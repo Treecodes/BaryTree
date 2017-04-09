@@ -1,0 +1,7 @@
+src/*.o
+src/treecp
+src/directpot
+data/treecp
+data/directpot
+.DS_store
+src/out.txt
