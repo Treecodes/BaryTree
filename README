@@ -1,14 +1,15 @@
 !
-!   Author:  Henry A. Boateng  (boateng@umich.edu) 
+!   Author:  Leighton W. Wilson  (lwwilson@umich.edu) 
+!   Based on code originally writted by Henry Boateng (boateng@umich.edu)
 !   Department of Mathematics
 !   University of Michigan, Ann Arbor
 !
-!   Copyright (c) 2013. The Regents of the University of Michigan.
+!   Copyright (c) 2017. The Regents of the University of Michigan.
 !   All Rights Reserved.
 !
 !
 !   This file is the partial documentation for PC_TREECODE and CP_TREECODE, 
-!   Fortran90 subroutines for approximating the electrostatic energy at 
+!   C subroutines for approximating the electrostatic energy at 
 !   a set of M targets due to a disjoint set of N source particles.
 !   PC_TREECODE employs the particle-cluster method which is more efficient
 !   when the sources outnumber the targets. CP_TREECODE employs the
