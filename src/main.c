@@ -1,13 +1,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <mpi.h>
 
 #include "array.h"
 #include "treedriver.h"
 #include "tools.h"
 
 /* The treedriver routine in Fortran */
-int main()
+int main(int argc, char **argv)
 {
 
         /* runtime parameters */
@@ -27,7 +28,7 @@ int main()
         double tpeng, dpeng;
 
 
-        // insert variables for date-time calculation?
+        /* insert variables for date-time calculation? */
         double total_time, time_direct, time_tree;
 
 
@@ -39,61 +40,57 @@ int main()
         /* variables for error calculations */
         double inferr, relinferr, n2err, reln2err;
 
-        //local variables (these decs may be unnecessary in C)
+        /* local variables */
         int i, j, err, ii;
+        int rank;
+
+
+        /* Executable statements begin here */
+        MPI_Init(&argc, &argv);
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 
         printf("Enter name of input file 1: \n");
         scanf("%s", sampin1);
-
         //sampin1 = "S10000.txt";
 
         printf("Enter name of input file 2: \n");
         scanf("%s", sampin2);
-
         //sampin2 = "T1000000.txt";
 
         printf("Enter name of input file 3: \n");
         scanf("%s", sampin3);
-
         //sampin3 = "ex_s4_t6.txt";
 
         //printf("Enter name of output file: \n");
         //scanf("%s", sampout);
-
         sampout = "out.txt";
 
         printf("Enter particle number for source and target: \n");
         scanf("%d %d", &numparsS, &numparsT);
-
         //numparsS = 10000;
         //numparsT = 10000;
 
-        //printf("Enter theta: \n");
-        //scanf("%lf", &theta);
-        
-        theta = 0.75;
+        printf("Enter theta: \n");
+        scanf("%lf", &theta);
+        //theta = 0.75;
 
-        //printf("Enter order: \n");
-        //scanf("%d", &order);
-        
-        order = 20;
+        printf("Enter order: \n");
+        scanf("%d", &order);
+        //order = 20;
 
         //printf("Enter maxparnode for source and target: \n");
         //scanf("%d %d", &maxparnodeS, &maxparnodeT);
-        
         maxparnodeS = 500;
         maxparnodeT = 500;
 
         //printf("Enter treelevel for source and target: \n");
         //scanf("%d %d", &treelevelS, &treelevelT);
-        
         treelevelS = 5;
         treelevelT = 5;
 
         //printf("Enter shrink for source and target (0-No 1-Yes): \n");
         //scanf("%d %d", &shrinkS, &shrinkT);
-        
         shrinkS = 1;
         shrinkT = 1;
 
@@ -102,20 +99,15 @@ int main()
         //       "or equal to maxparnode) \n");
         //printf("(1-divide tree till maxlevel attained): \n");
         //scanf("%d %d", &iflagS, &iflagT);
-        
         iflagS = 0;
         iflagT = 0;
 
-
         printf("Enter kappa value: \n");
         scanf("%lf", &kappa);
-
         //kappa = 0.00;
-
 
         printf("Enter potential type (0 Coulomb; 1 Yukawa): \n");
         scanf("%d", &pot_type);
-
         //pot_type = 1;
 
 
@@ -236,6 +228,6 @@ int main()
         printf("  Absolute 2 norm error in potential:  %e \n", n2err);
         printf("  Relative 2 norm error in potential:  %e \n\n", reln2err);
 
+        MPI_Finalize();
         return 0;
-
 }

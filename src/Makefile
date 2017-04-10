@@ -5,7 +5,7 @@ OFILESD = main-direct.o tools.o xmalloc.o
 TARGETD = directpot
 
 CC = mpicc
-CFLAGS = -Wall -Wextra  -O2
+CFLAGS = -Wall -Wextra  -O2 -std=c99
 $(TARGET): $(OFILES)
 	$(CC) $(OFILES) -o $@
 
