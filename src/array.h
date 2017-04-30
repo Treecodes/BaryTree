@@ -25,7 +25,7 @@
     size_t make_matrix_loop_counter;                           \
     make_vector(a, (m) + 1);                                   \
     for (make_matrix_loop_counter = 0;                         \
-            make_matrix_loop_counter < (m);                    \
+            make_matrix_loop_counter < (size_t)(m);            \
             make_matrix_loop_counter++)                        \
         make_vector((a)[make_matrix_loop_counter], (n));       \
     (a)[m] = NULL;                                             \
@@ -47,7 +47,7 @@
     size_t make_3array_loop_counter;                           \
     make_vector(a, (l) + 1);                                   \
     for (make_3array_loop_counter = 0;                         \
-            make_3array_loop_counter < (l);                    \
+            make_3array_loop_counter < (size_t)(l);            \
             make_3array_loop_counter++)                        \
         make_matrix((a)[make_3array_loop_counter], (m), (n));  \
     (a)[l] = NULL;                                             \
@@ -68,7 +68,7 @@
 #define print_vector(fmt, v, n) do {                           \
     size_t print_vector_loop_counter;                          \
     for (print_vector_loop_counter = 0;                        \
-            print_vector_loop_counter < (n);                   \
+            print_vector_loop_counter < (size_t)(n);           \
             print_vector_loop_counter++)                       \
         printf(fmt, (v)[print_vector_loop_counter]);           \
     putchar('\n');                                             \
@@ -77,7 +77,7 @@
 #define print_matrix(fmt, a, m, n) do {                        \
     size_t print_matrix_loop_counter;                          \
     for (print_matrix_loop_counter = 0;                        \
-            print_matrix_loop_counter < (m);                   \
+            print_matrix_loop_counter < (size_t)(m);           \
             print_matrix_loop_counter++)                       \
     print_vector(fmt, (a)[print_matrix_loop_counter], (n));    \
 } while (0)

@@ -9,9 +9,10 @@
 #include "globvars.h"
 #include "tnode.h"
 #include "tools.h"
-#include "partition.h"
 
-#include "tree-cp.h"
+#include "partition.h"
+#include "tree.h"
+
 
 /* Definition of variables declared extern in globvars.h */
 int torder, torderlim;
@@ -26,477 +27,460 @@ double thetasq, tarposq;
 
 int *orderarr;
 
+/* Variables used by Yukawa treecode */
+double *cf3;
+double ***a1;
+
 
 void setup(double *x, double *y, double *z,
            int numpars, int order, double theta, 
            double *xyzminmax)
 {
-        /*These are local variables. Definitions not necessary right here.*/
-        int err;
-        double t1;
+    /* local variables */
+    double t1;
 
-        /*changing values of our extern variables*/
-        torder = order;
-        orderoffset = 1;
-        torderlim = torder + orderoffset;
-        thetasq = theta * theta;
+    /* changing values of our extern variables */
+    torder = order;
+    orderoffset = 1;
+    torderlim = torder + orderoffset;
+    thetasq = theta * theta;
 
-        /*allocating global Taylor expansion variables*/
-                make_vector(cf, torder+1);
-                make_vector(cf1, torderlim);
-                make_vector(cf2, torderlim);
+    /* allocating global Taylor expansion variables */
+    make_vector(cf, torder+1);
+    make_vector(cf1, torderlim);
+    make_vector(cf2, torderlim);
 
-                make_3array(b1, torderlim+1, torderlim+1, torderlim+1);
+    make_3array(b1, torderlim+1, torderlim+1, torderlim+1);
 
 
-        /*initializing arrays for Taylor sums and coefficients*/
-                for (int i = 0; i < torder + 1; i++)
-                        cf[i] = -i + 1.0;
+    /* initializing arrays for Taylor sums and coefficients */
+    for (int i = 0; i < torder + 1; i++)
+        cf[i] = -i + 1.0;
 
-                for (int i = 0; i < torderlim; i++) {
-                        t1 = 1.0 / (i + 1.0);
-                        cf1[i] = 1.0 - (0.5 * t1);
-                        cf2[i] = 1.0 - t1;
-                }
+    for (int i = 0; i < torderlim; i++) {
+        t1 = 1.0 / (i + 1.0);
+        cf1[i] = 1.0 - (0.5 * t1);
+        cf2[i] = 1.0 - t1;
+    }
 
-        /*find bounds of Cartesian box enclosing the particles*/
-        xyzminmax[0] = minval(x, numpars);
-        xyzminmax[1] = maxval(x, numpars);
-        xyzminmax[2] = minval(y, numpars);
-        xyzminmax[3] = maxval(y, numpars);
-        xyzminmax[4] = minval(z, numpars);
-        xyzminmax[5] = maxval(z, numpars);
+    /* find bounds of Cartesian box enclosing the particles */
+    xyzminmax[0] = minval(x, numpars);
+    xyzminmax[1] = maxval(x, numpars);
+    xyzminmax[2] = minval(y, numpars);
+    xyzminmax[3] = maxval(y, numpars);
+    xyzminmax[4] = minval(z, numpars);
+    xyzminmax[5] = maxval(z, numpars);
 
-        make_vector(orderarr, numpars);
+    make_vector(orderarr, numpars);
 
-        for (int i = 0; i < numpars; i++)
-                orderarr[i] = i+1;
+    for (int i = 0; i < numpars; i++)
+        orderarr[i] = i+1;
 
-        return;
+    return;
+    
 }
 
 
-void create_tree_n0(struct tnode **p,
-                    int ibeg, int iend,
+void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
                     double *x, double *y, double *z,
                     int shrink, int maxparnode,
-                    double *xyzmm,
-                    int level, int arrdim)
+                    double *xyzmm, int level)
 {
-        /*local variables*/
-        double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-        int **ind;
-        double **xyzmms;
-        int i, j, limin, limax, err, loclev, numposchild;
-        double *lxyzmm;
+    /*local variables*/
+    double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
+    int **ind;
+    double **xyzmms;
+    int i, j, loclev, numposchild;
+    double *lxyzmm;
 
-        make_matrix(ind, 8, 2);
-        make_matrix(xyzmms, 6, 8);
-        make_vector(lxyzmm, 6);
+    make_matrix(ind, 8, 2);
+    make_matrix(xyzmms, 6, 8);
+    make_vector(lxyzmm, 6);
 
-        for (i = 0; i < 8; i++) {
-                for (j = 0; j < 2; j++) {
-                        ind[i][j] = 0.0;
-                }
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 2; j++) {
+            ind[i][j] = 0.0;
         }
+    }
 
-        for (i = 0; i < 6; i++) {
-                for (j = 0; j < 8; j++) {
-                        xyzmms[i][j] = 0.0;
-                }
+    for (i = 0; i < 6; i++) {
+        for (j = 0; j < 8; j++) {
+            xyzmms[i][j] = 0.0;
         }
+    }
 
-        for (i = 0; i < 6; i++) {
-                lxyzmm[i] = 0.0;
-        }
+    for (i = 0; i < 6; i++) {
+        lxyzmm[i] = 0.0;
+    }
                         
 
-        (*p) = malloc(sizeof(struct tnode));
+    (*p) = malloc(sizeof(struct tnode));
 
 
-        /* set node fields: number of particles, exist_ms, and xyz bounds */
-        (*p)->numpar = iend - ibeg + 1;
-        (*p)->exist_ms = 0;
+    /* set node fields: number of particles, exist_ms, and xyz bounds */
+    (*p)->numpar = iend - ibeg + 1;
+    (*p)->exist_ms = 0;
 
-        if (shrink == 1) {
+    if (shrink == 1) {
 
-                int nump = iend - ibeg + 1;
+        int nump = iend - ibeg + 1;
 
-                (*p)->x_min = minval(x + ibeg - 1, nump);
-                (*p)->x_max = maxval(x + ibeg - 1, nump);
-                (*p)->y_min = minval(y + ibeg - 1, nump);
-                (*p)->y_max = maxval(y + ibeg - 1, nump);
-                (*p)->z_min = minval(z + ibeg - 1, nump);
-                (*p)->z_max = maxval(z + ibeg - 1, nump);
+        (*p)->x_min = minval(x + ibeg - 1, nump);
+        (*p)->x_max = maxval(x + ibeg - 1, nump);
+        (*p)->y_min = minval(y + ibeg - 1, nump);
+        (*p)->y_max = maxval(y + ibeg - 1, nump);
+        (*p)->z_min = minval(z + ibeg - 1, nump);
+        (*p)->z_max = maxval(z + ibeg - 1, nump);
 
-        } else {
+    } else {
 
-                (*p)->x_min = xyzmm[0];
-                (*p)->x_max = xyzmm[1];
-                (*p)->y_min = xyzmm[2];
-                (*p)->y_max = xyzmm[3]; 
-                (*p)->z_min = xyzmm[4];
-                (*p)->z_max = xyzmm[5];
-        }
+        (*p)->x_min = xyzmm[0];
+        (*p)->x_max = xyzmm[1];
+        (*p)->y_min = xyzmm[2];
+        (*p)->y_max = xyzmm[3];
+        (*p)->z_min = xyzmm[4];
+        (*p)->z_max = xyzmm[5];
+    }
 
 
-        /*compute aspect ratio*/
-        xl = (*p)->x_max - (*p)->x_min;
-        yl = (*p)->y_max - (*p)->y_min;
-        zl = (*p)->z_max - (*p)->z_min;
+    /*compute aspect ratio*/
+    xl = (*p)->x_max - (*p)->x_min;
+    yl = (*p)->y_max - (*p)->y_min;
+    zl = (*p)->z_max - (*p)->z_min;
         
-        lmax = max3(xl, yl, zl);
-        t1 = lmax;
-        t2 = min3(xl, yl, zl);
+    lmax = max3(xl, yl, zl);
+    t1 = lmax;
+    t2 = min3(xl, yl, zl);
 
 
-        if (t2 != 0.0)
-                (*p)->aspect = t1/t2;
-        else
-                (*p)->aspect = 0.0;
+    if (t2 != 0.0)
+        (*p)->aspect = t1/t2;
+    else
+        (*p)->aspect = 0.0;
 
 
-        /*midpoint coordinates, RADIUS and SQRADIUS*/
-        (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
-        (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
-        (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
+    /*midpoint coordinates, RADIUS and SQRADIUS*/
+    (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
+    (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
+    (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
 
-        t1 = (*p)->x_max - (*p)->x_mid;
-        t2 = (*p)->y_max - (*p)->y_mid;
-        t3 = (*p)->z_max - (*p)->z_mid;
+    t1 = (*p)->x_max - (*p)->x_mid;
+    t2 = (*p)->y_max - (*p)->y_mid;
+    t3 = (*p)->z_max - (*p)->z_mid;
 
-        (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
-        (*p)->radius = sqrt((*p)->sqradius);
+    (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
+    (*p)->radius = sqrt((*p)->sqradius);
 
-        /*set particle limits, tree level of node, and nullify child pointers*/
-        (*p)->ibeg = ibeg;
-        (*p)->iend = iend;
-        (*p)->level = level;
-
-
-        if (maxlevel < level)
-                maxlevel = level;
-
-        (*p)->num_children = 0;
-        for (int i = 0; i < 8; i++)
-                (*p)->child[i] = NULL;
+    /*set particle limits, tree level of node, and nullify child pointers*/
+    (*p)->ibeg = ibeg;
+    (*p)->iend = iend;
+    (*p)->level = level;
 
 
-        if ((*p)->numpar > maxparnode) {
+    if (maxlevel < level)
+        maxlevel = level;
 
-        /*
-         * set IND array to 0, and then call PARTITION_8 routine.
-         * IND array holds indices of the eight new subregions.
-         * Also, setup XYZMMS array in the case that SHRINK = 1.
-         */
-                xyzmms[0][0] = (*p)->x_min;
-                xyzmms[1][0] = (*p)->x_max;
-                xyzmms[2][0] = (*p)->y_min;
-                xyzmms[3][0] = (*p)->y_max;
-                xyzmms[4][0] = (*p)->z_min;
-                xyzmms[5][0] = (*p)->z_max;
-
-                ind[0][0] = ibeg;
-                ind[0][1] = iend;
-
-                x_mid = (*p)->x_mid;
-                y_mid = (*p)->y_mid;
-                z_mid = (*p)->z_mid;
+    (*p)->num_children = 0;
+    for (i = 0; i < 8; i++)
+        (*p)->child[i] = NULL;
 
 
-                partition_8(x, y, z, xyzmms, xl, yl, zl,
-                            lmax, &numposchild,
-                            x_mid, y_mid, z_mid,
-                            ind, arrdim);
+    if ((*p)->numpar > maxparnode) {
 
-                loclev = level + 1;
+    /*
+     * set IND array to 0, and then call PARTITION_8 routine.
+     * IND array holds indices of the eight new subregions.
+     * Also, setup XYZMMS array in the case that SHRINK = 1.
+     */
+        xyzmms[0][0] = (*p)->x_min;
+        xyzmms[1][0] = (*p)->x_max;
+        xyzmms[2][0] = (*p)->y_min;
+        xyzmms[3][0] = (*p)->y_max;
+        xyzmms[4][0] = (*p)->z_min;
+        xyzmms[5][0] = (*p)->z_max;
+
+        ind[0][0] = ibeg;
+        ind[0][1] = iend;
+
+        x_mid = (*p)->x_mid;
+        y_mid = (*p)->y_mid;
+        z_mid = (*p)->z_mid;
 
 
-                for (int i = 0; i < numposchild; i++) {
-                        if (ind[i][0] <= ind[i][1]) {
-                                (*p)->num_children = (*p)->num_children + 1;
+        cp_partition_8(x, y, z, xyzmms, xl, yl, zl,
+                       lmax, &numposchild,
+                       x_mid, y_mid, z_mid, ind);
+
+        loclev = level + 1;
 
 
-                                for (int j = 0; j < 6; j++) 
-                                        lxyzmm[j] = xyzmms[j][i];
+        for (i = 0; i < numposchild; i++) {
+            if (ind[i][0] <= ind[i][1]) {
+                (*p)->num_children = (*p)->num_children + 1;
 
+                for (j = 0; j < 6; j++)
+                    lxyzmm[j] = xyzmms[j][i];
 
-                                create_tree_n0(
-                                        &((*p)->child[(*p)->num_children - 1]),
-                                        ind[i][0], ind[i][1],
-                                        x, y, z, shrink,
-                                        maxparnode, lxyzmm,
-                                        loclev, arrdim);
-                        }
-                }
-
-        } else {
-
-                if (level < minlevel)
-                        minlevel = level;
+                cp_create_tree_n0(&((*p)->child[(*p)->num_children - 1]),
+                                  ind[i][0], ind[i][1], x, y, z, shrink,
+                                  maxparnode, lxyzmm, loclev);
+            }
         }
 
-        return;
+    } else {
+
+        if (level < minlevel)
+            minlevel = level;
+    }
+
+    return;
 
 } /* end of function create_tree_n0 */
 
 
 
-void create_tree_lv(struct tnode **p, int ibeg, int iend, 
-                    double *x, double *y, double *z,
-                    int shrink, int treelevel,
-                    double *xyzmm, int level, int arrdim)
+
+void cp_create_tree_lv(struct tnode **p, int ibeg, int iend,
+                       double *x, double *y, double *z, int shrink,
+                       int treelevel, double *xyzmm, int level)
 {
-        /* local variables */
-        double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-        int **ind;
-        double **xyzmms;
-        int i, j, limin, limax, err, loclev, numposchild;
-        double *lxyzmm;
+    /* local variables */
+    double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
+    int **ind;
+    double **xyzmms;
+    int i, j, loclev, numposchild;
+    double *lxyzmm;
 
-        make_matrix(ind, 8, 2);
-        make_matrix(xyzmms, 6, 8);
-        make_vector(lxyzmm, 6);
+    make_matrix(ind, 8, 2);
+    make_matrix(xyzmms, 6, 8);
+    make_vector(lxyzmm, 6);
 
-        //Allocate pointer p?
-        // Now done in calling treecode routine
-        (*p) = malloc(sizeof(struct tnode));
+    //Allocate pointer p?
+    // Now done in calling treecode routine
+    (*p) = malloc(sizeof(struct tnode));
 
 
-        (*p)->numpar = iend - ibeg + 1;
-        (*p)->exist_ms = 0;
+    (*p)->numpar = iend - ibeg + 1;
+    (*p)->exist_ms = 0;
 
-        if (shrink == 1) {
-                int nump = iend - ibeg + 1;
+    if (shrink == 1) {
+        int nump = iend - ibeg + 1;
 
-                //This may need to be x+ibeg-1. Check this...
-                (*p)->x_min = minval(x + ibeg - 1, nump);
-                (*p)->x_max = maxval(x + ibeg - 1, nump);
-                (*p)->y_min = minval(y + ibeg - 1, nump);
-                (*p)->y_max = maxval(y + ibeg - 1, nump);
-                (*p)->z_min = minval(z + ibeg - 1, nump);
-                (*p)->z_max = maxval(z + ibeg - 1, nump);
+        //This may need to be x+ibeg-1. Check this...
+        (*p)->x_min = minval(x + ibeg - 1, nump);
+        (*p)->x_max = maxval(x + ibeg - 1, nump);
+        (*p)->y_min = minval(y + ibeg - 1, nump);
+        (*p)->y_max = maxval(y + ibeg - 1, nump);
+        (*p)->z_min = minval(z + ibeg - 1, nump);
+        (*p)->z_max = maxval(z + ibeg - 1, nump);
 
-        } else {
-                (*p)->x_min = xyzmm[0];
-                (*p)->x_max = xyzmm[1];
-                (*p)->y_min = xyzmm[2];
-                (*p)->y_max = xyzmm[3];
-                (*p)->z_min = xyzmm[4];
-                (*p)->z_max = xyzmm[5];
-        }
+    } else {
+        (*p)->x_min = xyzmm[0];
+        (*p)->x_max = xyzmm[1];
+        (*p)->y_min = xyzmm[2];
+        (*p)->y_max = xyzmm[3];
+        (*p)->z_min = xyzmm[4];
+        (*p)->z_max = xyzmm[5];
+    }
 
-        /* compute aspect ratio */
-        xl = (*p)->x_max - (*p)->x_min;
-        yl = (*p)->y_max - (*p)->y_min;
-        zl = (*p)->z_max - (*p)->z_min;
+    /* compute aspect ratio */
+    xl = (*p)->x_max - (*p)->x_min;
+    yl = (*p)->y_max - (*p)->y_min;
+    zl = (*p)->z_max - (*p)->z_min;
 
-        lmax = max3(xl, yl, zl);
-        t1 = lmax;
-        t2 = min3(xl, yl, zl);
+    lmax = max3(xl, yl, zl);
+    t1 = lmax;
+    t2 = min3(xl, yl, zl);
 
-        if (t2 != 0.0)
-                (*p)->aspect = t1/t2;
-        else
-                (*p)->aspect = 0.0;
+    if (t2 != 0.0)
+        (*p)->aspect = t1/t2;
+    else
+        (*p)->aspect = 0.0;
 
-        /* midpoint coordinates, RADIUS and SQRADIUS */
-        (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
-        (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
-        (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
+    /* midpoint coordinates, RADIUS and SQRADIUS */
+    (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
+    (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
+    (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
 
-        t1 = (*p)->x_max - (*p)->x_mid;
-        t2 = (*p)->y_max - (*p)->y_mid;
-        t3 = (*p)->z_max - (*p)->z_mid;
+    t1 = (*p)->x_max - (*p)->x_mid;
+    t2 = (*p)->y_max - (*p)->y_mid;
+    t3 = (*p)->z_max - (*p)->z_mid;
         
-        (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
-        (*p)->radius = sqrt((*p)->sqradius);
+    (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
+    (*p)->radius = sqrt((*p)->sqradius);
 
-        /* set particle limits, tree level of node, nullify children */
-        (*p)->ibeg = ibeg;
-        (*p)->iend = iend;
-        (*p)->level = level;
+    /* set particle limits, tree level of node, nullify children */
+    (*p)->ibeg = ibeg;
+    (*p)->iend = iend;
+    (*p)->level = level;
 
-        (*p)->num_children = 0;
+    (*p)->num_children = 0;
 
-        for (i = 0; i < 8; i++)
-                free((*p)->child[i]);
+    for (i = 0; i < 8; i++)
+        free((*p)->child[i]);
 
-        /*
-         * set IND array to 0 and then call PARTITION8 routine.
-         * IND array holds indices of the eight new subregions.
-         * Also, setup XYZMMS array in case SHRINK = 1.
-         */
-        if (level < treelevel) {
-                xyzmms[0][0] = (*p)->x_min;
-                xyzmms[1][0] = (*p)->x_max;
-                xyzmms[2][0] = (*p)->y_min;
-                xyzmms[3][0] = (*p)->y_max;
-                xyzmms[4][0] = (*p)->z_min;
-                xyzmms[5][0] = (*p)->z_max;
+    /*
+     * set IND array to 0 and then call PARTITION8 routine.
+     * IND array holds indices of the eight new subregions.
+     * Also, setup XYZMMS array in case SHRINK = 1.
+     */
+    if (level < treelevel) {
+        xyzmms[0][0] = (*p)->x_min;
+        xyzmms[1][0] = (*p)->x_max;
+        xyzmms[2][0] = (*p)->y_min;
+        xyzmms[3][0] = (*p)->y_max;
+        xyzmms[4][0] = (*p)->z_min;
+        xyzmms[5][0] = (*p)->z_max;
 
-                ind[0][0] = ibeg;
-                ind[0][1] = iend;
+        ind[0][0] = ibeg;
+        ind[0][1] = iend;
 
-                x_mid = (*p)->x_mid;
-                y_mid = (*p)->y_mid;
-                z_mid = (*p)->z_mid;
+        x_mid = (*p)->x_mid;
+        y_mid = (*p)->y_mid;
+        z_mid = (*p)->z_mid;
 
-                partition_8(x, y, z, xyzmms, xl, yl, zl,
-                            lmax, &numposchild,
-                            x_mid, y_mid, z_mid,
-                            ind, arrdim);
+        cp_partition_8(x, y, z, xyzmms, xl, yl, zl, lmax, &numposchild,
+                       x_mid, y_mid, z_mid, ind);
 
-                loclev = level + 1;
+        loclev = level + 1;
 
-                for (int i = 0; i < numposchild; i++) {
-                        if (ind[i][0] <= ind[i][1]) {
-                                (*p)->num_children = (*p)->num_children + 1;
+        for (i = 0; i < numposchild; i++) {
+            if (ind[i][0] <= ind[i][1]) {
+                (*p)->num_children = (*p)->num_children + 1;
 
-
-                                for (int j = 0; j < 6; j++)
-                                        lxyzmm[j] = xyzmms[j][i];
+                for (j = 0; j < 6; j++)
+                    lxyzmm[j] = xyzmms[j][i];
 
                 //Also, should probable be..
                 // p->child[p->num_children - 1]*
                 // in argument below
 
-                                create_tree_lv(
-                                        &((*p)->child[(*p)->num_children - 1]),
-                                        ind[i][0], ind[i][1],
-                                        x, y, z, shrink,
-                                        treelevel, lxyzmm,
-                                        loclev, arrdim);
-                        }
-                }
-
-        } else {
-                if (level < minlevel)
-                        minlevel = level;
+                cp_create_tree_lv(&((*p)->child[(*p)->num_children - 1]),
+                                  ind[i][0], ind[i][1], x, y, z, shrink,
+                                  treelevel, lxyzmm, loclev);
+            }
         }
 
-        return;
+    } else {
+        if (level < minlevel)
+            minlevel = level;
+    }
+
+    return;
 
 } /* END of function create_tree_lv */
 
 
-void partition_8(double *x, double *y, double *z,
-                 double **xyzmms, double xl, double yl, double zl,
-                 double lmax, int *numposchild,
-                 double x_mid, double y_mid, double z_mid,
-                 int **ind, int arrdim)
+void cp_partition_8(double *x, double *y, double *z, double **xyzmms,
+                    double xl, double yl, double zl, double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid, int **ind)
 //IN THE FORTRAN, numposchild is INOUT! I may need to make this a pointer instead
 //Note: I'm passing the address from the calls to partition_8
 {
 
-        /* local variables */
-        int temp_ind, i;
-        double critlen;
+    /* local variables */
+    int temp_ind, i, j;
+    double critlen;
 
-        *numposchild = 1;
-        critlen = lmax / sqrt(2.0);
-
-
-        if (xl >= critlen) {
-
-                partition(x, y, z, orderarr, ind[0][0], ind[0][1],
-                          x_mid, &temp_ind, arrdim);
+    *numposchild = 1;
+    critlen = lmax / sqrt(2.0);
 
 
-                ind[1][0] = temp_ind + 1;
-                ind[1][1] = ind[0][1];
-                ind[0][1] = temp_ind;
+    if (xl >= critlen) {
 
-                for (int i = 0; i < 6; i++) 
-                        xyzmms[i][1] = xyzmms[i][0];
+        cp_partition(x, y, z, orderarr, ind[0][0], ind[0][1],
+                     x_mid, &temp_ind);
 
-                xyzmms[1][0] = x_mid;
-                xyzmms[0][1] = x_mid;
-                *numposchild = 2 * *numposchild;
+        ind[1][0] = temp_ind + 1;
+        ind[1][1] = ind[0][1];
+        ind[0][1] = temp_ind;
 
-        }
+        for (i = 0; i < 6; i++)
+            xyzmms[i][1] = xyzmms[i][0];
+        
+        xyzmms[1][0] = x_mid;
+        xyzmms[0][1] = x_mid;
+        *numposchild = 2 * *numposchild;
+
+    }
 
 
-        if (yl >= critlen) {
+    if (yl >= critlen) {
 
-                for (i = 0; i < *numposchild; i++) {
-                        partition(y, x, z, orderarr, ind[i][0], ind[i][1],
-                                  y_mid, &temp_ind, arrdim);
+        for (i = 0; i < *numposchild; i++) {
+            cp_partition(y, x, z, orderarr, ind[i][0], ind[i][1],
+                         y_mid, &temp_ind);
                         
-                        ind[*numposchild + i][0] = temp_ind + 1;
-                        ind[*numposchild + i][1] = ind[i][1];
-                        ind[i][1] = temp_ind;
+            ind[*numposchild + i][0] = temp_ind + 1;
+            ind[*numposchild + i][1] = ind[i][1];
+            ind[i][1] = temp_ind;
 
-                        for (int j = 0; j < 6; j++)
-                                xyzmms[j][*numposchild + i] = xyzmms[j][i];
+            for (j = 0; j < 6; j++)
+                xyzmms[j][*numposchild + i] = xyzmms[j][i];
 
-                        xyzmms[3][i] = y_mid;
-                        xyzmms[2][*numposchild + i] = y_mid;
-                }
-
-                *numposchild = 2 * *numposchild;
-
+            xyzmms[3][i] = y_mid;
+            xyzmms[2][*numposchild + i] = y_mid;
         }
 
+        *numposchild = 2 * *numposchild;
 
-        if (zl >= critlen) {
+    }
 
-                for (i = 0; i < *numposchild; i++) {
-                        partition(z, x, y, orderarr, ind[i][0], ind[i][1],
-                                  z_mid, &temp_ind, arrdim);
+
+    if (zl >= critlen) {
+
+        for (i = 0; i < *numposchild; i++) {
+            cp_partition(z, x, y, orderarr, ind[i][0], ind[i][1],
+                         z_mid, &temp_ind);
                         
-                        ind[*numposchild + i][0] = temp_ind + 1;
-                        ind[*numposchild + i][1] = ind[i][1];
-                        ind[i][1] = temp_ind;
+            ind[*numposchild + i][0] = temp_ind + 1;
+            ind[*numposchild + i][1] = ind[i][1];
+            ind[i][1] = temp_ind;
 
-                        for (int j = 0; j < 6; j++)
-                                xyzmms[j][*numposchild + i] = xyzmms[j][i];
+            for (j = 0; j < 6; j++)
+                xyzmms[j][*numposchild + i] = xyzmms[j][i];
 
-                        xyzmms[5][i] = z_mid;
-                        xyzmms[4][*numposchild + i] = z_mid;
-                }
-
-                *numposchild = 2 * *numposchild;
-
+            xyzmms[5][i] = z_mid;
+            xyzmms[4][*numposchild + i] = z_mid;
         }
 
-        return;
+        *numposchild = 2 * *numposchild;
 
-} /* END of function partition_8 */
+    }
+
+    return;
+
+} /* END of function cp_partition_8 */
 
 
 
 
 void cp_treecode(struct tnode *p, double *xS, double *yS, double *zS,
                  double *qS, double *xT, double *yT, double *zT,
-                 double *tpeng, double *EnP,
-                 int numparsS, int numparsT)
+                 double *tpeng, double *EnP, int numparsS, int numparsT)
 {
-        /* local variables */
-        int i, j, nn;
-        double penglocal, peng;
+    /* local variables */
+    int i, j;
 
-        for (i = 0; i < numparsT; i++)
-                EnP[i] = 0.0;
+    for (i = 0; i < numparsT; i++)
+        EnP[i] = 0.0;
 
-        for (i = 0; i < numparsS; i++) {
-                peng = 0.0;
-                tarpos[0] = xS[i];
-                tarpos[1] = yS[i];
-                tarpos[2] = zS[i];
-                tarposq = qS[i];
+    for (i = 0; i < numparsS; i++) {
+        tarpos[0] = xS[i];
+        tarpos[1] = yS[i];
+        tarpos[2] = zS[i];
+        tarposq = qS[i];
 
-                for (j = 0; j < p->num_children; j++) {
-                        compute_cp1(p->child[j], EnP,
-                                    xT, yT, zT, numparsT);
-                }
-        }
+        for (j = 0; j < p->num_children; j++)
+            compute_cp1(p->child[j], EnP, xT, yT, zT);
+ 
+    }
 
-        compute_cp2(p, xT, yT, zT, EnP, numparsT);
+    compute_cp2(p, xT, yT, zT, EnP);
 
-        *tpeng = sum(EnP, numparsT);
+    *tpeng = sum(EnP, numparsT);
 
-        return;
+    return;
 
 } /* END of function cp_treecode */
 
@@ -504,89 +488,84 @@ void cp_treecode(struct tnode *p, double *xS, double *yS, double *zS,
 
 
 void compute_cp1(struct tnode *p, double *EnP,
-                 double *x, double *y, double *z,
-                 int arrdim)
+                 double *x, double *y, double *z)
 {
-        /* local variables */
-        double tx, ty, tz, distsq, t1, t2, penglocal;
-        int i, j, k, err;
-        int call_direct; 
+    /* local variables */
+    double tx, ty, tz, distsq;
+    int i, j, k;
 
-        //printf("Inside compute_cp1... 1\n");
+    //printf("Inside compute_cp1... 1\n");
 
-        /* determine DISTSQ for MAC test */
-        tx = tarpos[0] - p->x_mid;
-        ty = tarpos[1] - p->y_mid;
-        tz = tarpos[2] - p->z_mid;
-        distsq = tx*tx + ty*ty + tz*tz;
+    /* determine DISTSQ for MAC test */
+    tx = tarpos[0] - p->x_mid;
+    ty = tarpos[1] - p->y_mid;
+    tz = tarpos[2] - p->z_mid;
+    distsq = tx*tx + ty*ty + tz*tz;
 
     //    printf("        tarpos: %f, %f, %f\n", tarpos[0], tarpos[1], tarpos[2]);
     //    printf("        p->mids: %f, %f, %f\n", p->x_mid, p->y_mid, p->z_mid);
     //    printf("        tx, ty, tz: %f, %f, %f\n", tx, ty, tz);
     //    printf("        distsq: %f\n", distsq);
 
-        //printf("Inside compute_cp1... 2\n");
+    //printf("Inside compute_cp1... 2\n");
 
-        /* initialize potential energy and force */
+    /* initialize potential energy and force */
 
-        if ((p->sqradius < distsq * thetasq) && (p->sqradius != 0.00)) {
+    if ((p->sqradius < distsq * thetasq) && (p->sqradius != 0.00)) {
 
-         //       printf("Inside if statement, for sqradius < distq*thetasq, "
-         //              "or p->sqradius != 0.00.\n");
-         //       printf("p->sqradius = %f\n", p->sqradius);
-         //       printf("distsq*thetasq = %f\n", distsq*thetasq);
-        /*
-         * If MAC is accepted and there is more than 1 particle
-         * in the box, use the expansion for the approximation.
-         */
-                for (i = 0; i < torderlim + 1; i++) {
-                        for (j = 0; j < torderlim + 1; j++) {
-                                for (k = 0; k < torderlim + 1; k++) {
-                                        b1[i][j][k] = 0.0;
-                                }
-                        }
+    //       printf("Inside if statement, for sqradius < distq*thetasq, "
+    //              "or p->sqradius != 0.00.\n");
+    //       printf("p->sqradius = %f\n", p->sqradius);
+    //       printf("distsq*thetasq = %f\n", distsq*thetasq);
+    /*
+     * If MAC is accepted and there is more than 1 particle
+     * in the box, use the expansion for the approximation.
+     */
+        for (i = 0; i < torderlim + 1; i++) {
+            for (j = 0; j < torderlim + 1; j++) {
+                for (k = 0; k < torderlim + 1; k++) {
+                    b1[i][j][k] = 0.0;
                 }
-
-
-         //       printf("Zeroed out b1, before call to comp_tcoeff...\n");
-
-                comp_tcoeff(tx, ty, tz);
-
-         //       printf("After call to comp_tcoeff...\n");
-
-                if (p->exist_ms == 0) {
-                        make_3array(p->ms, torder+1, torder+1, torder+1);
-
-                        for (i = 0; i < torder + 1; i++) {
-                                for (j = 0; j < torder + 1; j++) {
-                                        for (k = 0; k < torder + 1; k++) {
-                                                p->ms[i][j][k] = 0.0;
-                                        }
-                                }
-                        }
-
-                        p->exist_ms = 1;
-                }
-
-                comp_cms(p);
-
-        } else {
-        /*
-         * If MAC fails check to see if there are children. If not, perform direct
-         * calculation. If there are children, call routine recursively for each.
-         */
-                if (p->num_children == 0) {
-                        comp_direct(EnP, p->ibeg, p->iend,
-                                    x, y, z, arrdim);
-                } else {
-                        for (i = 0; i < p->num_children; i++) {
-                                compute_cp1(p->child[i], EnP,
-                                            x, y, z, arrdim);
-                        }
-                }
+            }
         }
 
-        return;
+
+    //       printf("Zeroed out b1, before call to comp_tcoeff...\n");
+
+        comp_tcoeff(tx, ty, tz);
+
+    //       printf("After call to comp_tcoeff...\n");
+
+        if (p->exist_ms == 0) {
+            make_3array(p->ms, torder+1, torder+1, torder+1);
+
+            for (i = 0; i < torder + 1; i++) {
+                for (j = 0; j < torder + 1; j++) {
+                    for (k = 0; k < torder + 1; k++) {
+                        p->ms[i][j][k] = 0.0;
+                    }
+                }
+            }
+
+            p->exist_ms = 1;
+        }
+
+        cp_comp_ms(p);
+
+    } else {
+    /*
+     * If MAC fails check to see if there are children. If not, perform direct
+     * calculation. If there are children, call routine recursively for each.
+     */
+        if (p->num_children == 0) {
+            cp_comp_direct(EnP, p->ibeg, p->iend, x, y, z);
+        } else {
+            for (i = 0; i < p->num_children; i++)
+                compute_cp1(p->child[i], EnP, x, y, z);
+        }
+    }
+
+    return;
 
 } /* END of function compute_cp1 */
 
@@ -594,56 +573,54 @@ void compute_cp1(struct tnode *p, double *EnP,
 
 
 void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
-                 double *EnP, int arrdim)
+                 double *EnP)
 {
-        /* local variables */
-        double tx, ty, tz, peng;
-        double xm, ym, zm, dx, dy, dz;
-        int i, nn, j, k1, k2, k3, porder, porder1;
+    /* local variables */
+    double tx, ty, peng;
+    double xm, ym, zm, dx, dy, dz;
+    int i, nn, j, k1, k2, k3, porder, porder1;
 
-        porder = torder;
-        porder1 = porder - 1;
+    porder = torder;
+    porder1 = porder - 1;
 
-        if (ap->exist_ms == 1) {
-                xm = ap->x_mid;
-                ym = ap->y_mid;
-                zm = ap->z_mid;
+    if (ap->exist_ms == 1) {
+        xm = ap->x_mid;
+        ym = ap->y_mid;
+        zm = ap->z_mid;
 
-                for (i = ap->ibeg-1; i < ap->iend; i++) {
-                        nn = orderarr[i];
-                        dx = x[i] - xm;
-                        dy = y[i] - ym;
-                        dz = z[i] - zm;
+        for (i = ap->ibeg-1; i < ap->iend; i++) {
+            nn = orderarr[i];
+            dx = x[i] - xm;
+            dy = y[i] - ym;
+            dz = z[i] - zm;
 
-                        peng = ap->ms[0][0][porder];
+            peng = ap->ms[0][0][porder];
 
-                        for (k3 = porder1; k3 > -1; k3--) {
-                                ty = ap->ms[0][porder - k3][k3];
+            for (k3 = porder1; k3 > -1; k3--) {
+                ty = ap->ms[0][porder - k3][k3];
 
-                                for (k2 = porder1 - k3; k2 > -1; k2--) {
-                                        tx = ap->ms[porder - k3 - k2][k2][k3];
+                for (k2 = porder1 - k3; k2 > -1; k2--) {
+                    tx = ap->ms[porder - k3 - k2][k2][k3];
 
-                                        for (k1 = porder1 - k3 - k2; k1 > -1; k1--) {
-                                                tx = dx*tx + ap->ms[k1][k2][k3];
-                                        }
+                    for (k1 = porder1 - k3 - k2; k1 > -1; k1--) {
+                        tx = dx*tx + ap->ms[k1][k2][k3];
+                    }
 
-                                        ty = dy * ty + tx;
-                                }
-
-                                peng = dz * peng + ty;
-                        }
-
-                        //Double check these indices...
-                        EnP[nn-1] = EnP[nn-1] + peng;
+                    ty = dy * ty + tx;
                 }
-        }
 
-        for (j = 0; j < ap->num_children; j++) {
-                compute_cp2(ap->child[j], x, y, z,
-                            EnP, arrdim);
-        }
+                peng = dz * peng + ty;
+            }
 
-        return;
+            //Double check these indices...
+            EnP[nn-1] = EnP[nn-1] + peng;
+        }
+    }
+
+    for (j = 0; j < ap->num_children; j++)
+        compute_cp2(ap->child[j], x, y, z, EnP);
+
+    return;
 
 } /* END function compute_cp2 */
 
@@ -652,183 +629,184 @@ void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
 
 void comp_tcoeff(double dx, double dy, double dz)
 {
-        /* local variables */
-        double tdx, tdy, tdz, fac, sqfac, t1;
-        int i, j, k, tp1, mm, i1, i2, j1, j2, k1, k2;
+    /* local variables */
+    double tdx, tdy, tdz, fac, sqfac;
+    int i, j, k, i1, i2, j1, j2, k1, k2;
 
-        /* setup variables */
-        tdx = 2.0 * dx;
-        tdy = 2.0 * dy;
-        tdz = 2.0 * dz;
-        fac = 1.0 / (dx*dx + dy*dy + dz*dz);
-        sqfac = sqrt(fac);
+    /* setup variables */
+    tdx = 2.0 * dx;
+    tdy = 2.0 * dy;
+    tdz = 2.0 * dz;
+    fac = 1.0 / (dx*dx + dy*dy + dz*dz);
+    sqfac = sqrt(fac);
 
-    //    printf("        %f %f %f %f\n", tdx, tdy, tdz, sqfac);
+//    printf("        %f %f %f %f\n", tdx, tdy, tdz, sqfac);
 
-        /* 0th coefficient or function val */
-        b1[0][0][0] = sqfac;
+    /* 0th coefficient or function val */
+    b1[0][0][0] = sqfac;
 
-        /* set of indices for which two of them are 0 */
-        b1[1][0][0] = fac * dx * sqfac;
-        b1[0][1][0] = fac * dy * sqfac;
-        b1[0][0][1] = fac * dz * sqfac;
+    /* set of indices for which two of them are 0 */
+    b1[1][0][0] = fac * dx * sqfac;
+    b1[0][1][0] = fac * dy * sqfac;
+    b1[0][0][1] = fac * dz * sqfac;
 
-        for (i = 2; i < torderlim+1; i++) {
-                i1 = i - 1;
-                i2 = i - 2;
+    for (i = 2; i < torderlim+1; i++) {
+        i1 = i - 1;
+        i2 = i - 2;
+        
+        b1[i][0][0] = fac * (tdx * cf1[i1] * b1[i1][0][0]
+                                 - cf2[i1] * b1[i2][0][0]);
 
-                b1[i][0][0] = fac * (tdx * cf1[i1] * b1[i1][0][0]
-                                         - cf2[i1] * b1[i2][0][0]);
+        b1[0][i][0] = fac * (tdy * cf1[i1] * b1[0][i1][0]
+                                 - cf2[i1] * b1[0][i2][0]);
 
-                b1[0][i][0] = fac * (tdy * cf1[i1] * b1[0][i1][0]
-                                         - cf2[i1] * b1[0][i2][0]);
+        b1[0][0][i] = fac * (tdz * cf1[i1] * b1[0][0][i1]
+                                 - cf2[i1] * b1[0][0][i2]);
+    }
 
-                b1[0][0][i] = fac * (tdz * cf1[i1] * b1[0][0][i1]
-                                         - cf2[i1] * b1[0][0][i2]);
+    /* set of indices for which one is 0, one is 1, and other is >= 1 */
+    b1[1][1][0] = fac * (dx * b1[0][1][0] + tdy * b1[1][0][0]);
+    b1[1][0][1] = fac * (dx * b1[0][0][1] + tdz * b1[1][0][0]);
+    b1[0][1][1] = fac * (dy * b1[0][0][1] + tdz * b1[0][1][0]);
+
+    for (i = 2; i < torderlim; i++) {
+        i1 = i - 1;
+        i2 = i - 2;
+
+        b1[1][0][i] = fac * (dx * b1[0][0][i] + tdz * b1[1][0][i1]
+                                - b1[1][0][i2]);
+
+        b1[0][1][i] = fac * (dy * b1[0][0][i] + tdz * b1[0][1][i1]
+                                - b1[0][1][i2]);
+
+        b1[0][i][1] = fac * (dz * b1[0][i][0] + tdy * b1[0][i1][1]
+                                - b1[0][i2][1]);
+
+        b1[1][i][0] = fac * (dx * b1[0][i][0] + tdy * b1[1][i1][0]
+                                - b1[1][i2][0]);
+
+        b1[i][1][0] = fac * (dy * b1[i][0][0] + tdx * b1[i1][1][0]
+                                - b1[i2][1][0]);
+
+        b1[i][0][1] = fac * (dz * b1[i][0][0] + tdx * b1[i1][0][1]
+                                - b1[i2][0][1]);
+    }
+
+    /* set of indices for which one is 0, others are >=2 */
+    for (i = 2; i < torderlim - 1; i++) {
+        i1 = i - 1;
+        i2 = i - 2;
+
+        for (j = 2; j < torderlim - i + 1; j++) {
+            j1 = j - 1;
+            j2 = j - 2;
+
+            b1[i][j][0] = fac * (tdx * cf1[i1] * b1[i1][j][0]
+                                         + tdy * b1[i][j1][0]
+                                     - cf2[i1] * b1[i2][j][0]
+                                               - b1[i][j2][0]);
+
+            b1[i][0][j] = fac * (tdx * cf1[i1] * b1[i1][0][j]
+                                         + tdz * b1[i][0][j1]
+                                     - cf2[i1] * b1[i2][0][j]
+                                              - b1[i][0][j2]);
+
+            b1[0][i][j] = fac * (tdy * cf1[i1] * b1[0][i1][j]
+                                         + tdz * b1[0][i][j1]
+                                     - cf2[i1] * b1[0][i2][j]
+                                               - b1[0][i][j2]);
         }
+    }
 
-        /* set of indices for which one is 0, one is 1, and other is >= 1 */
-        b1[1][1][0] = fac * (dx * b1[0][1][0] + tdy * b1[1][0][0]);
-        b1[1][0][1] = fac * (dx * b1[0][0][1] + tdz * b1[1][0][0]);
-        b1[0][1][1] = fac * (dy * b1[0][0][1] + tdz * b1[0][1][0]);
+    /* set of indices for which two are 1, other is >= 1 */
+    b1[1][1][1] = fac * (dx * b1[0][1][1] + tdy * b1[1][0][1]
+                                          + tdz * b1[1][1][0]);
 
-        for (i = 2; i < torderlim; i++) {
-                i1 = i - 1;
-                i2 = i - 2;
+    for (i = 2; i < torderlim - 1; i++) {
+        i1 = i - 1;
+        i2 = i - 2;
 
-                b1[1][0][i] = fac * (dx * b1[0][0][i] + tdz * b1[1][0][i1]
-                                        - b1[1][0][i2]);
+        b1[1][1][i] = fac * (dx * b1[0][1][i] + tdy * b1[1][0][i]
+                          + tdz * b1[1][1][i1]      - b1[1][1][i2]);
 
-                b1[0][1][i] = fac * (dy * b1[0][0][i] + tdz * b1[0][1][i1]
-                                        - b1[0][1][i2]);
+        b1[1][i][1] = fac * (dx * b1[0][i][1] + tdy * b1[1][i1][1]
+                          + tdz * b1[1][i][0]       - b1[1][i2][1]);
 
-                b1[0][i][1] = fac * (dz * b1[0][i][0] + tdy * b1[0][i1][1]
-                                        - b1[0][i2][1]);
+        b1[i][1][1] = fac * (dy * b1[i][0][1] + tdx * b1[i1][1][1]
+                        + tdz * b1[i][1][0]       - b1[i2][1][1]);
+    }
 
-                b1[1][i][0] = fac * (dx * b1[0][i][0] + tdy * b1[1][i1][0]
-                                        - b1[1][i2][0]);
+    /* set of indices for which one is 1, others are >= 2 */
+    for (i = 2; i < torderlim - 2; i++) {
+        i1 = i - 1;
+        i2 = i - 2;
 
-                b1[i][1][0] = fac * (dy * b1[i][0][0] + tdx * b1[i1][1][0]
-                                        - b1[i2][1][0]);
+        for (j = 2; j < torderlim - i + 1; j++) {
+            j1 = j - 1;
+            j2 = j - 2;
 
-                b1[i][0][1] = fac * (dz * b1[i][0][0] + tdx * b1[i1][0][1]
-                                        - b1[i2][0][1]);
+            b1[1][i][j] = fac * (dx * b1[0][i][j] + tdy * b1[1][i1][j]
+                              + tdz * b1[1][i][j1]      - b1[1][i2][j]
+                                    - b1[1][i][j2]);
+
+            b1[i][1][j] = fac * (dy * b1[i][0][j] + tdx * b1[i1][1][j]
+                              + tdz * b1[i][1][j1]      - b1[i2][1][j]
+                                    - b1[i][1][j2]);
+
+            b1[i][j][1] = fac * (dz * b1[i][j][0] + tdx * b1[i1][j][1]
+                              + tdy * b1[i][j1][1]      - b1[i2][j][1]
+                                    - b1[i][j2][1]);
         }
+    }
 
-        /* set of indices for which one is 0, others are >=2 */
-        for (i = 2; i < torderlim - 1; i++) {
-                i1 = i - 1;
-                i2 = i - 2;
+    /* set of indices for which all are >= 2 */
 
-                for (j = 2; j < torderlim - i + 1; j++) {
-                        j1 = j - 1;
-                        j2 = j - 2;
-
-                        b1[i][j][0] = fac * (tdx * cf1[i1] * b1[i1][j][0]
-                                                     + tdy * b1[i][j1][0]
-                                                 - cf2[i1] * b1[i2][j][0]
-                                                           - b1[i][j2][0]);
-
-                        b1[i][0][j] = fac * (tdx * cf1[i1] * b1[i1][0][j]
-                                                     + tdz * b1[i][0][j1]
-                                                 - cf2[i1] * b1[i2][0][j]
-                                                           - b1[i][0][j2]);
-
-                        b1[0][i][j] = fac * (tdy * cf1[i1] * b1[0][i1][j]
-                                                     + tdz * b1[0][i][j1]
-                                                 - cf2[i1] * b1[0][i2][j]
-                                                           - b1[0][i][j2]);
-                }
-        }
-
-        /* set of indices for which two are 1, other is >= 1 */
-        b1[1][1][1] = fac * (dx * b1[0][1][1] + tdy * b1[1][0][1] 
-                                              + tdz * b1[1][1][0]);
-
-        for (i = 2; i < torderlim - 1; i++) {
-                i1 = i - 1;
-                i2 = i - 2;
-
-                b1[1][1][i] = fac * (dx * b1[0][1][i] + tdy * b1[1][0][i]
-                                  + tdz * b1[1][1][i1]      - b1[1][1][i2]);
-
-                b1[1][i][1] = fac * (dx * b1[0][i][1] + tdy * b1[1][i1][1]
-                                  + tdz * b1[1][i][0]       - b1[1][i2][1]);
-
-                b1[i][1][1] = fac * (dy * b1[i][0][1] + tdx * b1[i1][1][1]
-                                  + tdz * b1[i][1][0]       - b1[i2][1][1]);
-        }
-
-        /* set of indices for which one is 1, others are >= 2 */
-        for (i = 2; i < torderlim - 2; i++) {
-                i1 = i - 1;
-                i2 = i - 2;
-
-                for (j = 2; j < torderlim - i + 1; j++) {
-                        j1 = j - 1;
-                        j2 = j - 2;
-
-                        b1[1][i][j] = fac * (dx * b1[0][i][j] + tdy * b1[1][i1][j]
-                                          + tdz * b1[1][i][j1]      - b1[1][i2][j]
-                                                - b1[1][i][j2]);
-
-                        b1[i][1][j] = fac * (dy * b1[i][0][j] + tdx * b1[i1][1][j]
-                                          + tdz * b1[i][1][j1]      - b1[i2][1][j]
-                                                - b1[i][1][j2]);
-
-                        b1[i][j][1] = fac * (dz * b1[i][j][0] + tdx * b1[i1][j][1]
-                                          + tdy * b1[i][j1][1]      - b1[i2][j][1]
-                                                - b1[i][j2][1]);
-                }
-        }
-
-        /* set of indices for which all are >= 2 */
-
-        //reorder this to make it more friendly to row-major storage
-        for (k = 2; k < torderlim - 3; k++) {
-                k1 = k - 1;
-                k2 = k - 2;
+    //reorder this to make it more friendly to row-major storage
+    for (k = 2; k < torderlim - 3; k++) {
+        k1 = k - 1;
+        k2 = k - 2;
                 
-                for (j = 2; j < torderlim - k - 1; j++) {
-                        j1 = j - 1;
-                        j2 = j - 2;
+        for (j = 2; j < torderlim - k - 1; j++) {
+            j1 = j - 1;
+            j2 = j - 2;
 
-                        for (i = 2; i < torderlim - k - j + 1; i++) {
-                                i1 = i - 1;
-                                i2 = i - 2;
+            for (i = 2; i < torderlim - k - j + 1; i++) {
+                i1 = i - 1;
+                i2 = i - 2;
 
-                                b1[i][j][k] = fac * (tdx * cf1[i1] * b1[i1][j][k]
-                                                             + tdy * b1[i][j1][k] 
-                                                             + tdz * b1[i][j][k1]
-                                                         - cf2[i1] * b1[i2][j][k]
-                                                    - b1[i][j2][k] - b1[i][j][k2]);
-                        }
-                }
+                b1[i][j][k] = fac * (tdx * cf1[i1] * b1[i1][j][k]
+                                             + tdy * b1[i][j1][k]
+                                             + tdz * b1[i][j][k1]
+                                         - cf2[i1] * b1[i2][j][k]
+                                    - b1[i][j2][k] - b1[i][j][k2]);
+            }
         }
+    }
 
-        return;
+    return;
 
 } /* END function comp_tcoeff */
+
 
 
 
 /*
  * comp_cms computes the moments for node p needed in the Taylor approximation
  */
-void comp_cms(struct tnode *p)
+void cp_comp_ms(struct tnode *p)
 {
-        int k1, k2, k3;
+    int k1, k2, k3;
 
-        for (k3 = 0; k3 < torder + 1; k3++) {
-                for (k2 = 0; k2 < torder - k3 + 1; k2++) {
-                        for (k1 = 0; k1 < torder - k3 - k2 + 1; k1++) {
-                                p->ms[k1][k2][k3] = p->ms[k1][k2][k3]
-                                                    + tarposq * b1[k1][k2][k3];
-                        }
-                }
+    for (k3 = 0; k3 < torder + 1; k3++) {
+        for (k2 = 0; k2 < torder - k3 + 1; k2++) {
+            for (k1 = 0; k1 < torder - k3 - k2 + 1; k1++) {
+                p->ms[k1][k2][k3] = p->ms[k1][k2][k3]
+                                  + tarposq * b1[k1][k2][k3];
+            }
         }
+    }
 
-        return;
+    return;
 
 } /* END function comp_cms */
 
@@ -838,27 +816,27 @@ void comp_cms(struct tnode *p)
  * comp_direct directly computes the potential on the targets in the current cluster due
  * to the current source, determined by the global variable TARPOS
  */
-void comp_direct(double *EnP, int ibeg, int iend,
-                 double *x, double *y, double *z,
-                 int arrdim)
+void cp_comp_direct(double *EnP, int ibeg, int iend,
+                    double *x, double *y, double *z)
 {
 
-        /* local variables */
-        int i, nn;
-        double t1, tx, ty, tz;
+    /* local variables */
+    int i, nn;
+    double tx, ty, tz;
 
-        for (i = ibeg - 1; i < iend; i++) {
-                nn = orderarr[i];
-                tx = x[i] - tarpos[0];
-                ty = y[i] - tarpos[1];
-                tz = z[i] - tarpos[2];
-                EnP[nn-1] = EnP[nn-1] + tarposq / sqrt(tx*tx + ty*ty + tz*tz);
+    for (i = ibeg - 1; i < iend; i++) {
+        nn = orderarr[i];
+        tx = x[i] - tarpos[0];
+        ty = y[i] - tarpos[1];
+        tz = z[i] - tarpos[2];
+        EnP[nn-1] = EnP[nn-1] + tarposq / sqrt(tx*tx + ty*ty + tz*tz);
    //             printf("%d %f\n", nn-1, EnP[nn-1]);
-        }
+    }
 
-        return;
+    return;
 
-} /* END function comp_direct */
+} /* END function cp_comp_direct */
+
 
 
 
@@ -868,20 +846,18 @@ void comp_direct(double *EnP, int ibeg, int iend,
  */
 void cleanup(struct tnode *p)
 {
-        /* local variables */
-        int err;
 
-        free(cf);
-        free(cf1);
-        free(cf2);
-        free(b1);
+    free(cf);
+    free(cf1);
+    free(cf2);
+    free(b1);
 
-        free(orderarr);
+    free(orderarr);
 
-        remove_node(p);
-        free(p);
+    remove_node(p);
+    free(p);
 
-        return;
+    return;
 
 } /* END function cleanup */
 
@@ -890,19 +866,19 @@ void cleanup(struct tnode *p)
 
 void remove_node(struct tnode *p)
 {
-        /* local variables */
-        int i, err;
+    /* local variables */
+    int i;
 
-        if (p->exist_ms == 1)
-                free(p->ms);
+    if (p->exist_ms == 1)
+        free(p->ms);
 
-        if (p->num_children > 0) {
-                for (i = 0; i < p->num_children; i++) {
-                        remove_node(p->child[i]);
-                        free(p->child[i]);
-                }
+    if (p->num_children > 0) {
+        for (i = 0; i < p->num_children; i++) {
+            remove_node(p->child[i]);
+            free(p->child[i]);
         }
+    }
 
-        return;
+    return;
 
 } /* END function remove_node */
