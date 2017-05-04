@@ -1,5 +1,5 @@
 /*
- *Procedures for Cluster Particle Treecode
+ *Procedures for Particle-Cluster Treecode
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -48,6 +48,7 @@ void pc_treecode_yuk(struct tnode *p, double *xS, double *yS, double *zS,
 
 
 
+
 void compute_pc_yuk(struct tnode *p, double *peng,
                     double *x, double *y, double *z, double *q,
                     double kappa)
@@ -55,8 +56,7 @@ void compute_pc_yuk(struct tnode *p, double *peng,
     /* local variables */
     double tx, ty, tz, distsq, penglocal;
     int i, j, k;
-    
-    //printf("Inside compute_cp1... 1\n");
+
     
     /* determine DISTSQ for MAC test */
     tx = tarpos[0] - p->x_mid;
@@ -66,21 +66,7 @@ void compute_pc_yuk(struct tnode *p, double *peng,
     
     *peng = 0.0;
     
-    //    printf("        tarpos: %f, %f, %f\n", tarpos[0], tarpos[1], tarpos[2]);
-    //    printf("        p->mids: %f, %f, %f\n", p->x_mid, p->y_mid, p->z_mid);
-    //    printf("        tx, ty, tz: %f, %f, %f\n", tx, ty, tz);
-    //    printf("        distsq: %f\n", distsq);
-    
-    //printf("Inside compute_cp1... 2\n");
-    
-    /* initialize potential energy and force */
-    
     if ((p->sqradius < distsq * thetasq) && (p->sqradius != 0.00)) {
-        
-        //       printf("Inside if statement, for sqradius < distq*thetasq, "
-        //              "or p->sqradius != 0.00.\n");
-        //       printf("p->sqradius = %f\n", p->sqradius);
-        //       printf("distsq*thetasq = %f\n", distsq*thetasq);
         /*
          * If MAC is accepted and there is more than 1 particle
          * in the box, use the expansion for the approximation.

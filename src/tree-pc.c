@@ -1,5 +1,5 @@
 /*
- *Procedures for Cluster Particle Treecode
+ *Procedures for Particle-Cluster Treecode
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,14 +21,12 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
 {
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int **ind;
-    double **xyzmms;
     int i, j, loclev, numposchild;
-    double *lxyzmm;
+    
+    int ind[8][2];
+    double xyzmms[6][8];
+    double lxyzmm[6];
 
-    make_matrix(ind, 8, 2);
-    make_matrix(xyzmms, 6, 8);
-    make_vector(lxyzmm, 6);
 
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 2; j++) {
@@ -165,7 +163,7 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
 
     return;
 
-} /* end of function create_tree_n0 */
+} /* END of function create_tree_n0 */
 
 
 
@@ -177,26 +175,21 @@ void pc_create_tree_lv(struct tnode **p, int ibeg, int iend,
 {
     /* local variables */
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int **ind;
-    double **xyzmms;
-    int i, j, loclev, numposchild;
-    double *lxyzmm;
+    int i, j, loclev, numposchild, nump;
+    
+    int ind[8][2];
+    double xyzmms[6][8];
+    double lxyzmm[6];
 
-    make_matrix(ind, 8, 2);
-    make_matrix(xyzmms, 6, 8);
-    make_vector(lxyzmm, 6);
-
-    //Allocate pointer p?
-    // Now done in calling treecode routine
+    
     (*p) = malloc(sizeof(struct tnode));
 
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
 
     if (shrink == 1) {
-        int nump = iend - ibeg + 1;
+        nump = iend - ibeg + 1;
 
-        //This may need to be x+ibeg-1. Check this...
         (*p)->x_min = minval(x + ibeg - 1, nump);
         (*p)->x_max = maxval(x + ibeg - 1, nump);
         (*p)->y_min = minval(y + ibeg - 1, nump);
@@ -281,10 +274,6 @@ void pc_create_tree_lv(struct tnode **p, int ibeg, int iend,
                 for (j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
 
-                //Also, should probable be..
-                // p->child[p->num_children - 1]*
-                // in argument below
-
                 pc_create_tree_lv(&((*p)->child[(*p)->num_children - 1]),
                                   ind[i][0], ind[i][1], x, y, z, q, shrink,
                                   treelevel, lxyzmm, loclev);
@@ -304,13 +293,10 @@ void pc_create_tree_lv(struct tnode **p, int ibeg, int iend,
 
 
 
-void pc_partition_8(double *x, double *y, double *z, double *q, double **xyzmms,
+void pc_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid, int **ind)
-//IN THE FORTRAN, numposchild is INOUT! I may need to make this a pointer instead
-//Note: I'm passing the address from the calls to partition_8
+                    double x_mid, double y_mid, double z_mid, int ind[8][2])
 {
-
     /* local variables */
     int temp_ind, i, j;
     double critlen;
@@ -436,21 +422,7 @@ void compute_pc(struct tnode *p, double *peng,
     
     *peng = 0.0;
 
-    //    printf("        tarpos: %f, %f, %f\n", tarpos[0], tarpos[1], tarpos[2]);
-    //    printf("        p->mids: %f, %f, %f\n", p->x_mid, p->y_mid, p->z_mid);
-    //    printf("        tx, ty, tz: %f, %f, %f\n", tx, ty, tz);
-    //    printf("        distsq: %f\n", distsq);
-
-    //printf("Inside compute_cp1... 2\n");
-
-    /* initialize potential energy and force */
-
     if ((p->sqradius < distsq * thetasq) && (p->sqradius != 0.00)) {
-
-    //       printf("Inside if statement, for sqradius < distq*thetasq, "
-    //              "or p->sqradius != 0.00.\n");
-    //       printf("p->sqradius = %f\n", p->sqradius);
-    //       printf("distsq*thetasq = %f\n", distsq*thetasq);
     /*
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
@@ -512,13 +484,12 @@ void compute_pc(struct tnode *p, double *peng,
 
 
 /*
- * comp_direct directly computes the potential on the targets in the current cluster due
- * to the current source, determined by the global variable TARPOS
+ * comp_direct directly computes the potential on the targets in the current
+ * cluster due to the current source, determined by the global variable TARPOS
  */
 void pc_comp_direct(double *peng, int ibeg, int iend,
                     double *x, double *y, double *z, double *q)
 {
-
     /* local variables */
     int i;
     double tx, ty, tz;

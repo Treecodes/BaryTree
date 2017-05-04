@@ -37,11 +37,11 @@ void cp_create_tree_lv(struct tnode **p, int ibeg, int iend,
                        int shrink, int treelevel, double *xyzmm,
                        int level);
 
-void cp_partition_8(double *x, double *y, double *z, double **xyzmms,
+void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
                     double xl, double yl, double zl,
                     double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid,
-                    int **ind);
+                    int ind[8][2]);
 
 void cp_comp_ms(struct tnode *p);
 
@@ -53,7 +53,8 @@ void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
 void cp_treecode(struct tnode *p,
                  double *xS, double *yS, double *zS, double *qS,
                  double *xT, double *yT, double *zT, double *tpeng,
-                 double *EnP, int numparsS, int numparsT);
+                 double *EnP, int numparsS, int numparsT,
+                 double *timetree);
 
 void compute_cp1(struct tnode *p, double *EnP,
                  double *x, double *y, double *z);
@@ -66,7 +67,8 @@ void cp_comp_direct(double *EnP, int ibeg, int iend,
 void cp_treecode_yuk(struct tnode *p,
                      double *xS, double *yS, double *zS, double *qS,
                      double *xT, double *yT, double *zT, double *tpeng,
-                     double *EnP, int numparsS, int numparsT, double kappa);
+                     double *EnP, int numparsS, int numparsT,
+                     double kappa, double *timetree);
 
 void compute_cp1_yuk(struct tnode *p, double *EnP,
                      double *x, double *y, double *z,
@@ -89,10 +91,10 @@ void pc_create_tree_lv(struct tnode **p, int ibeg, int iend,
                        int level);
 
 void pc_partition_8(double *x, double *y, double *z, double *q,
-                    double **xyzmms, double xl, double yl, double zl,
+                    double xyzmms[6][8], double xl, double yl, double zl,
                     double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid,
-                    int **ind);
+                    int ind[8][2]);
 
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q);
 
@@ -114,7 +116,8 @@ void pc_comp_direct(double *EnP, int ibeg, int iend,
 void pc_treecode_yuk(struct tnode *p,
                      double *xS, double *yS, double *zS, double *qS,
                      double *xT, double *yT, double *zT, double *tpeng,
-                     double *EnP, int numparsS, int numparsT, double kappa);
+                     double *EnP, int numparsS, int numparsT,
+                     double kappa);
 
 void compute_pc_yuk(struct tnode *p, double *EnP,
                     double *x, double *y, double *z, double *q,

@@ -21,15 +21,15 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
 {
 
     /* local variables */
-    struct tnode *troot;
+    struct tnode *troot = NULL;
     int level;
-    double *xyzminmax;
+    double xyzminmax[6];
 
     /* date and time */
-    double time1, time2, totaltime;
+    double time1, time2;
 
-
-    make_vector(xyzminmax, 6);
+    
+    time1 = MPI_Wtime();
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
@@ -43,9 +43,7 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
         else if (pot_type == 1)
             setup_yuk(xS, yS, zS, numparsS, order, theta, xyzminmax);
     }
-
-
-    time1 = MPI_Wtime();
+    
 
     /* set global variables to track tree levels during construction */
     level = 0;
@@ -77,8 +75,7 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
 
 
     time2 = MPI_Wtime();
-    totaltime = time2-time1;
-    *timetree = totaltime;
+    timetree[0] = time2-time1;
 
 
     printf("Tree created.\n\n");
@@ -105,10 +102,10 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     if (tree_type == 0) {
         if (pot_type == 0) {
             cp_treecode(troot, xS, yS, zS, qS, xT, yT, zT,
-                        tpeng, tEn, numparsS, numparsT);
+                        tpeng, tEn, numparsS, numparsT, &timetree[1]);
         } else if (pot_type == 1) {
             cp_treecode_yuk(troot, xS, yS, zS, qS, xT, yT, zT,
-                            tpeng, tEn, numparsS, numparsT, kappa);
+                            tpeng, tEn, numparsS, numparsT, kappa, &timetree[1]);
         }
     } else if (tree_type == 1) {
         if (pot_type == 0) {
@@ -121,8 +118,7 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     }
 
     time2 = MPI_Wtime();
-    totaltime = time2-time1;
-    *timetree = *timetree + totaltime;
+    timetree[3] = time2-time1 + timetree[0];
 
     //printf("       Tree building time (s): %f\n", *timetree - totaltime);
     //printf("    Tree computation time (s): %f\n\n", totaltime);

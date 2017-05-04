@@ -23,35 +23,54 @@ int main(int argc, char **argv)
     int numparsS, numparsT, order;
     int maxparnode, treelevel;
     int iflag, pot_type, tree_type;
+    int pflag, sflag;
 
     double theta, temp;
     double kappa;
 
-    /* arrays for coordinates, charges, energy of target particles */
-    double *xS, *yS, *zS, *qS;  /* source particles */
-    double *xT, *yT, *zT;       /* target particles */
-    double *denergy, *tenergy;  /* exact energy, treecode energy */
+    /* source particles */
+    double *xS = NULL;
+    double *yS = NULL;
+    double *zS = NULL;
+    double *qS = NULL;
+    
+    /* target particles */
+    double *xT = NULL;
+    double *yT = NULL;
+    double *zT = NULL;
+    int *iT = NULL;
+    
+    /* exact energy, treecode energy */
+    double *denergy = NULL;
+    double *tenergy = NULL;
 
     /* for potential energy calculation */
-    double tpeng, dpeng;
-    double dpengglob, tpengglob;
+    double tpeng = 0;
+    double dpengglob = 0;
+    double tpengglob = 0;
 
     /* insert variables for date-time calculation? */
-    double time_direct, time_tree;
-    double time_tree_min, time_tree_max, time_tree_tot;
+    double time_direct, time_tree[4], time_preproc;
+    double time_tree_glob[3][4];
     double time1, time2;
 
     /* input and output files */
-    char *sampin1, *sampin2, *sampin3, *sampout;
+    char *sampin1 = NULL;
+    char *sampin2 = NULL;
+    char *sampin3 = NULL;
+    char *sampout = NULL;
+    FILE *fp;
 
     /* variables for error calculations */
     double inferr, relinferr, n2err, reln2err;
-    double inferrglob, relinferrglob, n2errglob, reln2errglob;
 
     /* local variables */
     int i, j;
-    int numparsTloc, maxparsTloc, globparsTloc;
+    int numparsTloc, maxparsTloc;
     double buf[5];
+    
+    int *displs = NULL;
+    int *scounts = NULL;
     
     /* MPI Variables */
     MPI_File fpmpi;
@@ -80,6 +99,8 @@ int main(int argc, char **argv)
             printf("         iflag:  0--use maxparnode, 1--use treelevel \n");       // 0
             printf("         kappa:  screened Coulomb parameter \n");                // 0.00
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
+            printf("         pflag:  distribute 0--targets, 1--sources \n");         // 0
+            printf("         sflag:  on distributed 0--sort, 1--don't sort \n");     // 0
         }
         return 0;
     }
@@ -97,28 +118,85 @@ int main(int argc, char **argv)
     iflag = atoi(argv[12]);
     kappa = atof(argv[13]);
     pot_type = atoi(argv[14]);
+    pflag = atoi(argv[15]);
+    sflag = atoi(argv[16]);
     
     
     numparsTloc = (int)floor((double)numparsT/(double)p);
     maxparsTloc = numparsTloc + (numparsT - (int)floor((double)numparsT/(double)p) * p);
     
-    if (rank == 0)
-        numparsTloc = maxparsTloc;
     
-    globparsTloc = maxparsTloc + numparsTloc * (rank-1);
-
-
     make_vector(xS,numparsS);
     make_vector(yS,numparsS);
     make_vector(zS,numparsS);
     make_vector(qS,numparsS);
     
-    make_vector(xT,numparsTloc);
-    make_vector(yT,numparsTloc);
-    make_vector(zT,numparsTloc);
+    if (rank == 0) {
+        make_vector(xT,numparsT);
+        make_vector(yT,numparsT);
+        make_vector(zT,numparsT);
+        make_vector(iT,numparsT);
+        
+        make_vector(tenergy,numparsT);
+        make_vector(denergy,numparsT);
+        
+        make_vector(displs,p);
+        make_vector(scounts,p);
+    } else {
+        make_vector(xT,numparsTloc);
+        make_vector(yT,numparsTloc);
+        make_vector(zT,numparsTloc);
+        
+        make_vector(tenergy,numparsTloc);
+    }
 
-    make_vector(tenergy,numparsTloc);
-    make_vector(denergy,numparsTloc);
+    
+    if (rank == 0) {
+        MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+        for (i = 0; i < numparsT; i++) {
+            MPI_File_read(fpmpi, buf, 3, MPI_DOUBLE, &status);
+            xT[i] = buf[0];
+            yT[i] = buf[1];
+            zT[i] = buf[2];
+            iT[i] = i;
+        }
+        MPI_File_close(&fpmpi);
+        
+        time1 = MPI_Wtime();
+        if (sflag == 0) sortTargets(xT, yT, zT, iT, numparsT);
+        time2 = MPI_Wtime();
+        time_preproc = time2 - time1;
+     
+        MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+        MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+        for (i = 0; i < numparsT; i++) {
+            MPI_File_read(fpmpi, buf, 1, MPI_DOUBLE, &status);
+            denergy[i] = buf[0];
+        }
+        MPI_File_close(&fpmpi);
+    
+        scounts[0] = 0;
+        displs[0] = 0;
+    
+        for (i=1; i < p; i++) {
+            scounts[i] = numparsTloc;
+            displs[i] = (i-1)*numparsTloc;
+        }
+    }
+    
+    time1 = MPI_Wtime();
+    
+    MPI_Scatterv(&xT[maxparsTloc], scounts, displs, MPI_DOUBLE,
+                 xT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&yT[maxparsTloc], scounts, displs, MPI_DOUBLE,
+                 yT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(&zT[maxparsTloc], scounts, displs, MPI_DOUBLE,
+                 zT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    
+    time2 = MPI_Wtime();
+    time_preproc += (time2 - time1);
 
 
     /* Reading in coordinates and charges for the source particles*/
@@ -132,67 +210,45 @@ int main(int argc, char **argv)
         qS[i] = buf[3];
     }
     MPI_File_close(&fpmpi);
-    
 
-    /* Reading in coordinates for the targets */
-    MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-    MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*3*sizeof(double), MPI_SEEK_SET);
-    for (i = 0; i < numparsTloc; i++) {
-        MPI_File_read(fpmpi, buf, 3, MPI_DOUBLE, &status);
-        xT[i] = buf[0];
-        yT[i] = buf[1];
-        zT[i] = buf[2];
-    }
-    MPI_File_close(&fpmpi);
 
-    
-    /* Reading in the values for exact energy at each target */
-    MPI_File_open(MPI_COMM_WORLD, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-    if (rank == 0)
-    {
-        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
-        MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
-    }
-    MPI_File_seek(fpmpi, (MPI_Offset)(globparsTloc+1)*sizeof(double), MPI_SEEK_SET);
-    for (i = 0; i < numparsTloc; i++) {
-        MPI_File_read(fpmpi, buf, 1, MPI_DOUBLE, &status);
-        denergy[i] = buf[0];
-    }
-    MPI_File_close(&fpmpi);
-    
-    time1 = MPI_Wtime();
-    sortTargets(xT, yT, zT, numparsTloc);
-    time2 = MPI_Wtime();
-    printf("  Sort time (s): %f\n\n", time2-time1);
-  
-    
-    
+    if (rank == 0) numparsTloc = maxparsTloc;
     /* Calling main treecode subroutine to calculate approximate energy */
     treecode(xS, yS, zS, qS, xT, yT, zT, numparsS, numparsTloc,
-             tenergy, &tpeng, order, theta, 1, maxparnode, &time_tree,
+             tenergy, &tpeng, order, theta, 1, maxparnode, time_tree,
              treelevel, iflag, pot_type, kappa, tree_type);
 
     
-    
     /* Reducing values to root process */
-    MPI_Reduce(&time_tree, &time_tree_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&time_tree, &time_tree_min, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&time_tree, &time_tree_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
-    dpeng = sum(denergy, numparsTloc);
-    MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if (rank == 0) dpengglob = sum(denergy, numparsT);
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     
     if (rank == 0)
     {
         /* Printing direct and treecode time calculations: */
-        printf("                   Direct time (s):  %f\n", time_direct);
-        printf("                 Max tree time (s):  %f\n", time_tree_max);
-        printf("                 Min tree time (s):  %f\n", time_tree_min);
-        printf("                 Avg tree time (s):  %f\n\n", time_tree_tot/(double)p);
-        printf("         Direct : Tree on %d procs:  %f\n\n",
-               p, time_direct/(time_tree_max*(double)p));
+        printf("                   Direct time (s):  %f\n\n", time_direct);
+        printf("              Pre-process time (s):  %f\n", time_preproc);
+        printf("      Min, Max tree setup time (s):  %f, %f\n", time_tree_glob[0][0],
+                                                                time_tree_glob[1][0]);
+        if (tree_type == 0) {
+            printf("             Min, Max cp1 time (s):  %f, %f\n", time_tree_glob[0][1],
+                                                                    time_tree_glob[1][1]);
+            printf("             Min, Max cp2 time (s):  %f, %f\n", time_tree_glob[0][2],
+                                                                    time_tree_glob[1][2]);
+        }
+        
+        printf("      Min, Max total tree time (s):  %f, %f\n\n", time_tree_glob[0][3],
+                                                                  time_tree_glob[1][3]);
+        printf(" Preproc + Max total tree time (s):  %f \n\n", time_tree_glob[1][3] + time_preproc);
+        
+        //printf("                 Avg tree time (s):  %f\n\n", time_tree_tot/(double)p);
+        //printf("         Direct : Tree on %d procs:  %f\n\n",
+        //       p, time_direct/(time_tree_max*(double)p));
 
     
         /* Printing error in potential energy and potential energy */
@@ -205,45 +261,93 @@ int main(int argc, char **argv)
                fabs((tpengglob-dpengglob)/dpengglob));
     }
     
-    /* Computing pointwise potential errors */
-
-    inferr = 0.0;
-    relinferr = 0.0;
-    n2err = 0.0;
-    reln2err = 0.0;
-
-    for (j = 0; j < numparsTloc; j++) {
-        temp = fabs(denergy[j] - tenergy[j]);
-        
-        if (temp >= inferr)
-            inferr = temp;
-
-        if (fabs(denergy[j]) >= relinferr)
-            relinferr = fabs(denergy[j]);
-
-        n2err = n2err + pow(denergy[j] - tenergy[j], 2.0);
-        reln2err = reln2err + pow(denergy[j], 2.0);
-    }
-
-    MPI_Reduce(&inferr, &inferrglob, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&relinferr, &relinferrglob, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     
-    MPI_Reduce(&n2err, &n2errglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&reln2err, &reln2errglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    /* Computing pointwise potential errors */
+    MPI_Gatherv(xT, numparsTloc, MPI_DOUBLE,
+                &xT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(yT, numparsTloc, MPI_DOUBLE,
+                &yT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(zT, numparsTloc, MPI_DOUBLE,
+                &zT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE,
+                &tenergy[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
     
     if (rank == 0)
     {
-        relinferrglob = inferrglob / relinferrglob;
-        reln2errglob = sqrt(n2errglob / reln2errglob);
-        n2errglob = sqrt(n2errglob);
+        inferr = 0.0;
+        relinferr = 0.0;
+        n2err = 0.0;
+        reln2err = 0.0;
 
-        printf("Absolute inf norm error in potential:  %e \n", inferrglob);
-        printf("Relative inf norm error in potential:  %e \n\n", relinferrglob);
-        printf("  Absolute 2 norm error in potential:  %e \n", n2errglob);
-        printf("  Relative 2 norm error in potential:  %e \n\n", reln2errglob);
+        for (j = 0; j < numparsT; j++) {
+            temp = fabs(denergy[iT[j]] - tenergy[j]);
+        
+            if (temp >= inferr)
+                inferr = temp;
+
+            if (fabs(denergy[j]) >= relinferr)
+                relinferr = fabs(denergy[j]);
+
+            n2err = n2err + pow(denergy[iT[j]] - tenergy[j], 2.0);
+            reln2err = reln2err + pow(denergy[j], 2.0);
+        }
+
+        relinferr = inferr / relinferr;
+        reln2err = sqrt(n2err / reln2err);
+        n2err = sqrt(n2err);
+
+        printf("Absolute inf norm error in potential:  %e \n", inferr);
+        printf("Relative inf norm error in potential:  %e \n\n", relinferr);
+        printf("  Absolute 2 norm error in potential:  %e \n", n2err);
+        printf("  Relative 2 norm error in potential:  %e \n\n", reln2err);
     }
+    
+    
+    if (rank == 0) {
+        fp = fopen(sampout, "a");
+        fprintf(fp, "%s \t %s \t %s \t %d \t %d \t %f \t %d \t %d \t %d \t"
+                "%d \t %d \t %f \t %d \t %d \t %d \t"
+                "%d \t %f \t %f \t %f \t %f \t %f \t %f \t %f \t"
+                "%f \t %f \t %f \t %f \t %f \t %f \t %f \t"
+                "%e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \n",
+                sampin1, sampin2, sampin3, numparsS, numparsT,
+                theta, order, tree_type, maxparnode, treelevel, iflag,
+                kappa, pot_type, sflag, pflag, //2 ends
+                p, time_preproc,
+                time_tree_glob[0][0], time_tree_glob[1][0],
+                time_tree_glob[2][0]/(double)p,
+                time_tree_glob[0][1], time_tree_glob[1][1],
+                time_tree_glob[2][1]/(double)p, //3 ends
+                time_tree_glob[0][2], time_tree_glob[1][2],
+                time_tree_glob[2][2]/(double)p,
+                time_tree_glob[0][3], time_tree_glob[1][3],
+                time_tree_glob[2][3]/(double)p,
+                time_tree_glob[1][3] + time_preproc, //4 ends
+                dpengglob, tpengglob, fabs(tpengglob-dpengglob),
+                fabs((tpengglob-dpengglob)/dpengglob),
+                inferr, relinferr, n2err, reln2err); //5 ends
+        fclose(fp);
+    }
+    
+    
+    free_vector(xS);
+    free_vector(yS);
+    free_vector(zS);
+    free_vector(qS);
+    
+    free_vector(xT);
+    free_vector(yT);
+    free_vector(zT);
+    free_vector(iT);
+    
+    free_vector(denergy);
+    free_vector(tenergy);
+    
+    free_vector(displs);
+    free_vector(scounts);
     
     MPI_Finalize();
     return 0;
+    
 }

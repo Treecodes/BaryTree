@@ -1,9 +1,10 @@
 /*
- *Procedures for Cluster Particle Treecode
+ *Procedures for Cluster-Particle Treecode
  */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <mpi.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -18,16 +19,16 @@ void setup_yuk(double *x, double *y, double *z,
                int numpars, int order, double theta, 
                double *xyzminmax)
 {
-    /*These are local variables */
+    /* local variables */
     double t1;
 
-    /*changing values of our extern variables*/
+    /* changing values of our extern variables */
     torder = order;
     orderoffset = 1;
     torderlim = torder + orderoffset;
     thetasq = theta * theta;
 
-    /*allocating global Taylor expansion variables*/
+    /* allocating global Taylor expansion variables */
     make_vector(cf, torder+1);
     make_vector(cf1, torderlim);
     make_vector(cf2, torderlim);
@@ -37,7 +38,7 @@ void setup_yuk(double *x, double *y, double *z,
     make_3array(b1, torderlim+3, torderlim+3, torderlim+3);
 
 
-    /*initializing arrays for Taylor sums and coefficients*/
+    /* initializing arrays for Taylor sums and coefficients */
     for (int i = 0; i < torder + 1; i++)
         cf[i] = i + 1.0;
 
@@ -48,7 +49,7 @@ void setup_yuk(double *x, double *y, double *z,
         cf3[i] = 1.0 - t1;
     }
 
-    /*find bounds of Cartesian box enclosing the particles*/
+    /* find bounds of Cartesian box enclosing the particles */
     xyzminmax[0] = minval(x, numpars);
     xyzminmax[1] = maxval(x, numpars);
     xyzminmax[2] = minval(y, numpars);
@@ -62,7 +63,8 @@ void setup_yuk(double *x, double *y, double *z,
         orderarr[i] = i+1;
 
     return;
-}
+    
+} /* END of function setup_yuk */
 
 
 
@@ -70,14 +72,17 @@ void setup_yuk(double *x, double *y, double *z,
 void cp_treecode_yuk(struct tnode *p, double *xS, double *yS, double *zS,
                      double *qS, double *xT, double *yT, double *zT,
                      double *tpeng, double *EnP, int numparsS, int numparsT,
-                     double kappa)
+                     double kappa, double *timetree)
 {
     /* local variables */
     int i, j;
+    double time1, time2, time3;
 
     for (i = 0; i < numparsT; i++)
         EnP[i] = 0.0;
 
+    time1 = MPI_Wtime();
+    
     for (i = 0; i < numparsS; i++) {
         tarpos[0] = xS[i];
         tarpos[1] = yS[i];
@@ -88,7 +93,13 @@ void cp_treecode_yuk(struct tnode *p, double *xS, double *yS, double *zS,
             compute_cp1_yuk(p->child[j], EnP, xT, yT, zT, kappa);
     }
 
+    time2 = MPI_Wtime();
+    
     compute_cp2(p, xT, yT, zT, EnP);
+    
+    time3 = MPI_Wtime();
+    timetree[0] = time2 - time1;
+    timetree[1] = time3 - time2;
 
     *tpeng = sum(EnP, numparsT);
 
@@ -106,29 +117,13 @@ void compute_cp1_yuk(struct tnode *p, double *EnP,
     double tx, ty, tz, distsq;
     int i, j, k;
 
-    //printf("Inside compute_cp1... 1\n");
-
     /* determine DISTSQ for MAC test */
     tx = tarpos[0] - p->x_mid;
     ty = tarpos[1] - p->y_mid;
     tz = tarpos[2] - p->z_mid;
     distsq = tx*tx + ty*ty + tz*tz;
 
-    //    printf("        tarpos: %f, %f, %f\n", tarpos[0], tarpos[1], tarpos[2]);
-    //    printf("        p->mids: %f, %f, %f\n", p->x_mid, p->y_mid, p->z_mid);
-    //    printf("        tx, ty, tz: %f, %f, %f\n", tx, ty, tz);
-    //    printf("        distsq: %f\n", distsq);
-
-    //printf("Inside compute_cp1... 2\n");
-
-    /* initialize potential energy and force */
-
     if ((p->sqradius < distsq * thetasq) && (p->sqradius != 0.00)) {
-        
-    //       printf("Inside if statement, for sqradius < distq*thetasq, "
-    //              "or p->sqradius != 0.00.\n");
-    //       printf("p->sqradius = %f\n", p->sqradius);
-    //       printf("distsq*thetasq = %f\n", distsq*thetasq);
     /*
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
@@ -142,11 +137,7 @@ void compute_cp1_yuk(struct tnode *p, double *EnP,
             }
         }
 
-    //       printf("Zeroed out b1, before call to comp_tcoeff...\n");
-
         comp_tcoeff_yuk(tx, ty, tz, kappa);
-
-    //       printf("After call to comp_tcoeff...\n");
 
         if (p->exist_ms == 0) {
             make_3array(p->ms, torder+1, torder+1, torder+1);
@@ -205,12 +196,9 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
     fac = 1.0 / (dist2);
     dist = sqrt(dist2);
 
-//    printf("        %f %f %f %f\n", tdx, tdy, tdz, sqfac);
-
     /* 0th coefficient or function val */
     a1[0][0][0] = exp(-kappa * dist);
     b1[0][0][0] = a1[0][0][0] / dist;
-
 
     /* set of indices for which two of them are 0 */
     a1[1][0][0] = kappax * b1[0][0][0];
@@ -244,7 +232,6 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
                    + cf1[i1] * kappa * (dz * a1[0][0][i1]
                                            - a1[0][0][i2]));
     }
-
 
     /* set of indices for which one is 0, one is 1, and other is >= 1 */
     a1[1][1][0] = kappax * b1[0][1][0];
@@ -394,8 +381,6 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
     }
 
     /* set of indices for which all are >= 2 */
-
-    //reorder this to make it more friendly to row-major storage
     for (k = 2; k < torderlim - 3; k++) {
         k1 = k - 1;
         k2 = k - 2;
@@ -449,7 +434,6 @@ void cp_comp_direct_yuk(double *EnP, int ibeg, int iend,
         dist = sqrt(tx*tx + ty*ty + tz*tz);
 
         EnP[nn-1] = EnP[nn-1] + tarposq * exp(-kappa * dist) / dist;
-//             printf("%d %f\n", nn-1, EnP[nn-1]);
     }
 
     return;
