@@ -5,16 +5,17 @@
 
 double minval(double *x, int numels)
 {
-        double min;
+    int i;
+    double min;
 
-        min = x[0];
+    min = x[0];
 
-        for (int i = 1; i < numels; i++) {
-                if (min > x[i])
-                        min = x[i];
-        }
+    for (i = 1; i < numels; i++) {
+        if (min > x[i])
+            min = x[i];
+    }
 
-        return min;
+    return min;
 }
 
 
@@ -22,16 +23,17 @@ double minval(double *x, int numels)
 
 double maxval(double *x, int numels)
 {
-        double max;
+    int i;
+    double max;
 
-        max = x[0];
+    max = x[0];
 
-        for (int i = 1; i < numels; i++) {
-                if (max < x[i])
-                        max = x[i];
-        }
+    for (i = 1; i < numels; i++) {
+        if (max < x[i])
+            max = x[i];
+    }
 
-        return max;
+    return max;
 }
 
 
@@ -39,12 +41,13 @@ double maxval(double *x, int numels)
 
 double sum(double *x, int numels)
 {
-        double sum = 0.0;
+    int i;
+    double sum = 0.0;
 
-        for (int i = 0; i < numels; i++) 
-                sum = sum + x[i];
+    for (i = 0; i < numels; i++)
+        sum = sum + x[i];
 
-        return sum;
+    return sum;
 }
 
 
@@ -52,17 +55,14 @@ double sum(double *x, int numels)
 
 double max3(double a, double b, double c)
 {
-        double max;
+    double max;
 
-        max = a;
+    max = a;
 
-        if (max < b)
-                max = b;
+    if (max < b) max = b;
+    if (max < c) max = c;
 
-        if (max < c)
-                max = c;
-
-        return max;
+    return max;
 }
 
 
@@ -70,15 +70,12 @@ double max3(double a, double b, double c)
 
 double min3(double a, double b, double c)
 {
-        double min;
+    double min;
 
-        min = a;
+    min = a;
 
-        if (min > b)
-                min = b;
+    if (min > b) min = b;
+    if (min > c) min = c;
 
-        if (min > c)
-                min = c;
-
-        return min;
+    return min;
 }

@@ -28,9 +28,19 @@ int main(int argc, char **argv)
     int pot_type;
 
     /* arrays for coordinates, charges, energy of target particles */
-    double *xS, *yS, *zS, *qS;  /* source particles */
-    double *xT, *yT, *zT;       /* target particles */
-    double *denergy;  /* exact energy, treecode energy */
+    /* source particles */
+    double *xS = NULL; 
+    double *yS = NULL;
+    double *zS = NULL;
+    double *qS = NULL;
+
+    /* target particles */
+    double *xT = NULL;
+    double *yT = NULL;
+    double *zT = NULL;
+
+    /* exact energy */
+    double *denergy = NULL;
 
     /* for potential energy calculation */
     double dpeng, dpengglob;
@@ -42,7 +52,8 @@ int main(int argc, char **argv)
     double time_direct_max, time_direct_min;
     
     /* input and output files */
-    char *sampin1, *sampin2, *sampout;
+    char *sampin1, *sampin2, *sampout, *sampdatout;
+    FILE *fp;
 
     //local variables
     int i;
@@ -63,6 +74,7 @@ int main(int argc, char **argv)
             printf("       sampin1:  sources input file \n");                // "S10000.bin"
             printf("       sampin2:  targets input file \n");                // "T1000000.bin"
             printf("       sampout:  direct calc potential output file \n"); // "ex_s4_t6.bin"
+            printf("    sampdatout:  human readable data output file \n");   // "out.txt"
             printf("      numparsS:  number of sources \n");                 // 10000
             printf("      numparsT:  number of targets \n");                 // 1000000
             printf("         kappa:  screened Coulomb parameter \n");        // 0.00
@@ -73,18 +85,17 @@ int main(int argc, char **argv)
     
     sampin2 = argv[2];
     sampout = argv[3];
-    numparsS = atoi(argv[4]);
-    numparsT = atoi(argv[5]);
-    kappa = atof(argv[6]);
-    pot_type = atoi(argv[7]);
+    sampdatout = argv[4];
+    numparsS = atoi(argv[5]);
+    numparsT = atoi(argv[6]);
+    kappa = atof(argv[7]);
+    pot_type = atoi(argv[8]);
     
     
     numparsTloc = (int)floor((double)numparsT/(double)p);
     maxparsTloc = numparsTloc + (numparsT - (int)floor((double)numparsT/(double)p) * p);
     
-    if (rank == 0)
-        numparsTloc = maxparsTloc;
-    
+    if (rank == 0) numparsTloc = maxparsTloc;
     globparsTloc = maxparsTloc + numparsTloc * (rank-1);
 
 
@@ -164,10 +175,32 @@ int main(int argc, char **argv)
         /* Calculating value dpeng by summing all values in denergy */
         printf("             Direct potential energy:  %f\n", dpengglob);
     }
+
     
+    if (rank == 0) {
+        fp = fopen(sampdatout, "a");
+        fprintf(fp, "%s \t %s \t %s \t %d \t %d \t %f \t %d \t %d \t"
+                "%f \t %f \t %f \t %e \n",
+                sampin1, sampin2, sampout, numparsS, numparsT,
+                kappa, pot_type, p, time_direct_max, time_direct_min,  
+                time_direct_tot/(double)p, dpengglob);
+        fclose(fp);
+    }
+
+    free_vector(xS);
+    free_vector(yS);
+    free_vector(zS);
+    free_vector(qS);
+    free_vector(xT);
+    free_vector(yT);
+    free_vector(zT);
+    free_vector(denergy);
+
     MPI_Finalize();
     return 0;
 }
+
+
 
 
 void direct_eng(double *xS, double *yS, double *zS, double *qS, 
@@ -215,9 +248,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS,
                 }
         }
 
-
         *dpeng = sum(denergy, numparsT);
-
 
         return;
 

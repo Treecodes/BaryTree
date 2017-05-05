@@ -20,6 +20,7 @@ void setup_yuk(double *x, double *y, double *z,
                double *xyzminmax)
 {
     /* local variables */
+    int i;
     double t1;
 
     /* changing values of our extern variables */
@@ -39,10 +40,10 @@ void setup_yuk(double *x, double *y, double *z,
 
 
     /* initializing arrays for Taylor sums and coefficients */
-    for (int i = 0; i < torder + 1; i++)
+    for (i = 0; i < torder + 1; i++)
         cf[i] = i + 1.0;
 
-    for (int i = 0; i < torderlim; i++) {
+    for (i = 0; i < torderlim; i++) {
         t1 = 1.0 / (i + 1.0);
         cf1[i] = t1;
         cf2[i] = 1.0 - (0.5 * t1);
@@ -59,7 +60,7 @@ void setup_yuk(double *x, double *y, double *z,
 
     make_vector(orderarr, numpars);
 
-    for (int i = 0; i < numpars; i++)
+    for (i = 0; i < numpars; i++)
         orderarr[i] = i+1;
 
     return;

@@ -12,7 +12,7 @@ OFILESC = makegrid.o
 TARGETC = makegrid
 
 CC = mpicc
-CFLAGS = -Wall -O2 -std=c99
+CFLAGS = -Wall -O3
 $(TARGET): $(OFILES)
 	$(CC) $(OFILES) -o $@
 
