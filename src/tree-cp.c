@@ -25,6 +25,9 @@ int *orderarr = NULL;
 
 int torder, torderlim;
 int minlevel, maxlevel;
+int maxpars, minpars;
+int numleaves;
+int xdiv, ydiv, zdiv;
 
 int orderoffset;
 double tarpos[3];
@@ -176,8 +179,7 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
     (*p)->level = level;
 
 
-    if (maxlevel < level)
-        maxlevel = level;
+    if (maxlevel < level) maxlevel = level;
 
     (*p)->num_children = 0;
     for (i = 0; i < 8; i++)
@@ -225,8 +227,11 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
 
     } else {
 
-        if (level < minlevel)
-            minlevel = level;
+        if (level < minlevel) minlevel = level;
+        if (minpars > (*p)->numpar) minpars = (*p)->numpar;
+        if (maxpars < (*p)->numpar) maxpars = (*p)->numpar;
+        
+        numleaves++;
     }
 
     return;
@@ -383,6 +388,8 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
         xyzmms[1][0] = x_mid;
         xyzmms[0][1] = x_mid;
         *numposchild = 2 * *numposchild;
+        
+        xdiv++;
     }
 
     if (yl >= critlen) {
@@ -402,6 +409,8 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
         }
         
         *numposchild = 2 * *numposchild;
+        
+        ydiv++;
     }
 
     if (zl >= critlen) {
@@ -421,6 +430,8 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
         }
         
         *numposchild = 2 * *numposchild;
+        
+        zdiv++;
     }
 
     return;

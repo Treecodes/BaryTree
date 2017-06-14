@@ -7,6 +7,9 @@ extern double *cf, *cf1, *cf2, *cf3;
 extern double ***a1, ***b1;
 
 extern int minlevel, maxlevel;
+extern int maxpars, minpars;
+extern int numleaves;
+extern int xdiv, ydiv, zdiv;
 
 extern int orderoffset;
 extern double tarpos[3];

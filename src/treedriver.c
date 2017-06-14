@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <mpi.h>
+#include <limits.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -47,13 +48,17 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
 
     /* set global variables to track tree levels during construction */
     level = 0;
-    minlevel = 50000;
+    numleaves = 0;
+    minlevel = INT_MAX;
+    minpars = INT_MAX;
+    xdiv = 0; ydiv = 0; zdiv = 0;
 
     printf("Creating tree... \n\n");
 
     if (tree_type == 0) {
         if (iflag == 0) {
             maxlevel = 0;
+            maxpars = 0;
             cp_create_tree_n0(&troot, 1, numparsT, xT, yT, zT,
                               shrink, maxparnode, xyzminmax, level);
         } else if (iflag == 1) {
@@ -64,6 +69,7 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     } else if (tree_type == 1) {
         if (iflag == 0) {
             maxlevel = 0;
+            maxpars = 0;
             pc_create_tree_n0(&troot, 1, numparsS, xS, yS, zS, qS,
                               shrink, maxparnode, xyzminmax, level);
         } else if (iflag == 1) {
@@ -81,20 +87,26 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     printf("Tree created.\n\n");
     printf("Tree information: \n\n");
 
-    printf("       numpar: %d\n", troot->numpar);
-    printf("        x_mid: %e\n", troot->x_mid);
-    printf("        y_mid: %e\n", troot->y_mid);
-    printf("        z_mid: %e\n\n", troot->z_mid);
-    printf("       radius: %f\n\n", troot->radius);
-    printf("        x_len: %e\n", troot->x_max - troot->x_min);
-    printf("        y_len: %e\n", troot->y_max - troot->y_min);
-    printf("        z_len: %e\n\n", troot->z_max - troot->z_min);
-    printf("       torder: %d\n", torder);
-    printf("        theta: %f\n", theta);
-    printf("       shrink: %d\n", shrink);
-    printf("   maxparnode: %d\n", maxparnode);
-    printf("        iflag: %d\n", iflag);
-    printf("tree maxlevel: %d\n\n", treelevel);
+    printf("                      numpar: %d\n", troot->numpar);
+    printf("                       x_mid: %e\n", troot->x_mid);
+    printf("                       y_mid: %e\n", troot->y_mid);
+    printf("                       z_mid: %e\n\n", troot->z_mid);
+    printf("                      radius: %f\n\n", troot->radius);
+    printf("                       x_len: %e\n", troot->x_max - troot->x_min);
+    printf("                       y_len: %e\n", troot->y_max - troot->y_min);
+    printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
+    printf("                      torder: %d\n", torder);
+    printf("                       theta: %f\n", theta);
+    printf("                      shrink: %d\n\n", shrink);
+    printf("        maxparnode (iflag 0): %d\n", maxparnode);
+    printf("         treelevel (iflag 1): %d\n", treelevel);
+    printf("                       iflag: %d\n\n", iflag);
+    printf("               tree maxlevel: %d\n", maxlevel);
+    printf("               tree minlevel: %d\n", minlevel);
+    printf("                tree maxpars: %d\n", maxpars);
+    printf("                tree minpars: %d\n", minpars);
+    printf("            number of leaves: %d\n", numleaves);
+    printf("        number of x,y,z divs: %d, %d, %d\n", xdiv, ydiv, zdiv);
 
 
     time1 = MPI_Wtime();

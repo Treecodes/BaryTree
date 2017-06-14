@@ -21,7 +21,7 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
 {
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int i, j, loclev, numposchild;
+    int i, j, loclev, numposchild, nump;
     
     int ind[8][2];
     double xyzmms[6][8];
@@ -54,7 +54,7 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
 
     if (shrink == 1) {
 
-        int nump = iend - ibeg + 1;
+        nump = iend - ibeg + 1;
 
         (*p)->x_min = minval(x + ibeg - 1, nump);
         (*p)->x_max = maxval(x + ibeg - 1, nump);
@@ -108,11 +108,10 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
     (*p)->level = level;
 
 
-    if (maxlevel < level)
-        maxlevel = level;
+    if (maxlevel < level) maxlevel = level;
 
     (*p)->num_children = 0;
-    for (int i = 0; i < 8; i++)
+    for (i = 0; i < 8; i++)
         (*p)->child[i] = NULL;
 
     
@@ -157,8 +156,11 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
 
     } else {
 
-        if (level < minlevel)
-            minlevel = level;
+        if (level < minlevel) minlevel = level;
+        if (minpars > (*p)->numpar) minpars = (*p)->numpar;
+        if (maxpars < (*p)->numpar) maxpars = (*p)->numpar;
+        
+        numleaves++;
     }
 
     return;

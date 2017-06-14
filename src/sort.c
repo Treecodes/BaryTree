@@ -1,14 +1,18 @@
 /* sort functions for use by treecode routines */
 #include <math.h>
+#include "array.h"
 
 void quicksortTargets(double *x, double *y, double *z, int *ind, int l, int r);
 int partitionTargets(double *x, double *y, double *z, int *ind, int l, int r);
 
-void sortTargets(double *x, double *y, double *z, int *ind, int numpars)
+void sortTargets(double *x, double *y, double *z, int *ind, int numpars, int dflag)
 {
-//    quicksortTargets(z, x, y, ind, 0, numpars-1);
-//    quicksortTargets(y, x, z, ind, 0, numpars-1);
-    quicksortTargets(x, y, z, ind, 0, numpars-1);
+    if (dflag == 0)
+        quicksortTargets(x, y, z, ind, 0, numpars-1);
+    else if (dflag == 1) 
+        quicksortTargets(y, z, x, ind, 0, numpars-1);
+    else
+        quicksortTargets(z, x, y, ind, 0, numpars-1);
 
     return;
 }
@@ -52,4 +56,48 @@ int partitionTargets(double *x, double *y, double *z, int *ind, int l, int r)
     x[j] = tx;   y[j] = ty;   z[j] = tz;   ind[j] = ti;
 
     return j;
+}
+
+
+void interleaveGridTargets(double *x, double *y, double *z, int *ind, int numpars, int p)
+{
+    double *xx, *yy, *zz;
+    int *indd;
+    int modsize, moddiv;
+    int numparsloc, maxparsdiv;
+    int i;
+    
+    numparsloc = numpars/p;
+    maxparsdiv = numpars/p * p;
+
+    make_vector(xx, numpars);
+    make_vector(yy, numpars);
+    make_vector(zz, numpars);
+    make_vector(indd, numpars);
+    
+    for (i = 0; i < maxparsdiv; i++) {
+        modsize = i/p;
+        moddiv = i%p;
+        
+        xx[numparsloc*moddiv + modsize] = x[i];
+        yy[numparsloc*moddiv + modsize] = y[i];
+        zz[numparsloc*moddiv + modsize] = z[i];
+        indd[numparsloc*moddiv + modsize] = ind[i];
+        
+        //printf("%d : modsize %d, moddiv %d, newind %d\n", i, modsize, moddiv, numparsloc*moddiv + modsize);
+    }
+    
+    for (i = 0; i < maxparsdiv; i++) {
+        x[i] = xx[i];
+        y[i] = yy[i];
+        z[i] = zz[i];
+        ind[i] = indd[i];
+    }
+    
+    free_vector(xx);
+    free_vector(yy);
+    free_vector(zz);
+    free_vector(indd);
+    
+    return;
 }

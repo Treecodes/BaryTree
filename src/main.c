@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     int numparsS, numparsT, order;
     int maxparnode, treelevel;
     int iflag, pot_type, tree_type;
-    int pflag, sflag;
+    int pflag, sflag, dflag, gflag;
 
     double theta, temp;
     double kappa;
@@ -100,7 +100,9 @@ int main(int argc, char **argv)
             printf("         kappa:  screened Coulomb parameter \n");                // 0.00
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
             printf("         pflag:  distribute 0--targets, 1--sources \n");         // 0
-            printf("         sflag:  on distributed 0--sort, 1--don't sort \n");     // 0
+            printf("         sflag:  on distr 0--sort, 1--no sort /interleave \n");  // 0
+            printf("         dflag:  if sorted, direction 0--x, 1--y, 2--z \n");     // 0
+            printf("         gflag:  targets on 0--not grid, 1--grid \n");           // 0
         }
         return 0;
     }
@@ -120,6 +122,8 @@ int main(int argc, char **argv)
     pot_type = atoi(argv[14]);
     pflag = atoi(argv[15]);
     sflag = atoi(argv[16]);
+    dflag = atoi(argv[17]);
+    gflag = atoi(argv[18]);
     
     
     numparsTloc = (int)floor((double)numparsT/(double)p);
@@ -164,17 +168,22 @@ int main(int argc, char **argv)
         MPI_File_close(&fpmpi);
         
         time1 = MPI_Wtime();
-        if (sflag == 0) sortTargets(xT, yT, zT, iT, numparsT);
+
+        if (sflag == 0) sortTargets(xT, yT, zT, iT, numparsT, dflag);
+        if (sflag == 1 && gflag == 1) interleaveGridTargets(xT, yT, zT, iT, numparsT, p);
+
         time2 = MPI_Wtime();
         time_preproc = time2 - time1;
      
         MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+
         for (i = 0; i < numparsT; i++) {
             MPI_File_read(fpmpi, buf, 1, MPI_DOUBLE, &status);
             denergy[i] = buf[0];
         }
+
         MPI_File_close(&fpmpi);
     
         scounts[0] = 0;
@@ -184,6 +193,9 @@ int main(int argc, char **argv)
             scounts[i] = numparsTloc;
             displs[i] = (i-1)*numparsTloc;
         }
+        
+        //for (i = 0; i < numparsT; i++)
+        //    printf("%d : %d, %f, %f, %f\n", i, iT[i], xT[i], yT[i], zT[i]);
     }
     
     time1 = MPI_Wtime();
@@ -263,16 +275,18 @@ int main(int argc, char **argv)
     
     
     /* Computing pointwise potential errors */
-    MPI_Gatherv(xT, numparsTloc, MPI_DOUBLE,
-                &xT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(yT, numparsTloc, MPI_DOUBLE,
-                &yT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(zT, numparsTloc, MPI_DOUBLE,
-                &zT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE,
-                &tenergy[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
+    if (p > 1) {
+        MPI_Gatherv(xT, numparsTloc, MPI_DOUBLE,
+                    &xT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(yT, numparsTloc, MPI_DOUBLE,
+                    &yT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(zT, numparsTloc, MPI_DOUBLE,
+                    &zT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE,
+                    &tenergy[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
     
+
     if (rank == 0)
     {
         inferr = 0.0;
