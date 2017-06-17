@@ -18,19 +18,19 @@ TARGETC = makegrid
 CC = mpicc
 CFLAGS = -Wall -O3
 $(TARGET): $(OFILES)
-	$(CC) $(OFILES) -o $@
+	$(CC) $(CFLAGS) $(OFILES) -o $@
 
 $(TARGETA): $(OFILESA)
-	$(CC) $(OFILESA) -o $@
+	$(CC) $(CFLAGS) $(OFILESA) -o $@
 
 $(TARGETB): $(OFILESB)
-	$(CC) $(OFILESB) -o $@
+	$(CC) $(CFLAGS) $(OFILESB) -o $@
 
 $(TARGETC): $(OFILESC)
-	$(CC) $(OFILESC) -o $@
+	$(CC) $(CFLAGS) $(OFILESC) -o $@
 
 $(TARGETD): $(OFILESD)
-	$(CC) $(OFILESD) -o $@
+	$(CC) $(CFLAGS) $(OFILESD) -o $@
 
 clean:
 	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA)
