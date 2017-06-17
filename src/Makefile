@@ -2,6 +2,10 @@ OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o \
 	 treedriver.o partition.o xmalloc.o sort.o
 TARGET = tree
 
+OFILESD = main-grid.o tools.o tree-cp.o tree-cp-grid.o \
+	  treedriver-grid.o partition.o xmalloc.o sort.o
+TARGETD = tree-grid
+
 OFILESA = main-direct.o tools.o xmalloc.o
 TARGETA = direct
 
@@ -25,17 +29,25 @@ $(TARGETB): $(OFILESB)
 $(TARGETC): $(OFILESC)
 	$(CC) $(OFILESC) -o $@
 
+$(TARGETD): $(OFILESD)
+	$(CC) $(OFILESD) -o $@
+
 clean:
 	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA)
-	rm -f $(OFILESB) $(TARGETB) $(TARGETC) $(OFILESC)
+	rm -f $(OFILESB) $(TARGETB) $(TARGETC) $(OFILESC) $(TARGETD) $(OFILESD)$
 
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h
+main-grid.o: main-grid.c array.h xmalloc.h treedriver.h tools.h
 tools.o: tools.c array.h xmalloc.h
 treedriver.o: treedriver.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  tree.h treedriver.h
+treedriver-grid.o: treedriver-grid.c array.h xmalloc.h globvars.h tnode.h tools.h \
+		  tree.h treedriver.h
 partition.o: partition.c tools.h partition.h
 tree-cp.o: tree-cp.c array.h xmalloc.h globvars.h tnode.h tools.h \
+		  partition.h tree.h
+tree-cp-grid.o: tree-cp-grid.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  partition.h tree.h
 tree-cp-yuk.o: tree-cp-yuk.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  partition.h tree.h

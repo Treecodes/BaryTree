@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     double *yT = NULL;
     double *zT = NULL;
     int *iT = NULL;
-    
+
     /* exact energy, treecode energy */
     double *denergy = NULL;
     double *tenergy = NULL;
@@ -100,9 +100,19 @@ int main(int argc, char **argv)
             printf("         kappa:  screened Coulomb parameter \n");                // 0.00
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
             printf("         pflag:  distribute 0--targets, 1--sources \n");         // 0
-            printf("         sflag:  on distr 0--sort, 1--no sort /interleave \n");  // 0
+            printf("         sflag:  on distr 0--sort, 1--no sort \n");              // 0
             printf("         dflag:  if sorted, direction 0--x, 1--y, 2--z \n");     // 0
-            printf("         gflag:  targets on 0--not grid, 1--grid \n");           // 0
+
+            printf("         gflag:  targets on 0--not grid, 1--grid \n");       // 0
+            printf("          xmin:  if on grid, min x dimension \n");           // 0
+            printf("          xmax:  if on grid, max x dimension \n");           // 0
+            printf("          ymin:  if on grid, min y dimension \n");           // 0
+            printf("          ymax:  if on grid, max y dimension \n");           // 0
+            printf("          zmin:  if on grid, min z dimension \n");           // 0
+            printf("          zmax:  if on grid, max z dimension \n");           // 0
+            printf("          xind:  if on grid, number x gridpoints \n");       // 0
+            printf("          yind:  if on grid, number y gridpoints \n");       // 0
+            printf("          zind:  if on grid, number z gridpoints \n");       // 0
         }
         return 0;
     }
@@ -124,7 +134,7 @@ int main(int argc, char **argv)
     sflag = atoi(argv[16]);
     dflag = atoi(argv[17]);
     gflag = atoi(argv[18]);
-    
+
     
     numparsTloc = (int)floor((double)numparsT/(double)p);
     maxparsTloc = numparsTloc + (numparsT - (int)floor((double)numparsT/(double)p) * p);
@@ -156,6 +166,9 @@ int main(int argc, char **argv)
 
     
     if (rank == 0) {
+
+        time1 = MPI_Wtime();
+
         MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         for (i = 0; i < numparsT; i++) {
@@ -167,22 +180,14 @@ int main(int argc, char **argv)
         }
         MPI_File_close(&fpmpi);
         
-        time1 = MPI_Wtime();
-
         if (sflag == 0) sortTargets(xT, yT, zT, iT, numparsT, dflag);
         if (sflag == 1 && gflag == 1) interleaveGridTargets(xT, yT, zT, iT, numparsT, p);
 
-        time2 = MPI_Wtime();
-        time_preproc = time2 - time1;
-     
         MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
 
-        for (i = 0; i < numparsT; i++) {
-            MPI_File_read(fpmpi, buf, 1, MPI_DOUBLE, &status);
-            denergy[i] = buf[0];
-        }
+        MPI_File_read(fpmpi, denergy, numparsT, MPI_DOUBLE, &status);
 
         MPI_File_close(&fpmpi);
     
@@ -193,6 +198,9 @@ int main(int argc, char **argv)
             scounts[i] = numparsTloc;
             displs[i] = (i-1)*numparsTloc;
         }
+
+        time2 = MPI_Wtime();
+        time_preproc = time2 - time1;
         
         //for (i = 0; i < numparsT; i++)
         //    printf("%d : %d, %f, %f, %f\n", i, iT[i], xT[i], yT[i], zT[i]);
@@ -207,9 +215,6 @@ int main(int argc, char **argv)
     MPI_Scatterv(&zT[maxparsTloc], scounts, displs, MPI_DOUBLE,
                  zT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     
-    time2 = MPI_Wtime();
-    time_preproc += (time2 - time1);
-
 
     /* Reading in coordinates and charges for the source particles*/
     MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -222,6 +227,10 @@ int main(int argc, char **argv)
         qS[i] = buf[3];
     }
     MPI_File_close(&fpmpi);
+
+
+    time2 = MPI_Wtime();
+    time_preproc += (time2 - time1);
 
 
     if (rank == 0) numparsTloc = maxparsTloc;

@@ -29,7 +29,6 @@ int maxpars, minpars;
 int numleaves;
 int xdiv, ydiv, zdiv;
 
-int orderoffset;
 double tarpos[3];
 double thetasq, tarposq;
 
@@ -48,8 +47,7 @@ void setup(double *x, double *y, double *z,
 
     /* changing values of our extern variables */
     torder = order;
-    orderoffset = 1;
-    torderlim = torder + orderoffset;
+    torderlim = torder + 1;
     thetasq = theta * theta;
 
     /* allocating global Taylor expansion variables */

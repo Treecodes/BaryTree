@@ -25,8 +25,7 @@ void setup_yuk(double *x, double *y, double *z,
 
     /* changing values of our extern variables */
     torder = order;
-    orderoffset = 1;
-    torderlim = torder + orderoffset;
+    torderlim = torder + 1;
     thetasq = theta * theta;
 
     /* allocating global Taylor expansion variables */

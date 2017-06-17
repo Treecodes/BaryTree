@@ -12,6 +12,10 @@ struct tnode
         int level, num_children, exist_ms;
         double ***ms;
         struct tnode *child[8];      //Child is ptr to array of ptrs to tnode children
+
+        int xdim, ydim, zdim;
+        int xlind, ylind, zlind;
+        int xhind, yhind, zhind;
 };
 
 #endif /* H_TNODE_H */
