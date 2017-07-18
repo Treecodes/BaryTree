@@ -16,4 +16,10 @@ void treecode_grid(double *xS, double *yS, double *zS, double *qS,
                    double *tEn, double *tpeng, int order, double theta, 
                    int maxparnode, double *timetree, int pot_type, double kappa);
 
+
+void treecode_grid_bdry(double *xS, double *yS, double *zS, double *qS,
+                   double *xyzminmax, int *xyzdim, double zyx, int dir, int numparsS,
+                   double *tEn, double *tpeng, int order, double theta,
+                   int maxparnode, double *timetree, int pot_type, double kappa);
+
 #endif /* H_TREEFUNCTIONS_H */

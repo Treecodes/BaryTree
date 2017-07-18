@@ -149,4 +149,26 @@ void cp_comp_direct_grid(struct tnode *p, double *EnP);
 
 void compute_cp2_grid(struct tnode *ap, double *EnP);
 
+
+/* use for grid bdry treecode */
+void setup_grid_bdry(double *xyzminmax, int *xyzdim, int *xyzind,
+                int order, double theta);
+
+void cp_create_tree_n0_grid_bdry(struct tnode **p, int maxparnode,
+                            double *xyzmm, int *xyzdim, int *xyzind, int level);
+
+void cp_partition_8_grid_bdry(double xyzmms[4][4], int xyzdims[2][4], int xyzinds[4][4],
+                         double xl, double yl, double lmax, int *numposchild,
+                         double x_mid, double y_mid);
+
+void cp_treecode_grid_bdry(struct tnode *p, double zyx, int dir,
+                           double *xS, double *yS, double *zS, double *qS,
+                      double *tpeng, double *EnP, int numparsS, int numparsT,
+                      double *timetree);
+
+void compute_cp1_grid_bdry(struct tnode *p, double zyx, int dir, double *EnP);
+
+void cp_comp_direct_grid_bdry(struct tnode *p, double zyx, int dir, double *EnP);
+
+void compute_cp2_grid_bdry(struct tnode *ap, double zyx, int dir, double *EnP);
 #endif /* H_TREEFUNCTIONS_H */

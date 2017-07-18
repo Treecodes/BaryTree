@@ -32,7 +32,7 @@ int main()
         printf("Grid (0), uniform rand (1), or normal rand (2): \n");
         scanf("%d", &flag);
 
-        if (flag == 0) {
+        if (flag == 0 || flag == 3) {
             printf("Enter origin x, y, z: \n");
             scanf("%lf %lf %lf", &ox, &oy, &oz);
 
@@ -51,51 +51,121 @@ int main()
                 perror("File opening failed");
                 return EXIT_FAILURE;
             }
-
-            if (dir == 0) {
-                for (i = 0; i < nx; i++) {
-                    for (j = 0; j < ny; j++) {
-                        for (k = 0; k < nz; k++) {
-                            xx = ox + i*dx;
-                            yy = oy + j*dy;
-                            zz = oz + k*dz;
-                            fwrite(&xx, sizeof(double), 1, fp);
-                            fwrite(&yy, sizeof(double), 1, fp);
-                            fwrite(&zz, sizeof(double), 1, fp);
-                        }
-                    }
-                }
-            } else if (dir == 1) {
-                for (j = 0; j < ny; j++) {
-                    for (k = 0; k < nz; k++) {
-                        for (i = 0; i < nx; i++) {
-                            xx = ox + i*dx;
-                            yy = oy + j*dy;
-                            zz = oz + k*dz;
-                            fwrite(&xx, sizeof(double), 1, fp);
-                            fwrite(&yy, sizeof(double), 1, fp);
-                            fwrite(&zz, sizeof(double), 1, fp);
-                        }
-                    }
-                }
-            } else {
-                for (k = 0; k < nz; k++) {
+            if (flag == 0) {
+                if (dir == 0) {
                     for (i = 0; i < nx; i++) {
                         for (j = 0; j < ny; j++) {
-                            xx = ox + i*dx;
-                            yy = oy + j*dy;
-                            zz = oz + k*dz;
-                            fwrite(&xx, sizeof(double), 1, fp);
-                            fwrite(&yy, sizeof(double), 1, fp);
-                            fwrite(&zz, sizeof(double), 1, fp);
+                            for (k = 0; k < nz; k++) {
+                                xx = ox + i*dx;
+                                yy = oy + j*dy;
+                                zz = oz + k*dz;
+                                fwrite(&xx, sizeof(double), 1, fp);
+                                fwrite(&yy, sizeof(double), 1, fp);
+                                fwrite(&zz, sizeof(double), 1, fp);
+                            }
+                        }
+                    }
+                } else if (dir == 1) {
+                    for (j = 0; j < ny; j++) {
+                        for (k = 0; k < nz; k++) {
+                            for (i = 0; i < nx; i++) {
+                                xx = ox + i*dx;
+                                yy = oy + j*dy;
+                                zz = oz + k*dz;
+                                fwrite(&xx, sizeof(double), 1, fp);
+                                fwrite(&yy, sizeof(double), 1, fp);
+                                fwrite(&zz, sizeof(double), 1, fp);
+                            }
+                        }
+                    }
+                } else if (dir == 2) {
+                    for (k = 0; k < nz; k++) {
+                        for (i = 0; i < nx; i++) {
+                            for (j = 0; j < ny; j++) {
+                                xx = ox + i*dx;
+                                yy = oy + j*dy;
+                                zz = oz + k*dz;
+                                fwrite(&xx, sizeof(double), 1, fp);
+                                fwrite(&yy, sizeof(double), 1, fp);
+                                fwrite(&zz, sizeof(double), 1, fp);
+                            }
                         }
                     }
                 }
+                
+            } else if (flag == 3) {
+                
+                zz = oz;
+                for (i = 0; i < nx; i++) {
+                    for (j = 0; j < ny; j++) {
+                        xx = ox + i*dx;
+                        yy = oy + j*dy;
+                        fwrite(&xx, sizeof(double), 1, fp);
+                        fwrite(&yy, sizeof(double), 1, fp);
+                        fwrite(&zz, sizeof(double), 1, fp);
+                    }
+                }
+                
+                zz = oz + (nz-1)*dz;
+                for (i = 0; i < nx; i++) {
+                    for (j = 0; j < ny; j++) {
+                        xx = ox + i*dx;
+                        yy = oy + j*dy;
+                        fwrite(&xx, sizeof(double), 1, fp);
+                        fwrite(&yy, sizeof(double), 1, fp);
+                        fwrite(&zz, sizeof(double), 1, fp);
+                    }
+                }
+                
+                yy = oy;
+                for (i = 0; i < nx; i++) {
+                    for (k = 1; k < nz-1; k++) {
+                        xx = ox + i*dx;
+                        zz = oz + k*dz;
+                        fwrite(&xx, sizeof(double), 1, fp);
+                        fwrite(&yy, sizeof(double), 1, fp);
+                        fwrite(&zz, sizeof(double), 1, fp);
+                    }
+                }
+                
+                yy = oy + (ny-1)*dy;
+                for (i = 0; i < nx; i++) {
+                    for (k = 1; k < nz-1; k++) {
+                        xx = ox + i*dx;
+                        zz = oz + k*dz;
+                        fwrite(&xx, sizeof(double), 1, fp);
+                        fwrite(&yy, sizeof(double), 1, fp);
+                        fwrite(&zz, sizeof(double), 1, fp);
+                    }
+                }
+                
+                xx = ox;
+                for (j = 1; j < ny-1; j++) {
+                    for (k = 1; k < nz-1; k++) {
+                        yy = oy + j*dy;
+                        zz = oz + k*dz;
+                        fwrite(&xx, sizeof(double), 1, fp);
+                        fwrite(&yy, sizeof(double), 1, fp);
+                        fwrite(&zz, sizeof(double), 1, fp);
+                    }
+                }
+                
+                xx = ox + (nx-1)*dx;
+                for (j = 1; j < ny-1; j++) {
+                    for (k = 1; k < nz-1; k++) {
+                        yy = oy + j*dy;
+                        zz = oz + k*dz;
+                        fwrite(&xx, sizeof(double), 1, fp);
+                        fwrite(&yy, sizeof(double), 1, fp);
+                        fwrite(&zz, sizeof(double), 1, fp);
+                    }
+                }
+                
             }
 
             fclose(fp);
 
-        } else {
+        } else if (flag == 1 || flag == 2) {
 
             printf("Enter number of particles: \n");
             scanf("%d", &numpars);
@@ -126,7 +196,7 @@ int main()
                     fwrite(&zz, sizeof(double), 1, fp);
                 }
 
-            } else {
+            } else if (flag == 1 || flag == 2) {
                 for (i = 0; i < numpars; i++) {
                     r1 = ((double)rand())/RAND_MAX;
                     r2 = ((double)rand())/RAND_MAX;
