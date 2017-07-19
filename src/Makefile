@@ -19,8 +19,10 @@ TARGETB = txt2bin
 OFILESC = makegrid.o
 TARGETC = makegrid
 
+OUTDIR = ../bin/
 CC = mpicc
 CFLAGS = -Wall -O3
+
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(OFILES) -o $@
 
@@ -41,7 +43,16 @@ $(TARGETE): $(OFILESE)
 
 clean:
 	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA) $(OFILESE) $(TARGETE)
-	rm -f $(OFILESB) $(TARGETB) $(TARGETC) $(OFILESC) $(TARGETD) $(OFILESD)$
+	rm -f $(OFILESB) $(TARGETB) $(TARGETC) $(OFILESC) $(TARGETD) $(OFILESD)
+	rm -f $(OUTDIR)*
+
+bin:                                                                                         
+	mv $(TARGET) $(OUTDIR)$(TARGET)
+	mv $(TARGETA) $(OUTDIR)$(TARGETA)
+	mv $(TARGETB) $(OUTDIR)$(TARGETB)
+	mv $(TARGETC) $(OUTDIR)$(TARGETC)
+	mv $(TARGETD) $(OUTDIR)$(TARGETD)
+	mv $(TARGETE) $(OUTDIR)$(TARGETE)
 
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h

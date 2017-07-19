@@ -1,9 +1,5 @@
 src/*.o
-src/tree
-src/tree-grid
-src/direct
-src/makegrid
-src/txt2bin
 data/*
+bin/*
 .DS_store
 src/out.txt
