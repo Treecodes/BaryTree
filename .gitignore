@@ -2,4 +2,3 @@ src/*.o
 data/*
 bin/*
 .DS_store
-src/out.txt

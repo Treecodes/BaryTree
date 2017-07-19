@@ -23,6 +23,8 @@ OUTDIR = ../bin/
 CC = mpicc
 CFLAGS = -Wall -O3
 
+all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) $(TARGETD) $(TARGETE) bin
+
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(OFILES) -o $@
 
