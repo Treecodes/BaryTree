@@ -55,7 +55,7 @@ void setup(double *x, double *y, double *z,
     make_vector(cf1, torderlim);
     make_vector(cf2, torderlim);
 
-    make_3array(b1, torderlim+1, torderlim+1, torderlim+1);
+    make_3array(b1, torderlim, torderlim, torderlim);
 
 
     /* initializing arrays for Taylor sums and coefficients */
@@ -498,9 +498,9 @@ void compute_cp1(struct tnode *p, double *EnP,
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
-        for (i = 0; i < torderlim + 1; i++) {
-            for (j = 0; j < torderlim + 1; j++) {
-                for (k = 0; k < torderlim + 1; k++) {
+        for (i = 0; i < torderlim; i++) {
+            for (j = 0; j < torderlim; j++) {
+                for (k = 0; k < torderlim; k++) {
                     b1[i][j][k] = 0.0;
                 }
             }
@@ -619,7 +619,7 @@ void comp_tcoeff(double dx, double dy, double dz)
     b1[0][1][0] = fac * dy * sqfac;
     b1[0][0][1] = fac * dz * sqfac;
 
-    for (i = 2; i < torderlim+1; i++) {
+    for (i = 2; i < torderlim; i++) {
         i1 = i - 1;
         i2 = i - 2;
         

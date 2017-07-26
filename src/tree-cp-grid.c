@@ -45,7 +45,7 @@ void setup_grid(double *xyzminmax, int *xyzdim, int *xyzind,
     make_vector(cf1, torderlim);
     make_vector(cf2, torderlim);
 
-    make_3array(b1, torderlim+1, torderlim+1, torderlim+1);
+    make_3array(b1, torderlim, torderlim, torderlim);
 
 
     /* initializing arrays for Taylor sums and coefficients */
@@ -394,9 +394,9 @@ void compute_cp1_grid(struct tnode *p, double *EnP)
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
-        for (i = 0; i < torderlim + 1; i++) {
-            for (j = 0; j < torderlim + 1; j++) {
-                for (k = 0; k < torderlim + 1; k++) {
+        for (i = 0; i < torderlim; i++) {
+            for (j = 0; j < torderlim; j++) {
+                for (k = 0; k < torderlim; k++) {
                     b1[i][j][k] = 0.0;
                 }
             }

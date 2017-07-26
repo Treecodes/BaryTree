@@ -429,9 +429,9 @@ void compute_pc(struct tnode *p, double *peng,
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
-        for (i = 0; i < torderlim + 1; i++) {
-            for (j = 0; j < torderlim + 1; j++) {
-                for (k = 0; k < torderlim + 1; k++) {
+        for (i = 0; i < torderlim; i++) {
+            for (j = 0; j < torderlim; j++) {
+                for (k = 0; k < torderlim; k++) {
                     b1[i][j][k] = 0.0;
                 }
             }
