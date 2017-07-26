@@ -23,7 +23,7 @@ double ***b1 = NULL;
 
 int *orderarr = NULL;
 
-int torder, torderlim;
+int torder, torderlim, torderflat;
 int minlevel, maxlevel;
 int maxpars, minpars;
 int numleaves;
@@ -49,6 +49,7 @@ void setup(double *x, double *y, double *z,
     torder = order;
     torderlim = torder + 1;
     thetasq = theta * theta;
+    torderflat = torderlim * (torderlim + 1) * (torderlim + 2) / 6;
 
     /* allocating global Taylor expansion variables */
     make_vector(cf, torder+1);
@@ -509,15 +510,10 @@ void compute_cp1(struct tnode *p, double *EnP,
         comp_tcoeff(tx, ty, tz);
 
         if (p->exist_ms == 0) {
-            make_3array(p->ms, torder+1, torder+1, torder+1);
+            make_vector(p->ms, torderflat);
 
-            for (i = 0; i < torder + 1; i++) {
-                for (j = 0; j < torder + 1; j++) {
-                    for (k = 0; k < torder + 1; k++) {
-                        p->ms[i][j][k] = 0.0;
-                    }
-                }
-            }
+            for (i = 0; i < torderflat; i++)
+                p->ms[i] = 0.0;
             
             p->exist_ms = 1;
         }
@@ -550,7 +546,7 @@ void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
     /* local variables */
     double tx, ty, peng;
     double xm, ym, zm, dx, dy, dz;
-    int i, nn, j, k1, k2, k3, porder, porder1;
+    int i, nn, j, k1, k2, k3, kk, porder, porder1;
 
     porder = torder;
     porder1 = porder - 1;
@@ -566,16 +562,17 @@ void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
             dy = y[i] - ym;
             dz = z[i] - zm;
 
-            peng = ap->ms[0][0][porder];
+            kk=0;
+            peng = ap->ms[kk];
 
             for (k3 = porder1; k3 > -1; k3--) {
-                ty = ap->ms[0][porder - k3][k3];
+                ty = ap->ms[++kk];
 
                 for (k2 = porder1 - k3; k2 > -1; k2--) {
-                    tx = ap->ms[porder - k3 - k2][k2][k3];
+                    tx = ap->ms[++kk];
 
                     for (k1 = porder1 - k3 - k2; k1 > -1; k1--) {
-                        tx = dx*tx + ap->ms[k1][k2][k3];
+                        tx = dx*tx + ap->ms[++kk];
                     }
 
                     ty = dy * ty + tx;
@@ -762,13 +759,14 @@ void comp_tcoeff(double dx, double dy, double dz)
  */
 void cp_comp_ms(struct tnode *p)
 {
-    int k1, k2, k3;
+    int k1, k2, k3, kk=-1;
 
-    for (k3 = 0; k3 < torder + 1; k3++) {
-        for (k2 = 0; k2 < torder - k3 + 1; k2++) {
-            for (k1 = 0; k1 < torder - k3 - k2 + 1; k1++) {
-                p->ms[k1][k2][k3] = p->ms[k1][k2][k3]
-                                  + tarposq * b1[k1][k2][k3];
+    for (k3 = torder; k3 > -1; k3--) {
+        for (k2 = torder - k3; k2 > -1; k2--) {
+            for (k1 = torder - k3 - k2; k1 > -1; k1--) {
+                kk++;
+                p->ms[kk] = p->ms[kk]
+                          + tarposq * b1[k1][k2][k3];
             }
         }
     }

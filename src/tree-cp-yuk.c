@@ -27,6 +27,7 @@ void setup_yuk(double *x, double *y, double *z,
     torder = order;
     torderlim = torder + 1;
     thetasq = theta * theta;
+    torderflat = torderlim * (torderlim + 1) * (torderlim + 2) / 6;
 
     /* allocating global Taylor expansion variables */
     make_vector(cf, torder+1);
@@ -140,14 +141,10 @@ void compute_cp1_yuk(struct tnode *p, double *EnP,
         comp_tcoeff_yuk(tx, ty, tz, kappa);
 
         if (p->exist_ms == 0) {
-            make_3array(p->ms, torder+1, torder+1, torder+1);
+            make_vector(p->ms, torderflat);
 
-            for (i = 0; i < torder + 1; i++) {
-                for (j = 0; j < torder + 1; j++) {
-                    for (k = 0; k < torder + 1; k++) {
-                        p->ms[i][j][k] = 0.0;
-                    }
-                }
+            for (i = 0; i < torderflat; i++) {
+                p->ms[i] = 0.0;
             }
 
             p->exist_ms = 1;

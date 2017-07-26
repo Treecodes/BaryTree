@@ -55,7 +55,7 @@ void compute_pc_yuk(struct tnode *p, double *peng,
 {
     /* local variables */
     double tx, ty, tz, distsq, penglocal;
-    int i, j, k;
+    int i, j, k, kk=-1;
 
     
     /* determine DISTSQ for MAC test */
@@ -81,14 +81,10 @@ void compute_pc_yuk(struct tnode *p, double *peng,
         }
         
         if (p->exist_ms == 0) {
-            make_3array(p->ms, torder+1, torder+1, torder+1);
+            make_vector(p->ms, torderflat);
             
-            for (i = 0; i < torder + 1; i++) {
-                for (j = 0; j < torder + 1; j++) {
-                    for (k = 0; k < torder + 1; k++) {
-                        p->ms[i][j][k] = 0.0;
-                    }
-                }
+            for (i = 0; i < torderflat; i++) {
+                p->ms[i] = 0.0;
             }
             
             pc_comp_ms(p, x, y, z, q);
@@ -97,10 +93,10 @@ void compute_pc_yuk(struct tnode *p, double *peng,
         
         comp_tcoeff_yuk(tx, ty, tz, kappa);
         
-        for (k = 0; k < torder+1; k++) {
-            for (j = 0; j < torder-k+1; j++) {
-                for (i = 0; i < torder-k-j+1; i++) {
-                    *peng += a1[i+2][j+2][k+2] * p->ms[i][j][k];
+        for (k = torder; k > -1; k--) {
+            for (j = torder - k; j > -1; j--) {
+                for (i = torder - k - j; i > -1; i--) {
+                    *peng += a1[i+2][j+2][k+2] * p->ms[++kk];
                 }
             }
         }

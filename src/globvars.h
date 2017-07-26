@@ -2,7 +2,7 @@
 #define H_GLOBALVARS_H
 
 /* declaration of external global variables */
-extern int torder, torderlim;
+extern int torder, torderlim, torderflat;
 extern double *cf, *cf1, *cf2, *cf3;
 extern double ***a1, ***b1;
 
