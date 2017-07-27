@@ -30,6 +30,7 @@ void setup_grid(double *xyzminmax, int *xyzdim, int *xyzind,
     torder = order;
     torderlim = torder + 1;
     thetasq = theta * theta;
+    torderflat = torderlim * (torderlim + 1) * (torderlim + 2) / 6;
 
     xglobdim = xyzdim[0];
     yglobdim = xyzdim[1];
@@ -405,15 +406,10 @@ void compute_cp1_grid(struct tnode *p, double *EnP)
         comp_tcoeff(tx, ty, tz);
 
         if (p->exist_ms == 0) {
-            make_3array(p->ms, torder+1, torder+1, torder+1);
+            make_vector(p->ms, torderflat);
 
-            for (i = 0; i < torder + 1; i++) {
-                for (j = 0; j < torder + 1; j++) {
-                    for (k = 0; k < torder + 1; k++) {
-                        p->ms[i][j][k] = 0.0;
-                    }
-                }
-            }
+            for (i = 0; i < torderflat; i++)
+                p->ms[i] = 0.0;
             
             p->exist_ms = 1;
         }
@@ -448,7 +444,7 @@ void compute_cp2_grid(struct tnode *ap, double *EnP)
     double tx, ty, peng;
     double xm, ym, zm, dx, dy, dz, xl, yl, zl;
     int xlind, ylind, zlind, xhind, yhind, zhind;
-    int i, nn, j, k, k1, k2, k3, porder, porder1;
+    int i, nn, j, k, k1, k2, k3, kk, porder, porder1;
 
     porder = torder;
     porder1 = porder - 1;
@@ -479,16 +475,18 @@ void compute_cp2_grid(struct tnode *ap, double *EnP)
                     dy = yl + (j-ylind)*dgloby  - ym;
                     dz = zl + (k-zlind)*dglobz  - zm;
 
-                    peng = ap->ms[0][0][porder];
+                    kk = 0;
+
+                    peng = ap->ms[kk];
 
                     for (k3 = porder1; k3 > -1; k3--) {
-                        ty = ap->ms[0][porder - k3][k3];
+                        ty = ap->ms[++kk];
 
                         for (k2 = porder1 - k3; k2 > -1; k2--) {
-                            tx = ap->ms[porder - k3 - k2][k2][k3];
+                            tx = ap->ms[++kk];
 
                             for (k1 = porder1 - k3 - k2; k1 > -1; k1--) {
-                                tx = dx*tx + ap->ms[k1][k2][k3];
+                                tx = dx*tx + ap->ms[++kk];
                             }
 
                             ty = dy * ty + tx;
