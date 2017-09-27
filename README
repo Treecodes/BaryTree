@@ -16,6 +16,9 @@
 !   cluster-particle method which is more efficient when the sources
 !   outnumber the targets.
 !
+!   This code includes capabilities to build virtual target trees on grids,
+!   and specialized code for target boundary grids.
+!
 !   This program is free software; you can redistribute it and/or modify
 !   it under the terms of the GNU General Public License as published by
 !   the Free Software Foundation; either version 3 of the License, or
