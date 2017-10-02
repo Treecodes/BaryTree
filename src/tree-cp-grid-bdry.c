@@ -454,12 +454,14 @@ void compute_cp2_grid_bdry(struct tnode *ap, double zyx, int dir, double *EnP)
         }
 
         for (i = xlind; i <= xhind; i++) {
+            dx = xl + (i-xlind)*ddx  - xm;
+
             for (j = ylind; j <= yhind; j++) {
+                dy = yl + (j-ylind)*ddy  - ym;
+
                 for (k = zlind; k <= zhind; k++) {
 
                     nn = (i * ydim * zdim) + (j * zdim) + k;
-                    dx = xl + (i-xlind)*ddx  - xm;
-                    dy = yl + (j-ylind)*ddy  - ym;
                     dz = zl + (k-zlind)*ddz  - zm;
 
                     kk = 0;
@@ -543,12 +545,14 @@ void cp_comp_direct_grid_bdry(struct tnode *ap, double zyx, int dir, double *EnP
     
     
     for (i = xlind; i <= xhind; i++) {
+        tx = xl + (i-xlind)*ddx  - tarpos[0];
+
         for (j = ylind; j <= yhind; j++) {
+            ty = yl + (j-ylind)*ddy  - tarpos[1];
+
             for (k = zlind; k <= zhind; k++) {
 
                 nn = (i * ydim * zdim) + (j * zdim) + k;
-                tx = xl + (i-xlind)*ddx  - tarpos[0];
-                ty = yl + (j-ylind)*ddy  - tarpos[1];
                 tz = zl + (k-zlind)*ddz  - tarpos[2];
 
                 EnP[nn] = EnP[nn] + tarposq / sqrt(tx*tx + ty*ty + tz*tz);
