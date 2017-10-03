@@ -41,6 +41,7 @@ int main(int argc, char **argv)
 
     /* exact energy */
     double *denergy = NULL;
+    double *denergyglob = NULL;
 
     /* for potential energy calculation */
     double dpeng, dpengglob;
@@ -108,7 +109,7 @@ int main(int argc, char **argv)
 
     xyzdim[0] = atoi(argv[13]);
     xyzdim[1] = atoi(argv[14]);
-    xyzdim[2] = atoi(argv[25]);
+    xyzdim[2] = atoi(argv[15]);
 
 
     numparsT = xyzdim[0] * xyzdim[1] * xyzdim[2];
@@ -132,6 +133,7 @@ int main(int argc, char **argv)
     make_vector(qS,numparsSloc);
 
     make_vector(denergy,numparsT);
+    if (rank == 0) make_vector(denergyglob,numparsT);
 
 
     /* Reading in coordinates and charges for the source particles*/
@@ -164,7 +166,7 @@ int main(int argc, char **argv)
     MPI_Reduce(&time_direct, &time_direct_min, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(denergy, denergy, numparsT, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(denergy, denergyglob, numparsT, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
 
     MPI_File_open(MPI_COMM_WORLD, sampout, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fpmpi);
