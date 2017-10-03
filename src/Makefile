@@ -56,13 +56,13 @@ clean:
 	rm -f $(OUTDIR)*
 
 bin:                                                                                         
-	mv $(TARGET) $(OUTDIR)$(TARGET)
-	mv $(TARGETA) $(OUTDIR)$(TARGETA)
-	mv $(TARGETB) $(OUTDIR)$(TARGETB)
-	mv $(TARGETC) $(OUTDIR)$(TARGETC)
-	mv $(TARGETD) $(OUTDIR)$(TARGETD)
-	mv $(TARGETE) $(OUTDIR)$(TARGETE)
-	mv $(TARGETF) $(OUTDIR)$(TARGETF)
+	cp $(TARGET) $(OUTDIR)$(TARGET)
+	cp $(TARGETA) $(OUTDIR)$(TARGETA)
+	cp $(TARGETB) $(OUTDIR)$(TARGETB)
+	cp $(TARGETC) $(OUTDIR)$(TARGETC)
+	cp $(TARGETD) $(OUTDIR)$(TARGETD)
+	cp $(TARGETE) $(OUTDIR)$(TARGETE)
+	cp $(TARGETF) $(OUTDIR)$(TARGETF)
 
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h

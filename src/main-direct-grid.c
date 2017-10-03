@@ -207,6 +207,7 @@ int main(int argc, char **argv)
     free_vector(zS);
     free_vector(qS);
     free_vector(denergy);
+    if (rank == 0) free_vector(denergyglob);
 
     MPI_Finalize();
     return 0;
