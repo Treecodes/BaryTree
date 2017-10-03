@@ -175,7 +175,7 @@ int main(int argc, char **argv)
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         MPI_File_write(fpmpi, &time_direct_max, 1, MPI_DOUBLE, &status);
         MPI_File_seek(fpmpi, (MPI_Offset)(1)*sizeof(double), MPI_SEEK_SET);
-        MPI_File_write(fpmpi, denergy, numparsT, MPI_DOUBLE, &status);
+        MPI_File_write(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
     }
     MPI_File_close(&fpmpi);
 
