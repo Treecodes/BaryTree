@@ -29,7 +29,7 @@ int main()
         scanf("%s", sampout);
         //sampout = "out.txt";
 
-        printf("Grid (0), uniform rand (1), or normal rand (2): \n");
+        printf("Grid (0), uniform rand (1), normal rand (2), grid bdry (3): \n");
         scanf("%d", &flag);
 
         if (flag == 0 || flag == 3) {

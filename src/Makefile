@@ -16,6 +16,9 @@ TARGETA = direct
 OFILESF = main-direct-grid.o tools.o xmalloc.o
 TARGETF = direct-grid
 
+OFILESG = main-direct-grid-bdry.o tools.o xmalloc.o
+TARGETG = direct-grid-bdry
+
 OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin
 
@@ -49,10 +52,13 @@ $(TARGETE): $(OFILESE)
 $(TARGETF): $(OFILESF)
 	$(CC) $(CFLAGS) $(OFILESF) -o $@
 
+$(TARGETG): $(OFILESG)
+	$(CC) $(CFLAGS) $(OFILESG) -o $@
+
 clean:
 	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA) $(OFILESE) $(TARGETE)
 	rm -f $(OFILESB) $(TARGETB) $(TARGETC) $(OFILESC) $(TARGETD) $(OFILESD)
-	rm -f $(TARGETF) $(OFILESF)
+	rm -f $(TARGETF) $(OFILESF) $(TARGETG) $(OFILESG)  
 	rm -f $(OUTDIR)*
 
 bin:                                                                                         
@@ -63,6 +69,7 @@ bin:
 	cp $(TARGETD) $(OUTDIR)$(TARGETD)
 	cp $(TARGETE) $(OUTDIR)$(TARGETE)
 	cp $(TARGETF) $(OUTDIR)$(TARGETF)
+	cp $(TARGETG) $(OUTDIR)$(TARGETG)
 
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h
@@ -92,5 +99,6 @@ xmalloc.o: xmalloc.c xmalloc.h
 sort.o: sort.c
 main-direct.o: main-direct.c array.h xmalloc.h tools.h
 main-direct-grid.o: main-direct-grid.c array.h xmalloc.h tools.h
+main-direct-grid-bdry.o: main-direct-grid-bdry.c array.h xmalloc.h tools.h
 txt2bin.o: txt2bin.c array.h xmalloc.h
 makegrid.o: makegrid.c
