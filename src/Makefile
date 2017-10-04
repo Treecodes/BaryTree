@@ -1,23 +1,23 @@
 OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o \
 	 treedriver.o partition.o xmalloc.o sort.o
-TARGET = tree
+TARGET = tree.exe
 
 OFILESD = main-grid.o tools.o tree-cp.o tree-cp-grid.o \
 	  treedriver-grid.o partition.o xmalloc.o sort.o
-TARGETD = tree-grid
+TARGETD = tree-grid.exe
 
 OFILESE = main-grid-bdry.o tools.o tree-cp.o tree-cp-grid-bdry.o \
       treedriver-grid-bdry.o partition.o xmalloc.o sort.o
-TARGETE = tree-grid-bdry
+TARGETE = tree-grid-bdry.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
-TARGETA = direct
+TARGETA = direct.exe
 
 OFILESB = txt2bin.o sort.o xmalloc.o
-TARGETB = txt2bin
+TARGETB = txt2bin.exe
 
 OFILESC = makegrid.o
-TARGETC = makegrid
+TARGETC = makegrid.exe
 
 OUTDIR = ../bin/
 CC = mpicc
@@ -49,12 +49,12 @@ clean:
 	rm -f $(OUTDIR)*
 
 bin:                                                                                         
-	mv $(TARGET) $(OUTDIR)$(TARGET)
-	mv $(TARGETA) $(OUTDIR)$(TARGETA)
-	mv $(TARGETB) $(OUTDIR)$(TARGETB)
-	mv $(TARGETC) $(OUTDIR)$(TARGETC)
-	mv $(TARGETD) $(OUTDIR)$(TARGETD)
-	mv $(TARGETE) $(OUTDIR)$(TARGETE)
+	cp $(TARGET) $(OUTDIR)$(TARGET)
+	cp $(TARGETA) $(OUTDIR)$(TARGETA)
+	cp $(TARGETB) $(OUTDIR)$(TARGETB)
+	cp $(TARGETC) $(OUTDIR)$(TARGETC)
+	cp $(TARGETD) $(OUTDIR)$(TARGETD)
+	cp $(TARGETE) $(OUTDIR)$(TARGETE)
 
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h

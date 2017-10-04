@@ -471,12 +471,12 @@ void compute_cp2_grid(struct tnode *ap, double *EnP)
         zhind = ap->zhind;
 
         for (i = xlind; i <= xhind; i++) {
+            dx = xl + (i-xlind)*dglobx  - xm;
             for (j = ylind; j <= yhind; j++) {
+                dy = yl + (j-ylind)*dgloby  - ym;
                 for (k = zlind; k <= zhind; k++) {
 
                     nn = (i * yglobdim * zglobdim) + (j * zglobdim) + k;
-                    dx = xl + (i-xlind)*dglobx  - xm;
-                    dy = yl + (j-ylind)*dgloby  - ym;
                     dz = zl + (k-zlind)*dglobz  - zm;
 
                     peng = ap->ms[0][0][porder];
@@ -538,12 +538,12 @@ void cp_comp_direct_grid(struct tnode *ap, double *EnP)
     zhind = ap->zhind;
 
     for (i = xlind; i <= xhind; i++) {
+        tx = xl + (i-xlind)*dglobx  - tarpos[0];
         for (j = ylind; j <= yhind; j++) {
+            ty = yl + (j-ylind)*dgloby  - tarpos[1];
             for (k = zlind; k <= zhind; k++) {
 
                 nn = (i * yglobdim * zglobdim) + (j * zglobdim) + k;
-                tx = xl + (i-xlind)*dglobx  - tarpos[0];
-                ty = yl + (j-ylind)*dgloby  - tarpos[1];
                 tz = zl + (k-zlind)*dglobz  - tarpos[2];
 
                 EnP[nn] = EnP[nn] + tarposq / sqrt(tx*tx + ty*ty + tz*tz);
