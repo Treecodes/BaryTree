@@ -1,29 +1,29 @@
 OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o \
 	 treedriver.o partition.o xmalloc.o sort.o
-TARGET = tree
+TARGET = tree.exe
 
 OFILESD = main-grid.o tools.o tree-cp.o tree-cp-grid.o \
 	  treedriver-grid.o partition.o xmalloc.o sort.o
-TARGETD = tree-grid
+TARGETD = tree-grid.exe
 
 OFILESE = main-grid-bdry.o tools.o tree-cp.o tree-cp-grid-bdry.o \
       treedriver-grid-bdry.o partition.o xmalloc.o sort.o
-TARGETE = tree-grid-bdry
+TARGETE = tree-grid-bdry.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
-TARGETA = direct
+TARGETA = direct.exe
 
 OFILESF = main-direct-grid.o tools.o xmalloc.o
-TARGETF = direct-grid
+TARGETF = direct-grid.exe
 
 OFILESG = main-direct-grid-bdry.o tools.o xmalloc.o
-TARGETG = direct-grid-bdry
+TARGETG = direct-grid-bdry.exe
 
 OFILESB = txt2bin.o sort.o xmalloc.o
-TARGETB = txt2bin
+TARGETB = txt2bin.exe
 
 OFILESC = makegrid.o
-TARGETC = makegrid
+TARGETC = makegrid.exe
 
 OUTDIR = ../bin/
 CC = mpicc
