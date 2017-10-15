@@ -1,23 +1,23 @@
 OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o \
 	 treedriver.o partition.o xmalloc.o sort.o
-TARGET = tree.exe
+TARGET = tree-flat.exe
 
 OFILESD = main-grid.o tools.o tree-cp.o tree-cp-grid.o \
 	  treedriver-grid.o partition.o xmalloc.o sort.o
-TARGETD = tree-grid.exe
+TARGETD = tree-grid-flat.exe
 
 OFILESE = main-grid-bdry.o tools.o tree-cp.o tree-cp-grid-bdry.o \
       treedriver-grid-bdry.o partition.o xmalloc.o sort.o
-TARGETE = tree-grid-bdry.exe
+TARGETE = tree-grid-bdry-flat.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
-TARGETA = direct.exe
+TARGETA = direct-flat.exe
 
 OFILESF = main-direct-grid.o tools.o xmalloc.o
-TARGETF = direct-grid.exe
+TARGETF = direct-grid-flat.exe
 
 OFILESG = main-direct-grid-bdry.o tools.o xmalloc.o
-TARGETG = direct-grid-bdry.exe
+TARGETG = direct-grid-bdry-flat.exe
 
 OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
