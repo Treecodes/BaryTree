@@ -27,7 +27,7 @@ TARGETC = makegrid.exe
 
 OUTDIR = ../bin/
 CC = mpicc
-CFLAGS = -Wall -O3 -lm
+CFLAGS = -Wall -O3
 
 all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) $(TARGETD) $(TARGETE) $(TARGETF) $(TARGETG) bin
 
