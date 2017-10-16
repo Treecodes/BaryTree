@@ -11,13 +11,13 @@ OFILESE = main-grid-bdry.o tools.o tree-cp.o tree-cp-grid-bdry.o \
 TARGETE = tree-grid-bdry-flat.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
-TARGETA = direct-flat.exe
+TARGETA = direct.exe
 
 OFILESF = main-direct-grid.o tools.o xmalloc.o
-TARGETF = direct-grid-flat.exe
+TARGETF = direct-grid.exe
 
 OFILESG = main-direct-grid-bdry.o tools.o xmalloc.o
-TARGETG = direct-grid-bdry-flat.exe
+TARGETG = direct-grid-bdry.exe
 
 OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
@@ -27,7 +27,7 @@ TARGETC = makegrid.exe
 
 OUTDIR = ../bin/
 CC = mpicc
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -O3 -lm
 
 all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) $(TARGETD) $(TARGETE) $(TARGETF) $(TARGETG) bin
 
