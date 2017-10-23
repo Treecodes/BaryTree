@@ -101,6 +101,8 @@ int main(int argc, char **argv)
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");       // 1
 
             printf("         sflag:  0--target sort, 1--target interleave, 2--sources \n");  // 0
+            printf("                 (note: sflag for determining parallel distribution.\n");
+            printf("                        currently only sources implemented.)\n");
             printf("         dflag:  if targets, direction 0--x, 1--y, 2--z \n");            // 0
             
             printf("          xmin:  if on grid, min x dimension \n");           // 0
