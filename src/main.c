@@ -139,6 +139,8 @@ int main(int argc, char **argv)
     numparsTloc = numparsT;
     numparsSloc = numparsS;
     
+    time1 = MPI_Wtime();
+
     if (pflag == 0) {
 
         numparsTloc = numparsT/p;
@@ -172,8 +174,6 @@ int main(int argc, char **argv)
     
         if (rank == 0) {
 
-            time1 = MPI_Wtime();
-
             MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
             MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
             for (i = 0; i < numparsT; i++) {
@@ -201,15 +201,9 @@ int main(int argc, char **argv)
     
             for (i=1; i < p; i++) {
                 scounts[i] = numparsTloc;
-                displs[i] = (i-1)*numparsTloc;
+                displs[i] = (i-1) * numparsTloc;
             }
-
-            time2 = MPI_Wtime();
-            time_preproc = time2 - time1;
-        
         }
-    
-        time1 = MPI_Wtime();
     
         MPI_Scatterv(&xT[maxparsTloc], scounts, displs, MPI_DOUBLE,
                      xT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -233,13 +227,10 @@ int main(int argc, char **argv)
 
         if (rank == 0) numparsTloc = maxparsTloc;
 
-        time2 = MPI_Wtime();
-        time_preproc += (time2 - time1);
-
     } else if (pflag == 1) {
 
         numparsSloc = numparsS / p;
-        if (rank == p-1) numparsSloc += ((numparsS - numparsS / p) * p);
+        if (rank == p-1) numparsSloc += (numparsS - (numparsS / p) * p);
     
         make_vector(xS,numparsSloc);
         make_vector(yS,numparsSloc);
@@ -286,7 +277,11 @@ int main(int argc, char **argv)
             MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
             MPI_File_close(&fpmpi);
         }
+
     }
+
+    time2 = MPI_Wtime();
+    time_preproc = time2 - time1;
 
 
     /* Calling main treecode subroutine to calculate approximate energy */
@@ -340,8 +335,19 @@ int main(int argc, char **argv)
     
     /* Computing pointwise potential errors */
     if (pflag == 0) { 
+
+        if (rank == 0) {
+            scounts[0] = maxparsTloc;
+            displs[0] = 0;
+            for (i=1; i < p; i++) {
+                scounts[i] = numparsTloc;
+                displs[i] = maxparsTloc + (i-1) * numparsTloc;
+            }
+        }
+
         MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE, tenergyglob,
                     scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
     } else if (pflag == 1) {
         MPI_Reduce(tenergy, tenergyglob, numparsT, 
                    MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
