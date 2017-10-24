@@ -143,7 +143,6 @@ int main(int argc, char **argv)
     xyzdim[2] = atoi(argv[20]);
 
     
-    
     time1 = MPI_Wtime();
     numparsT = 2 * xyzdim[0] * xyzdim[1] + 2 * xyzdim[0] * (xyzdim[2]-2)
              + 2 * (xyzdim[1]-2) * (xyzdim[2]-2);
@@ -161,53 +160,106 @@ int main(int argc, char **argv)
     memcpy(xyzddloc, xyzdd, sizeof(xyzdd));
     
 
-    numparsSloc = numparsS / p;
-    if (rank == p-1) numparsSloc += (numparsS - (numparsS / p) * p);
+    if (sflag == 2) {
+
+        numparsSloc = numparsS / p;
+        if (rank == p-1) numparsSloc += (numparsS - (numparsS / p) * p);
         
-    make_vector(xS,numparsSloc);
-    make_vector(yS,numparsSloc);
-    make_vector(zS,numparsSloc);
-    make_vector(qS,numparsSloc);
-    make_vector(tenergy,numparsT);
+        make_vector(xS,numparsSloc);
+        make_vector(yS,numparsSloc);
+        make_vector(zS,numparsSloc);
+        make_vector(qS,numparsSloc);
+        make_vector(tenergy,numparsT);
     
-    for (i = 0; i < numparsT; i++) tenergy[i] = 0.0;
+        for (i = 0; i < numparsT; i++) tenergy[i] = 0.0;
         
     /* Reading in coordinates and charges for the source particles*/
-    MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-    MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*4*sizeof(double)), MPI_SEEK_SET);
-    for (i = 0; i < numparsSloc; i++) {
-        MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
-        xS[i] = buf[0];
-        yS[i] = buf[1];
-        zS[i] = buf[2];
-        qS[i] = buf[3];
-    }
-    MPI_File_close(&fpmpi);
-        
-    if (rank == 0) {
-        make_vector(tenergyglob,numparsT);
-        make_vector(denergyglob,numparsT);
-            
-        MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
-        MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
-        MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
+        MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*4*sizeof(double)), MPI_SEEK_SET);
+        for (i = 0; i < numparsSloc; i++) {
+            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+            xS[i] = buf[0];
+            yS[i] = buf[1];
+            zS[i] = buf[2];
+            qS[i] = buf[3];
+        }
         MPI_File_close(&fpmpi);
+        
+        if (rank == 0) {
+            make_vector(tenergyglob,numparsT);
+            make_vector(denergyglob,numparsT);
+            
+            MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+            MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+            MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+            MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
+            MPI_File_close(&fpmpi);
+        }
+
+        xxminmax[0][0] = xyzminmax[0];  xxminmax[0][1] = xyzminmax[1];
+        xxminmax[0][2] = xyzminmax[2];  xxminmax[0][3] = xyzminmax[3];
+        xxdim[0][0] = xyzdim[0];  xxdim[0][1] = xyzdim[1];
+    
+        xxminmax[1][0] = xyzminmax[0];  xxminmax[1][1] = xyzminmax[1];
+        xxminmax[1][2] = xyzminmax[4]+xyzdd[2];  xxminmax[1][3] = xyzminmax[5]-xyzdd[2];
+        xxdim[1][0] = xyzdim[0];  xxdim[1][1] = xyzdim[2]-2;
+    
+        xxminmax[2][0] = xyzminmax[2]+xyzdd[1];  xxminmax[2][1] = xyzminmax[3]-xyzdd[1];
+        xxminmax[2][2] = xyzminmax[4]+xyzdd[2];  xxminmax[2][3] = xyzminmax[5]-xyzdd[2];
+        xxdim[2][0] = xyzdim[1]-2;  xxdim[2][1] = xyzdim[2]-2;
+
+    } else if (sflag == 0) {
+
+        numparsTloc[0] = numparsS / p;
+        if (rank == p-1) {
+            numparsSloc += (numparsS - (numparsS / p) * p);
+        }
+        
+        make_vector(xS,numparsS);
+        make_vector(yS,numparsS);
+        make_vector(zS,numparsS);
+        make_vector(qS,numparsS);
+        make_vector(tenergy,numparsT);
+    
+        for (i = 0; i < numparsT; i++) tenergy[i] = 0.0;
+        
+    /* Reading in coordinates and charges for the source particles*/
+        MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*4*sizeof(double)), MPI_SEEK_SET);
+        for (i = 0; i < numparsSloc; i++) {
+            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+            xS[i] = buf[0];
+            yS[i] = buf[1];
+            zS[i] = buf[2];
+            qS[i] = buf[3];
+        }
+        MPI_File_close(&fpmpi);
+        
+        if (rank == 0) {
+            make_vector(tenergyglob,numparsT);
+            make_vector(denergyglob,numparsT);
+            
+            MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+            MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+            MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+            MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
+            MPI_File_close(&fpmpi);
+        }
+
+        xxminmax[0][0] = xyzminmax[0];  xxminmax[0][1] = xyzminmax[1];
+        xxminmax[0][2] = xyzminmax[2];  xxminmax[0][3] = xyzminmax[3];
+        xxdim[0][0] = xyzdim[0];  xxdim[0][1] = xyzdim[1];
+    
+        xxminmax[1][0] = xyzminmax[0];  xxminmax[1][1] = xyzminmax[1];
+        xxminmax[1][2] = xyzminmax[4]+xyzdd[2];  xxminmax[1][3] = xyzminmax[5]-xyzdd[2];
+        xxdim[1][0] = xyzdim[0];  xxdim[1][1] = xyzdim[2]-2;
+    
+        xxminmax[2][0] = xyzminmax[2]+xyzdd[1];  xxminmax[2][1] = xyzminmax[3]-xyzdd[1];
+        xxminmax[2][2] = xyzminmax[4]+xyzdd[2];  xxminmax[2][3] = xyzminmax[5]-xyzdd[2];
+        xxdim[2][0] = xyzdim[1]-2;  xxdim[2][1] = xyzdim[2]-2;
+
+
     }
-    
-
-    xxminmax[0][0] = xyzminmax[0];  xxminmax[0][1] = xyzminmax[1];
-    xxminmax[0][2] = xyzminmax[2];  xxminmax[0][3] = xyzminmax[3];
-    xxdim[0][0] = xyzdim[0];  xxdim[0][1] = xyzdim[1];
-    
-    xxminmax[1][0] = xyzminmax[0];  xxminmax[1][1] = xyzminmax[1];
-    xxminmax[1][2] = xyzminmax[4]+xyzdd[2];  xxminmax[1][3] = xyzminmax[5]-xyzdd[2];
-    xxdim[1][0] = xyzdim[0];  xxdim[1][1] = xyzdim[2]-2;
-    
-    xxminmax[2][0] = xyzminmax[2]+xyzdd[1];  xxminmax[2][1] = xyzminmax[3]-xyzdd[1];
-    xxminmax[2][2] = xyzminmax[4]+xyzdd[2];  xxminmax[2][3] = xyzminmax[5]-xyzdd[2];
-    xxdim[2][0] = xyzdim[1]-2;  xxdim[2][1] = xyzdim[2]-2;
-
 
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
