@@ -41,7 +41,8 @@ int main(int argc, char **argv)
     int *iT = NULL;
 
     /* exact energy, treecode energy */
-    double *denergy = NULL;
+    double *denergyglob = NULL;
+    double *tenergyglob = NULL;
     double *tenergy = NULL;
 
     /* for potential energy calculation */
@@ -66,7 +67,7 @@ int main(int argc, char **argv)
 
     /* local variables */
     int i, j;
-    int numparsTloc, maxparsTloc;
+    int numparsTloc, maxparsTloc, numparsSloc;
     double buf[5];
     
     int *displs = NULL;
@@ -135,40 +136,135 @@ int main(int argc, char **argv)
     dflag = atoi(argv[17]);
     gflag = atoi(argv[18]);
 
+    numparsTloc = numparsT;
+    numparsSloc = numparsS;
     
-    numparsTloc = (int)floor((double)numparsT/(double)p);
-    maxparsTloc = numparsTloc + (numparsT - (int)floor((double)numparsT/(double)p) * p);
+    if (pflag == 0) {
+
+        numparsTloc = numparsT/p;
+        maxparsTloc = numparsTloc + (numparsS - (numparsS / p) * p);
     
+        make_vector(xS,numparsS);
+        make_vector(yS,numparsS);
+        make_vector(zS,numparsS);
+        make_vector(qS,numparsS);
     
-    make_vector(xS,numparsS);
-    make_vector(yS,numparsS);
-    make_vector(zS,numparsS);
-    make_vector(qS,numparsS);
+        if (rank == 0) {
+            make_vector(xT,numparsT);
+            make_vector(yT,numparsT);
+            make_vector(zT,numparsT);
+            make_vector(iT,numparsT);
+        
+            make_vector(tenergy,numparsT);
+            make_vector(tenergyglob,numparsT);
+            make_vector(denergyglob,numparsT);
+        
+            make_vector(displs,p);
+            make_vector(scounts,p);
+        } else {
+            make_vector(xT,numparsTloc);
+            make_vector(yT,numparsTloc);
+            make_vector(zT,numparsTloc);
+        
+            make_vector(tenergy,numparsTloc);
+        }
+
     
-    if (rank == 0) {
+        if (rank == 0) {
+
+            time1 = MPI_Wtime();
+
+            MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+            MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+            for (i = 0; i < numparsT; i++) {
+                MPI_File_read(fpmpi, buf, 3, MPI_DOUBLE, &status);
+                xT[i] = buf[0];
+                yT[i] = buf[1];
+                zT[i] = buf[2];
+                iT[i] = i;
+            }
+            MPI_File_close(&fpmpi);
+        
+            if (sflag == 0) sortTargets(xT, yT, zT, iT, numparsT, dflag);
+            if (sflag == 1 && gflag == 1) interleaveGridTargets(xT, yT, zT, iT, numparsT, p);
+
+            MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+            MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+            MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+
+            MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
+
+            MPI_File_close(&fpmpi);
+    
+            scounts[0] = 0;
+            displs[0] = 0;
+    
+            for (i=1; i < p; i++) {
+                scounts[i] = numparsTloc;
+                displs[i] = (i-1)*numparsTloc;
+            }
+
+            time2 = MPI_Wtime();
+            time_preproc = time2 - time1;
+        
+        }
+    
+        time1 = MPI_Wtime();
+    
+        MPI_Scatterv(&xT[maxparsTloc], scounts, displs, MPI_DOUBLE,
+                     xT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&yT[maxparsTloc], scounts, displs, MPI_DOUBLE,
+                     yT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&zT[maxparsTloc], scounts, displs, MPI_DOUBLE,
+                     zT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    
+
+        /* Reading in coordinates and charges for the source particles*/
+        MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+        for (i = 0; i < numparsS; i++) {
+            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+            xS[i] = buf[0];
+            yS[i] = buf[1];
+            zS[i] = buf[2];
+            qS[i] = buf[3];
+        }
+        MPI_File_close(&fpmpi);
+
+        if (rank == 0) numparsTloc = maxparsTloc;
+
+        time2 = MPI_Wtime();
+        time_preproc += (time2 - time1);
+
+    } else if (pflag == 1) {
+
+        numparsSloc = numparsS / p;
+        if (rank == p-1) numparsSloc += ((numparsS - numparsS / p) * p);
+    
+        make_vector(xS,numparsSloc);
+        make_vector(yS,numparsSloc);
+        make_vector(zS,numparsSloc);
+        make_vector(qS,numparsSloc);
+    
         make_vector(xT,numparsT);
         make_vector(yT,numparsT);
         make_vector(zT,numparsT);
         make_vector(iT,numparsT);
-        
         make_vector(tenergy,numparsT);
-        make_vector(denergy,numparsT);
         
-        make_vector(displs,p);
-        make_vector(scounts,p);
-    } else {
-        make_vector(xT,numparsTloc);
-        make_vector(yT,numparsTloc);
-        make_vector(zT,numparsTloc);
-        
-        make_vector(tenergy,numparsTloc);
-    }
+        /* Reading in coordinates and charges for the source particles*/
+        MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*4*sizeof(double)), MPI_SEEK_SET);
+        for (i = 0; i < numparsSloc; i++) {
+            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+            xS[i] = buf[0];
+            yS[i] = buf[1];
+            zS[i] = buf[2];
+            qS[i] = buf[3];
+        }
+        MPI_File_close(&fpmpi);
 
-    
-    if (rank == 0) {
-
-        time1 = MPI_Wtime();
-
+        /* Reading in coordinates for target particles*/
         MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         for (i = 0; i < numparsT; i++) {
@@ -179,63 +275,22 @@ int main(int argc, char **argv)
             iT[i] = i;
         }
         MPI_File_close(&fpmpi);
-        
-        if (sflag == 0) sortTargets(xT, yT, zT, iT, numparsT, dflag);
-        if (sflag == 1 && gflag == 1) interleaveGridTargets(xT, yT, zT, iT, numparsT, p);
 
-        MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
-        MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+        if (rank == 0) {
+            make_vector(tenergyglob,numparsT);
+            make_vector(denergyglob,numparsT);
 
-        MPI_File_read(fpmpi, denergy, numparsT, MPI_DOUBLE, &status);
-
-        MPI_File_close(&fpmpi);
-    
-        scounts[0] = 0;
-        displs[0] = 0;
-    
-        for (i=1; i < p; i++) {
-            scounts[i] = numparsTloc;
-            displs[i] = (i-1)*numparsTloc;
+            MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+            MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+            MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+            MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
+            MPI_File_close(&fpmpi);
         }
-
-        time2 = MPI_Wtime();
-        time_preproc = time2 - time1;
-        
-        //for (i = 0; i < numparsT; i++)
-        //    printf("%d : %d, %f, %f, %f\n", i, iT[i], xT[i], yT[i], zT[i]);
     }
-    
-    time1 = MPI_Wtime();
-    
-    MPI_Scatterv(&xT[maxparsTloc], scounts, displs, MPI_DOUBLE,
-                 xT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&yT[maxparsTloc], scounts, displs, MPI_DOUBLE,
-                 yT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&zT[maxparsTloc], scounts, displs, MPI_DOUBLE,
-                 zT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
-
-    /* Reading in coordinates and charges for the source particles*/
-    MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-    MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
-    for (i = 0; i < numparsS; i++) {
-        MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
-        xS[i] = buf[0];
-        yS[i] = buf[1];
-        zS[i] = buf[2];
-        qS[i] = buf[3];
-    }
-    MPI_File_close(&fpmpi);
 
 
-    time2 = MPI_Wtime();
-    time_preproc += (time2 - time1);
-
-
-    if (rank == 0) numparsTloc = maxparsTloc;
     /* Calling main treecode subroutine to calculate approximate energy */
-    treecode(xS, yS, zS, qS, xT, yT, zT, numparsS, numparsTloc,
+    treecode(xS, yS, zS, qS, xT, yT, zT, numparsSloc, numparsTloc,
              tenergy, &tpeng, order, theta, 1, maxparnode, time_tree,
              treelevel, iflag, pot_type, kappa, tree_type);
 
@@ -245,7 +300,7 @@ int main(int argc, char **argv)
     MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
-    if (rank == 0) dpengglob = sum(denergy, numparsT);
+    if (rank == 0) dpengglob = sum(denergyglob, numparsT);
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     
@@ -284,17 +339,13 @@ int main(int argc, char **argv)
     
     
     /* Computing pointwise potential errors */
-    if (p > 1) {
-        MPI_Gatherv(xT, numparsTloc, MPI_DOUBLE,
-                    &xT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Gatherv(yT, numparsTloc, MPI_DOUBLE,
-                    &yT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Gatherv(zT, numparsTloc, MPI_DOUBLE,
-                    &zT[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE,
-                    &tenergy[maxparsTloc], scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    if (pflag == 0) { 
+        MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE, tenergyglob,
+                    scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    } else if (pflag == 1) {
+        MPI_Reduce(tenergy, tenergyglob, numparsT, 
+                   MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     }
-    
 
     if (rank == 0)
     {
@@ -304,16 +355,16 @@ int main(int argc, char **argv)
         reln2err = 0.0;
 
         for (j = 0; j < numparsT; j++) {
-            temp = fabs(denergy[iT[j]] - tenergy[j]);
+            temp = fabs(denergyglob[iT[j]] - tenergyglob[j]);
         
             if (temp >= inferr)
                 inferr = temp;
 
-            if (fabs(denergy[j]) >= relinferr)
-                relinferr = fabs(denergy[j]);
+            if (fabs(denergyglob[j]) >= relinferr)
+                relinferr = fabs(denergyglob[j]);
 
-            n2err = n2err + pow(denergy[iT[j]] - tenergy[j], 2.0);
-            reln2err = reln2err + pow(denergy[j], 2.0);
+            n2err = n2err + pow(denergyglob[iT[j]] - tenergyglob[j], 2.0);
+            reln2err = reln2err + pow(denergyglob[j], 2.0);
         }
 
         relinferr = inferr / relinferr;
@@ -363,12 +414,16 @@ int main(int argc, char **argv)
     free_vector(yT);
     free_vector(zT);
     free_vector(iT);
-    
-    free_vector(denergy);
     free_vector(tenergy);
-    
-    free_vector(displs);
-    free_vector(scounts);
+
+    if (rank == 0) {
+        free_vector(denergyglob);
+        free_vector(tenergyglob);
+        if (pflag == 0) {
+            free_vector(displs);
+            free_vector(scounts);
+        }
+    }
     
     MPI_Finalize();
     return 0;
