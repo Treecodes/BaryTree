@@ -210,10 +210,51 @@ int main(int argc, char **argv)
 
     } else if (sflag == 0) {
 
-        numparsTloc[0] = numparsS / p;
-        if (rank == p-1) {
-            numparsSloc += (numparsS - (numparsS / p) * p);
+        // Setting x-y grids
+        tempdim = xyzdim[0] / p;
+        if (rank < p-1) {
+            xxdim[0][0] = tempdim;
+            xxminmax[0][0] = xyzminmax[0] + (rank * tempdim) * xyzdd[0];  
+            xxminmax[0][1] = xyzminmax[0] + ((rank + 1) * tempdim - 1) * xyzdd[0];
+        } else if (rank == p-1) {
+            xxdim[0][0] = xyzdim[0] - tempdim * (p-1);
+            xxminmax[0][0] = xyzminmax[0] + (rank * tempdim) * xyzdd[0];
+            xxminmax[0][1] = xyzminmax[1];
         }
+        xxdim[0][1] = xyzdim[1];
+        xxminmax[0][2] = xyzminmax[2];
+        xxminmax[0][3] = xyzminmax[3];
+    
+        // Setting x-z grids
+        tempdim = xyzdim[0] / p;
+        if (rank < p-1) {
+            xxdim[1][0] = tempdim;  
+            xxminmax[1][0] = xyzminmax[0] + (rank * tempdim) * xyzdd[0];  
+            xxminmax[1][1] = xyzminmax[0] + ((rank + 1) * tempdim - 1) * xyzdd[0];
+        } else if (rank == p-1) {
+            xxdim[1][0] = xyzdim[0] - tempdim * (p-1);  
+            xxminmax[1][0] = xyzminmax[0] + (rank * tempdim) * xyzdd[0];  
+            xxminmax[1][1] = xyzminmax[1];
+        }
+        xxdim[1][1] = xyzdim[2]-2;
+        xxminmax[1][2] = xyzminmax[4]+xyzdd[2];
+        xxminmax[1][3] = xyzminmax[5]-xyzdd[2];
+    
+        // Setting y-z grids
+        tempdim = (xyzdim[1]-2) / p;
+        if (rank < p-1) {
+            xxdim[2][0] = xyzdim[1]-2;  
+            xxminmax[2][0] = xyzminmax[2] + xyzdd[1] + (rank * tempdim) * xyzdd[1];
+            xxminmax[2][1] = xyzminmax[2] + xyzdd[1] + ((rank + 1) * tempdim - 1) * xyzdd[1];
+        } else if (rank == p-1) {
+            xxdim[2][0] = (xyzdim[1]-2) - tempdim * (p-1);  
+            xxminmax[2][0] = xyzminmax[2] + xyzdd[1] + (rank * tempdim) * xyzdd[1];
+            xxminmax[2][1] = xyzminmax[3] - xyzdd[1];
+        }
+        xxdim[2][1] = xyzdim[2]-2;
+        xxminmax[2][2] = xyzminmax[4]+xyzdd[2];  
+        xxminmax[2][3] = xyzminmax[5]-xyzdd[2];
+
         
         make_vector(xS,numparsS);
         make_vector(yS,numparsS);
@@ -225,8 +266,8 @@ int main(int argc, char **argv)
         
     /* Reading in coordinates and charges for the source particles*/
         MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*4*sizeof(double)), MPI_SEEK_SET);
-        for (i = 0; i < numparsSloc; i++) {
+        MPI_File_seek(fpmpi, (MPI_Offset)(0), MPI_SEEK_SET);
+        for (i = 0; i < numparsS; i++) {
             MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
             xS[i] = buf[0];
             yS[i] = buf[1];
@@ -245,19 +286,6 @@ int main(int argc, char **argv)
             MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
             MPI_File_close(&fpmpi);
         }
-
-        xxminmax[0][0] = xyzminmax[0];  xxminmax[0][1] = xyzminmax[1];
-        xxminmax[0][2] = xyzminmax[2];  xxminmax[0][3] = xyzminmax[3];
-        xxdim[0][0] = xyzdim[0];  xxdim[0][1] = xyzdim[1];
-    
-        xxminmax[1][0] = xyzminmax[0];  xxminmax[1][1] = xyzminmax[1];
-        xxminmax[1][2] = xyzminmax[4]+xyzdd[2];  xxminmax[1][3] = xyzminmax[5]-xyzdd[2];
-        xxdim[1][0] = xyzdim[0];  xxdim[1][1] = xyzdim[2]-2;
-    
-        xxminmax[2][0] = xyzminmax[2]+xyzdd[1];  xxminmax[2][1] = xyzminmax[3]-xyzdd[1];
-        xxminmax[2][2] = xyzminmax[4]+xyzdd[2];  xxminmax[2][3] = xyzminmax[5]-xyzdd[2];
-        xxdim[2][0] = xyzdim[1]-2;  xxdim[2][1] = xyzdim[2]-2;
-
 
     }
 
