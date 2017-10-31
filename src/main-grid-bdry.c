@@ -243,7 +243,7 @@ int main(int argc, char **argv)
         // Setting y-z grids
         tempdim = (xyzdim[1]-2) / p;
         if (rank < p-1) {
-            xxdim[2][0] = xyzdim[1]-2;  
+            xxdim[2][0] = tempdim;  
             xxminmax[2][0] = xyzminmax[2] + xyzdd[1] + (rank * tempdim) * xyzdd[1];
             xxminmax[2][1] = xyzminmax[2] + xyzdd[1] + ((rank + 1) * tempdim - 1) * xyzdd[1];
         } else if (rank == p-1) {
