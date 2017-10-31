@@ -29,10 +29,10 @@ OUTDIR = ../bin/
 CC = mpicc
 
 ifeq ($(uname), Linux) 
-CFLAGS = -Wall -O3 -lm
+CFLAGS = -Wall -O3 -lm -I$(GSL_INCLUDE) -L$(GSL_LIB) -lgsl -lgslcblas
 endif
 ifeq ($(uname), Darwin)
-CFLAGS = -Wall -O3
+CFLAGS = -Wall -O3 -I/usr/local/include -L/usr/local/lib -lgsl
 endif
 
 all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) $(TARGETD) $(TARGETE) $(TARGETF) $(TARGETG) bin
