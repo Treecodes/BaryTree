@@ -22,12 +22,15 @@ TARGETC = makegrid.exe
 OUTDIR = ../bin/
 CC = mpicc
 
-ifeq ($(uname), Linux)                                                                       
-CFLAGS = -Wall -O3 -lm                                                                       
-endif                                                                                        
-ifeq ($(uname), Darwin)                                                                      
-CFLAGS = -Wall -O3                                                                           
-endif 
+UNAME := $(shell uname -s)
+
+ifeq ($(UNAME),Linux)
+CFLAGS = -Wall -O3 -I$(GSL_INCLUDE) -L$(GSL_LIB) -lgsl -lgslcblas -lm -ldl
+endif
+ifeq ($(UNAME),Darwin)  
+CFLAGS = -Wall -O3 -I/usr/local/include -L/usr/local/lib -lgsl
+endif
+
 
 all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) $(TARGETD) $(TARGETE) bin
 
