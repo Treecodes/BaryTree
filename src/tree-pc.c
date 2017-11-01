@@ -449,9 +449,9 @@ void compute_pc(struct tnode *p, double *peng,
 
         comp_tcoeff(tx, ty, tz);
         
-        for (k = torder; k > -1; k--) {
-            for (j = torder - k; j > -1; j--) {
-                for (i = torder - k - j; i > -1; i--) {
+        for (k = 0; k < torder + 1; k++) {
+            for (j = 0; j < torder - k + 1; j++) {
+                for (i = 0; i < torder - k - j + 1; i++) {
                     *peng += b1[i][j][k] * p->ms[++kk];
                 }
             }
@@ -514,7 +514,7 @@ void pc_comp_direct(double *peng, int ibeg, int iend,
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
 {
 
-    int i, k1, k2, k3, kk=-1;
+    int i, k1, k2, k3, kk;
     double dx, dy, dz, tx, ty, tz, qloc;
     
     for (i = p->ibeg-1; i < p->iend; i++) {
@@ -523,12 +523,13 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
         dz = z[i] - p->z_mid;
         qloc = q[i];
         
+        kk = -1;
         tz = 1.0;
-        for (k3 = torder; k3 > -1; k3--) {
+        for (k3 = 0; k3 < torder + 1; k3++) {
             ty = 1.0;
-            for (k2 = torder - k3; k2 > -1; k2--) {
+            for (k2 = 0; k2 < torder - k3 + 1; k2++) {
                 tx = 1.0;
-                for (k1 = torder - k3 - k2; k1 > -1; k1--) {
+                for (k1 = 0; k1 < torder - k3 - k2 + 1; k1++) {
                     p->ms[++kk] += qloc * tx*ty*tz;
                     tx *= dx;
                 }
