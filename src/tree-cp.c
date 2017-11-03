@@ -499,13 +499,6 @@ void compute_cp1(struct tnode *p, double *EnP,
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
-        for (i = 0; i < torderlim; i++) {
-            for (j = 0; j < torderlim; j++) {
-                for (k = 0; k < torderlim; k++) {
-                    b1[i][j][k] = 0.0;
-                }
-            }
-        }
         
         comp_tcoeff(tx, ty, tz);
 
@@ -635,7 +628,7 @@ void comp_tcoeff(double dx, double dy, double dz)
     b1[1][0][1] = fac * (dx * b1[0][0][1] + tdz * b1[1][0][0]);
     b1[0][1][1] = fac * (dy * b1[0][0][1] + tdz * b1[0][1][0]);
 
-    for (i = 2; i < torderlim; i++) {
+    for (i = 2; i < torderlim - 1; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
@@ -659,11 +652,11 @@ void comp_tcoeff(double dx, double dy, double dz)
     }
 
     /* set of indices for which one is 0, others are >=2 */
-    for (i = 2; i < torderlim - 1; i++) {
+    for (i = 2; i < torderlim - 2; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
-        for (j = 2; j < torderlim - i + 1; j++) {
+        for (j = 2; j < torderlim - i; j++) {
             j1 = j - 1;
             j2 = j - 2;
 
@@ -688,7 +681,7 @@ void comp_tcoeff(double dx, double dy, double dz)
     b1[1][1][1] = fac * (dx * b1[0][1][1] + tdy * b1[1][0][1]
                                           + tdz * b1[1][1][0]);
 
-    for (i = 2; i < torderlim - 1; i++) {
+    for (i = 2; i < torderlim - 2; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
@@ -703,11 +696,11 @@ void comp_tcoeff(double dx, double dy, double dz)
     }
 
     /* set of indices for which one is 1, others are >= 2 */
-    for (i = 2; i < torderlim - 2; i++) {
+    for (i = 2; i < torderlim - 3; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
-        for (j = 2; j < torderlim - i + 1; j++) {
+        for (j = 2; j < torderlim - i - 1; j++) {
             j1 = j - 1;
             j2 = j - 2;
 
@@ -726,17 +719,17 @@ void comp_tcoeff(double dx, double dy, double dz)
     }
 
     /* set of indices for which all are >= 2 */
-    for (k = 2; k < torderlim - 3; k++) {
-        k1 = k - 1;
-        k2 = k - 2;
+    for (i = 2; i < torderlim - 4; i++) {
+        i1 = i - 1;
+        i2 = i - 2;
                 
-        for (j = 2; j < torderlim - k - 1; j++) {
+        for (j = 2; j < torderlim - i - 2; j++) {
             j1 = j - 1;
             j2 = j - 2;
 
-            for (i = 2; i < torderlim - k - j + 1; i++) {
-                i1 = i - 1;
-                i2 = i - 2;
+            for (k = 2; k < torderlim - i - j; k++) {
+                k1 = k - 1;
+                k2 = k - 2;
 
                 b1[i][j][k] = fac * (tdx * cf1[i1] * b1[i1][j][k]
                                              + tdy * b1[i][j1][k]
