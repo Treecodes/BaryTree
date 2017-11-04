@@ -394,13 +394,6 @@ void compute_cp1_grid(struct tnode *p, double *EnP)
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
-        for (i = 0; i < torderlim; i++) {
-            for (j = 0; j < torderlim; j++) {
-                for (k = 0; k < torderlim; k++) {
-                    b1[i][j][k] = 0.0;
-                }
-            }
-        }
         
         comp_tcoeff(tx, ty, tz);
 
