@@ -129,14 +129,6 @@ void compute_cp1_yuk(struct tnode *p, double *EnP,
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
-        for (i = 0; i < torderlim + 1; i++) {
-            for (j = 0; j < torderlim + 1; j++) {
-                for (k = 0; k < torderlim + 1; k++) {
-                    b1[i][j][k] = 0.0;
-                    a1[i][j][k] = 0.0;
-                }
-            }
-        }
 
         comp_tcoeff_yuk(tx, ty, tz, kappa);
 

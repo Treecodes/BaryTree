@@ -71,14 +71,6 @@ void compute_pc_yuk(struct tnode *p, double *peng,
          * If MAC is accepted and there is more than 1 particle
          * in the box, use the expansion for the approximation.
          */
-        for (i = 0; i < torderlim + 3; i++) {
-            for (j = 0; j < torderlim + 3; j++) {
-                for (k = 0; k < torderlim + 3; k++) {
-                    b1[i][j][k] = 0.0;
-                    a1[i][j][k] = 0.0;
-                }
-            }
-        }
         
         if (p->exist_ms == 0) {
             make_vector(p->ms, torderflat);
