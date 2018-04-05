@@ -348,6 +348,7 @@ void pc_comp_direct(double *peng, int ibeg, int iend,
     
     *peng = 0.0;
 
+    #pragma acc kernels
     for (i = ibeg - 1; i < iend; i++) {
         tx = x[i] - tarpos[0];
         ty = y[i] - tarpos[1];
