@@ -629,6 +629,7 @@ void comp_tcoeff(double dx, double dy, double dz)
     b1[0][1][1] = fac * (dy * b1[0][0][1] + tdz * b1[0][1][0]);
 
     for (i = 2; i < torderlim - 1; i++) {
+
         i1 = i - 1;
         i2 = i - 2;
 
@@ -682,6 +683,7 @@ void comp_tcoeff(double dx, double dy, double dz)
                                           + tdz * b1[1][1][0]);
 
     for (i = 2; i < torderlim - 2; i++) {
+
         i1 = i - 1;
         i2 = i - 2;
 
@@ -719,17 +721,18 @@ void comp_tcoeff(double dx, double dy, double dz)
     }
 
     /* set of indices for which all are >= 2 */
-    for (i = 2; i < torderlim - 4; i++) {
-        i1 = i - 1;
-        i2 = i - 2;
+  
+    for (k = 2; k < torderlim - 4; k++) {
+        k1 = k - 1;
+        k2 = k - 2;
                 
-        for (j = 2; j < torderlim - i - 2; j++) {
+        for (j = 2; j < torderlim - k - 2; j++) {
             j1 = j - 1;
             j2 = j - 2;
 
-            for (k = 2; k < torderlim - i - j; k++) {
-                k1 = k - 1;
-                k2 = k - 2;
+            for (i = 2; i < torderlim - k - j - 1; i++) {
+                i1 = i - 1;
+                i2 = i - 2;
 
                 b1[i][j][k] = fac * (tdx * cf1[i1] * b1[i1][j][k]
                                              + tdy * b1[i][j1][k]

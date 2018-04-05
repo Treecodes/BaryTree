@@ -395,6 +395,7 @@ void compute_cp1_grid(struct tnode *p, double *EnP)
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
+
         comp_tcoeff(tx, ty, tz);
 
         if (p->exist_ms == 0) {
