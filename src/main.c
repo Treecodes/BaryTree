@@ -21,8 +21,8 @@ int main(int argc, char **argv)
 
     /* runtime parameters */
     int numparsS, numparsT, order;
-    int maxparnode, treelevel;
-    int iflag, pot_type, tree_type;
+    int maxparnode;
+    int pot_type, tree_type;
     int pflag, sflag, dflag, gflag;
 
     double theta, temp;
@@ -96,8 +96,6 @@ int main(int argc, char **argv)
             printf("         order:  order of treecode Taylor expansion \n");        // 20
             printf("     tree_type:  0--cluster-particle, 1--particle-cluster \n");  // 0
             printf("    maxparnode:  maximum particles in leaf \n");                 // 500
-            printf("     treelevel:  maximum tree levels \n");                       // 5
-            printf("         iflag:  0--use maxparnode, 1--use treelevel \n");       // 0
             printf("         kappa:  screened Coulomb parameter \n");                // 0.00
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
             printf("         pflag:  distribute 0--targets, 1--sources \n");         // 0
@@ -116,14 +114,12 @@ int main(int argc, char **argv)
     order = atoi(argv[8]);
     tree_type = atoi(argv[9]);
     maxparnode = atoi(argv[10]);
-    treelevel = atoi(argv[11]);
-    iflag = atoi(argv[12]);
-    kappa = atof(argv[13]);
-    pot_type = atoi(argv[14]);
-    pflag = atoi(argv[15]);
-    sflag = atoi(argv[16]);
-    dflag = atoi(argv[17]);
-    gflag = atoi(argv[18]);
+    kappa = atof(argv[11]);
+    pot_type = atoi(argv[12]);
+    pflag = atoi(argv[13]);
+    sflag = atoi(argv[14]);
+    dflag = atoi(argv[15]);
+    gflag = atoi(argv[16]);
 
     numparsTloc = numparsT;
     numparsSloc = numparsS;
@@ -376,12 +372,12 @@ int main(int argc, char **argv)
     if (rank == 0) {
         fp = fopen(sampout, "a");
         fprintf(fp, "%s \t %s \t %s \t %d \t %d \t %f \t %d \t %d \t %d \t"
-                "%d \t %d \t %f \t %d \t %d \t %d \t"
+                "%f \t %d \t %d \t %d \t"
                 "%d \t %f \t %f \t %f \t %f \t %f \t %f \t %f \t"
                 "%f \t %f \t %f \t %f \t %f \t %f \t %f \t"
                 "%e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \n",
                 sampin1, sampin2, sampin3, numparsS, numparsT,
-                theta, order, tree_type, maxparnode, treelevel, iflag,
+                theta, order, tree_type, maxparnode,
                 kappa, pot_type, sflag, pflag, //2 ends
                 p, time_preproc,
                 time_tree_glob[0][0], time_tree_glob[1][0],
