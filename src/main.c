@@ -119,7 +119,6 @@ int main(int argc, char **argv)
     pflag = atoi(argv[13]);
     sflag = atoi(argv[14]);
     dflag = atoi(argv[15]);
-    gflag = atoi(argv[16]);
 
     numparsTloc = numparsT;
     numparsSloc = numparsS;
@@ -156,7 +155,6 @@ int main(int argc, char **argv)
             make_vector(tenergy,numparsTloc);
         }
 
-    
         if (rank == 0) {
 
             MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -197,7 +195,6 @@ int main(int argc, char **argv)
         MPI_Scatterv(&zT[maxparsTloc], scounts, displs, MPI_DOUBLE,
                      zT, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     
-
         /* Reading in coordinates and charges for the source particles*/
         MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
@@ -239,6 +236,7 @@ int main(int argc, char **argv)
             qS[i] = buf[3];
         }
         MPI_File_close(&fpmpi);
+
 
         /* Reading in coordinates for target particles*/
         MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);

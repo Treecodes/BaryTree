@@ -10,6 +10,8 @@ TARGETB = txt2bin.exe
 
 OUTDIR = ../bin/
 CC = mpicc
+CFLAGS = -acc -Minfo=all
+
 
 UNAME := $(shell uname -s)
 
