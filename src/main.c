@@ -103,17 +103,6 @@ int main(int argc, char **argv)
             printf("         pflag:  distribute 0--targets, 1--sources \n");         // 0
             printf("         sflag:  on distr 0--sort, 1--no sort \n");              // 0
             printf("         dflag:  if sorted, direction 0--x, 1--y, 2--z \n");     // 0
-
-            printf("         gflag:  targets on 0--not grid, 1--grid \n");       // 0
-            printf("          xmin:  if on grid, min x dimension \n");           // 0
-            printf("          xmax:  if on grid, max x dimension \n");           // 0
-            printf("          ymin:  if on grid, min y dimension \n");           // 0
-            printf("          ymax:  if on grid, max y dimension \n");           // 0
-            printf("          zmin:  if on grid, min z dimension \n");           // 0
-            printf("          zmax:  if on grid, max z dimension \n");           // 0
-            printf("          xind:  if on grid, number x gridpoints \n");       // 0
-            printf("          yind:  if on grid, number y gridpoints \n");       // 0
-            printf("          zind:  if on grid, number z gridpoints \n");       // 0
         }
         return 0;
     }
