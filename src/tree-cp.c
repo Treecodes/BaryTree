@@ -91,7 +91,7 @@ void setup(double *x, double *y, double *z,
 
 void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
                     double *x, double *y, double *z,
-                    int shrink, int maxparnode,
+                    int maxparnode,
                     double *xyzmm, int level)
 {
     /*local variables*/
@@ -124,24 +124,12 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
 
-    if (shrink == 1) {
-        nump = iend - ibeg + 1;
-
-        (*p)->x_min = minval(x + ibeg - 1, nump);
-        (*p)->x_max = maxval(x + ibeg - 1, nump);
-        (*p)->y_min = minval(y + ibeg - 1, nump);
-        (*p)->y_max = maxval(y + ibeg - 1, nump);
-        (*p)->z_min = minval(z + ibeg - 1, nump);
-        (*p)->z_max = maxval(z + ibeg - 1, nump);
-
-    } else {
-        (*p)->x_min = xyzmm[0];
-        (*p)->x_max = xyzmm[1];
-        (*p)->y_min = xyzmm[2];
-        (*p)->y_max = xyzmm[3];
-        (*p)->z_min = xyzmm[4];
-        (*p)->z_max = xyzmm[5];
-    }
+    (*p)->x_min = minval(x + ibeg - 1, nump);
+    (*p)->x_max = maxval(x + ibeg - 1, nump);
+    (*p)->y_min = minval(y + ibeg - 1, nump);
+    (*p)->y_max = maxval(y + ibeg - 1, nump);
+    (*p)->z_min = minval(z + ibeg - 1, nump);
+    (*p)->z_max = maxval(z + ibeg - 1, nump);
 
     /*compute aspect ratio*/
     xl = (*p)->x_max - (*p)->x_min;
@@ -219,7 +207,7 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
                     lxyzmm[j] = xyzmms[j][i];
 
                 cp_create_tree_n0(&((*p)->child[(*p)->num_children - 1]),
-                                  ind[i][0], ind[i][1], x, y, z, shrink,
+                                  ind[i][0], ind[i][1], x, y, z,
                                   maxparnode, lxyzmm, loclev);
             }
         }
@@ -237,128 +225,6 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
 
 } /* end of function create_tree_n0 */
 
-
-
-
-void cp_create_tree_lv(struct tnode **p, int ibeg, int iend,
-                       double *x, double *y, double *z, int shrink,
-                       int treelevel, double *xyzmm, int level)
-{
-    /* local variables */
-    double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int i, j, loclev, numposchild, nump;
-    
-    int ind[8][2];
-    double xyzmms[6][8];
-    double lxyzmm[6];
-
-    (*p) = malloc(sizeof(struct tnode));
-
-    (*p)->numpar = iend - ibeg + 1;
-    (*p)->exist_ms = 0;
-
-    if (shrink == 1) {
-        nump = iend - ibeg + 1;
-
-        (*p)->x_min = minval(x + ibeg - 1, nump);
-        (*p)->x_max = maxval(x + ibeg - 1, nump);
-        (*p)->y_min = minval(y + ibeg - 1, nump);
-        (*p)->y_max = maxval(y + ibeg - 1, nump);
-        (*p)->z_min = minval(z + ibeg - 1, nump);
-        (*p)->z_max = maxval(z + ibeg - 1, nump);
-
-    } else {
-        (*p)->x_min = xyzmm[0];
-        (*p)->x_max = xyzmm[1];
-        (*p)->y_min = xyzmm[2];
-        (*p)->y_max = xyzmm[3];
-        (*p)->z_min = xyzmm[4];
-        (*p)->z_max = xyzmm[5];
-    }
-
-    /* compute aspect ratio */
-    xl = (*p)->x_max - (*p)->x_min;
-    yl = (*p)->y_max - (*p)->y_min;
-    zl = (*p)->z_max - (*p)->z_min;
-
-    lmax = max3(xl, yl, zl);
-    t1 = lmax;
-    t2 = min3(xl, yl, zl);
-
-    if (t2 != 0.0)
-        (*p)->aspect = t1/t2;
-    else
-        (*p)->aspect = 0.0;
-
-    /* midpoint coordinates, RADIUS and SQRADIUS */
-    (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
-    (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
-    (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
-
-    t1 = (*p)->x_max - (*p)->x_mid;
-    t2 = (*p)->y_max - (*p)->y_mid;
-    t3 = (*p)->z_max - (*p)->z_mid;
-        
-    (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
-    (*p)->radius = sqrt((*p)->sqradius);
-
-    /* set particle limits, tree level of node, nullify children */
-    (*p)->ibeg = ibeg;
-    (*p)->iend = iend;
-    (*p)->level = level;
-
-    (*p)->num_children = 0;
-
-    for (i = 0; i < 8; i++)
-        free((*p)->child[i]);
-
-    /*
-     * set IND array to 0 and then call PARTITION8 routine.
-     * IND array holds indices of the eight new subregions.
-     * Also, setup XYZMMS array in case SHRINK = 1.
-     */
-    if (level < treelevel) {
-        xyzmms[0][0] = (*p)->x_min;
-        xyzmms[1][0] = (*p)->x_max;
-        xyzmms[2][0] = (*p)->y_min;
-        xyzmms[3][0] = (*p)->y_max;
-        xyzmms[4][0] = (*p)->z_min;
-        xyzmms[5][0] = (*p)->z_max;
-
-        ind[0][0] = ibeg;
-        ind[0][1] = iend;
-
-        x_mid = (*p)->x_mid;
-        y_mid = (*p)->y_mid;
-        z_mid = (*p)->z_mid;
-
-        cp_partition_8(x, y, z, xyzmms, xl, yl, zl, lmax, &numposchild,
-                       x_mid, y_mid, z_mid, ind);
-
-        loclev = level + 1;
-
-        for (i = 0; i < numposchild; i++) {
-            if (ind[i][0] <= ind[i][1]) {
-                (*p)->num_children = (*p)->num_children + 1;
-
-                for (j = 0; j < 6; j++)
-                    lxyzmm[j] = xyzmms[j][i];
-
-                cp_create_tree_lv(&((*p)->child[(*p)->num_children - 1]),
-                                  ind[i][0], ind[i][1], x, y, z, shrink,
-                                  treelevel, lxyzmm, loclev);
-            }
-        }
-
-    } else {
-        
-        if (level < minlevel)
-            minlevel = level;
-    }
-
-    return;
-
-} /* END of function create_tree_lv */
 
 
 void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],

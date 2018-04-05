@@ -16,8 +16,8 @@
 void treecode(double *xS, double *yS, double *zS, double *qS, 
               double *xT, double *yT, double *zT,
               int numparsS, int numparsT, double *tEn, double *tpeng, 
-              int order, double theta, int shrink, int maxparnode,
-              double *timetree, int treelevel, int iflag,
+              int order, double theta, int maxparnode,
+              double *timetree, 
               int pot_type, double kappa, int tree_type)
 {
 
@@ -56,27 +56,15 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     printf("Creating tree... \n\n");
 
     if (tree_type == 0) {
-        if (iflag == 0) {
-            maxlevel = 0;
-            maxpars = 0;
-            cp_create_tree_n0(&troot, 1, numparsT, xT, yT, zT,
-                              shrink, maxparnode, xyzminmax, level);
-        } else if (iflag == 1) {
-            maxlevel = treelevel;
-            cp_create_tree_lv(&troot, 1, numparsT, xT, yT, zT,
-                              shrink, treelevel, xyzminmax, level);
-        }
+        maxlevel = 0;
+        maxpars = 0;
+        cp_create_tree_n0(&troot, 1, numparsT, xT, yT, zT,
+                          maxparnode, xyzminmax, level);
     } else if (tree_type == 1) {
-        if (iflag == 0) {
-            maxlevel = 0;
-            maxpars = 0;
-            pc_create_tree_n0(&troot, 1, numparsS, xS, yS, zS, qS,
-                              shrink, maxparnode, xyzminmax, level);
-        } else if (iflag == 1) {
-            maxlevel = treelevel;
-            pc_create_tree_lv(&troot, 1, numparsS, xS, yS, zS, qS,
-                              shrink, treelevel, xyzminmax, level);
-        }
+        maxlevel = 0;
+        maxpars = 0;
+        pc_create_tree_n0(&troot, 1, numparsS, xS, yS, zS, qS,
+                          maxparnode, xyzminmax, level);
     }
 
 
@@ -97,10 +85,7 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
     printf("                      torder: %d\n", torder);
     printf("                       theta: %f\n", theta);
-    printf("                      shrink: %d\n\n", shrink);
-    printf("        maxparnode (iflag 0): %d\n", maxparnode);
-    printf("         treelevel (iflag 1): %d\n", treelevel);
-    printf("                       iflag: %d\n\n", iflag);
+    printf("                  maxparnode: %d\n", maxparnode);
     printf("               tree maxlevel: %d\n", maxlevel);
     printf("               tree minlevel: %d\n", minlevel);
     printf("                tree maxpars: %d\n", maxpars);

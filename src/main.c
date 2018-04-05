@@ -275,8 +275,8 @@ int main(int argc, char **argv)
 
     /* Calling main treecode subroutine to calculate approximate energy */
     treecode(xS, yS, zS, qS, xT, yT, zT, numparsSloc, numparsTloc,
-             tenergy, &tpeng, order, theta, 1, maxparnode, time_tree,
-             treelevel, iflag, pot_type, kappa, tree_type);
+             tenergy, &tpeng, order, theta, maxparnode, time_tree,
+             pot_type, kappa, tree_type);
 
     
     /* Reducing values to root process */
