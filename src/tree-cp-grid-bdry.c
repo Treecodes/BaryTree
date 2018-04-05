@@ -30,6 +30,7 @@ void setup_grid_bdry(double *xyzminmax, int *xyzdim, int *xyzind,
     torder = order;
     torderlim = torder + 1;
     thetasq = theta * theta;
+    torderflat = torderlim * (torderlim + 1) * (torderlim + 2) / 6;
 
     xglobdim = xyzdim[0];
     yglobdim = xyzdim[1];
@@ -364,19 +365,14 @@ void compute_cp1_grid_bdry(struct tnode *p, double zyx, int dir, double *EnP)
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
      */
-        
+
         comp_tcoeff(tx, ty, tz);
 
         if (p->exist_ms == 0) {
-            make_3array(p->ms, torder+1, torder+1, torder+1);
+            make_vector(p->ms, torderflat);
 
-            for (i = 0; i < torder + 1; i++) {
-                for (j = 0; j < torder + 1; j++) {
-                    for (k = 0; k < torder + 1; k++) {
-                        p->ms[i][j][k] = 0.0;
-                    }
-                }
-            }
+            for (i = 0; i < torderflat; i++)
+                        p->ms[i] = 0.0;
             
             p->exist_ms = 1;
         }
@@ -413,7 +409,7 @@ void compute_cp2_grid_bdry(struct tnode *ap, double zyx, int dir, double *EnP)
     int xlind=0, ylind=0, zlind=0, xhind=0, yhind=0, zhind=0;
     int ydim=0, zdim=0;
     double ddx=0, ddy=0, ddz=0;
-    int i, nn, j, k, k1, k2, k3, porder, porder1;
+    int i, nn, j, k, k1, k2, k3, kk, porder, porder1;
 
     porder = torder;
     porder1 = porder - 1;
@@ -452,23 +448,27 @@ void compute_cp2_grid_bdry(struct tnode *ap, double zyx, int dir, double *EnP)
 
         for (i = xlind; i <= xhind; i++) {
             dx = xl + (i-xlind)*ddx  - xm;
+
             for (j = ylind; j <= yhind; j++) {
                 dy = yl + (j-ylind)*ddy  - ym;
+
                 for (k = zlind; k <= zhind; k++) {
 
                     nn = (i * ydim * zdim) + (j * zdim) + k;
                     dz = zl + (k-zlind)*ddz  - zm;
 
-                    peng = ap->ms[0][0][porder];
+                    kk = 0;
+
+                    peng = ap->ms[kk];
 
                     for (k3 = porder1; k3 > -1; k3--) {
-                        ty = ap->ms[0][porder - k3][k3];
+                        ty = ap->ms[++kk];
 
                         for (k2 = porder1 - k3; k2 > -1; k2--) {
-                            tx = ap->ms[porder - k3 - k2][k2][k3];
+                            tx = ap->ms[++kk];
 
                             for (k1 = porder1 - k3 - k2; k1 > -1; k1--) {
-                                tx = dx*tx + ap->ms[k1][k2][k3];
+                                tx = dx*tx + ap->ms[++kk];
                             }
 
                             ty = dy * ty + tx;
@@ -539,8 +539,10 @@ void cp_comp_direct_grid_bdry(struct tnode *ap, double zyx, int dir, double *EnP
     
     for (i = xlind; i <= xhind; i++) {
         tx = xl + (i-xlind)*ddx  - tarpos[0];
+
         for (j = ylind; j <= yhind; j++) {
             ty = yl + (j-ylind)*ddy  - tarpos[1];
+
             for (k = zlind; k <= zhind; k++) {
 
                 nn = (i * ydim * zdim) + (j * zdim) + k;

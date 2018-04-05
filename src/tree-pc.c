@@ -412,7 +412,7 @@ void compute_pc(struct tnode *p, double *peng,
 {
     /* local variables */
     double tx, ty, tz, distsq, penglocal;
-    int i, j, k;
+    int i, j, k, kk=-1;
 
     //printf("Inside compute_cp1... 1\n");
 
@@ -431,15 +431,10 @@ void compute_pc(struct tnode *p, double *peng,
      */
 
         if (p->exist_ms == 0) {
-            make_3array(p->ms, torder+1, torder+1, torder+1);
+            make_vector(p->ms, torderflat);
 
-            for (i = 0; i < torder + 1; i++) {
-                for (j = 0; j < torder + 1; j++) {
-                    for (k = 0; k < torder + 1; k++) {
-                        p->ms[i][j][k] = 0.0;
-                    }
-                }
-            }
+            for (i = 0; i < torderflat; i++)
+                p->ms[i] = 0.0;
 
             pc_comp_ms(p, x, y, z, q);
             p->exist_ms = 1;
@@ -447,10 +442,10 @@ void compute_pc(struct tnode *p, double *peng,
 
         comp_tcoeff(tx, ty, tz);
         
-        for (k = 0; k < torder+1; k++) {
-            for (j = 0; j < torder-k+1; j++) {
-                for (i = 0; i < torder-k-j+1; i++) {
-                    *peng += b1[i][j][k] * p->ms[i][j][k];
+        for (k = 0; k < torder + 1; k++) {
+            for (j = 0; j < torder - k + 1; j++) {
+                for (i = 0; i < torder - k - j + 1; i++) {
+                    *peng += b1[i][j][k] * p->ms[++kk];
                 }
             }
         }
@@ -512,7 +507,7 @@ void pc_comp_direct(double *peng, int ibeg, int iend,
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
 {
 
-    int i, k1, k2, k3;
+    int i, k1, k2, k3, kk;
     double dx, dy, dz, tx, ty, tz, qloc;
     
     for (i = p->ibeg-1; i < p->iend; i++) {
@@ -521,13 +516,14 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
         dz = z[i] - p->z_mid;
         qloc = q[i];
         
+        kk = -1;
         tz = 1.0;
         for (k3 = 0; k3 < torder + 1; k3++) {
             ty = 1.0;
             for (k2 = 0; k2 < torder - k3 + 1; k2++) {
                 tx = 1.0;
                 for (k1 = 0; k1 < torder - k3 - k2 + 1; k1++) {
-                    p->ms[k1][k2][k3] += qloc * tx*ty*tz;
+                    p->ms[++kk] += qloc * tx*ty*tz;
                     tx *= dx;
                 }
                 ty *= dy;

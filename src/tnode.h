@@ -10,7 +10,7 @@ struct tnode
         double x_mid, y_mid, z_mid;
         double radius, sqradius, aspect;
         int level, num_children, exist_ms;
-        double ***ms;
+        double *ms;
         struct tnode *child[8];      //Child is ptr to array of ptrs to tnode children
 
         int xdim, ydim, zdim;

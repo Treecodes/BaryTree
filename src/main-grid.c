@@ -99,7 +99,8 @@ int main(int argc, char **argv)
             printf("         kappa:  screened Coulomb parameter \n");            // 0.00
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");       // 1
 
-            printf("         sflag:  0--target sort, 1--target interleave, 2--sources \n");  // 0
+            printf("         sflag:  0--target strips, 1--target interleave, 2--sources \n");  // 0
+            printf("                 (note: sflag is for determining parallel distribution)\n");  // 0
             printf("         dflag:  if targets, direction 0--x, 1--y, 2--z \n");            // 0
             
             printf("          xmin:  if on grid, min x dimension \n");           // 0
@@ -124,7 +125,7 @@ int main(int argc, char **argv)
     maxparnode = atoi(argv[7]);
     kappa = atof(argv[8]);
     pot_type = atoi(argv[9]);
-    
+
     sflag = atoi(argv[10]);
     dflag = atoi(argv[11]);
 

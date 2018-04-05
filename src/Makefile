@@ -1,17 +1,24 @@
 OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o \
 	 treedriver.o partition.o xmalloc.o sort.o
-TARGET = tree.exe
+
+TARGET = tree-flat.exe
 
 OFILESD = main-grid.o tools.o tree-cp.o tree-cp-grid.o \
 	  treedriver-grid.o partition.o xmalloc.o sort.o
-TARGETD = tree-grid.exe
+TARGETD = tree-grid-flat.exe
 
 OFILESE = main-grid-bdry.o tools.o tree-cp.o tree-cp-grid-bdry.o \
       treedriver-grid-bdry.o partition.o xmalloc.o sort.o
-TARGETE = tree-grid-bdry.exe
+TARGETE = tree-grid-bdry-flat.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
 TARGETA = direct.exe
+
+OFILESF = main-direct-grid.o tools.o xmalloc.o
+TARGETF = direct-grid.exe
+
+OFILESG = main-direct-grid-bdry.o tools.o xmalloc.o
+TARGETG = direct-grid-bdry.exe
 
 OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
@@ -24,15 +31,14 @@ CC = mpicc
 
 UNAME := $(shell uname -s)
 
-ifeq ($(UNAME),Linux)
-CFLAGS = -Wall -O3 -I$(GSL_INCLUDE) -L$(GSL_LIB) -lgsl -lgslcblas -lm -ldl
+ifeq ($(UNAME), Linux)
+CFLAGS = -Wall -O3 -lm -I$(GSL_INCLUDE) -L$(GSL_LIB) -lgsl -lgslcblas
 endif
-ifeq ($(UNAME),Darwin)  
+ifeq ($(UNAME), Darwin)
 CFLAGS = -Wall -O3 -I/usr/local/include -L/usr/local/lib -lgsl
 endif
 
-
-all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) $(TARGETD) $(TARGETE) bin
+all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) $(TARGETD) $(TARGETE) $(TARGETF) $(TARGETG) bin
 
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(OFILES) -o $@
@@ -52,9 +58,16 @@ $(TARGETD): $(OFILESD)
 $(TARGETE): $(OFILESE)
 	$(CC) $(CFLAGS) $(OFILESE) -o $@
 
+$(TARGETF): $(OFILESF)
+	$(CC) $(CFLAGS) $(OFILESF) -o $@
+
+$(TARGETG): $(OFILESG)
+	$(CC) $(CFLAGS) $(OFILESG) -o $@
+
 clean:
 	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA) $(OFILESE) $(TARGETE)
 	rm -f $(OFILESB) $(TARGETB) $(TARGETC) $(OFILESC) $(TARGETD) $(OFILESD)
+	rm -f $(TARGETF) $(OFILESF) $(TARGETG) $(OFILESG)  
 	rm -f $(OUTDIR)*
 
 bin:                                                                                         
@@ -64,6 +77,8 @@ bin:
 	cp $(TARGETC) $(OUTDIR)$(TARGETC)
 	cp $(TARGETD) $(OUTDIR)$(TARGETD)
 	cp $(TARGETE) $(OUTDIR)$(TARGETE)
+	cp $(TARGETF) $(OUTDIR)$(TARGETF)
+	cp $(TARGETG) $(OUTDIR)$(TARGETG)
 
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h
@@ -92,5 +107,7 @@ tree-pc-yuk.o: tree-pc-yuk.c array.h xmalloc.h globvars.h tnode.h tools.h \
 xmalloc.o: xmalloc.c xmalloc.h
 sort.o: sort.c
 main-direct.o: main-direct.c array.h xmalloc.h tools.h
+main-direct-grid.o: main-direct-grid.c array.h xmalloc.h tools.h
+main-direct-grid-bdry.o: main-direct-grid-bdry.c array.h xmalloc.h tools.h
 txt2bin.o: txt2bin.c array.h xmalloc.h
 makegrid.o: makegrid.c
