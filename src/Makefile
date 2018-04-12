@@ -10,8 +10,7 @@ TARGETB = txt2bin.exe
 
 OUTDIR = ../bin/
 CC = mpicc
-CFLAGS = -acc -Minfo=all
-
+CFLAGS = -acc -Minfo=all -ta=tesla,time
 
 UNAME := $(shell uname -s)
 

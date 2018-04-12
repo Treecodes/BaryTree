@@ -3,3 +3,4 @@ src/*.exe
 data/*
 bin/*
 .DS_store
+/.ptp-sync/

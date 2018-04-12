@@ -243,6 +243,7 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
     int i, j;
     double penglocal, peng;
 
+
     for (i = 0; i < numparsT; i++)
         EnP[i] = 0.0;
 
@@ -252,8 +253,11 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
         tarpos[1] = yT[i];
         tarpos[2] = zT[i];
 
+        /* Copy target coordinates to GPU */
+		#pragma acc data copyin(tarpos[3])
+
         for (j = 0; j < p->num_children; j++) {
-            compute_pc(p->child[j], &penglocal, xS, yS, zS, qS);
+            compute_pc(p->child[j], &penglocal, xS, yS, zS, qS, numparsS);
             peng += penglocal;
         }
         
@@ -270,7 +274,7 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
 
 
 void compute_pc(struct tnode *p, double *peng,
-                double *x, double *y, double *z, double *q)
+                double *x, double *y, double *z, double *q, int numparsS)
 {
     /* local variables */
     double tx, ty, tz, distsq, penglocal;
@@ -318,11 +322,11 @@ void compute_pc(struct tnode *p, double *peng,
      * calculation. If there are children, call routine recursively for each.
      */
         if (p->num_children == 0) {
-            pc_comp_direct(&penglocal, p->ibeg, p->iend, x, y, z, q);
+            pc_comp_direct(&penglocal, p->ibeg, p->iend, x, y, z, q, numparsS);
             *peng = penglocal;
         } else {
             for (i = 0; i < p->num_children; i++) {
-                compute_pc(p->child[i], &penglocal, x, y, z, q);
+                compute_pc(p->child[i], &penglocal, x, y, z, q, numparsS);
                 *peng += penglocal;
             }
         }
@@ -334,28 +338,34 @@ void compute_pc(struct tnode *p, double *peng,
 
 
 
-
 /*
  * comp_direct directly computes the potential on the targets in the current
  * cluster due to the current source, determined by the global variable TARPOS
  */
 void pc_comp_direct(double *peng, int ibeg, int iend,
-                    double *x, double *y, double *z, double *q)
+                    double *x, double *y, double *z, double *q, int numparsS)
 {
     /* local variables */
     int i;
     double tx, ty, tz;
-    
-    *peng = 0.0;
+  
+//    *peng = 0.0;
 
-    #pragma acc kernels
+    double d_peng=0.0;
+//    #pragma acc kernels loop worker(16) reduction(+:d_peng)
+	#pragma acc data present(x[numparsS],y[numparsS],z[numparsS],q[numparsS],tarpos[3])
+	#pragma acc kernels
+    { 															// begin acc kernels region
+//	#pragma acc kernels loop gang(32), vector(128)
     for (i = ibeg - 1; i < iend; i++) {
         tx = x[i] - tarpos[0];
         ty = y[i] - tarpos[1];
         tz = z[i] - tarpos[2];
         
-        *peng += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
+        d_peng += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
     }
+    } 															// end acc kernels region
+    *peng = d_peng;
 
     return;
 

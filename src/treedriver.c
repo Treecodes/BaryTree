@@ -21,6 +21,8 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
               int pot_type, double kappa, int tree_type)
 {
 
+
+
     /* local variables */
     struct tnode *troot = NULL;
     int level;
@@ -96,6 +98,10 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
 
     time1 = MPI_Wtime();
 
+    /* Copy source arrays to GPU */
+    #pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
+
+
     if (tree_type == 0) {
         if (pot_type == 0) {
             cp_treecode(troot, xS, yS, zS, qS, xT, yT, zT,
@@ -113,6 +119,7 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
                             tpeng, tEn, numparsS, numparsT, kappa);
         }
     }
+
 
     time2 = MPI_Wtime();
     timetree[3] = time2-time1 + timetree[0];

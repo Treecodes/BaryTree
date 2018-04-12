@@ -99,7 +99,7 @@ void compute_pc(struct tnode *p, double *EnP,
                 double *x, double *y, double *z, double *q);
 
 void pc_comp_direct(double *EnP, int ibeg, int iend,
-                    double *x, double *y, double *z, double *q);
+                    double *x, double *y, double *z, double *q, int numparsS);
 
 
 /* used by cluster-particle Yukawa */
