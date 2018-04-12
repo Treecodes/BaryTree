@@ -3,4 +3,6 @@ src/*.exe
 data/*
 bin/*
 .DS_store
-/.ptp-sync/
+*.ptp*
+bin_cpu/*
+*.tsv
