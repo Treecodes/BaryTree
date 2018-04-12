@@ -1,5 +1,5 @@
-OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o \
-	 treedriver.o partition.o xmalloc.o sort.o
+OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o \
+	 treedriver.o partition.o xmalloc.o sort.o 
 TARGET = tree.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
@@ -9,8 +9,9 @@ OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
 
 OUTDIR = ../bin/
-CC = mpicc
-CFLAGS = -acc -Minfo=all -ta=tesla,time
+CC = mpicc 
+#CFLAGS = -acc -Minfo=all -ta=tesla,time
+CFLAGS = -Wall
 
 UNAME := $(shell uname -s)
 
@@ -41,6 +42,8 @@ treedriver.o: treedriver.c array.h xmalloc.h globvars.h tnode.h tools.h \
 partition.o: partition.c tools.h partition.h
 tree-cp.o: tree-cp.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  partition.h tree.h
+tree-batch.o: tree-batch.c array.h xmalloc.h globvars.h tnode.h tools.h \
+		  partition.h tree.h array.h
 tree-cp-yuk.o: tree-cp-yuk.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  partition.h tree.h
 tree-pc.o: tree-pc.c array.h xmalloc.h globvars.h tnode.h tools.h \

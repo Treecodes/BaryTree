@@ -24,6 +24,7 @@ int main(int argc, char **argv)
     int maxparnode;
     int pot_type, tree_type;
     int pflag, sflag, dflag, gflag;
+    int batch_size;
 
     double theta, temp;
     double kappa;
@@ -119,6 +120,7 @@ int main(int argc, char **argv)
     pflag = atoi(argv[13]);
     sflag = atoi(argv[14]);
     dflag = atoi(argv[15]);
+    batch_size = atoi(argv[16]);
 
     numparsTloc = numparsT;
     numparsSloc = numparsS;
@@ -270,7 +272,7 @@ int main(int argc, char **argv)
     /* Calling main treecode subroutine to calculate approximate energy */
     treecode(xS, yS, zS, qS, xT, yT, zT, numparsSloc, numparsTloc,
              tenergy, &tpeng, order, theta, maxparnode, time_tree,
-             pot_type, kappa, tree_type);
+             pot_type, kappa, tree_type, batch_size);
 
     
     /* Reducing values to root process */

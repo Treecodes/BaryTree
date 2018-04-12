@@ -124,12 +124,12 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
 
-    (*p)->x_min = minval(x + ibeg - 1, nump);
-    (*p)->x_max = maxval(x + ibeg - 1, nump);
-    (*p)->y_min = minval(y + ibeg - 1, nump);
-    (*p)->y_max = maxval(y + ibeg - 1, nump);
-    (*p)->z_min = minval(z + ibeg - 1, nump);
-    (*p)->z_max = maxval(z + ibeg - 1, nump);
+    (*p)->x_min = minval(x + ibeg - 1, (*p)->numpar);
+    (*p)->x_max = maxval(x + ibeg - 1, (*p)->numpar);
+    (*p)->y_min = minval(y + ibeg - 1, (*p)->numpar);
+    (*p)->y_max = maxval(y + ibeg - 1, (*p)->numpar);
+    (*p)->z_min = minval(z + ibeg - 1, (*p)->numpar);
+    (*p)->z_max = maxval(z + ibeg - 1, (*p)->numpar);
 
     /*compute aspect ratio*/
     xl = (*p)->x_max - (*p)->x_min;
@@ -253,8 +253,6 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
         xyzmms[1][0] = x_mid;
         xyzmms[0][1] = x_mid;
         *numposchild = 2 * *numposchild;
-        
-        xdiv++;
     }
 
     if (yl >= critlen) {
@@ -274,8 +272,6 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
         }
         
         *numposchild = 2 * *numposchild;
-        
-        ydiv++;
     }
 
     if (zl >= critlen) {
@@ -295,8 +291,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
         }
         
         *numposchild = 2 * *numposchild;
-        
-        zdiv++;
+
     }
 
     return;

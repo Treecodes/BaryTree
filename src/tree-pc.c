@@ -237,7 +237,9 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6]
 
 void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
                  double *qS, double *xT, double *yT, double *zT,
-                 double *tpeng, double *EnP, int numparsS, int numparsT)
+                 double *tpeng, double *EnP, int numparsS, int numparsT,
+                 int **batch_index, double **batch_center, double *batch_radius,
+                 int batch_num)
 {
     /* local variables */
     int i, j;
@@ -247,21 +249,28 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
     for (i = 0; i < numparsT; i++)
         EnP[i] = 0.0;
 
-    for (i = 0; i < numparsT; i++) {
-        peng = 0.0;
-        tarpos[0] = xT[i];
-        tarpos[1] = yT[i];
-        tarpos[2] = zT[i];
-
-        /* Copy target coordinates to GPU */
-		#pragma acc data copyin(tarpos[3])
-
+//    for (i = 0; i < numparsT; i++) {
+//        peng = 0.0;
+//        tarpos[0] = xT[i];
+//        tarpos[1] = yT[i];
+//        tarpos[2] = zT[i];
+//
+//        /* Copy target coordinates to GPU */
+//        #pragma acc data copyin(tarpos[3])
+//
+//        for (j = 0; j < p->num_children; j++) {
+//            compute_pc(p->child[j], &penglocal, xS, yS, zS, qS, numparsS);
+//            peng += penglocal;
+//        }
+//
+//        EnP[i] = peng;
+//    }
+    
+    for (i = 0; i < batch_num; i++) {
         for (j = 0; j < p->num_children; j++) {
-            compute_pc(p->child[j], &penglocal, xS, yS, zS, qS, numparsS);
-            peng += penglocal;
+            compute_pc(p->child[j], EnP, xS, yS, zS, qS, xT, yT, zT,
+            batch_index[i], batch_center[i], batch_radius[i]);
         }
-        
-        EnP[i] = peng;
     }
 
     *tpeng = sum(EnP, numparsT);
@@ -273,24 +282,25 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
 
 
 
-void compute_pc(struct tnode *p, double *peng,
-                double *x, double *y, double *z, double *q, int numparsS)
+void compute_pc(struct tnode *p, double *EnP,
+                double *x, double *y, double *z, double *q,
+                double *xT, double *yT, double *zT,
+                int *batch_ind, double *batch_mid, double batch_rad)
 {
     /* local variables */
-    double tx, ty, tz, distsq, penglocal;
-    int i, j, k, kk=-1;
+    double tx, ty, tz, distsq, dist, penglocal;
+    int i, j, k, kk=-1, ii;
 
     //printf("Inside compute_cp1... 1\n");
 
     /* determine DISTSQ for MAC test */
-    tx = tarpos[0] - p->x_mid;
-    ty = tarpos[1] - p->y_mid;
-    tz = tarpos[2] - p->z_mid;
+    tx = batch_mid[0] - p->x_mid;
+    ty = batch_mid[1] - p->y_mid;
+    tz = batch_mid[2] - p->z_mid;
     distsq = tx*tx + ty*ty + tz*tz;
-    
-    *peng = 0.0;
+    dist = sqrt(distsq);
 
-    if ((p->sqradius < distsq * thetasq) && (p->sqradius != 0.00)) {
+    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)) {
     /*
      * If MAC is accepted and there is more than 1 particle
      * in the box, use the expansion for the approximation.
@@ -305,13 +315,19 @@ void compute_pc(struct tnode *p, double *peng,
             pc_comp_ms(p, x, y, z, q);
             p->exist_ms = 1;
         }
-
-        comp_tcoeff(tx, ty, tz);
         
-        for (k = 0; k < torder + 1; k++) {
-            for (j = 0; j < torder - k + 1; j++) {
-                for (i = 0; i < torder - k - j + 1; i++) {
-                    *peng += b1[i][j][k] * p->ms[++kk];
+        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+            tx = xT[ii] - p->x_mid;
+            ty = yT[ii] - p->y_mid;
+            tz = zT[ii] - p->z_mid;
+
+            comp_tcoeff(tx, ty, tz);
+        
+            for (k = 0; k < torder + 1; k++) {
+                for (j = 0; j < torder - k + 1; j++) {
+                    for (i = 0; i < torder - k - j + 1; i++) {
+                        EnP[ii] += b1[i][j][k] * p->ms[++kk];
+                    }
                 }
             }
         }
@@ -322,12 +338,12 @@ void compute_pc(struct tnode *p, double *peng,
      * calculation. If there are children, call routine recursively for each.
      */
         if (p->num_children == 0) {
-            pc_comp_direct(&penglocal, p->ibeg, p->iend, x, y, z, q, numparsS);
-            *peng = penglocal;
+            pc_comp_direct(EnP, p->ibeg, p->iend, x, y, z, q,
+                           batch_ind[0], batch_ind[1], xT, yT, zT);
         } else {
             for (i = 0; i < p->num_children; i++) {
-                compute_pc(p->child[i], &penglocal, x, y, z, q, numparsS);
-                *peng += penglocal;
+                compute_pc(p->child[i], EnP, x, y, z, q, xT, yT, zT,
+                           batch_ind, batch_mid, batch_rad);
             }
         }
     }
@@ -342,15 +358,16 @@ void compute_pc(struct tnode *p, double *peng,
  * comp_direct directly computes the potential on the targets in the current
  * cluster due to the current source, determined by the global variable TARPOS
  */
-void pc_comp_direct(double *peng, int ibeg, int iend,
-                    double *x, double *y, double *z, double *q, int numparsS)
+void pc_comp_direct(double *EnP, int ibeg, int iend,
+                    double *x, double *y, double *z, double *q,
+                    int batch_ibeg, int batch_iend, double *xT, double *yT, double *zT)
 {
     /* local variables */
-    int i;
+    int i, ii;
     double tx, ty, tz;
-  
-//    *peng = 0.0;
 
+/*
+//    *peng = 0.0;
     double d_peng=0.0;
 //    #pragma acc kernels loop worker(16) reduction(+:d_peng)
 	#pragma acc data present(x[numparsS],y[numparsS],z[numparsS],q[numparsS],tarpos[3])
@@ -366,6 +383,17 @@ void pc_comp_direct(double *peng, int ibeg, int iend,
     }
     } 															// end acc kernels region
     *peng = d_peng;
+*/
+
+    for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
+        for (i = ibeg - 1; i < iend; i++) {
+            tx = x[i] - xT[ii];
+            ty = y[i] - yT[ii];
+            tz = z[i] - zT[ii];
+        
+            EnP[ii] += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
+        }
+    }
 
     return;
 

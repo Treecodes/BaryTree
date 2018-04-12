@@ -8,6 +8,6 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
               int numparsS, int numparsT, double *tEn, double *tpeng, 
               int order, double theta, int maxparnode,
               double timetree[4],
-              int pot_type, double kappa, int tree_type);
+              int pot_type, double kappa, int tree_type, int batch_size);
 
 #endif /* H_TREEFUNCTIONS_H */
