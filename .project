@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>hybrid-gpu-treecode</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.ptp.rdt.sync.core.remoteSyncNature</nature>
+	</natures>
+</projectDescription>

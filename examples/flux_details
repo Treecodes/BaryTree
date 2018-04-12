@@ -1,0 +1,8 @@
+Modules needed
+1) cuda/8.0.44   2) pgi/16.4   3) openmpi/1.10.2/pgi/16.4   4) cupti/8.0.44
+
+module load cuda cupti pgi openmpi/1.10.2/pgi/16.4
+
+To profile, either compile with -ta=nvidia,time or in the command line eneter 
+export PGI_ACC_TIME=1
+export ACC_NOTIFY=1
