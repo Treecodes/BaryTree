@@ -17,9 +17,9 @@
 
 
 void cp_setup_batch(double *x, double *y, double *z,
-           int numpars, int batch_size, double *xyzminmax, int *batch_reorder,
-           int *batch_num, int **batch_index, double **batch_center,
-           double *batch_radius)
+           int numpars, int batch_size, double *xyzminmax, int **batch_reorder,
+           int *batch_num, int ***batch_index, double ***batch_center,
+           double **batch_radius)
 {
     /* local variables */
     int i;
@@ -36,13 +36,13 @@ void cp_setup_batch(double *x, double *y, double *z,
     *batch_num = 0;
     max_batch_num = (int)ceil((double)numpars * 8 / batch_size);
 
-    make_vector(batch_reorder, numpars);
-    make_matrix(batch_index, max_batch_num, 2);
-    make_matrix(batch_center, max_batch_num, 3);
-    make_vector(batch_radius, max_batch_num);
+    make_vector(*batch_reorder, numpars);
+    make_matrix(*batch_index, max_batch_num, 2);
+    make_matrix(*batch_center, max_batch_num, 3);
+    make_vector(*batch_radius, max_batch_num);
 
     for (i = 0; i < numpars; i++)
-        batch_reorder[i] = i+1;
+        (*batch_reorder)[i] = i+1;
 
     return;
     
@@ -153,6 +153,7 @@ void cp_create_batch(struct tnode **p, int ibeg, int iend,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
+
         cp_partition_batch(x, y, z, xyzmms, xl, yl, zl,
                            lmax, &numposchild,
                            x_mid, y_mid, z_mid, ind, batch_reorder);
@@ -177,6 +178,8 @@ void cp_create_batch(struct tnode **p, int ibeg, int iend,
     } else {
     
         (*batch_num) += 1;
+        
+        printf("batch num is now: %d\n", (*batch_num));
         
         batch_index[*batch_num-1][0] = (*p)->ibeg;
         batch_index[*batch_num-1][1] = (*p)->iend;

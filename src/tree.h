@@ -124,9 +124,9 @@ void pc_comp_direct_yuk(double *EnP, int ibeg, int iend,
 
 /* batch functions */
 void cp_setup_batch(double *x, double *y, double *z,
-           int numpars, int batch_size, double *xyzminmax, int *batch_reorder,
-           int *batch_num, int **batch_index, double **batch_center,
-           double *batch_radius);
+           int numpars, int batch_size, double *xyzminmax, int **batch_reorder,
+           int *batch_num, int ***batch_index, double ***batch_center,
+           double **batch_radius);
 
 void cp_create_batch(struct tnode **p, int ibeg, int iend,
                      double *x, double *y, double *z,

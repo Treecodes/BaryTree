@@ -390,9 +390,12 @@ void pc_comp_direct(double *EnP, int ibeg, int iend,
             tx = x[i] - xT[ii];
             ty = y[i] - yT[ii];
             tz = z[i] - zT[ii];
-        
+            
             EnP[ii] += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
         }
+        
+        //printf("%d; EnP %lf \n", ii, EnP[ii]);
+        
     }
 
     return;

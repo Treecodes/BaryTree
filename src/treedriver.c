@@ -76,8 +76,8 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
         pc_create_tree_n0(&troot, 1, numparsS, xS, yS, zS, qS,
                           maxparnode, xyzminmax, level);
         
-        cp_setup_batch(xT, yT, zT, numparsT, batch_size, batch_lim, batch_reorder,
-                       &batch_num, batch_index, batch_center, batch_radius);
+        cp_setup_batch(xT, yT, zT, numparsT, batch_size, batch_lim, &batch_reorder,
+                       &batch_num, &batch_index, &batch_center, &batch_radius);
         cp_create_batch(&batch_root, 1, numparsT, xT, yT, zT, batch_size, batch_lim,
                         batch_level, batch_reorder, &batch_num, batch_index, batch_center,
                         batch_radius);
