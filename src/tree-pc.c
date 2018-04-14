@@ -8,6 +8,7 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
+#include "batch.h"
 #include "tools.h"
 
 #include "partition.h"
@@ -235,41 +236,23 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6]
 
 
 
-void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
+void pc_treecode(struct tnode *p, struct batch *batches,
+                 double *xS, double *yS, double *zS,
                  double *qS, double *xT, double *yT, double *zT,
-                 double *tpeng, double *EnP, int numparsS, int numparsT,
-                 int **batch_index, double **batch_center, double *batch_radius,
-                 int batch_num, int *batch_reorder)
+                 int numparsS, int numparsT,
+                 double *tpeng, double *EnP)
 {
     /* local variables */
     int i, j;
-    double penglocal, peng;
-
 
     for (i = 0; i < numparsT; i++)
         EnP[i] = 0.0;
-
-//    for (i = 0; i < numparsT; i++) {
-//        peng = 0.0;
-//        tarpos[0] = xT[i];
-//        tarpos[1] = yT[i];
-//        tarpos[2] = zT[i];
-//
-//        /* Copy target coordinates to GPU */
-//        #pragma acc data copyin(tarpos[3])
-//
-//        for (j = 0; j < p->num_children; j++) {
-//            compute_pc(p->child[j], &penglocal, xS, yS, zS, qS, numparsS);
-//            peng += penglocal;
-//        }
-//
-//        EnP[i] = peng;
-//    }
     
-    for (i = 0; i < batch_num; i++) {
+    for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
-            compute_pc(p->child[j], EnP, xS, yS, zS, qS, xT, yT, zT,
-            batch_index[i], batch_center[i], batch_radius[i], batch_reorder);
+            compute_pc(p->child[j],
+                batches->index[i], batches->center[i], batches->radius[i],
+                xS, yS, zS, qS, xT, yT, zT, EnP);
         }
     }
 
@@ -282,17 +265,14 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
 
 
 
-void compute_pc(struct tnode *p, double *EnP,
-                double *x, double *y, double *z, double *q,
-                double *xT, double *yT, double *zT,
+void compute_pc(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
-                int *batch_reorder)
+                double *xS, double *yS, double *zS, double *qS,
+                double *xT, double *yT, double *zT, double *EnP)
 {
     /* local variables */
-    double tx, ty, tz, distsq, dist, penglocal;
-    int i, j, k, kk, ii, nn;
-
-    //printf("Inside compute_cp1... 1\n");
+    double tx, ty, tz, distsq, dist;
+    int i, j, k, kk, ii;
 
     /* determine DISTSQ for MAC test */
     tx = batch_mid[0] - p->x_mid;
@@ -313,12 +293,11 @@ void compute_pc(struct tnode *p, double *EnP,
             for (i = 0; i < torderflat; i++)
                 p->ms[i] = 0.0;
 
-            pc_comp_ms(p, x, y, z, q);
+            pc_comp_ms(p, xS, yS, zS, qS);
             p->exist_ms = 1;
         }
         
         for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
-//            nn = batch_reorder[ii] - 1;
             tx = xT[ii] - p->x_mid;
             ty = yT[ii] - p->y_mid;
             tz = zT[ii] - p->z_mid;
@@ -342,12 +321,12 @@ void compute_pc(struct tnode *p, double *EnP,
      * calculation. If there are children, call routine recursively for each.
      */
         if (p->num_children == 0) {
-            pc_comp_direct(EnP, p->ibeg, p->iend, x, y, z, q,
-                           batch_ind[0], batch_ind[1], xT, yT, zT, batch_reorder);
+            pc_comp_direct(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
+                           xS, yS, zS, qS, xT, yT, zT, EnP);
         } else {
             for (i = 0; i < p->num_children; i++) {
-                compute_pc(p->child[i], EnP, x, y, z, q, xT, yT, zT,
-                           batch_ind, batch_mid, batch_rad, batch_reorder);
+                compute_pc(p->child[i], batch_ind, batch_mid, batch_rad,
+                           xS, yS, zS, qS, xT, yT, zT, EnP);
             }
         }
     }
@@ -362,51 +341,28 @@ void compute_pc(struct tnode *p, double *EnP,
  * comp_direct directly computes the potential on the targets in the current
  * cluster due to the current source, determined by the global variable TARPOS
  */
-void pc_comp_direct(double *EnP, int ibeg, int iend,
-                    double *restrict x, double *restrict y, double *restrict z, double *restrict q,
-                    int batch_ibeg, int batch_iend, double *restrict xT, double *restrict yT, double *restrict zT,
-                    int *restrict batch_reorder)
+void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
+                    double *restrict xS, double *restrict yS, double *restrict zS, double *restrict qS,
+                    double *restrict xT, double *restrict yT, double *restrict zT, double *EnP)
 {
     /* local variables */
-    int i, ii, nn;
+    int i, ii;
     double tx, ty, tz;
 
-/*
-//    *peng = 0.0;
-    double d_peng=0.0;
-//    #pragma acc kernels loop worker(16) reduction(+:d_peng)
-	#pragma acc data present(x[numparsS],y[numparsS],z[numparsS],q[numparsS],tarpos[3])
-	#pragma acc kernels
-    { 															// begin acc kernels region
-//	#pragma acc kernels loop gang(32), vector(128)
-    for (i = ibeg - 1; i < iend; i++) {
-        tx = x[i] - tarpos[0];
-        ty = y[i] - tarpos[1];
-        tz = z[i] - tarpos[2];
-        
-        d_peng += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
-    }
-    } 															// end acc kernels region
-    *peng = d_peng;
-*/
+    double d_peng;
 
-    double d_peng=0.0;
-//	#pragma acc data present(x,y,z,q,xT,yT,zT)
 	#pragma acc data present(x,y,z,q)
 	#pragma acc region
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
-//        nn = batch_reorder[ii] - 1;
-        d_peng=0.0;
+        d_peng = 0.0;
         for (i = ibeg - 1; i < iend; i++) {
-            tx = x[i] - xT[ii];
-            ty = y[i] - yT[ii];
-            tz = z[i] - zT[ii];
+            tx = xS[i] - xT[ii];
+            ty = yS[i] - yT[ii];
+            tz = zS[i] - zT[ii];
             
-            d_peng += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
+            d_peng += qS[i] / sqrt(tx*tx + ty*ty + tz*tz);
         }
         EnP[ii] += d_peng;
-        
-        //printf("%d; EnP %lf \n", ii, EnP[ii]);
     }
 
     return;
