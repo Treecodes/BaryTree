@@ -10,10 +10,15 @@ TARGETB = txt2bin.exe
 
 OUTDIR = ../bin/
 CC = mpicc 
-#CFLAGS = -acc -Minfo=all -ta=tesla,time
-CFLAGS = -Wall
 
 UNAME := $(shell uname -s)
+
+ifeq ($(UNAME),Linux)
+CFLAGS = -acc -Minfo=all -ta=tesla,time
+endif
+ifeq ($(UNAME),Darwin)
+CFLAGS = -Wall
+endif
 
 all: $(TARGET) $(TARGETA) $(TARGETB) bin
 

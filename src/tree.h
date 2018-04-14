@@ -94,16 +94,19 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
                  double *qS, double *xT, double *yT, double *zT,
                  double *tpeng, double *EnP, int numparsS, int numparsT,
                  int **batch_index, double **batch_center, double *batch_radius,
-                 int batch_num);
+                 int batch_num, int *batch_reorder);
 
 void compute_pc(struct tnode *p, double *EnP,
                 double *x, double *y, double *z, double *q,
                 double *xT, double *yT, double *zT,
-                int *batch_ind, double *batch_mid, double batch_rad);
+                int *batch_ind, double *batch_mid, double batch_rad,
+                int *batch_reorder);
 
 void pc_comp_direct(double *EnP, int ibeg, int iend,
                     double *x, double *y, double *z, double *q,
-                    int batch_ibeg, int batch_iend, double *xT, double *yT, double *zT);
+                    int batch_ibeg, int batch_iend,
+                    double *xT, double *yT, double *zT,
+                    int *batch_reorder);
 
 
 /* used by cluster-particle Yukawa */

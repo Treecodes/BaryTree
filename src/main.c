@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     int numparsS, numparsT, order;
     int maxparnode;
     int pot_type, tree_type;
-    int pflag, sflag, dflag, gflag;
+    int pflag, sflag, dflag, gflag = 0;
     int batch_size;
 
     double theta, temp;

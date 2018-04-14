@@ -179,8 +179,6 @@ void cp_create_batch(struct tnode **p, int ibeg, int iend,
     
         (*batch_num) += 1;
         
-        printf("batch num is now: %d\n", (*batch_num));
-        
         batch_index[*batch_num-1][0] = (*p)->ibeg;
         batch_index[*batch_num-1][1] = (*p)->iend;
         

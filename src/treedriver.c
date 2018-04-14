@@ -126,7 +126,8 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
         if (pot_type == 0) {
             pc_treecode(troot, xS, yS, zS, qS, xT, yT, zT,
                         tpeng, tEn, numparsS, numparsT,
-                        batch_index, batch_center, batch_radius, batch_num);
+                        batch_index, batch_center, batch_radius, batch_num,
+                        batch_reorder);
         } else if (pot_type == 1) {
             pc_treecode_yuk(troot, xS, yS, zS, qS, xT, yT, zT,
                             tpeng, tEn, numparsS, numparsT, kappa);

@@ -239,7 +239,7 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
                  double *qS, double *xT, double *yT, double *zT,
                  double *tpeng, double *EnP, int numparsS, int numparsT,
                  int **batch_index, double **batch_center, double *batch_radius,
-                 int batch_num)
+                 int batch_num, int *batch_reorder)
 {
     /* local variables */
     int i, j;
@@ -269,7 +269,7 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
     for (i = 0; i < batch_num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc(p->child[j], EnP, xS, yS, zS, qS, xT, yT, zT,
-            batch_index[i], batch_center[i], batch_radius[i]);
+            batch_index[i], batch_center[i], batch_radius[i], batch_reorder);
         }
     }
 
@@ -285,11 +285,12 @@ void pc_treecode(struct tnode *p, double *xS, double *yS, double *zS,
 void compute_pc(struct tnode *p, double *EnP,
                 double *x, double *y, double *z, double *q,
                 double *xT, double *yT, double *zT,
-                int *batch_ind, double *batch_mid, double batch_rad)
+                int *batch_ind, double *batch_mid, double batch_rad,
+                int *batch_reorder)
 {
     /* local variables */
     double tx, ty, tz, distsq, dist, penglocal;
-    int i, j, k, kk=-1, ii;
+    int i, j, k, kk, ii, nn;
 
     //printf("Inside compute_cp1... 1\n");
 
@@ -317,16 +318,19 @@ void compute_pc(struct tnode *p, double *EnP,
         }
         
         for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+            nn = batch_reorder[ii] - 1;
             tx = xT[ii] - p->x_mid;
             ty = yT[ii] - p->y_mid;
             tz = zT[ii] - p->z_mid;
 
             comp_tcoeff(tx, ty, tz);
         
+            kk = -1;
+            
             for (k = 0; k < torder + 1; k++) {
                 for (j = 0; j < torder - k + 1; j++) {
                     for (i = 0; i < torder - k - j + 1; i++) {
-                        EnP[ii] += b1[i][j][k] * p->ms[++kk];
+                        EnP[nn] += b1[i][j][k] * p->ms[++kk];
                     }
                 }
             }
@@ -339,11 +343,11 @@ void compute_pc(struct tnode *p, double *EnP,
      */
         if (p->num_children == 0) {
             pc_comp_direct(EnP, p->ibeg, p->iend, x, y, z, q,
-                           batch_ind[0], batch_ind[1], xT, yT, zT);
+                           batch_ind[0], batch_ind[1], xT, yT, zT, batch_reorder);
         } else {
             for (i = 0; i < p->num_children; i++) {
                 compute_pc(p->child[i], EnP, x, y, z, q, xT, yT, zT,
-                           batch_ind, batch_mid, batch_rad);
+                           batch_ind, batch_mid, batch_rad, batch_reorder);
             }
         }
     }
@@ -360,10 +364,11 @@ void compute_pc(struct tnode *p, double *EnP,
  */
 void pc_comp_direct(double *EnP, int ibeg, int iend,
                     double *x, double *y, double *z, double *q,
-                    int batch_ibeg, int batch_iend, double *xT, double *yT, double *zT)
+                    int batch_ibeg, int batch_iend, double *xT, double *yT, double *zT,
+                    int *batch_reorder)
 {
     /* local variables */
-    int i, ii;
+    int i, ii, nn;
     double tx, ty, tz;
 
 /*
@@ -386,12 +391,13 @@ void pc_comp_direct(double *EnP, int ibeg, int iend,
 */
 
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
+        nn = batch_reorder[ii] - 1;
         for (i = ibeg - 1; i < iend; i++) {
             tx = x[i] - xT[ii];
             ty = y[i] - yT[ii];
             tz = z[i] - zT[ii];
             
-            EnP[ii] += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
+            EnP[nn] += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
         }
         
         //printf("%d; EnP %lf \n", ii, EnP[ii]);
