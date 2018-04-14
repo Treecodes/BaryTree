@@ -14,7 +14,7 @@ CC = mpicc
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
-CFLAGS = -acc -Minfo=all -ta=tesla,time
+CFLAGS = -acc -Minfo=accel -ta=tesla,time
 endif
 ifeq ($(UNAME),Darwin)
 CFLAGS = -Wall

@@ -111,7 +111,8 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     time1 = MPI_Wtime();
 
     /* Copy source arrays to GPU */
-    #pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
+//	#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS], xT[numparsT], yT[numparsT],zT[numparsT])
+	#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
 
 
     if (tree_type == 0) {

@@ -318,7 +318,7 @@ void compute_pc(struct tnode *p, double *EnP,
         }
         
         for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
-            nn = batch_reorder[ii] - 1;
+//            nn = batch_reorder[ii] - 1;
             tx = xT[ii] - p->x_mid;
             ty = yT[ii] - p->y_mid;
             tz = zT[ii] - p->z_mid;
@@ -330,7 +330,7 @@ void compute_pc(struct tnode *p, double *EnP,
             for (k = 0; k < torder + 1; k++) {
                 for (j = 0; j < torder - k + 1; j++) {
                     for (i = 0; i < torder - k - j + 1; i++) {
-                        EnP[nn] += b1[i][j][k] * p->ms[++kk];
+                        EnP[ii] += b1[i][j][k] * p->ms[++kk];
                     }
                 }
             }
@@ -363,9 +363,9 @@ void compute_pc(struct tnode *p, double *EnP,
  * cluster due to the current source, determined by the global variable TARPOS
  */
 void pc_comp_direct(double *EnP, int ibeg, int iend,
-                    double *x, double *y, double *z, double *q,
-                    int batch_ibeg, int batch_iend, double *xT, double *yT, double *zT,
-                    int *batch_reorder)
+                    double *restrict x, double *restrict y, double *restrict z, double *restrict q,
+                    int batch_ibeg, int batch_iend, double *restrict xT, double *restrict yT, double *restrict zT,
+                    int *restrict batch_reorder)
 {
     /* local variables */
     int i, ii, nn;
@@ -390,18 +390,23 @@ void pc_comp_direct(double *EnP, int ibeg, int iend,
     *peng = d_peng;
 */
 
+    double d_peng=0.0;
+//	#pragma acc data present(x,y,z,q,xT,yT,zT)
+	#pragma acc data present(x,y,z,q)
+	#pragma acc region
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
-        nn = batch_reorder[ii] - 1;
+//        nn = batch_reorder[ii] - 1;
+        d_peng=0.0;
         for (i = ibeg - 1; i < iend; i++) {
             tx = x[i] - xT[ii];
             ty = y[i] - yT[ii];
             tz = z[i] - zT[ii];
             
-            EnP[nn] += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
+            d_peng += q[i] / sqrt(tx*tx + ty*ty + tz*tz);
         }
+        EnP[ii] += d_peng;
         
         //printf("%d; EnP %lf \n", ii, EnP[ii]);
-        
     }
 
     return;
