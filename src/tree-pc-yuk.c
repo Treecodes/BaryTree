@@ -123,7 +123,7 @@ void compute_pc_yuk(struct tnode *p,
 void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *restrict xS, double *restrict yS, double *restrict zS, double *restrict qS,
                     double *restrict xT, double *restrict yT, double *restrict zT,
-                    double kappa, double *EnP)
+                    double kappa, double *restrict EnP)
 {
     
     /* local variables */
