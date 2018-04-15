@@ -2,3 +2,12 @@ https://www.youtube.com/watch?v=7HcBxW5pBik&list=PL5B692fm6--u-tdH8ct52nXWqmmp4B
 At minute 16, discuss copying structures onto GPU. Copy in the structure, then copy in its members.  
 
 "Deep Copy" -- copy in data, copy in pointers, then go back and identify what those pointers should point to.
+
+
+
+
+CUDA -- OpenACC Translator
+
+		CUDA 										OpenACC
+		
+	Blocks/Warps/Threads						Gangs/Workers/Vector

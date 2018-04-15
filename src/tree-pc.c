@@ -389,11 +389,13 @@ void pc_comp_direct(double *EnP, int ibeg, int iend,
     } 															// end acc kernels region
     *peng = d_peng;
 */
-
+//    printf("Batch size: %i \n", batch_iend-batch_ibeg+1);
     double d_peng=0.0;
 //	#pragma acc data present(x,y,z,q,xT,yT,zT)
 	#pragma acc data present(x,y,z,q)
-	#pragma acc region
+//	#pragma acc region
+//	#pragma acc kernels loop workers(16) vector(32)
+	#pragma acc kernels loop
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
 //        nn = batch_reorder[ii] - 1;
         d_peng=0.0;
