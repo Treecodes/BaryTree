@@ -9,26 +9,27 @@
 #include "globvars.h"
 #include "tnode.h"
 #include "batch.h"
+#include "particles.h"
 #include "tools.h"
 
 #include "partition.h"
 #include "tree.h"
 
 
-void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
-                       double *x, double *y, double *z, double *q,
-                       int maxparnode, double *xyzmm,
+void pc_create_tree_n0(struct tnode **p, struct particles *sources,
+                       int ibeg, int iend, int maxparnode, double *xyzmm,
                        int level)
 {
+
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int i, j, loclev, numposchild, nump;
+    int i, j, loclev, numposchild;
     
     int ind[8][2];
     double xyzmms[6][8];
     double lxyzmm[6];
-
-
+    
+    
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 2; j++) {
             ind[i][j] = 0.0;
@@ -52,16 +53,14 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
     /* set node fields: number of particles, exist_ms, and xyz bounds */
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
-
-    nump = iend - ibeg + 1;
-
-    (*p)->x_min = minval(x + ibeg - 1, nump);
-    (*p)->x_max = maxval(x + ibeg - 1, nump);
-    (*p)->y_min = minval(y + ibeg - 1, nump);
-    (*p)->y_max = maxval(y + ibeg - 1, nump);
-    (*p)->z_min = minval(z + ibeg - 1, nump);
-    (*p)->z_max = maxval(z + ibeg - 1, nump);
-
+    
+    (*p)->x_min = minval(sources->x + ibeg - 1, (*p)->numpar);
+    (*p)->x_max = maxval(sources->x + ibeg - 1, (*p)->numpar);
+    (*p)->y_min = minval(sources->y + ibeg - 1, (*p)->numpar);
+    (*p)->y_max = maxval(sources->y + ibeg - 1, (*p)->numpar);
+    (*p)->z_min = minval(sources->z + ibeg - 1, (*p)->numpar);
+    (*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
+    
 
     /*compute aspect ratio*/
     xl = (*p)->x_max - (*p)->x_min;
@@ -77,7 +76,6 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
         (*p)->aspect = t1/t2;
     else
         (*p)->aspect = 0.0;
-
 
     /*midpoint coordinates, RADIUS and SQRADIUS*/
     (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
@@ -125,7 +123,8 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
-        pc_partition_8(x, y, z, q, xyzmms, xl, yl, zl, lmax, &numposchild,
+        pc_partition_8(sources->x, sources->y, sources->z, sources->q,
+                       xyzmms, xl, yl, zl, lmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
         loclev = level + 1;
@@ -136,20 +135,22 @@ void pc_create_tree_n0(struct tnode **p, int ibeg, int iend,
 
                 for (j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
-
+                
                 pc_create_tree_n0(&((*p)->child[(*p)->num_children - 1]),
-                                  ind[i][0], ind[i][1], x, y, z, q,
+                                  sources, ind[i][0], ind[i][1],
                                   maxparnode, lxyzmm, loclev);
             }
         }
-
+        
     } else {
-
+        
         if (level < minlevel) minlevel = level;
         if (minpars > (*p)->numpar) minpars = (*p)->numpar;
         if (maxpars < (*p)->numpar) maxpars = (*p)->numpar;
         
         numleaves++;
+        
+
     }
 
     return;
@@ -237,26 +238,25 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6]
 
 
 void pc_treecode(struct tnode *p, struct batch *batches,
-                 double *xS, double *yS, double *zS,
-                 double *qS, double *xT, double *yT, double *zT,
-                 int numparsS, int numparsT,
+                 struct particles *sources, struct particles *targets,
                  double *tpeng, double *EnP)
 {
     /* local variables */
     int i, j;
 
-    for (i = 0; i < numparsT; i++)
+    for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
     
     for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc(p->child[j],
                 batches->index[i], batches->center[i], batches->radius[i],
-                xS, yS, zS, qS, xT, yT, zT, EnP);
+                sources->x, sources->y, sources->z, sources->q,
+                targets->x, targets->y, targets->z, EnP);
         }
     }
 
-    *tpeng = sum(EnP, numparsT);
+    *tpeng = sum(EnP, targets->num);
 
     return;
 

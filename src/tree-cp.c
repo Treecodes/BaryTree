@@ -9,6 +9,7 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
+#include "particles.h"
 #include "tools.h"
 
 #include "partition.h"
@@ -37,8 +38,7 @@ double *cf3 = NULL;
 double ***a1 = NULL;
 
 
-void setup(double *x, double *y, double *z,
-           int numpars, int order, double theta, 
+void setup(struct particles *particles, int order, double theta,
            double *xyzminmax)
 {
     /* local variables */
@@ -70,16 +70,16 @@ void setup(double *x, double *y, double *z,
     }
 
     /* find bounds of Cartesian box enclosing the particles */
-    xyzminmax[0] = minval(x, numpars);
-    xyzminmax[1] = maxval(x, numpars);
-    xyzminmax[2] = minval(y, numpars);
-    xyzminmax[3] = maxval(y, numpars);
-    xyzminmax[4] = minval(z, numpars);
-    xyzminmax[5] = maxval(z, numpars);
+    xyzminmax[0] = minval(particles->x, particles->num);
+    xyzminmax[1] = maxval(particles->x, particles->num);
+    xyzminmax[2] = minval(particles->y, particles->num);
+    xyzminmax[3] = maxval(particles->y, particles->num);
+    xyzminmax[4] = minval(particles->z, particles->num);
+    xyzminmax[5] = maxval(particles->z, particles->num);
 
-    make_vector(orderarr, numpars);
+    make_vector(orderarr, particles->num);
 
-    for (i = 0; i < numpars; i++)
+    for (i = 0; i < particles->num; i++)
         orderarr[i] = i+1;
 
     return;
@@ -89,10 +89,9 @@ void setup(double *x, double *y, double *z,
 
 
 
-void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
-                    double *x, double *y, double *z,
-                    int maxparnode,
-                    double *xyzmm, int level)
+void cp_create_tree_n0(struct tnode **p, struct particles *targets,
+                       int ibeg, int iend, int maxparnode,
+                       double *xyzmm, int level)
 {
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
@@ -124,12 +123,12 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
 
-    (*p)->x_min = minval(x + ibeg - 1, (*p)->numpar);
-    (*p)->x_max = maxval(x + ibeg - 1, (*p)->numpar);
-    (*p)->y_min = minval(y + ibeg - 1, (*p)->numpar);
-    (*p)->y_max = maxval(y + ibeg - 1, (*p)->numpar);
-    (*p)->z_min = minval(z + ibeg - 1, (*p)->numpar);
-    (*p)->z_max = maxval(z + ibeg - 1, (*p)->numpar);
+    (*p)->x_min = minval(targets->x + ibeg - 1, (*p)->numpar);
+    (*p)->x_max = maxval(targets->x + ibeg - 1, (*p)->numpar);
+    (*p)->y_min = minval(targets->y + ibeg - 1, (*p)->numpar);
+    (*p)->y_max = maxval(targets->y + ibeg - 1, (*p)->numpar);
+    (*p)->z_min = minval(targets->z + ibeg - 1, (*p)->numpar);
+    (*p)->z_max = maxval(targets->z + ibeg - 1, (*p)->numpar);
 
     /*compute aspect ratio*/
     xl = (*p)->x_max - (*p)->x_min;
@@ -193,8 +192,8 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
-        cp_partition_8(x, y, z, xyzmms, xl, yl, zl,
-                       lmax, &numposchild,
+        cp_partition_8(targets->x, targets->y, targets->z,
+                       xyzmms, xl, yl, zl, lmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
         loclev = level + 1;
@@ -207,7 +206,7 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
                     lxyzmm[j] = xyzmms[j][i];
 
                 cp_create_tree_n0(&((*p)->child[(*p)->num_children - 1]),
-                                  ind[i][0], ind[i][1], x, y, z,
+                                  targets, ind[i][0], ind[i][1],
                                   maxparnode, lxyzmm, loclev);
             }
         }
@@ -301,39 +300,38 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
 
 
-void cp_treecode(struct tnode *p, double *xS, double *yS, double *zS,
-                 double *qS, double *xT, double *yT, double *zT,
-                 double *tpeng, double *EnP, int numparsS, int numparsT,
-                 double *timetree)
+void cp_treecode(struct tnode *p,
+                 struct particles *sources, struct particles *targets,
+                 double *tpeng, double *EnP, double *timetree)
 {
     /* local variables */
     int i, j;
     double time1, time2, time3;
 
-    for (i = 0; i < numparsT; i++)
+    for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
 
     time1 = MPI_Wtime();
     
-    for (i = 0; i < numparsS; i++) {
-        tarpos[0] = xS[i];
-        tarpos[1] = yS[i];
-        tarpos[2] = zS[i];
-        tarposq = qS[i];
+    for (i = 0; i < sources->num; i++) {
+        tarpos[0] = sources->x[i];
+        tarpos[1] = sources->y[i];
+        tarpos[2] = sources->z[i];
+        tarposq = sources->q[i];
 
         for (j = 0; j < p->num_children; j++)
-            compute_cp1(p->child[j], EnP, xT, yT, zT);
+            compute_cp1(p->child[j], EnP, targets->x, targets->y, targets->z);
     }
     
     time2 = MPI_Wtime();
 
-    compute_cp2(p, xT, yT, zT, EnP);
+    compute_cp2(p, targets->x, targets->y, targets->z, EnP);
     
     time3 = MPI_Wtime();
     timetree[0] = time2 - time1;
     timetree[1] = time3 - time2;
 
-    *tpeng = sum(EnP, numparsT);
+    *tpeng = sum(EnP, targets->num);
 
     return;
 

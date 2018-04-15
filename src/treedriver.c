@@ -6,6 +6,7 @@
 #include "globvars.h"
 #include "tnode.h"
 #include "batch.h"
+#include "particles.h"
 #include "tools.h"
 #include "tree.h"
 
@@ -14,9 +15,7 @@
 
 /* definition of primary treecode driver */
 
-void treedriver(double *xS, double *yS, double *zS, double *qS,
-                double *xT, double *yT, double *zT,
-                int numparsS, int numparsT,
+void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
                 double *tEn, double *tpeng, double *timetree)
@@ -49,26 +48,27 @@ void treedriver(double *xS, double *yS, double *zS, double *qS,
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
         if (pot_type == 0) {
-            setup(xT, yT, zT, numparsT, order, theta, xyzminmax);
+            setup(targets, order, theta, xyzminmax);
         } else if (pot_type == 1) {
-            setup_yuk(xT, yT, zT, numparsT, order, theta, xyzminmax);
+            setup_yuk(targets, order, theta, xyzminmax);
         }
         
-        cp_create_tree_n0(&troot, 1, numparsT, xT, yT, zT,
+        cp_create_tree_n0(&troot, targets, 1, targets->num,
                           maxparnode, xyzminmax, level);
         
     } else if (tree_type == 1) {
+    
         if (pot_type == 0) {
-            setup(xS, yS, zS, numparsS, order, theta, xyzminmax);
+            setup(sources, order, theta, xyzminmax);
         } else if (pot_type == 1) {
-            setup_yuk(xS, yS, zS, numparsS, order, theta, xyzminmax);
+            setup_yuk(sources, order, theta, xyzminmax);
         }
         
-        pc_create_tree_n0(&troot, 1, numparsS, xS, yS, zS, qS,
+        pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
-        
-        setup_batch(&batches, batch_lim, xT, yT, zT, numparsT, batch_size);
-        cp_create_batch(batches, 1, numparsT, xT, yT, zT,
+
+        setup_batch(&batches, batch_lim, targets, batch_size);
+        cp_create_batch(batches, targets, 1, targets->num,
                         batch_size, batch_lim);
     }
 
@@ -103,22 +103,20 @@ void treedriver(double *xS, double *yS, double *zS, double *qS,
 
     if (tree_type == 0) {
         if (pot_type == 0) {
-            cp_treecode(troot, xS, yS, zS, qS, xT, yT, zT,
-                        tpeng, tEn, numparsS, numparsT, &timetree[1]);
+            cp_treecode(troot, sources, targets, tpeng, tEn, &timetree[1]);
         } else if (pot_type == 1) {
-            cp_treecode_yuk(troot, xS, yS, zS, qS, xT, yT, zT,
-                            tpeng, tEn, numparsS, numparsT, kappa, &timetree[1]);
+            cp_treecode_yuk(troot, sources, targets, kappa,
+                            tpeng, tEn, &timetree[1]);
         }
     } else if (tree_type == 1) {
         if (pot_type == 0) {
-            pc_treecode(troot, batches, xS, yS, zS, qS, xT, yT, zT,
-                        numparsS, numparsT, tpeng, tEn);
+            pc_treecode(troot, batches, sources, targets, tpeng, tEn);
         } else if (pot_type == 1) {
-            pc_treecode_yuk(troot, batches, xS, yS, zS, qS, xT, yT, zT,
-                        numparsS, numparsT, kappa, tpeng, tEn);
+            pc_treecode_yuk(troot, batches, sources, targets,
+                            kappa, tpeng, tEn);
         }
         
-        reorder_energies(batches->reorder, numparsT, tEn); 
+        reorder_energies(batches->reorder, targets->num, tEn);
     }
 
 

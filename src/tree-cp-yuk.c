@@ -9,14 +9,14 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
+#include "particles.h"
 #include "tools.h"
 
 #include "partition.h"
 #include "tree.h"
 
 
-void setup_yuk(double *x, double *y, double *z,
-               int numpars, int order, double theta, 
+void setup_yuk(struct particles *particles, int order, double theta,
                double *xyzminmax)
 {
     /* local variables */
@@ -35,8 +35,8 @@ void setup_yuk(double *x, double *y, double *z,
     make_vector(cf2, torderlim);
     make_vector(cf3, torderlim);
 
-    make_3array(a1, torderlim+3, torderlim+3, torderlim+3);
-    make_3array(b1, torderlim+3, torderlim+3, torderlim+3);
+    make_3array(a1, torderlim, torderlim, torderlim);
+    make_3array(b1, torderlim, torderlim, torderlim);
 
 
     /* initializing arrays for Taylor sums and coefficients */
@@ -51,16 +51,16 @@ void setup_yuk(double *x, double *y, double *z,
     }
 
     /* find bounds of Cartesian box enclosing the particles */
-    xyzminmax[0] = minval(x, numpars);
-    xyzminmax[1] = maxval(x, numpars);
-    xyzminmax[2] = minval(y, numpars);
-    xyzminmax[3] = maxval(y, numpars);
-    xyzminmax[4] = minval(z, numpars);
-    xyzminmax[5] = maxval(z, numpars);
+    xyzminmax[0] = minval(particles->x, particles->num);
+    xyzminmax[1] = maxval(particles->x, particles->num);
+    xyzminmax[2] = minval(particles->y, particles->num);
+    xyzminmax[3] = maxval(particles->y, particles->num);
+    xyzminmax[4] = minval(particles->z, particles->num);
+    xyzminmax[5] = maxval(particles->z, particles->num);
 
-    make_vector(orderarr, numpars);
+    make_vector(orderarr, particles->num);
 
-    for (i = 0; i < numpars; i++)
+    for (i = 0; i < particles->num; i++)
         orderarr[i] = i+1;
 
     return;
@@ -70,39 +70,40 @@ void setup_yuk(double *x, double *y, double *z,
 
 
 
-void cp_treecode_yuk(struct tnode *p, double *xS, double *yS, double *zS,
-                     double *qS, double *xT, double *yT, double *zT,
-                     double *tpeng, double *EnP, int numparsS, int numparsT,
-                     double kappa, double *timetree)
+void cp_treecode_yuk(struct tnode *p,
+                     struct particles *sources, struct particles *targets,
+                     double kappa, double *tpeng, double *EnP,
+                     double *timetree)
 {
     /* local variables */
     int i, j;
     double time1, time2, time3;
 
-    for (i = 0; i < numparsT; i++)
+    for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
 
     time1 = MPI_Wtime();
     
-    for (i = 0; i < numparsS; i++) {
-        tarpos[0] = xS[i];
-        tarpos[1] = yS[i];
-        tarpos[2] = zS[i];
-        tarposq = qS[i];
+    for (i = 0; i < sources->num; i++) {
+        tarpos[0] = sources->x[i];
+        tarpos[1] = sources->y[i];
+        tarpos[2] = sources->z[i];
+        tarposq = sources->q[i];
 
         for (j = 0; j < p->num_children; j++)
-            compute_cp1_yuk(p->child[j], EnP, xT, yT, zT, kappa);
+            compute_cp1_yuk(p->child[j], EnP, targets->x, targets->y,
+                            targets->z, kappa);
     }
 
     time2 = MPI_Wtime();
     
-    compute_cp2(p, xT, yT, zT, EnP);
+    compute_cp2(p, targets->x, targets->y, targets->z, EnP);
     
     time3 = MPI_Wtime();
     timetree[0] = time2 - time1;
     timetree[1] = time3 - time2;
 
-    *tpeng = sum(EnP, numparsT);
+    *tpeng = sum(EnP, targets->num);
 
     return;
 
@@ -116,7 +117,7 @@ void compute_cp1_yuk(struct tnode *p, double *EnP,
 {
     /* local variables */
     double tx, ty, tz, distsq;
-    int i, j, k;
+    int i;
 
     /* determine DISTSQ for MAC test */
     tx = tarpos[0] - p->x_mid;
@@ -198,7 +199,7 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
     b1[0][1][0] = fac * dy * (b1[0][0][0] + kappa*a1[0][0][0]);
     b1[0][0][1] = fac * dz * (b1[0][0][0] + kappa*a1[0][0][0]);
 
-    for (i = 2; i < torderlim+1; i++) {
+    for (i = 2; i < torderlim; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
@@ -235,7 +236,7 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
     b1[0][1][1] = fac * (dy * b1[0][0][1] + tdz * b1[0][1][0]
                                        + kappay * a1[0][0][1]);
 
-    for (i = 2; i < torderlim; i++) {
+    for (i = 2; i < torderlim - 1; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
@@ -272,11 +273,11 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
     }
 
     /* set of indices for which one is 0, others are >=2 */
-    for (i = 2; i < torderlim - 1; i++) {
+    for (i = 2; i < torderlim - 2; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
-        for (j = 2; j < torderlim - i + 1; j++) {
+        for (j = 2; j < torderlim - i; j++) {
             j1 = j - 1;
             j2 = j - 2;
 
@@ -318,7 +319,7 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
                                           + tdz * b1[1][1][0]
                                        + kappax * a1[0][1][1]);
 
-    for (i = 2; i < torderlim - 1; i++) {
+    for (i = 2; i < torderlim - 2; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
@@ -340,11 +341,11 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
     }
 
     /* set of indices for which one is 1, others are >= 2 */
-    for (i = 2; i < torderlim - 2; i++) {
+    for (i = 2; i < torderlim - 3; i++) {
         i1 = i - 1;
         i2 = i - 2;
 
-        for (j = 2; j < torderlim - i + 1; j++) {
+        for (j = 2; j < torderlim - i - 1; j++) {
             j1 = j - 1;
             j2 = j - 2;
 
@@ -370,15 +371,15 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa)
     }
 
     /* set of indices for which all are >= 2 */
-    for (k = 2; k < torderlim - 3; k++) {
+    for (k = 2; k < torderlim - 4; k++) {
         k1 = k - 1;
         k2 = k - 2;
                 
-        for (j = 2; j < torderlim - k - 1; j++) {
+        for (j = 2; j < torderlim - k - 2; j++) {
             j1 = j - 1;
             j2 = j - 2;
 
-            for (i = 2; i < torderlim - k - j + 1; i++) {
+            for (i = 2; i < torderlim - k - j - 1; i++) {
                 i1 = i - 1;
                 i2 = i - 2;
 

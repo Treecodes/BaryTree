@@ -15,26 +15,25 @@
 
 
 void pc_treecode_yuk(struct tnode *p, struct batch *batches,
-                     double *xS, double *yS, double *zS,
-                     double *qS, double *xT, double *yT, double *zT,
-                     int numparsS, int numparsT, double kappa,
-                     double *tpeng, double *EnP)
+                     struct particles *sources, struct particles *targets,
+                     double kappa, double *tpeng, double *EnP)
 {
     /* local variables */
     int i, j;
     
-    for (i = 0; i < numparsT; i++)
+    for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
     
     for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc_yuk(p->child[j],
                 batches->index[i], batches->center[i], batches->radius[i],
-                xS, yS, zS, qS, xT, yT, zT, kappa, EnP);
+                sources->x, sources->y, sources->z, sources->q,
+                targets->x, targets->y, targets->z, kappa, EnP);
         }
     }
     
-    *tpeng = sum(EnP, numparsT);
+    *tpeng = sum(EnP, targets->num);
     
     return;
     
@@ -85,10 +84,10 @@ void compute_pc_yuk(struct tnode *p,
         
             kk = -1;
         
-            for (k = torder; k > -1; k--) {
-                for (j = torder - k; j > -1; j--) {
-                    for (i = torder - k - j; i > -1; i--) {
-                        EnP[ii] += a1[i+2][j+2][k+2] * p->ms[++kk];
+            for (k = 0; k < torder + 1; k++) {
+                for (j = 0; j < torder - k + 1; j++) {
+                    for (i = 0; i < torder - k - j + 1; i++) {
+                        EnP[ii] += b1[i][j][k] * p->ms[++kk];
                     }
                 }
             }

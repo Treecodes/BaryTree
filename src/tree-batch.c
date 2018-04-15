@@ -10,6 +10,7 @@
 #include "globvars.h"
 #include "tnode.h"
 #include "batch.h"
+#include "particles.h"
 #include "tools.h"
 
 #include "partition.h"
@@ -18,31 +19,31 @@
 
 
 void setup_batch(struct batch **batches, double *batch_lim,
-                 double *x, double *y, double *z, int numpars, int batch_size)
+                 struct particles *particles, int batch_size)
 {
     /* local variables */
     int i;
     int max_batch_num;
     
     /* find bounds of Cartesian box enclosing the particles */
-    batch_lim[0] = minval(x, numpars);
-    batch_lim[1] = maxval(x, numpars);
-    batch_lim[2] = minval(y, numpars);
-    batch_lim[3] = maxval(y, numpars);
-    batch_lim[4] = minval(z, numpars);
-    batch_lim[5] = maxval(z, numpars);
+    batch_lim[0] = minval(particles->x, particles->num);
+    batch_lim[1] = maxval(particles->x, particles->num);
+    batch_lim[2] = minval(particles->y, particles->num);
+    batch_lim[3] = maxval(particles->y, particles->num);
+    batch_lim[4] = minval(particles->z, particles->num);
+    batch_lim[5] = maxval(particles->z, particles->num);
     
     (*batches) = malloc(sizeof(struct batch));
     (*batches)->num = 0;
     
-    max_batch_num = (int)ceil((double)numpars * 8 / batch_size);
+    max_batch_num = (int)ceil((double)particles->num * 8 / batch_size);
 
-    make_vector((*batches)->reorder, numpars);
+    make_vector((*batches)->reorder, particles->num);
     make_matrix((*batches)->index, max_batch_num, 2);
     make_matrix((*batches)->center, max_batch_num, 3);
     make_vector((*batches)->radius, max_batch_num);
 
-    for (i = 0; i < numpars; i++)
+    for (i = 0; i < particles->num; i++)
         (*batches)->reorder[i] = i+1;
 
     return;
@@ -52,9 +53,8 @@ void setup_batch(struct batch **batches, double *batch_lim,
 
 
 
-void cp_create_batch(struct batch *batches,
-                     int ibeg, int iend, double *x, double *y, double *z,
-                     int maxparnode, double *xyzmm)
+void cp_create_batch(struct batch *batches, struct particles *particles,
+                     int ibeg, int iend, int maxparnode, double *xyzmm)
 {
     /*local variables*/
     double x_min, x_max, y_min, y_max, z_min, z_max;
@@ -85,12 +85,12 @@ void cp_create_batch(struct batch *batches,
     /* set node fields: number of particles, exist_ms, and xyz bounds */
     numpar = iend - ibeg + 1;
 
-    x_min = minval(x + ibeg - 1, numpar);
-    x_max = maxval(x + ibeg - 1, numpar);
-    y_min = minval(y + ibeg - 1, numpar);
-    y_max = maxval(y + ibeg - 1, numpar);
-    z_min = minval(z + ibeg - 1, numpar);
-    z_max = maxval(z + ibeg - 1, numpar);
+    x_min = minval(particles->x + ibeg - 1, numpar);
+    x_max = maxval(particles->x + ibeg - 1, numpar);
+    y_min = minval(particles->y + ibeg - 1, numpar);
+    y_max = maxval(particles->y + ibeg - 1, numpar);
+    z_min = minval(particles->z + ibeg - 1, numpar);
+    z_max = maxval(particles->z + ibeg - 1, numpar);
     
     /*compute aspect ratio*/
     xl = x_max - x_min;
@@ -110,7 +110,6 @@ void cp_create_batch(struct batch *batches,
 
     sqradius = t1*t1 + t2*t2 + t3*t3;
     radius = sqrt(sqradius);
-
     
     /*set particle limits, tree level of node, and nullify child pointers*/
 
@@ -130,8 +129,8 @@ void cp_create_batch(struct batch *batches,
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
-        cp_partition_batch(x, y, z, xyzmms, xl, yl, zl,
-                           lmax, &numposchild,
+        cp_partition_batch(particles->x, particles->y, particles->z,
+                           xyzmms, xl, yl, zl, lmax, &numposchild,
                            x_mid, y_mid, z_mid, ind, batches->reorder);
 
         for (i = 0; i < numposchild; i++) {
@@ -139,8 +138,8 @@ void cp_create_batch(struct batch *batches,
 
                 for (j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
-
-                cp_create_batch(batches, ind[i][0], ind[i][1], x, y, z,
+                
+                cp_create_batch(batches, particles, ind[i][0], ind[i][1],
                                 maxparnode, lxyzmm);
             }
         }
