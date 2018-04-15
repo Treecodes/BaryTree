@@ -114,8 +114,8 @@ void treedriver(double *xS, double *yS, double *zS, double *qS,
             pc_treecode(troot, batches, xS, yS, zS, qS, xT, yT, zT,
                         numparsS, numparsT, tpeng, tEn);
         } else if (pot_type == 1) {
-            pc_treecode_yuk(troot, xS, yS, zS, qS, xT, yT, zT,
-                            tpeng, tEn, numparsS, numparsT, kappa);
+            pc_treecode_yuk(troot, batches, xS, yS, zS, qS, xT, yT, zT,
+                        numparsS, numparsT, kappa, tpeng, tEn);
         }
         
         reorder_energies(batches->reorder, numparsT, tEn); 

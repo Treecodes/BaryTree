@@ -271,15 +271,14 @@ void compute_pc(struct tnode *p,
                 double *xT, double *yT, double *zT, double *EnP)
 {
     /* local variables */
-    double tx, ty, tz, distsq, dist;
+    double tx, ty, tz, dist;
     int i, j, k, kk, ii;
 
-    /* determine DISTSQ for MAC test */
+    /* determine DIST for MAC test */
     tx = batch_mid[0] - p->x_mid;
     ty = batch_mid[1] - p->y_mid;
     tz = batch_mid[2] - p->z_mid;
-    distsq = tx*tx + ty*ty + tz*tz;
-    dist = sqrt(distsq);
+    dist = sqrt(tx*tx + ty*ty + tz*tz);
 
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)) {
     /*
@@ -351,7 +350,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
     double d_peng;
 
-	#pragma acc data present(x,y,z,q)
+	#pragma acc data present(xS, yS, zS, qS)
 	#pragma acc region
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;

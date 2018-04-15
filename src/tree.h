@@ -108,19 +108,22 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 
 /* used by cluster-particle Yukawa */
-void pc_treecode_yuk(struct tnode *p,
-                     double *xS, double *yS, double *zS, double *qS,
-                     double *xT, double *yT, double *zT, double *tpeng,
-                     double *EnP, int numparsS, int numparsT,
-                     double kappa);
+void pc_treecode_yuk(struct tnode *p, struct batch *batches,
+                     double *xS, double *yS, double *zS,
+                     double *qS, double *xT, double *yT, double *zT,
+                     int numparsS, int numparsT, double kappa,
+                     double *tpeng, double *EnP);
 
-void compute_pc_yuk(struct tnode *p, double *EnP,
-                    double *x, double *y, double *z, double *q,
-                    double kappa);
+void compute_pc_yuk(struct tnode *p,
+                    int *batch_ind, double *batch_mid, double batch_rad,
+                    double *xS, double *yS, double *zS, double *qS,
+                    double *xT, double *yT, double *zT,
+                    double kappa, double *EnP);
 
-void pc_comp_direct_yuk(double *EnP, int ibeg, int iend,
-                        double *x, double *y, double *z, double *q,
-                        double kappa);
+void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
+                        double *xS, double *yS, double *zS, double *qS,
+                        double *xT, double *yT, double *zT,
+                        double kappa, double *EnP);
 
 
 /* batch functions */
