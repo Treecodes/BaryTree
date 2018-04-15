@@ -43,7 +43,6 @@ void treedriver(double *xS, double *yS, double *zS, double *qS,
     minpars = INT_MAX;
     maxlevel = 0;
     maxpars = 0;
-    xdiv = 0; ydiv = 0; zdiv = 0;
     
     printf("Creating tree... \n\n");
 

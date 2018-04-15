@@ -9,9 +9,7 @@ extern double ***a1, ***b1;
 extern int minlevel, maxlevel;
 extern int maxpars, minpars;
 extern int numleaves;
-extern int xdiv, ydiv, zdiv;
 
-extern int orderoffset;
 extern double tarpos[3];
 extern double thetasq, tarposq;
 
