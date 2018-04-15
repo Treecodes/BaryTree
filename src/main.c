@@ -270,9 +270,10 @@ int main(int argc, char **argv)
 
 
     /* Calling main treecode subroutine to calculate approximate energy */
-    treecode(xS, yS, zS, qS, xT, yT, zT, numparsSloc, numparsTloc,
-             tenergy, &tpeng, order, theta, maxparnode, time_tree,
-             pot_type, kappa, tree_type, batch_size);
+    treedriver(xS, yS, zS, qS, xT, yT, zT, numparsSloc, numparsTloc,
+               order, theta, maxparnode, batch_size,
+               pot_type, kappa, tree_type,
+               tenergy, &tpeng, time_tree);
 
     
     /* Reducing values to root process */

@@ -96,7 +96,7 @@ void cp_create_tree_n0(struct tnode **p, int ibeg, int iend,
 {
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int i, j, loclev, numposchild, nump;
+    int i, j, loclev, numposchild;
     
     int ind[8][2];
     double xyzmms[6][8];
@@ -347,7 +347,7 @@ void compute_cp1(struct tnode *p, double *EnP,
 {
     /* local variables */
     double tx, ty, tz, distsq;
-    int i, j, k;
+    int i;
 
     /* determine DISTSQ for MAC test */
     tx = tarpos[0] - p->x_mid;

@@ -42,7 +42,7 @@ bin:
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h
 tools.o: tools.c array.h xmalloc.h
-treedriver.o: treedriver.c array.h xmalloc.h globvars.h tnode.h tools.h \
+treedriver.o: treedriver.c array.h xmalloc.h globvars.h tnode.h batch.h tools.h \
 		  tree.h treedriver.h
 partition.o: partition.c tools.h partition.h
 tree-cp.o: tree-cp.c array.h xmalloc.h globvars.h tnode.h tools.h \
@@ -51,7 +51,7 @@ tree-batch.o: tree-batch.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  partition.h tree.h array.h
 tree-cp-yuk.o: tree-cp-yuk.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  partition.h tree.h
-tree-pc.o: tree-pc.c array.h xmalloc.h globvars.h tnode.h tools.h \
+tree-pc.o: tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h tools.h \
 		  partition.h tree.h
 tree-pc-yuk.o: tree-pc-yuk.c array.h xmalloc.h globvars.h tnode.h tools.h \
 		  partition.h tree.h

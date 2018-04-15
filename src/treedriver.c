@@ -5,6 +5,7 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
+#include "batch.h"
 #include "tools.h"
 #include "tree.h"
 
@@ -13,15 +14,13 @@
 
 /* definition of primary treecode driver */
 
-void treecode(double *xS, double *yS, double *zS, double *qS, 
-              double *xT, double *yT, double *zT,
-              int numparsS, int numparsT, double *tEn, double *tpeng, 
-              int order, double theta, int maxparnode,
-              double *timetree, int pot_type, double kappa, int tree_type,
-              int batch_size)
+void treedriver(double *xS, double *yS, double *zS, double *qS,
+                double *xT, double *yT, double *zT,
+                int numparsS, int numparsT,
+                int order, double theta, int maxparnode, int batch_size,
+                int pot_type, double kappa, int tree_type,
+                double *tEn, double *tpeng, double *timetree)
 {
-
-
 
     /* local variables */
     struct tnode *troot = NULL;
@@ -29,14 +28,8 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     double xyzminmax[6];
     
     /* batch variables */
-    struct tnode *batch_root = NULL;
-    int batch_level;
+    struct batch *batches = NULL;
     double batch_lim[6];
-    int *batch_reorder = NULL;
-    int batch_num;
-    int **batch_index = NULL;
-    double **batch_center = NULL;
-    double *batch_radius = NULL;
     
     /* date and time */
     double time1, time2;
@@ -50,8 +43,6 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     minpars = INT_MAX;
     maxlevel = 0;
     maxpars = 0;
-    xdiv = 0; ydiv = 0; zdiv = 0;
-    batch_level = 0;
     
     printf("Creating tree... \n\n");
 
@@ -76,11 +67,9 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
         pc_create_tree_n0(&troot, 1, numparsS, xS, yS, zS, qS,
                           maxparnode, xyzminmax, level);
         
-        cp_setup_batch(xT, yT, zT, numparsT, batch_size, batch_lim, &batch_reorder,
-                       &batch_num, &batch_index, &batch_center, &batch_radius);
-        cp_create_batch(&batch_root, 1, numparsT, xT, yT, zT, batch_size, batch_lim,
-                        batch_level, batch_reorder, &batch_num, batch_index, batch_center,
-                        batch_radius);
+        setup_batch(&batches, batch_lim, xT, yT, zT, numparsT, batch_size);
+        cp_create_batch(batches, 1, numparsT, xT, yT, zT,
+                        batch_size, batch_lim);
     }
 
     time2 = MPI_Wtime();
@@ -105,13 +94,10 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     printf("                tree maxpars: %d\n", maxpars);
     printf("                tree minpars: %d\n", minpars);
     printf("            number of leaves: %d\n", numleaves);
-    //printf("        number of x,y,z divs: %d, %d, %d\n", xdiv, ydiv, zdiv);
-
 
     time1 = MPI_Wtime();
 
     /* Copy source arrays to GPU */
-//	#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS], xT[numparsT], yT[numparsT],zT[numparsT])
 	#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
 
 
@@ -125,22 +111,20 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
         }
     } else if (tree_type == 1) {
         if (pot_type == 0) {
-            pc_treecode(troot, xS, yS, zS, qS, xT, yT, zT,
-                        tpeng, tEn, numparsS, numparsT,
-                        batch_index, batch_center, batch_radius, batch_num,
-                        batch_reorder);
+            pc_treecode(troot, batches, xS, yS, zS, qS, xT, yT, zT,
+                        numparsS, numparsT, tpeng, tEn);
         } else if (pot_type == 1) {
-            pc_treecode_yuk(troot, xS, yS, zS, qS, xT, yT, zT,
-                            tpeng, tEn, numparsS, numparsT, kappa);
+            pc_treecode_yuk(troot, batches, xS, yS, zS, qS, xT, yT, zT,
+                        numparsS, numparsT, kappa, tpeng, tEn);
         }
+        
+        reorder_energies(batches->reorder, numparsT, tEn); 
     }
 
 
     time2 = MPI_Wtime();
     timetree[3] = time2-time1 + timetree[0];
 
-    //printf("       Tree building time (s): %f\n", *timetree - totaltime);
-    //printf("    Tree computation time (s): %f\n\n", totaltime);
     printf("Deallocating tree structure... \n\n");
 
     cleanup(troot);

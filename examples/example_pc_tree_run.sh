@@ -20,9 +20,9 @@
 #../bin_cpu/tree_cpu.exe /scratch/krasny_fluxg/lwwilson/S10000000.bin /scratch/krasny_fluxg/lwwilson/T10000000.bin /scratch/krasny_fluxg/lwwilson/ex_s6_t5_0_p1.bin out.tsv 200000 200000 0.0 5 1 1000 0 0 0 1 0 100000
 #echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#echo ~~~~~~~~~~~~~~~~~~~~~~CPU TREECODE~~~~~~~~~~~~~~~~~~~~~~~~~
-#../bin_cpu/tree_cpu.exe /scratch/krasny_fluxg/lwwilson/S10000000.bin /scratch/krasny_fluxg/lwwilson/T10000000.bin /scratch/krasny_fluxg/lwwilson/ex_s6_t5_0_p1.bin out.tsv 1600000 1600000 0.5 5 1 1000 0 0 0 1 0 1
-#echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo ~~~~~~~~~~~~~~~~~~~~~~CPU TREECODE~~~~~~~~~~~~~~~~~~~~~~~~~
+../bin_cpu/tree_cpu.exe /scratch/krasny_fluxg/lwwilson/S10000000.bin /scratch/krasny_fluxg/lwwilson/T10000000.bin /scratch/krasny_fluxg/lwwilson/ex_s6_t5_0_p1.bin out.tsv 1600000 1600000 0.5 5 1 1000 0 0 0 1 0 1
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #echo ~~~~~~~CPU TREECODE with large leaves and batching~~~~~~~~~
 #../bin_cpu/tree_cpu.exe /scratch/krasny_fluxg/lwwilson/S10000000.bin /scratch/krasny_fluxg/lwwilson/T10000000.bin /scratch/krasny_fluxg/lwwilson/ex_s6_t5_0_p1.bin out.tsv 200000 200000 0.5 5 1 30000 0 0 0 1 0 2000
