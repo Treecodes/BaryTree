@@ -339,30 +339,21 @@ void compute_pc(struct tnode *p,
 /*
  * comp_direct directly computes the potential on the targets in the current
  * cluster due to the current source, determined by the global variable TARPOS
-// */
-//void pc_comp_direct(double *EnP, int ibeg, int iend,
-//                    double *restrict x, double *restrict y, double *restrict z, double *restrict q,
-//                    int batch_ibeg, int batch_iend, double *restrict xT, double *restrict yT, double *restrict zT,
-//                    int *restrict batch_reorder)
-
+ */
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *restrict xS, double *restrict yS, double *restrict zS, double *restrict qS,
                     double *restrict xT, double *restrict yT, double *restrict zT, double *restrict EnP)
 {
     /* local variables */
-    int i, ii, nn;
+    int i, ii;
     double tx, ty, tz;
+	
+    double d_peng;
 
-
-//    printf("Batch size: %i \n", batch_iend-batch_ibeg+1);
-    double d_peng=0.0;
-	#pragma acc data present(xS,yS,zS,qS)
-//	#pragma acc region
-//	#pragma acc kernels loop workers(16) vector(32)
-	#pragma acc kernels loop
+    #pragma acc data present(xS, yS, zS, qS)
+    #pragma acc kernels loop
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
-//        nn = batch_reorder[ii] - 1;
-        d_peng=0.0;
+        d_peng = 0.0;
         for (i = ibeg - 1; i < iend; i++) {
             tx = xS[i] - xT[ii];
             ty = yS[i] - yT[ii];
@@ -371,8 +362,6 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
             d_peng += qS[i] / sqrt(tx*tx + ty*ty + tz*tz);
         }
         EnP[ii] += d_peng;
-
-        //printf("%d; EnP %lf \n", ii, EnP[ii]);
     }
 
     return;
