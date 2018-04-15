@@ -1,13 +1,13 @@
 #ifndef H_TREEDRIVER_H
 #define H_TREEDRIVER_H
 
+#include "particles.h"
+
 /* declaration of primary treecode driver */
 
-void treecode(double *xS, double *yS, double *zS, double *qS, 
-              double *xT, double *yT, double *zT,
-              int numparsS, int numparsT, double *tEn, double *tpeng, 
-              int order, double theta, int maxparnode,
-              double timetree[4],
-              int pot_type, double kappa, int tree_type);
+void treedriver(struct particles *sources, struct particles *targets,
+                int order, double theta, int maxparnode, int batch_size,
+                int pot_type, double kappa, int tree_type,
+                double *tEn, double *tpeng, double *timetree);
 
-#endif /* H_TREEFUNCTIONS_H */
+#endif /* H_TREEDRIVER_H */

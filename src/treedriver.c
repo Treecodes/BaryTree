@@ -5,6 +5,8 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
+#include "batch.h"
+#include "particles.h"
 #include "tools.h"
 #include "tree.h"
 
@@ -13,66 +15,65 @@
 
 /* definition of primary treecode driver */
 
-void treecode(double *xS, double *yS, double *zS, double *qS, 
-              double *xT, double *yT, double *zT,
-              int numparsS, int numparsT, double *tEn, double *tpeng, 
-              int order, double theta, int maxparnode,
-              double *timetree, 
-              int pot_type, double kappa, int tree_type)
+void treedriver(struct particles *sources, struct particles *targets,
+                int order, double theta, int maxparnode, int batch_size,
+                int pot_type, double kappa, int tree_type,
+                double *tEn, double *tpeng, double *timetree)
 {
-
-
 
     /* local variables */
     struct tnode *troot = NULL;
     int level;
     double xyzminmax[6];
-
+    
+    /* batch variables */
+    struct batch *batches = NULL;
+    double batch_lim[6];
+    
     /* date and time */
     double time1, time2;
 
     
     time1 = MPI_Wtime();
-
-    /* call setup to allocate arrays for Taylor expansions and setup global vars */
-    if (tree_type == 0) {
-        if (pot_type == 0)
-            setup(xT, yT, zT, numparsT, order, theta, xyzminmax);
-        else if (pot_type == 1)
-            setup_yuk(xT, yT, zT, numparsT, order, theta, xyzminmax);
-    } else if (tree_type == 1) {
-        if (pot_type == 0)
-            setup(xS, yS, zS, numparsS, order, theta, xyzminmax);
-        else if (pot_type == 1)
-            setup_yuk(xS, yS, zS, numparsS, order, theta, xyzminmax);
-    }
     
-
-    /* set global variables to track tree levels during construction */
     level = 0;
     numleaves = 0;
     minlevel = INT_MAX;
     minpars = INT_MAX;
-    xdiv = 0; ydiv = 0; zdiv = 0;
-
+    maxlevel = 0;
+    maxpars = 0;
+    
     printf("Creating tree... \n\n");
 
+    /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
-        maxlevel = 0;
-        maxpars = 0;
-        cp_create_tree_n0(&troot, 1, numparsT, xT, yT, zT,
+        if (pot_type == 0) {
+            setup(targets, order, theta, xyzminmax);
+        } else if (pot_type == 1) {
+            setup_yuk(targets, order, theta, xyzminmax);
+        }
+        
+        cp_create_tree_n0(&troot, targets, 1, targets->num,
                           maxparnode, xyzminmax, level);
+        
     } else if (tree_type == 1) {
-        maxlevel = 0;
-        maxpars = 0;
-        pc_create_tree_n0(&troot, 1, numparsS, xS, yS, zS, qS,
+    
+        if (pot_type == 0) {
+            setup(sources, order, theta, xyzminmax);
+        } else if (pot_type == 1) {
+            setup_yuk(sources, order, theta, xyzminmax);
+        }
+        
+        pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
-    }
 
+        setup_batch(&batches, batch_lim, targets, batch_size);
+        cp_create_batch(batches, targets, 1, targets->num,
+                        batch_size, batch_lim);
+    }
 
     time2 = MPI_Wtime();
     timetree[0] = time2-time1;
-
 
     printf("Tree created.\n\n");
     printf("Tree information: \n\n");
@@ -93,39 +94,35 @@ void treecode(double *xS, double *yS, double *zS, double *qS,
     printf("                tree maxpars: %d\n", maxpars);
     printf("                tree minpars: %d\n", minpars);
     printf("            number of leaves: %d\n", numleaves);
-    printf("        number of x,y,z divs: %d, %d, %d\n", xdiv, ydiv, zdiv);
-
 
     time1 = MPI_Wtime();
 
     /* Copy source arrays to GPU */
-    #pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
+	#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
 
 
     if (tree_type == 0) {
         if (pot_type == 0) {
-            cp_treecode(troot, xS, yS, zS, qS, xT, yT, zT,
-                        tpeng, tEn, numparsS, numparsT, &timetree[1]);
+            cp_treecode(troot, sources, targets, tpeng, tEn, &timetree[1]);
         } else if (pot_type == 1) {
-            cp_treecode_yuk(troot, xS, yS, zS, qS, xT, yT, zT,
-                            tpeng, tEn, numparsS, numparsT, kappa, &timetree[1]);
+            cp_treecode_yuk(troot, sources, targets, kappa,
+                            tpeng, tEn, &timetree[1]);
         }
     } else if (tree_type == 1) {
         if (pot_type == 0) {
-            pc_treecode(troot, xS, yS, zS, qS, xT, yT, zT,
-                        tpeng, tEn, numparsS, numparsT);
+            pc_treecode(troot, batches, sources, targets, tpeng, tEn);
         } else if (pot_type == 1) {
-            pc_treecode_yuk(troot, xS, yS, zS, qS, xT, yT, zT,
-                            tpeng, tEn, numparsS, numparsT, kappa);
+            pc_treecode_yuk(troot, batches, sources, targets,
+                            kappa, tpeng, tEn);
         }
+        
+        reorder_energies(batches->reorder, targets->num, tEn);
     }
 
 
     time2 = MPI_Wtime();
     timetree[3] = time2-time1 + timetree[0];
 
-    //printf("       Tree building time (s): %f\n", *timetree - totaltime);
-    //printf("    Tree computation time (s): %f\n\n", totaltime);
     printf("Deallocating tree structure... \n\n");
 
     cleanup(troot);

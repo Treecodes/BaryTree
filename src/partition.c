@@ -17,12 +17,12 @@ void cp_partition(double *a, double *b, double *c, int *indarr,
         double ta, tb, tc;
         int lower, upper, tind;
 
-
         if (ibeg < iend) {
         /* 
          * temporarily stores ibeg entries and set a(ibeg) = val
          * for the partitioning algorithm.
          */
+         
                 ta = a[ibeg - 1];
                 tb = b[ibeg - 1];
                 tc = c[ibeg - 1];
@@ -56,7 +56,6 @@ void cp_partition(double *a, double *b, double *c, int *indarr,
                 }
 
                 *midind = upper;
-
 
                 /* replace TA in position upper and change midind if ta > val */
 
