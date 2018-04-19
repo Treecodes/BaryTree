@@ -1,23 +1,21 @@
 !
-!   Author:  Leighton W. Wilson  (lwwilson@umich.edu) 
-!   Based on code originally writted by Henry Boateng (boateng@umich.edu)
+!   Authors:  Leighton W. Wilson  (lwwilson@umich.edu) 
+!             Nathan J. Vaughn  (njvaughn@umich.edu) 
+!   Inspired by code originally writted by: Henry Boateng (boateng@umich.edu)
+!                                           Hans Johnston
 !   Department of Mathematics
 !   University of Michigan, Ann Arbor
 !
-!   Copyright (c) 2017. The Regents of the University of Michigan.
+!   Copyright (c) 2018. The Regents of the University of Michigan.
 !   All Rights Reserved.
 !
 !
-!   This file is the partial documentation for PC_TREECODE and CP_TREECODE, 
-!   C subroutines for approximating the electrostatic energy at 
-!   a set of M targets due to a disjoint set of N source particles.
-!   PC_TREECODE employs the particle-cluster method which is more efficient
-!   when the sources outnumber the targets. CP_TREECODE employs the
-!   cluster-particle method which is more efficient when the sources
-!   outnumber the targets.
-!
-!   This code includes capabilities to build virtual target trees on grids,
-!   and specialized code for target boundary grids.
+!   This file is the partial documentation for hybrid-gpu-treecode, 
+!   a work-in-progress set of routines for approximating the electrostatic 
+!   energy at a set of M targets due to a disjoint set of N source particles.
+!   The current code employs an OpenACC GPU implementation to handle direct
+!   source-target interactions, and can also be compiled with MPI 
+!   capabilities.
 !
 !   This program is free software; you can redistribute it and/or modify
 !   it under the terms of the GNU General Public License as published by
@@ -45,8 +43,7 @@
         (1) Boateng. H. A., Krasny, R.: Comparison of Treecodes for
             Computing Electrostatic Potentials in Charged Particle 
 			Systems with Disjoint Targets and Sources.
-            J. Comput. Chem. (2013)
-		 
+            J. Comput. Chem. (2013)	 
 
         (2) Duan, Z.-H., Krasny, R.: An adaptive treecode for computing
             nonbonded potential energy in classical molecular systems.
@@ -61,165 +58,63 @@
             SIAM J. Sci. Comput. {\bf 34} (2012) A1126-A1140
 
 
-Summary of files :
-------------------
 
-      treedriver.f90 : Driver program for testing the treecode subroutines 
-                       tree_pc.f90 and tree_cp.f90 
+Summary of executables
+----------------------
+  tree.exe:     Runs the particle-cluster or cluster-particle treecode for Coulomb or
+                screened Coulomb interactions.
+	     
+  direct.exe:   Directly computes Coulomb or screened Coulomb interactions.
+  
+  txt2bin.exe:  Turns a text file of sources (pqr or x/y/z/q file) or targets into a 
+  		binary file for use by the tree.exe or direct.exe executables.
 
-      tree_pc.f90    : Subroutine for particle-cluster treecode
-	  
-	  tree_cp.f90    : Subroutine for cluster-particle treecode
-	  
-	  exact_coul.f90 : Program to compute the interactions directly. It should
-                       be run first to generate the exact energies to which 
-					   the approximate energies from the treecode algorithms 
-					   are compared.
-					   
-      S*.txt         : Files containing the charges and coordinates of the 
-					   source particles uniformly distributed in
-					   [-0.5,0.5]x[-0.5,0.5]x[-0.5,0.5]. The files S10000.txt,
-                       S100000.txt and S1000000.txt correspond to 10000, 
-					   100000, and 1000000 source particles respectively.
 
-      T*.txt         : Files containing the coordinates of the target particles
-					   uniformly distributed in [-0.5,0.5]x[-0.5,0.5]x[-0.5,0.5].
-					   The files T10000.txt, T100000.txt and T1000000.txt
-					   correspond to 10000, 100000, and 1000000 target particles
-					   respectively.
-					   
-      input_ex.txt   : Input file for the executable from compiling exact_coul.f90 
-					                                
-
-      input_pc.txt   : Input file for the executable from compiling tree_pc.f90 
-	  
-	  input_cp.txt   : Input file for the executable from compiling tree_cp.f90
-	  
-	  run_direct     : Bash script for running exact_coul for different M and N's.
-	  
-	  run_pc         : Bash script for running tree_pc for different M and N's.
-	  
-	  run_cp         : Bash script for running tree_cp for different M and N's.
-                    
                      
-
 Compiling and Testing the code
 ------------------------------
 
-  Compiling : 
-              The source code is written in Fortran90. To compile 
-              on an Intel Fortran compiler to generate an executable,
-			  exact_coul, for the direct computation, use:
-			  
-				   ifort -fast exact_coul.f90 -O3 -o exact_coul.
-			
-			  To generate an executable, tree_pc, for the 
-              particle-cluster code use:
+  Compiling: 
+	      To compile with GPU support, first load all modules necessary for PGI compilers.
+	      For instance, on Michigan Flux, first run:
+	      
+	      module load cuda cupti pgi openmpi/1.10.2/pgi/16.4
+	      
+	      To profile the code, either add the flag `-ta=nvidia,time` to the Makefile in
+	      src, or run the following commands:
+	      
+	      export PGI_ACC_TIME=1
+              export ACC_NOTIFY=1
+              pgaccelinfo (to get details of the detected accelerator)
+	      
+	      The code is compiled with a `make` command in the src directory. This will generate
+	      executables in the bin directory. By default, on Linux, the compilation will rely
+	      on PGI compilers for GPU support, and by default, on Mac, the compilation will not
+	      include GPU support. Edit the flags in Makefile to change this behavior.
 
-                   ifort -fast treedriver.f tree_pc.f90 -O3 -o tree_pc
-				   
-		      and for an executable, tree_cp, for the cluster-particle
-			  code, use:
-				   
-				   ifort -fast treedriver.f tree_cp.f90 -O3 -o tree_cp
-
-
-   Testing   :
+    Testing:
    
-
-              Make the files run_* executable by invoking 'chmod +x run_direct', 
-			  'chmod +x run_pc', and 'chmod +x run_cp'. Then execute 
-			  './run_direct >out1.txt &' to generate the exact energies and
-			  time for direct summations for different sources and targets. 
-			  The output for 10^4  sources and 10^5 targets is labeled ex_s4_t5.txt .
-			  In general, the output for 10^n sources and 10^m targets is labeled
-			  ex_sn_tm.txt . The outputs are input files for tree_pc and tree_cp .
-			  
-			  Execute './run_pc>out2.txt &' and './run_cp>out3.txt &' to approximate
-			  the interactions using particle-cluster and cluster-particle 
-			  respectively with different orders of multipole approximation.
+   
               
                                                      
-Input for the treedriver.f90 :
+Input for tree.exe:
 -------------------------------
 
-      Treedriver is written to work with both tree_pc.f90 and tree_cp.f90.
-      Treedriver will prompt the user for the following:
+      Enter the following as command line arguments:
  
- 
-      SAMPIN1     : Name of input file containing coordinates 
-				    and charges of sources.
-				
-	  SAMPIN2     : (CHARACTER) Name of input files containing coordinates 
-	                of targets.	
-	  
-	  SAMPIN3     : (CHARACTER) Name of input file containing the exact  
-	                energy at of each target and the cpu time for direct 
-				    summation.
-				
-	  SAMPOUT     : (CHARACTER) Name of output file
-	  			
-      NUMPARSS    : (INTEGER) Number of sources particles 
-      
-	  NUMPARST    : (INTEGER) Number of targets
-	  
-      THETA       : (REAL*8) The multipole acceptance criterion.
-	   
-      ORDER       : (INTEGER) Order of the Taylor expansions used for the
-                    approximation if the MAC is accepted.
- 
-
-      IFLAGS      : (INTEGER) Flag determining how source tree division terminates:
-
-					IFLAGS=0  : Divide till number of particles in a leaf is less
-				                or equal to a given number.
-                    IFLAGS=1  : Divide till number of levels in a tree is equal to
-								a given number.
- 
-	  IFLAGT      : (INTEGER) Flag determining how target tree division terminates:
-
-                    IFLAGT=0  : Divide till number of particles in a leaf is less
-				                or equal to a given number.
-                    IFLAGT=1  : Divide till number of levels in a tree is equal to
-								a given number.
-						   
-	  MAXPARNODES : (INTEGER) If IFLAGS=0, then division of a cluster terminates if
-	                the number of particles in the cluster is less or equal to
-					MAXPARNODES.
-
-	  MAXPARNODET : (INTEGER) If IFLAGT=0, then division of a cluster terminates if 
-	                the number of particles in the cluster is less or equal to
-					MAXPARNODET.
-
-	  TREELEVELS  : (INTEGER) If IFLAGS=1, then division of a source cluster  
-	                terminates if the cluster is at level=TREELEVELS.
-
-	  TREELEVELT  : (INTEGER) If IFLAGT=1, then division of a target cluster  
-	                terminates if the cluster is at level=TREELEVELT.					
-
-      SHRINKS     : (INTEGER) Adaptive switch used in the construction of the
-	                 source tree. If SHRINKS=1, then the bounds of a cluster
-					 are taken to be that of the minimal box that contains all
-					 the particles in the cluster. Else, each cluster is 
-					 divided into 8 child clusters of equal volume determined
-					 by the midpoints in the x, y, z directions.
-
-
-      SHRINKT     : (INTEGER) Adaptive switch used in the construction of the
-	                 target tree. If SHRINKT=1, then the bounds of a cluster
-					 are taken to be that of the minimal box that contains all
-					 the particles in the cluster. Else, each cluster is 
-					 divided into 8 child clusters of equal volume determined
-					 by the midpoints in the x, y, z directions.
-
-Output for the treedriver.f90 :
--------------------------------
-
-The output file prints out two lines of data for each realization. The first line is
-a printout of the inputs:
-
-NUMPARSS,NUMPARST,IFLAGS,IFLAGT,MAXPARNODES,MAXPARNODET,TREELEVELS,TREELEVELT,ORDER,THETA .
-
-The second line is a printout of:
-Relative error in total energy, root mean square error, cpu time for direct summation, 
-and cput time for the treecode approximation. 					 
+                   sampin1:  sources input file 
+                   sampin2:  targets input file 
+                   sampin3:  direct calc potential input file 
+                   sampout:  tree calc potential output file
+                  numparsS:  number of sources 
+                  numparsT:  number of targets
+                     theta:  multipole acceptance criterion
+                     order:  order of treecode Taylor expansion 
+                 tree_type:  0--cluster-particle, 1--particle-cluster 
+                maxparnode:  maximum particles in leaf 
+                     kappa:  screened Coulomb parameter
+                  pot_type:  0--Coulomb, 1--screened Coulomb
+                     pflag:  distribute 0--targets, 1--sources
+                     sflag:  on distr 0--sort, 1--no sort
+                     dflag:  if sorted, direction 0--x, 1--y, 2--z	
+		     batch:  maximum particles in batch
