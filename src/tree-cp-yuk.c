@@ -70,7 +70,7 @@ void setup_yuk(struct particles *particles, int order, double theta,
 
 
 
-void cp_treecode_yuk(struct tnode *p,
+void cp_treecode_yuk(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets,
                      double kappa, double *tpeng, double *EnP,
                      double *timetree)

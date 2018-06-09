@@ -30,8 +30,8 @@ void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa);
 
 /* used by cluster-particle */
 void cp_create_tree_n0(struct tnode **p, struct particles *targets,
-                       int ibeg, int iend, int maxparnode,
-                       double *xyzmm, int level);
+                       int ibeg, int iend, int maxparnode, double *xyzmm,
+                       int level);
 
 void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
                     double xl, double yl, double zl,
@@ -46,7 +46,7 @@ void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
 
 
 /* used by cluster-particle Coulomb */
-void cp_treecode(struct tnode *p,
+void cp_treecode(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets,
                  double *tpeng, double *EnP, double *timetree);
 
@@ -58,7 +58,7 @@ void cp_comp_direct(double *EnP, int ibeg, int iend,
 
 
 /* used by cluster-particle Yukawa */
-void cp_treecode_yuk(struct tnode *p,
+void cp_treecode_yuk(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets,
                      double kappa, double *tpeng, double *EnP,
                      double *timetree);
@@ -123,10 +123,18 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
 void setup_batch(struct batch **batches, double *batch_lim,
                  struct particles *particles, int batch_size);
 
-void cp_create_batch(struct batch *batches, struct particles *particles,
+void create_target_batch(struct batch *batches, struct particles *particles,
                      int ibeg, int iend, int maxparnode, double *xyzmm);
 
 void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
+                    double xl, double yl, double zl, double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid, int ind[8][2],
+                    int *batch_reorder);
+
+void create_source_batch(struct batch *batches, struct particles *particles,
+                     int ibeg, int iend, int maxparnode, double *xyzmm);
+
+void pc_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
                     int *batch_reorder);

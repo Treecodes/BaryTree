@@ -28,7 +28,6 @@ int torder, torderlim, torderflat;
 int minlevel, maxlevel;
 int maxpars, minpars;
 int numleaves;
-int xdiv, ydiv, zdiv;
 
 double tarpos[3];
 double thetasq, tarposq;
@@ -300,7 +299,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
 
 
-void cp_treecode(struct tnode *p,
+void cp_treecode(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets,
                  double *tpeng, double *EnP, double *timetree)
 {

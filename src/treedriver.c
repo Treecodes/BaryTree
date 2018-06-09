@@ -56,6 +56,10 @@ void treedriver(struct particles *sources, struct particles *targets,
         cp_create_tree_n0(&troot, targets, 1, targets->num,
                           maxparnode, xyzminmax, level);
         
+        setup_batch(&batches, batch_lim, targets, batch_size);
+        create_source_batch(batches, sources, 1, sources->num,
+                            batch_size, batch_lim);
+        
     } else if (tree_type == 1) {
     
         if (pot_type == 0) {
@@ -68,8 +72,8 @@ void treedriver(struct particles *sources, struct particles *targets,
                           maxparnode, xyzminmax, level);
 
         setup_batch(&batches, batch_lim, targets, batch_size);
-        cp_create_batch(batches, targets, 1, targets->num,
-                        batch_size, batch_lim);
+        create_target_batch(batches, targets, 1, targets->num,
+                            batch_size, batch_lim);
     }
 
     time2 = MPI_Wtime();
@@ -103,9 +107,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     if (tree_type == 0) {
         if (pot_type == 0) {
-            cp_treecode(troot, sources, targets, tpeng, tEn, &timetree[1]);
+            cp_treecode(troot, batches, sources, targets,
+                        tpeng, tEn, &timetree[1]);
         } else if (pot_type == 1) {
-            cp_treecode_yuk(troot, sources, targets, kappa,
+            cp_treecode_yuk(troot, batches, sources, targets, kappa,
                             tpeng, tEn, &timetree[1]);
         }
     } else if (tree_type == 1) {
