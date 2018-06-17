@@ -85,7 +85,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(tree_array->x_mid, numnodes);
         make_vector(tree_array->y_mid, numnodes);
         make_vector(tree_array->z_mid, numnodes);
-        
+
         pc_create_tree_array(troot, tree_array);
 
         setup_batch(&batches, batch_lim, targets, batch_size);
@@ -115,11 +115,12 @@ void treedriver(struct particles *sources, struct particles *targets,
     printf("                tree maxpars: %d\n", maxpars);
     printf("                tree minpars: %d\n", minpars);
     printf("            number of leaves: %d\n", numleaves);
+    printf("             number of nodes: %d\n", numnodes);
 
     time1 = MPI_Wtime();
 
     /* Copy source arrays to GPU */
-	#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
+	//#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
 
 
     if (tree_type == 0) {
@@ -133,22 +134,10 @@ void treedriver(struct particles *sources, struct particles *targets,
     } else if (tree_type == 1) {
         if (pot_type == 0) {
         
-            make_matrix(tree_inter_list, batches->num, numnodes-numleaves);
+            make_matrix(tree_inter_list, batches->num, numnodes);
             make_matrix(direct_inter_list, batches->num, numleaves);
             
             pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
-            
-            for (i = 0; i < batches->num; i++) {
-                printf("batch %d: \n\t", i);
-                for (j = 0; j < numnodes-numleaves; j++) {
-                    printf("  %d  ", tree_inter_list[i][j]);
-                }
-                printf("\n\n");
-                for (j = 0; j < numleaves; j++) {
-                    printf("  %d  ", direct_inter_list[i][j]);
-                }
-                printf("\n\n");
-            }
             
             pc_treecode(troot, batches, sources, targets, tpeng, tEn);
             

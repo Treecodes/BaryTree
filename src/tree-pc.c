@@ -444,7 +444,7 @@ void pc_make_interaction_list(struct tnode *p, struct batch *batches,
     int direct_index_counter;
 
     for (i = 0; i < batches->num; i++) {
-        for (j = 0; j < numnodes-numleaves; j++) {
+        for (j = 0; j < numnodes; j++) {
             tree_inter_list[i][j] = -1;
         }
         for (j = 0; j < numleaves; j++) {
@@ -501,6 +501,7 @@ void pc_compute_interaction_list(struct tnode *p,
         if (p->num_children == 0) {
             batch_direct_list[*direct_index_counter] = p->node_index;
             (*direct_index_counter)++;
+
         } else {
             for (i = 0; i < p->num_children; i++) {
                 pc_compute_interaction_list(p->child[i], batch_ind, batch_mid, batch_rad,
