@@ -26,6 +26,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     int level;
     double xyzminmax[6];
     
+    int i, j;
+    
     /* batch variables */
     struct batch *batches = NULL;
     double batch_lim[6];
@@ -135,6 +137,18 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_matrix(direct_inter_list, batches->num, numleaves);
             
             pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+            
+            for (i = 0; i < batches->num; i++) {
+                printf("batch %d: \n\t", i);
+                for (j = 0; j < numnodes-numleaves; j++) {
+                    printf("  %d  ", tree_inter_list[i][j]);
+                }
+                printf("\n\n");
+                for (j = 0; j < numleaves; j++) {
+                    printf("  %d  ", direct_inter_list[i][j]);
+                }
+                printf("\n\n");
+            }
             
             pc_treecode(troot, batches, sources, targets, tpeng, tEn);
             
