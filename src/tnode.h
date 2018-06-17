@@ -16,6 +16,20 @@ struct tnode
         int xdim, ydim, zdim;
         int xlind, ylind, zlind;
         int xhind, yhind, zhind;
+    
+        int node_index;
 };
+
+
+struct tnode_array
+{
+        int numnodes;
+        int *ibeg;
+        int *iend;
+        double *x_mid;
+        double *y_mid;
+        double *z_mid;
+};
+
 
 #endif /* H_TNODE_H */

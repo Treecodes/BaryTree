@@ -50,6 +50,10 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
     (*p) = malloc(sizeof(struct tnode));
 
 
+    /* increment number of nodes */
+    (*p)->node_index = numnodes;
+    numnodes++;
+
     /* set node fields: number of particles, exist_ms, and xyz bounds */
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
@@ -148,9 +152,30 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
         if (minpars > (*p)->numpar) minpars = (*p)->numpar;
         if (maxpars < (*p)->numpar) maxpars = (*p)->numpar;
         
+        /* increment number of leaves */
         numleaves++;
-        
+    }
 
+    return;
+
+} /* END of function create_tree_n0 */
+
+
+
+void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
+{
+    int i;
+
+    /*midpoint coordinates, RADIUS and SQRADIUS*/
+    tree_array->x_mid[p->node_index] = p->x_mid;
+    tree_array->y_mid[p->node_index] = p->y_mid;
+    tree_array->z_mid[p->node_index] = p->z_mid;
+
+    tree_array->ibeg[p->node_index] = p->ibeg;
+    tree_array->iend[p->node_index] = p->iend;
+
+    for (i = 0; i < p->num_children; i++) {
+        pc_create_tree_array(p->child[i], tree_array);
     }
 
     return;
@@ -336,6 +361,7 @@ void compute_pc(struct tnode *p,
 
 
 
+
 /*
  * comp_direct directly computes the potential on the targets in the current
  * cluster due to the current source, determined by the global variable TARPOS
@@ -405,3 +431,85 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     return;
     
 } /* END function cp_comp_ms */
+
+
+
+
+void pc_make_interaction_list(struct tnode *p, struct batch *batches,
+                              int **tree_inter_list, int **direct_inter_list)
+{
+    /* local variables */
+    int i, j;
+    int tree_index_counter;
+    int direct_index_counter;
+
+    for (i = 0; i < batches->num; i++) {
+        for (j = 0; j < numnodes-numleaves; j++) {
+            tree_inter_list[i][j] = -1;
+        }
+        for (j = 0; j < numleaves; j++) {
+            direct_inter_list[i][j] = -1;
+        }
+    }
+    
+    for (i = 0; i < batches->num; i++) {
+        tree_index_counter = 0;
+        direct_index_counter = 0;
+        
+        pc_compute_interaction_list(p,
+                batches->index[i], batches->center[i], batches->radius[i],
+                tree_inter_list[i], direct_inter_list[i],
+                &tree_index_counter, &direct_index_counter);
+    }
+
+    return;
+
+} /* END of function pc_treecode */
+
+
+
+
+void pc_compute_interaction_list(struct tnode *p,
+                int *batch_ind, double *batch_mid, double batch_rad,
+                int *batch_tree_list, int *batch_direct_list,
+                int *tree_index_counter, int *direct_index_counter)
+{
+    /* local variables */
+    double tx, ty, tz, dist;
+    int i;
+
+    /* determine DIST for MAC test */
+    tx = batch_mid[0] - p->x_mid;
+    ty = batch_mid[1] - p->y_mid;
+    tz = batch_mid[2] - p->z_mid;
+    dist = sqrt(tx*tx + ty*ty + tz*tz);
+
+    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)) {
+    /*
+     * If MAC is accepted and there is more than 1 particle
+     * in the box, use the expansion for the approximation.
+     */
+
+        batch_tree_list[*tree_index_counter] = p->node_index;
+        (*tree_index_counter)++;
+
+    } else {
+    /*
+     * If MAC fails check to see if there are children. If not, perform direct
+     * calculation. If there are children, call routine recursively for each.
+     */
+        if (p->num_children == 0) {
+            batch_direct_list[*direct_index_counter] = p->node_index;
+            (*direct_index_counter)++;
+        } else {
+            for (i = 0; i < p->num_children; i++) {
+                pc_compute_interaction_list(p->child[i], batch_ind, batch_mid, batch_rad,
+                           batch_tree_list, batch_direct_list,
+                           tree_index_counter, direct_index_counter);
+            }
+        }
+    }
+
+    return;
+
+} /* END of function compute_pc */

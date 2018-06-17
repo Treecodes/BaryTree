@@ -43,6 +43,11 @@ void treedriver(struct particles *sources, struct particles *targets,
     maxlevel = 0;
     maxpars = 0;
     
+    int **tree_inter_list;
+    int **direct_inter_list;
+    struct tnode_array *tree_array = NULL;
+    numnodes = 0;
+    
     printf("Creating tree... \n\n");
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
@@ -70,6 +75,16 @@ void treedriver(struct particles *sources, struct particles *targets,
         
         pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
+        
+        tree_array = malloc(sizeof(struct tnode_array));
+        tree_array->numnodes = numnodes;
+        make_vector(tree_array->ibeg, numnodes);
+        make_vector(tree_array->iend, numnodes);
+        make_vector(tree_array->x_mid, numnodes);
+        make_vector(tree_array->y_mid, numnodes);
+        make_vector(tree_array->z_mid, numnodes);
+        
+        pc_create_tree_array(troot, tree_array);
 
         setup_batch(&batches, batch_lim, targets, batch_size);
         create_target_batch(batches, targets, 1, targets->num,
@@ -115,7 +130,14 @@ void treedriver(struct particles *sources, struct particles *targets,
         }
     } else if (tree_type == 1) {
         if (pot_type == 0) {
+        
+            make_matrix(tree_inter_list, batches->num, numnodes-numleaves);
+            make_matrix(direct_inter_list, batches->num, numleaves);
+            
+            pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+            
             pc_treecode(troot, batches, sources, targets, tpeng, tEn);
+            
         } else if (pot_type == 1) {
             pc_treecode_yuk(troot, batches, sources, targets,
                             kappa, tpeng, tEn);

@@ -78,6 +78,8 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
                        int level);
 
+void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
+
 void pc_partition_8(double *x, double *y, double *z, double *q,
                     double xyzmms[6][8], double xl, double yl, double zl,
                     double lmax, int *numposchild,
@@ -85,6 +87,16 @@ void pc_partition_8(double *x, double *y, double *z, double *q,
                     int ind[8][2]);
 
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q);
+
+
+
+void pc_make_interaction_list(struct tnode *p, struct batch *batches,
+                              int **tree_inter_list, int **direct_inter_list);
+
+void pc_compute_interaction_list(struct tnode *p,
+                int *batch_ind, double *batch_mid, double batch_rad,
+                int *batch_tree_list, int *batch_direct_list,
+                int *tree_index_counter, int *direct_index_counter);
 
 
 /* used by particle-cluster Coulomb */

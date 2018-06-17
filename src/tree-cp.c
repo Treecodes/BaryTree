@@ -29,6 +29,8 @@ int minlevel, maxlevel;
 int maxpars, minpars;
 int numleaves;
 
+int numnodes;
+
 double tarpos[3];
 double thetasq, tarposq;
 

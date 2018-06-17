@@ -18,4 +18,6 @@ extern int *orderarr;
 extern double dglobx, dgloby, dglobz;
 extern int xglobdim, yglobdim, zglobdim;
 
+extern int numnodes;
+
 #endif /* H_GLOBALVARS_H */
