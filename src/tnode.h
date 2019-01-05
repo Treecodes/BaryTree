@@ -18,6 +18,8 @@ struct tnode
         int xhind, yhind, zhind;
     
         int node_index;
+    
+        double *t1, *t2, *t3;
 };
 
 
