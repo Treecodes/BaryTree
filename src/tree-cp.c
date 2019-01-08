@@ -38,6 +38,9 @@ double thetasq, tarposq;
 double *cf3 = NULL;
 double ***a1 = NULL;
 
+/* variable used by kernel independent moment computation */
+double *tt;
+
 
 void setup(struct particles *particles, int order, double theta,
            double *xyzminmax)
@@ -58,7 +61,12 @@ void setup(struct particles *particles, int order, double theta,
     make_vector(cf2, torderlim);
 
     make_3array(b1, torderlim, torderlim, torderlim);
-
+    
+    make_vector(tt, torder+1);
+    
+    /* initializing array for Chev points */
+    for (i = 0; i < torder + 1; i++)
+        tt[i] = cos(i * M_PI / torder);
 
     /* initializing arrays for Taylor sums and coefficients */
     for (i = 0; i < torder + 1; i++)
@@ -71,12 +79,12 @@ void setup(struct particles *particles, int order, double theta,
     }
 
     /* find bounds of Cartesian box enclosing the particles */
-    xyzminmax[0] = minval(particles->x, particles->num);
-    xyzminmax[1] = maxval(particles->x, particles->num);
-    xyzminmax[2] = minval(particles->y, particles->num);
-    xyzminmax[3] = maxval(particles->y, particles->num);
-    xyzminmax[4] = minval(particles->z, particles->num);
-    xyzminmax[5] = maxval(particles->z, particles->num);
+    xyzminmax[0] = minval(particles->x, particles->num)-0.00001;
+    xyzminmax[1] = maxval(particles->x, particles->num)+0.00001;
+    xyzminmax[2] = minval(particles->y, particles->num)-0.00001;
+    xyzminmax[3] = maxval(particles->y, particles->num)+0.00001;
+    xyzminmax[4] = minval(particles->z, particles->num)-0.00001;
+    xyzminmax[5] = maxval(particles->z, particles->num)+0.00001;
 
     make_vector(orderarr, particles->num);
 
@@ -130,6 +138,13 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
     (*p)->y_max = maxval(targets->y + ibeg - 1, (*p)->numpar);
     (*p)->z_min = minval(targets->z + ibeg - 1, (*p)->numpar);
     (*p)->z_max = maxval(targets->z + ibeg - 1, (*p)->numpar);
+    
+//    (*p)->x_min = xyzmm[0];
+//    (*p)->x_max = xyzmm[1];
+//    (*p)->y_min = xyzmm[2];
+//    (*p)->y_max = xyzmm[3];
+//    (*p)->z_min = xyzmm[4];
+//    (*p)->z_max = xyzmm[5];
 
     /*compute aspect ratio*/
     xl = (*p)->x_max - (*p)->x_min;

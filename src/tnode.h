@@ -19,7 +19,7 @@ struct tnode
     
         int node_index;
     
-        double *t1, *t2, *t3;
+        double *tx, *ty, *tz;
 };
 
 

@@ -20,4 +20,6 @@ extern int xglobdim, yglobdim, zglobdim;
 
 extern int numnodes;
 
+extern double *tt;
+
 #endif /* H_GLOBALVARS_H */

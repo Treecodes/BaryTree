@@ -65,6 +65,13 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
     (*p)->z_min = minval(sources->z + ibeg - 1, (*p)->numpar);
     (*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
     
+    (*p)->x_min = xyzmm[0];
+    (*p)->x_max = xyzmm[1];
+    (*p)->y_min = xyzmm[2];
+    (*p)->y_max = xyzmm[3];
+    (*p)->z_min = xyzmm[4];
+    (*p)->z_max = xyzmm[5];
+    
 
     /*compute aspect ratio*/
     xl = (*p)->x_max - (*p)->x_min;
@@ -296,8 +303,10 @@ void compute_pc(struct tnode *p,
                 double *xT, double *yT, double *zT, double *EnP)
 {
     /* local variables */
-    double tx, ty, tz, dist;
+    double dxt, dyt, dzt, dist;
+    double tx, ty, tz;
     int i, j, k, kk, ii;
+    double *temp_i, *temp_j, *temp_k;
 
     /* determine DIST for MAC test */
     tx = batch_mid[0] - p->x_mid;
@@ -307,14 +316,22 @@ void compute_pc(struct tnode *p,
 
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)) {
     /*
-     * If MAC is accepted and there is more than 1 particle
+     * If MAC is accepted and there is more than n0 particles
      * in the box, use the expansion for the approximation.
      */
+     
+        make_vector(temp_i, torder+1);
+        make_vector(temp_j, torder+1);
+        make_vector(temp_k, torder+1);
 
         if (p->exist_ms == 0) {
-            make_vector(p->ms, torderflat);
+            make_vector(p->ms, (torder+1)*(torder+1)*(torder+1));
+            make_vector(p->tx, torder+1);
+            make_vector(p->ty, torder+1);
+            make_vector(p->tz, torder+1);
+            
 
-            for (i = 0; i < torderflat; i++)
+            for (i = 0; i < (torder+1)*(torder+1)*(torder+1); i++)
                 p->ms[i] = 0.0;
 
             pc_comp_ms(p, xS, yS, zS, qS);
@@ -322,23 +339,31 @@ void compute_pc(struct tnode *p,
         }
         
         for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
-            tx = xT[ii] - p->x_mid;
-            ty = yT[ii] - p->y_mid;
-            tz = zT[ii] - p->z_mid;
-
-            comp_tcoeff(tx, ty, tz);
+        
+            for (i = 0; i < torder + 1; i++) {
+                dxt = xT[ii] - p->tx[i];
+                dyt = yT[ii] - p->ty[i];
+                dzt = zT[ii] - p->tz[i];
+                temp_i[i] = dxt * dxt;
+                temp_j[i] = dyt * dyt;
+                temp_k[i] = dzt * dzt;
+            }
         
             kk = -1;
-            
             for (k = 0; k < torder + 1; k++) {
-                for (j = 0; j < torder - k + 1; j++) {
-                    for (i = 0; i < torder - k - j + 1; i++) {
-                        EnP[ii] += b1[i][j][k] * p->ms[++kk];
+                for (j = 0; j < torder + 1; j++) {
+                    for (i = 0; i < torder + 1; i++) {
+                        kk++;
+                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
                     }
                 }
             }
         }
-
+        
+        free_vector(temp_i);
+        free_vector(temp_j);
+        free_vector(temp_k);
+        
     } else {
     /*
      * If MAC fails check to see if there are children. If not, perform direct
@@ -403,30 +428,115 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
 {
 
-    int i, k1, k2, k3, kk;
+    int i, j, k1, k2, k3, kk;
     double dx, dy, dz, tx, ty, tz, qloc;
+    double x0, x1, y0, y1, z0, z1;
+    double sumA1, sumA2, sumA3;
+    double xx, yy, zz;
+    
+    double *w1i, *w2j, *w3k, *dj, *Dd;
+    double **a1i, **a2j, **a3k;
+    
+    x0 = p->x_min;
+    x1 = p->x_max;
+    y0 = p->y_min;
+    y1 = p->y_max;
+    z0 = p->z_min;
+    z1 = p->z_max;
+    
+    for (i = 0; i < torder + 1; i++) {
+        p->tx[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
+        p->ty[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
+        p->tz[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+    }
+    
+    make_vector(w1i, torder+1);
+    make_vector(w2j, torder+1);
+    make_vector(w3k, torder+1);
+    make_vector(dj, torder+1);
+    
+    make_matrix(a1i, torder+1, p->numpar);
+    make_matrix(a2j, torder+1, p->numpar);
+    make_matrix(a3k, torder+1, p->numpar);
+    
+    make_vector(Dd, p->numpar);
+    
+    dj[0] = 0.5;
+    dj[torder] = 0.5;
+    for (j = 1; j < torder; j++)
+        dj[j] = 1.0;
+    
+    for (j = 0; j < torder + 1; j++) {
+        w1i[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
+        w2j[j] = w1i[j];
+        w3k[j] = w1i[j];
+    }
+    
+    sumA1 = 0.0;
+    sumA2 = 0.0;
+    sumA3 = 0.0;
     
     for (i = p->ibeg-1; i < p->iend; i++) {
-        dx = x[i] - p->x_mid;
-        dy = y[i] - p->y_mid;
-        dz = z[i] - p->z_mid;
-        qloc = q[i];
+        xx = x[i];
+        yy = y[i];
+        zz = z[i];
         
-        kk = -1;
-        tz = 1.0;
-        for (k3 = 0; k3 < torder + 1; k3++) {
-            ty = 1.0;
-            for (k2 = 0; k2 < torder - k3 + 1; k2++) {
-                tx = 1.0;
-                for (k1 = 0; k1 < torder - k3 - k2 + 1; k1++) {
-                    p->ms[++kk] += qloc * tx*ty*tz;
-                    tx *= dx;
+        for (j = 0; j < torder + 1; j++) {
+            a1i[j][i - p->ibeg + 1] = w1i[j] / (xx - p->tx[j]);
+            a2j[j][i - p->ibeg + 1] = w2j[j] / (yy - p->ty[j]);
+            a3k[j][i - p->ibeg + 1] = w3k[j] / (zz - p->tz[j]);
+            
+            //if (isinf(a2j[j][i - p->ibeg + 1]))
+            //    printf("a2j %d, %d: %f, %f, %f\n", i, j, a2j[j][i - p->ibeg + 1], yy, p->ty[j]);
+            
+            //if (isinf(a1i[j][i - p->ibeg + 1]))
+            //    printf("a1i %d, %d: %f, %f, %f\n", i, j, a1i[j][i - p->ibeg + 1], xx, p->tx[j]);
+
+            //if (isinf(a3k[j][i - p->ibeg + 1]))
+            //    printf("a3k %d, %d: %f, %f, %f\n", i, j, a3k[j][i - p->ibeg + 1], zz, p->tz[j]);
+
+            sumA1 += a1i[j][i - p->ibeg + 1];
+            sumA2 += a2j[j][i - p->ibeg + 1];
+            sumA3 += a3k[j][i - p->ibeg + 1];
+        }
+        
+        Dd[i - p->ibeg + 1] = 1.0 / (sumA1 * sumA2 * sumA3);
+        
+        sumA1 = 0.0;
+        sumA2 = 0.0;
+        sumA3 = 0.0;
+    }
+    
+    kk = -1;
+    for (k3 = 0; k3 < torder + 1; k3++) {
+        for (k2 = 0; k2 < torder + 1; k2++) {
+            for (k1 = 0; k1 < torder + 1; k1++) {
+                kk++;
+                for (i = 0; i < p->numpar; i++) {
+                    p->ms[kk] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i]
+                               * Dd[i] * q[p->ibeg-1+i];
+                    
+                    //if (p->ms[kk] != p->ms[kk])
+                    //    printf("%d, %d, %d, %d: %f, %f, %f, %f, %f, %f\n", k1, k2, k3, i,
+                    //    p->ms[kk], Dd[i], q[p->ibeg-1+i], a1i[k1][i], a2j[k2][i], a3k[k3][i]);
                 }
-                ty *= dy;
             }
-            tz *= dz;
         }
     }
+    
+    
+    
+    free_vector(w1i);
+    free_vector(w2j);
+    free_vector(w3k);
+    
+    free_vector(dj);
+    
+    free_matrix(a1i);
+    free_matrix(a2j);
+    free_matrix(a3k);
+
+    free_vector(Dd);
     
     return;
     
