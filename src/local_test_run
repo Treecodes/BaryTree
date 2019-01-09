@@ -1,0 +1,1 @@
+../bin/tree.exe ../examples/S100000.bin ../examples/T10000.bin ../examples/ex_s5_t4_0_p1.bin ../examples/out.tsv 100000 10000 0.9 5 1 5000 0 0 0 1 0 500

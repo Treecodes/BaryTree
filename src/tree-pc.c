@@ -339,31 +339,105 @@ void compute_pc(struct tnode *p,
             p->exist_ms = 1;
         }
         
-        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+//        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+//
+//            for (i = 0; i < torderlim; i++) {
+//                dxt = xT[ii] - p->tx[i];
+//                dyt = yT[ii] - p->ty[i];
+//                dzt = zT[ii] - p->tz[i];
+//                temp_i[i] = dxt * dxt;
+//                temp_j[i] = dyt * dyt;
+//                temp_k[i] = dzt * dzt;
+//            }
+//
+//            kk = -1;
+//            for (k = 0; k < torderlim; k++) {
+//                for (j = 0; j < torderlim; j++) {
+//                    for (i = 0; i < torderlim; i++) {
+//                        kk++;
+//                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
+//                    }
+//                }
+//            }
+//        }
+//
+//      free_vector(temp_i);
+//		free_vector(temp_j);
+//		free_vector(temp_k);
+
+
+
+        // Allocate the matrices and vectors
+        int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
+        int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
         
-            for (i = 0; i < torderlim; i++) {
-                dxt = xT[ii] - p->tx[i];
-                dyt = yT[ii] - p->ty[i];
-                dzt = zT[ii] - p->tz[i];
-                temp_i[i] = dxt * dxt;
-                temp_j[i] = dyt * dyt;
-                temp_k[i] = dzt * dzt;
-            }
-        
-            kk = -1;
-            for (k = 0; k < torderlim; k++) {
-                for (j = 0; j < torderlim; j++) {
-                    for (i = 0; i < torderlim; i++) {
-                        kk++;
-                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
-                    }
-                }
-            }
+        double *A = (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
+        double *C = (double *)malloc(numberOfTargets * sizeof(double));
+
+
+        double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+        double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+        double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+
+
+        // Fill in the interpolation point coordinate vectors.  Not necessary, but helps modularize the next step, filling the kernel matrix.
+        int kk = -1;
+        int k1, k2, k3;
+		for (k3 = 0; k3 < torderlim; k3++) {
+			for (k2 = 0; k2 < torderlim; k2++) {
+				for (k1 = 0; k1 < torderlim; k1++) {
+					kk++;
+					interpolationX[kk] = p->tx[k1];
+					interpolationY[kk] = p->ty[k2];
+					interpolationZ[kk] = p->tz[k3];
+				}
+			}
+		}
+
+
+		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
+        double dx, dy, dz;
+
+        for (i = 0; i < numberOfTargets; i++){
+
+        	for (j = 0; j < numberOfInterpolationPoints; j++){
+
+        		// Compute x, y, and z distances between target i and interpolation point j
+        		dx = xT[ batch_ind[0] - 1 + i] - interpolationX[j];
+        		dy = yT[ batch_ind[0] - 1 + i] - interpolationY[j];
+        		dz = zT[ batch_ind[0] - 1 + i] - interpolationZ[j];
+
+        		// Evaluate Kernel, store in A[i][j]
+        		A[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
+
+        	}
+
+        }
+
+
+        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
+        double tempSum;
+
+        for (i = 0; i < numberOfTargets; i++){
+
+        	tempSum = 0.0;
+
+			for (j = 0; j < numberOfInterpolationPoints; j++){
+
+				tempSum += A[i*numberOfInterpolationPoints + j] * p->ms[j];
+			}
+
+			C[i] = tempSum;
+
         }
         
-        free_vector(temp_i);
-        free_vector(temp_j);
-        free_vector(temp_k);
+
+        // Add result to EnP, starting at index batch_ind[0] - 1
+		for (i = 0; i < numberOfTargets; i++){
+			EnP[batch_ind[0] - 1 + i] += C[i];
+		}
+
+
         
     } else {
     /*
