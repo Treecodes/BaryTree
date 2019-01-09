@@ -58,12 +58,12 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
     
-    (*p)->x_min = minval(sources->x + ibeg - 1, (*p)->numpar);
-    (*p)->x_max = maxval(sources->x + ibeg - 1, (*p)->numpar);
-    (*p)->y_min = minval(sources->y + ibeg - 1, (*p)->numpar);
-    (*p)->y_max = maxval(sources->y + ibeg - 1, (*p)->numpar);
-    (*p)->z_min = minval(sources->z + ibeg - 1, (*p)->numpar);
-    (*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
+    //(*p)->x_min = minval(sources->x + ibeg - 1, (*p)->numpar);
+    //(*p)->x_max = maxval(sources->x + ibeg - 1, (*p)->numpar);
+    //(*p)->y_min = minval(sources->y + ibeg - 1, (*p)->numpar);
+    //(*p)->y_max = maxval(sources->y + ibeg - 1, (*p)->numpar);
+    //(*p)->z_min = minval(sources->z + ibeg - 1, (*p)->numpar);
+    //(*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
     
     (*p)->x_min = xyzmm[0];
     (*p)->x_max = xyzmm[1];
@@ -314,24 +314,25 @@ void compute_pc(struct tnode *p,
     tz = batch_mid[2] - p->z_mid;
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
+    
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)) {
     /*
      * If MAC is accepted and there is more than n0 particles
      * in the box, use the expansion for the approximation.
      */
      
-        make_vector(temp_i, torder+1);
-        make_vector(temp_j, torder+1);
-        make_vector(temp_k, torder+1);
+        make_vector(temp_i, torderlim);
+        make_vector(temp_j, torderlim);
+        make_vector(temp_k, torderlim);
 
         if (p->exist_ms == 0) {
-            make_vector(p->ms, (torder+1)*(torder+1)*(torder+1));
-            make_vector(p->tx, torder+1);
-            make_vector(p->ty, torder+1);
-            make_vector(p->tz, torder+1);
+            make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
+            make_vector(p->tx, torderlim);
+            make_vector(p->ty, torderlim);
+            make_vector(p->tz, torderlim);
             
 
-            for (i = 0; i < (torder+1)*(torder+1)*(torder+1); i++)
+            for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++)
                 p->ms[i] = 0.0;
 
             pc_comp_ms(p, xS, yS, zS, qS);
@@ -340,7 +341,7 @@ void compute_pc(struct tnode *p,
         
         for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
         
-            for (i = 0; i < torder + 1; i++) {
+            for (i = 0; i < torderlim; i++) {
                 dxt = xT[ii] - p->tx[i];
                 dyt = yT[ii] - p->ty[i];
                 dzt = zT[ii] - p->tz[i];
@@ -350,9 +351,9 @@ void compute_pc(struct tnode *p,
             }
         
             kk = -1;
-            for (k = 0; k < torder + 1; k++) {
-                for (j = 0; j < torder + 1; j++) {
-                    for (i = 0; i < torder + 1; i++) {
+            for (k = 0; k < torderlim; k++) {
+                for (j = 0; j < torderlim; j++) {
+                    for (i = 0; i < torderlim; i++) {
                         kk++;
                         EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
                     }
@@ -433,9 +434,15 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     double x0, x1, y0, y1, z0, z1;
     double sumA1, sumA2, sumA3;
     double xx, yy, zz;
+    double *xibeg, *yibeg, *zibeg, *qibeg;
     
     double *w1i, *w2j, *w3k, *dj, *Dd;
     double **a1i, **a2j, **a3k;
+    
+    xibeg = &(x[p->ibeg-1]);
+    yibeg = &(y[p->ibeg-1]);
+    zibeg = &(z[p->ibeg-1]);
+    qibeg = &(q[p->ibeg-1]);
     
     x0 = p->x_min;
     x1 = p->x_max;
@@ -444,20 +451,20 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     z0 = p->z_min;
     z1 = p->z_max;
     
-    for (i = 0; i < torder + 1; i++) {
+    for (i = 0; i < torderlim; i++) {
         p->tx[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         p->ty[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         p->tz[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
     }
     
-    make_vector(w1i, torder+1);
-    make_vector(w2j, torder+1);
-    make_vector(w3k, torder+1);
-    make_vector(dj, torder+1);
+    make_vector(w1i, torderlim);
+    make_vector(w2j, torderlim);
+    make_vector(w3k, torderlim);
+    make_vector(dj, torderlim);
     
-    make_matrix(a1i, torder+1, p->numpar);
-    make_matrix(a2j, torder+1, p->numpar);
-    make_matrix(a3k, torder+1, p->numpar);
+    make_matrix(a1i, torderlim, p->numpar);
+    make_matrix(a2j, torderlim, p->numpar);
+    make_matrix(a3k, torderlim, p->numpar);
     
     make_vector(Dd, p->numpar);
     
@@ -466,7 +473,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     for (j = 1; j < torder; j++)
         dj[j] = 1.0;
     
-    for (j = 0; j < torder + 1; j++) {
+    for (j = 0; j < torderlim; j++) {
         w1i[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
         w2j[j] = w1i[j];
         w3k[j] = w1i[j];
@@ -476,15 +483,15 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     sumA2 = 0.0;
     sumA3 = 0.0;
     
-    for (i = p->ibeg-1; i < p->iend; i++) {
-        xx = x[i];
-        yy = y[i];
-        zz = z[i];
+    for (i = 0; i < p->numpar; i++) {
+        xx = xibeg[i];
+        yy = yibeg[i];
+        zz = zibeg[i];
         
-        for (j = 0; j < torder + 1; j++) {
-            a1i[j][i - p->ibeg + 1] = w1i[j] / (xx - p->tx[j]);
-            a2j[j][i - p->ibeg + 1] = w2j[j] / (yy - p->ty[j]);
-            a3k[j][i - p->ibeg + 1] = w3k[j] / (zz - p->tz[j]);
+        for (j = 0; j < torderlim; j++) {
+            a1i[j][i] = w1i[j] / (xx - p->tx[j]);
+            a2j[j][i] = w2j[j] / (yy - p->ty[j]);
+            a3k[j][i] = w3k[j] / (zz - p->tz[j]);
             
             //if (isinf(a2j[j][i - p->ibeg + 1]))
             //    printf("a2j %d, %d: %f, %f, %f\n", i, j, a2j[j][i - p->ibeg + 1], yy, p->ty[j]);
@@ -495,12 +502,12 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
             //if (isinf(a3k[j][i - p->ibeg + 1]))
             //    printf("a3k %d, %d: %f, %f, %f\n", i, j, a3k[j][i - p->ibeg + 1], zz, p->tz[j]);
 
-            sumA1 += a1i[j][i - p->ibeg + 1];
-            sumA2 += a2j[j][i - p->ibeg + 1];
-            sumA3 += a3k[j][i - p->ibeg + 1];
+            sumA1 += a1i[j][i];
+            sumA2 += a2j[j][i];
+            sumA3 += a3k[j][i];
         }
         
-        Dd[i - p->ibeg + 1] = 1.0 / (sumA1 * sumA2 * sumA3);
+        Dd[i] = 1.0 / (sumA1 * sumA2 * sumA3);
         
         sumA1 = 0.0;
         sumA2 = 0.0;
@@ -508,13 +515,13 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     }
     
     kk = -1;
-    for (k3 = 0; k3 < torder + 1; k3++) {
-        for (k2 = 0; k2 < torder + 1; k2++) {
-            for (k1 = 0; k1 < torder + 1; k1++) {
+    for (k3 = 0; k3 < torderlim; k3++) {
+        for (k2 = 0; k2 < torderlim; k2++) {
+            for (k1 = 0; k1 < torderlim; k1++) {
                 kk++;
                 for (i = 0; i < p->numpar; i++) {
                     p->ms[kk] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i]
-                               * Dd[i] * q[p->ibeg-1+i];
+                               * Dd[i] * qibeg[i];
                     
                     //if (p->ms[kk] != p->ms[kk])
                     //    printf("%d, %d, %d, %d: %f, %f, %f, %f, %f, %f\n", k1, k2, k3, i,

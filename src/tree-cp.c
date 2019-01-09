@@ -62,10 +62,10 @@ void setup(struct particles *particles, int order, double theta,
 
     make_3array(b1, torderlim, torderlim, torderlim);
     
-    make_vector(tt, torder+1);
+    make_vector(tt, torderlim);
     
     /* initializing array for Chev points */
-    for (i = 0; i < torder + 1; i++)
+    for (i = 0; i < torderlim; i++)
         tt[i] = cos(i * M_PI / torder);
 
     /* initializing arrays for Taylor sums and coefficients */
