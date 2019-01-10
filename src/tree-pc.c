@@ -15,6 +15,8 @@
 #include "partition.h"
 #include "tree.h"
 
+#include "mkl.h"
+
 
 void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
@@ -371,13 +373,24 @@ void compute_pc(struct tnode *p,
         int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
         int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
         
-        double *A = (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
-        double *C = (double *)malloc(numberOfTargets * sizeof(double));
+        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
+        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
 
 
         double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
+
+        if (kernelMatrix == NULL || interactionResult == NULL || Weights == NULL) {
+			printf( "\n ERROR: Can't allocate memory for matrices. Aborting... \n\n");
+			mkl_free(kernelMatrix);
+			mkl_free(interactionResult);
+			mkl_free(Weights);
+			free(interpolationX);
+			free(interpolationY);
+			free(interpolationZ);
+        }
 
 
         // Fill in the interpolation point coordinate vectors.  Not necessary, but helps modularize the next step, filling the kernel matrix.
@@ -390,9 +403,16 @@ void compute_pc(struct tnode *p,
 					interpolationX[kk] = p->tx[k1];
 					interpolationY[kk] = p->ty[k2];
 					interpolationZ[kk] = p->tz[k3];
+					Weights[kk] = p->ms[kk];
+
 				}
 			}
 		}
+
+		// Zero out the interactionResult array.  Probably not necessary
+		for (i = 0; i < numberOfTargets; i++) {
+			interactionResult[i] = 0.0;
+		    }
 
 
 		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
@@ -408,34 +428,56 @@ void compute_pc(struct tnode *p,
         		dz = zT[ batch_ind[0] - 1 + i] - interpolationZ[j];
 
         		// Evaluate Kernel, store in A[i][j]
-        		A[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
+        		kernelMatrix[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
 
         	}
 
         }
 
 
-        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
-        double tempSum;
+//        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
+//        double tempSum;
+//
+//        for (i = 0; i < numberOfTargets; i++){
+//
+//        	tempSum = 0.0;
+//
+//			for (j = 0; j < numberOfInterpolationPoints; j++){
+//
+//				tempSum += kernelMatrix[i*numberOfInterpolationPoints + j] * Weights[j];
+//			}
+//
+//			interactionResult[i] = tempSum;
+//
+//        }
 
-        for (i = 0; i < numberOfTargets; i++){
 
-        	tempSum = 0.0;
+        // Multiply with CBLAS
+        printf("\nBeginning CBLAS section.\n");
+        double alpha=1;
+        double beta=0;
 
-			for (j = 0; j < numberOfInterpolationPoints; j++){
+        int incX = 1;
+        int incY = 1;
 
-				tempSum += A[i*numberOfInterpolationPoints + j] * p->ms[j];
-			}
+        printf("\nBeginning CBLAS call.\n");
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
+        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
+        printf("\nExiting CBLAS call.\n");
 
-			C[i] = tempSum;
 
-        }
-        
 
         // Add result to EnP, starting at index batch_ind[0] - 1
 		for (i = 0; i < numberOfTargets; i++){
-			EnP[batch_ind[0] - 1 + i] += C[i];
+			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
 		}
+
+		mkl_free(kernelMatrix);
+		mkl_free(interactionResult);
+		mkl_free(Weights);
+		free(interpolationX);
+		free(interpolationY);
+		free(interpolationZ);
 
 
         

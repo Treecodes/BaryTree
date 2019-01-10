@@ -9,7 +9,7 @@ OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
 
 OUTDIR = ../bin/
-CC = mpicc 
+CC = mpicc
 
 UNAME := $(shell uname -s)
 
@@ -17,13 +17,15 @@ ifeq ($(UNAME),Linux)
 CFLAGS = -acc -Minfo=accel -ta=tesla,time
 endif
 ifeq ($(UNAME),Darwin)
-CFLAGS = -Wall
+CFLAGS = -Wall 
 endif
+
+LIBS = -L/opt/intel/lib -L/opt/intel/mkl/lib -liomp5 -lmkl_intel_thread -lmkl_intel_ilp64 -lmkl_core -lpthread -lm -ldl
 
 all: $(TARGET) $(TARGETA) $(TARGETB) bin
 
 $(TARGET): $(OFILES)
-	$(CC) $(CFLAGS) $(OFILES) -o $@
+	$(CC) $(LIBS) $(CFLAGS) $(OFILES) -o $@
 
 $(TARGETA): $(OFILESA)
 	$(CC) $(CFLAGS) $(OFILESA) -o $@
