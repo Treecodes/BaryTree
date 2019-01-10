@@ -132,8 +132,8 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
     
     double d_peng;
     
-    #pragma acc data present(xS, yS, zS, qS)
-    #pragma acc region
+    //#pragma acc data present(xS, yS, zS, qS)
+    //#pragma acc region
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;
         for (i = ibeg - 1; i < iend; i++) {
