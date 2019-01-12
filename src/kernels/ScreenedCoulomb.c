@@ -2,7 +2,7 @@
 
 void screenedCoulombSingularitySubtractionKernel( int numberOfTargets, int numberOfInterpolationPoints, int indexOfFirstTarget,
 					double *targetX, double *targetY, double *targetZ, double *targetVal,
-					double *interpolationX, double interpolationY, double *interpolationZ, double *interpolationVal,
+					double *interpolationX, double *interpolationY, double *interpolationZ, double *interpolationVal,
 					double screeningK, double *kernelMatrix){
 
 	// indexOfFirstTarget = batch_ind[0] - 1 with current convention
