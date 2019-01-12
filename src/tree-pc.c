@@ -372,25 +372,28 @@ void compute_pc(struct tnode *p,
         // Allocate the matrices and vectors
         int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
         int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
-        
-        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
-        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
+
+//        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
+        double *kernelMatrix 		= (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
+//        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
+        double *interactionResult 	= (double *)malloc(numberOfTargets * sizeof(double));
 
 
         double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
+//        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
+        double *Weights 	   = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
 
-        if (kernelMatrix == NULL || interactionResult == NULL || Weights == NULL) {
-			printf( "\n ERROR: Can't allocate memory for matrices. Aborting... \n\n");
-			mkl_free(kernelMatrix);
-			mkl_free(interactionResult);
-			mkl_free(Weights);
-			free(interpolationX);
-			free(interpolationY);
-			free(interpolationZ);
-        }
+//        if (kernelMatrix == NULL || interactionResult == NULL || Weights == NULL) {
+//			printf( "\n ERROR: Can't allocate memory for matrices. Aborting... \n\n");
+//			mkl_free(kernelMatrix);
+//			mkl_free(interactionResult);
+//			mkl_free(Weights);
+//			free(interpolationX);
+//			free(interpolationY);
+//			free(interpolationZ);
+//        }
 
 
         // Fill in the interpolation point coordinate vectors.  Not necessary, but helps modularize the next step, filling the kernel matrix.
@@ -435,35 +438,37 @@ void compute_pc(struct tnode *p,
         }
 
 
-//        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
-//        double tempSum;
-//
-//        for (i = 0; i < numberOfTargets; i++){
-//
-//        	tempSum = 0.0;
-//
-//			for (j = 0; j < numberOfInterpolationPoints; j++){
-//
-//				tempSum += kernelMatrix[i*numberOfInterpolationPoints + j] * Weights[j];
-//			}
-//
-//			interactionResult[i] = tempSum;
-//
-//        }
+        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
+        double tempSum;
+
+#pragma omp parallel for private(j,tempSum)
+        for (i = 0; i < numberOfTargets; i++){
+
+        	tempSum = 0.0;
+
+			for (j = 0; j < numberOfInterpolationPoints; j++){
+
+				tempSum += kernelMatrix[i*numberOfInterpolationPoints + j] * Weights[j];
+			}
+
+			interactionResult[i] = tempSum;
+
+        }
 
 
-        // Multiply with CBLAS
-        printf("\nBeginning CBLAS section.\n");
-        double alpha=1;
-        double beta=0;
-
-        int incX = 1;
-        int incY = 1;
-
-        printf("\nBeginning CBLAS call.\n");
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
-        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
-        printf("\nExiting CBLAS call.\n");
+//        // Multiply with CBLAS
+//        printf("\nBeginning CBLAS section.\n");
+//        double alpha=1;
+//        double beta=0;
+//
+//        int incX = 1;
+//        int incY = 1;
+//
+//        printf("\nBeginning CBLAS call.\n");
+//        cblas_dgemv(CblasRowMajor, CblasTrans, numberOfTargets, numberOfInterpolationPoints,
+//        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
+//        printf("\nExiting CBLAS call.\n");
+//
 
 
 
@@ -472,12 +477,12 @@ void compute_pc(struct tnode *p,
 			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
 		}
 
-		mkl_free(kernelMatrix);
-		mkl_free(interactionResult);
-		mkl_free(Weights);
-		free(interpolationX);
-		free(interpolationY);
-		free(interpolationZ);
+//		mkl_free(kernelMatrix);
+//		mkl_free(interactionResult);
+//		mkl_free(Weights);
+//		free(interpolationX);
+//		free(interpolationY);
+//		free(interpolationZ);
 
 
         
