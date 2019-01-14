@@ -373,17 +373,17 @@ void compute_pc(struct tnode *p,
         int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
         int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
 
-//        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
-        double *kernelMatrix 		= (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
-//        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
-        double *interactionResult 	= (double *)malloc(numberOfTargets * sizeof(double));
+        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
+//        double *kernelMatrix 		= (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
+        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
+//        double *interactionResult 	= (double *)malloc(numberOfTargets * sizeof(double));
 
 
         double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-//        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
-        double *Weights 	   = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
+//        double *Weights 	   = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
 
 //        if (kernelMatrix == NULL || interactionResult == NULL || Weights == NULL) {
 //			printf( "\n ERROR: Can't allocate memory for matrices. Aborting... \n\n");
@@ -437,7 +437,7 @@ void compute_pc(struct tnode *p,
 
         }
 
-
+/*
         // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
         double tempSum;
 
@@ -454,21 +454,21 @@ void compute_pc(struct tnode *p,
 			interactionResult[i] = tempSum;
 
         }
+*/
 
+        // Multiply with CBLAS
+        printf("\nBeginning CBLAS section.\n");
+        double alpha=1;
+        double beta=0;
 
-//        // Multiply with CBLAS
-//        printf("\nBeginning CBLAS section.\n");
-//        double alpha=1;
-//        double beta=0;
-//
-//        int incX = 1;
-//        int incY = 1;
-//
-//        printf("\nBeginning CBLAS call.\n");
-//        cblas_dgemv(CblasRowMajor, CblasTrans, numberOfTargets, numberOfInterpolationPoints,
-//        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
-//        printf("\nExiting CBLAS call.\n");
-//
+        int incX = 1;
+        int incY = 1;
+
+        printf("\nBeginning CBLAS call.\n");
+        cblas_dgemv(CblasRowMajor, CblasTrans, numberOfTargets, numberOfInterpolationPoints,
+        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
+        printf("\nExiting CBLAS call.\n");
+
 
 
 
@@ -477,12 +477,12 @@ void compute_pc(struct tnode *p,
 			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
 		}
 
-//		mkl_free(kernelMatrix);
-//		mkl_free(interactionResult);
-//		mkl_free(Weights);
-//		free(interpolationX);
-//		free(interpolationY);
-//		free(interpolationZ);
+		mkl_free(kernelMatrix);
+		mkl_free(interactionResult);
+		mkl_free(Weights);
+		free(interpolationX);
+		free(interpolationY);
+		free(interpolationZ);
 
 
         
@@ -514,8 +514,8 @@ void compute_pc(struct tnode *p,
  * cluster due to the current source, determined by the global variable TARPOS
  */
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                    double *restrict xS, double *restrict yS, double *restrict zS, double *restrict qS,
-                    double *restrict xT, double *restrict yT, double *restrict zT, double *restrict EnP)
+                    double *xS, double *yS, double *zS, double *qS,
+                    double *xT, double *yT, double *zT, double *EnP)
 {
     /* local variables */
     int i, ii;

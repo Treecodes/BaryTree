@@ -121,9 +121,9 @@ void compute_pc_yuk(struct tnode *p,
  * to the current source, determined by the global variable TARPOS
  */
 void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                    double *restrict xS, double *restrict yS, double *restrict zS, double *restrict qS,
-                    double *restrict xT, double *restrict yT, double *restrict zT,
-                    double kappa, double *restrict EnP)
+                    double *xS, double *yS, double *zS, double *qS,
+                    double *xT, double *yT, double *zT,
+                    double kappa, double *EnP)
 {
     
     /* local variables */

@@ -26,8 +26,7 @@ if [ -d "$PBS_O_WORKDIR" ] ; then
 fi
 
 #  Put your job commands after this line
-module load cuda cupti pgi openmpi/1.10.2/pgi/16.4 mkl
-export PGI_ACC_TIME=0
+module load openmpi/1.10.2/gcc/4.8.5 cuda/8.0.44 mkl/2017.0.1 gcc/4.8.5
 
 ../bin/tree.exe S10000.bin T10000.bin ex_s4_t4_0_p1.bin out.tsv 10000 10000 0.5 3 1 500 0 0 1 0 0 500
 

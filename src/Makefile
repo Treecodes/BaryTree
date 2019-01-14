@@ -16,14 +16,14 @@ UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
 #CFLAGS = -acc -Minfo=accel -ta=tesla,time 
-CFLAGS = -fopenmp
-LIBS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+CFLAGS = -fopenmp -lm
+LIBS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -ldl
 endif
 
 ifeq ($(UNAME),Darwin)
-CFLAGS = -Wall -fopenmp
+CFLAGS = -Wall -fopenmp -lm
 MKLROOT = /opt/intel/mkl
-LIBS = -L/opt/intel/lib -L/opt/intel/mkl/lib -liomp5 -lmkl_intel_thread -lmkl_intel_ilp64 -lmkl_core -lpthread -lm -ldl
+LIBS = -L/opt/intel/lib -L/opt/intel/mkl/lib -liomp5 -lmkl_intel_thread -lmkl_intel_ilp64 -lmkl_core -lpthread -ldl
 endif
 
 #LIBS = ${MKLROOT}/lib/libmkl_intel_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -lpthread -lm -ldl
@@ -32,10 +32,10 @@ endif
 all: $(TARGET) $(TARGETA) $(TARGETB) bin
 
 $(TARGET): $(OFILES)
-	$(CC) $(CFLAGS) $(OFILES) -o $@
+	$(CC) $(CFLAGS) $(LIBS) $(OFILES) -o $@
 
 $(TARGETA): $(OFILESA)
-	$(CC) $(CFLAGS) $(OFILESA) -o $@
+	$(CC) $(CFLAGS) $(LIBS) $(OFILESA) -o $@
 
 $(TARGETB): $(OFILESB)
 	$(CC) $(CFLAGS) $(OFILESB) -o $@
@@ -45,9 +45,9 @@ clean:
 	rm -f $(OUTDIR)*
 
 bin:                                                                                         
-	cp $(TARGET) $(OUTDIR)$(TARGET)
-	cp $(TARGETA) $(OUTDIR)$(TARGETA)
-	cp $(TARGETB) $(OUTDIR)$(TARGETB)
+	mv $(TARGET) $(OUTDIR)$(TARGET)
+	mv $(TARGETA) $(OUTDIR)$(TARGETA)
+	mv $(TARGETB) $(OUTDIR)$(TARGETB)
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h
