@@ -15,17 +15,19 @@ CC = mpicc
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
-CFLAGS = -acc -Minfo=accel -ta=tesla,time 
+#CFLAGS = -acc -Minfo=accel -ta=tesla,time 
+CFLAGS = -fopenmp
+LIBS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
 endif
+
 ifeq ($(UNAME),Darwin)
 CFLAGS = -Wall -fopenmp
+MKLROOT = /opt/intel/mkl
+LIBS = -L/opt/intel/lib -L/opt/intel/mkl/lib -liomp5 -lmkl_intel_thread -lmkl_intel_ilp64 -lmkl_core -lpthread -lm -ldl
 endif
 
-
-MKLROOT=/opt/intel/mkl
-#LIBS = -L/opt/intel/lib -L/opt/intel/mkl/lib -liomp5 -lmkl_intel_thread -lmkl_intel_ilp64 -lmkl_core -lpthread -lm -ldl
 #LIBS = ${MKLROOT}/lib/libmkl_intel_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -lpthread -lm -ldl
-#LIBS =  -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl
+
 
 all: $(TARGET) $(TARGETA) $(TARGETB) bin
 
