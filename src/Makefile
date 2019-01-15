@@ -21,12 +21,10 @@ LIBS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp
 endif
 
 ifeq ($(UNAME),Darwin)
-CFLAGS = -Wall -fopenmp -lm
 MKLROOT = /opt/intel/mkl
-LIBS = -L/opt/intel/lib -L/opt/intel/mkl/lib -liomp5 -lmkl_intel_thread -lmkl_intel_ilp64 -lmkl_core -lpthread -ldl
+CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include 
+LIBS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl
 endif
-
-#LIBS = ${MKLROOT}/lib/libmkl_intel_ilp64.a ${MKLROOT}/lib/libmkl_sequential.a ${MKLROOT}/lib/libmkl_core.a -lpthread -lm -ldl
 
 
 all: $(TARGET) $(TARGETA) $(TARGETB) bin
