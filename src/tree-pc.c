@@ -370,6 +370,7 @@ void compute_pc(struct tnode *p,
 
 
         // Allocate the matrices and vectors
+//        printf("Working on batch from %d to %d\n\n", batch_ind[0] - 1,batch_ind[1]);
         int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
         int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
 
@@ -430,50 +431,49 @@ void compute_pc(struct tnode *p,
         		dy = yT[ batch_ind[0] - 1 + i] - interpolationY[j];
         		dz = zT[ batch_ind[0] - 1 + i] - interpolationZ[j];
 
-        		// Evaluate Kernel, store in A[i][j]
+        		// Evaluate Kernel, store in kernelMatrix[i][j]
         		kernelMatrix[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
 
         	}
 
         }
 
-/*
-        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
-        double tempSum;
 
-#pragma omp parallel for private(j,tempSum)
-        for (i = 0; i < numberOfTargets; i++){
+//        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
+//        double tempSum;
+//
+//#pragma omp parallel for private(j,tempSum)
+//        for (i = 0; i < numberOfTargets; i++){
+//
+//        	tempSum = 0.0;
+//
+//			for (j = 0; j < numberOfInterpolationPoints; j++){
+//
+//				tempSum += kernelMatrix[i*numberOfInterpolationPoints + j] * Weights[j];
+//			}
+//
+//			interactionResult[i] = tempSum;
+//
+//        }
 
-        	tempSum = 0.0;
-
-			for (j = 0; j < numberOfInterpolationPoints; j++){
-
-				tempSum += kernelMatrix[i*numberOfInterpolationPoints + j] * Weights[j];
-			}
-
-			interactionResult[i] = tempSum;
-
-        }
-*/
 
         // Multiply with CBLAS
-        printf("\nBeginning CBLAS section.\n");
         double alpha=1;
         double beta=0;
 
         int incX = 1;
         int incY = 1;
 
-        printf("\nBeginning CBLAS call.\n");
-        cblas_dgemv(CblasRowMajor, CblasTrans, numberOfTargets, numberOfInterpolationPoints,
-        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
-        printf("\nExiting CBLAS call.\n");
 
+        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
+        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
 
 
 
         // Add result to EnP, starting at index batch_ind[0] - 1
+//		printf("Batch starting at: %d\n", batch_ind[0]-1);
 		for (i = 0; i < numberOfTargets; i++){
+//			printf("Interation Result entry %d: %12.5e\n", batch_ind[0] - 1 + i, interactionResult[i]);
 			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
 		}
 
