@@ -26,7 +26,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     int level;
     double xyzminmax[6];
     
-    int i, j;
+//    int i, j;
     
     /* batch variables */
     struct batch *batches = NULL;

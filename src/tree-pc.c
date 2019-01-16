@@ -305,9 +305,9 @@ void compute_pc(struct tnode *p,
                 double *xT, double *yT, double *zT, double *qT, double *EnP)
 {
     /* local variables */
-    double dxt, dyt, dzt, dist;
+    double dist;
     double tx, ty, tz;
-    int i, j, k, kk, ii;
+    int i, j;
     double *temp_i, *temp_j, *temp_k;
 
     /* determine DIST for MAC test */
@@ -552,7 +552,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
 {
 
     int i, j, k1, k2, k3, kk;
-    double dx, dy, dz, tx, ty, tz, qloc;
+//    double dx, dy, dz, tx, ty, tz, qloc;
     double x0, x1, y0, y1, z0, z1;
     double sumA1, sumA2, sumA3;
     double xx, yy, zz;
@@ -699,8 +699,8 @@ void pc_comp_weights(struct tnode *p)
 
     for (i=0;i<torderlim;i++){
     	scaledWeightsX[i] = (x1-x0)/2.0*unscaledQuadratureWeights[i];
-    	scaledWeightsY[i] = (x1-x0)/2.0*unscaledQuadratureWeights[i];
-    	scaledWeightsZ[i] = (x1-x0)/2.0*unscaledQuadratureWeights[i];
+    	scaledWeightsY[i] = (y1-y0)/2.0*unscaledQuadratureWeights[i];
+    	scaledWeightsZ[i] = (z1-z0)/2.0*unscaledQuadratureWeights[i];
     }
 
 	p->wx = scaledWeightsX;

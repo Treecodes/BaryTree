@@ -15,8 +15,8 @@ int main()
     //local variables (these decs may be unnecessary in C)
     int i, numparsS, intype, j;
     char c1[10], c2[10], c3[10], c4[10], c5[10], c6[10], c7[10];
-    double a1, a2, a3, a4, a5;
-	double *xS, *yS, *zS, *qS, *mS;
+    double a1, a2, a3, a4; //, a5;
+	double *xS, *yS, *zS, *qS; //, *mS;
     int *iS;
 
     printf("Enter name of input file: \n");
