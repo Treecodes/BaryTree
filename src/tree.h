@@ -80,13 +80,15 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
 
 void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
 
-void pc_partition_8(double *x, double *y, double *z, double *q,
+void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
                     double xyzmms[6][8], double xl, double yl, double zl,
                     double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid,
                     int ind[8][2]);
 
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q);
+
+void pc_comp_weights(struct tnode *p);
 
 
 
@@ -106,12 +108,12 @@ void pc_treecode(struct tnode *p, struct batch *batches,
 
 void compute_pc(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS,
-                double *xT, double *yT, double *zT, double *EnP);
+                double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT, double *EnP);
 
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                    double *xS, double *yS, double *zS, double *qS,
-                    double *xT, double *yT, double *zT, double *EnP);
+                    double *xS, double *yS, double *zS, double *qS, double *wS,
+                    double *xT, double *yT, double *zT, double *qT, double *EnP);
 
 
 /* used by cluster-particle Yukawa */
@@ -146,7 +148,7 @@ void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
 void create_source_batch(struct batch *batches, struct particles *particles,
                      int ibeg, int iend, int maxparnode, double *xyzmm);
 
-void pc_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
+void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
                     int *batch_reorder);

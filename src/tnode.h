@@ -20,6 +20,7 @@ struct tnode
         int node_index;
     
         double *tx, *ty, *tz;
+        double *wx, *wy, *wz;
 };
 
 

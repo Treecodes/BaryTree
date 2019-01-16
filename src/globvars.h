@@ -22,4 +22,6 @@ extern int numnodes;
 
 extern double *tt;
 
+extern double *unscaledQuadratureWeights;
+
 #endif /* H_GLOBALVARS_H */

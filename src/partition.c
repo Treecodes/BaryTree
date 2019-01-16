@@ -87,11 +87,11 @@ void cp_partition(double *a, double *b, double *c, int *indarr,
 
 
 
-void pc_partition(double *a, double *b, double *c, double *d, int *indarr,
+void pc_partition(double *a, double *b, double *c, double *d, double *w, int *indarr,
                   int ibeg, int iend, double val, int *midind)
 {
     /* local variables */
-    double ta, tb, tc, td;
+    double ta, tb, tc, td, tw;
     int lower, upper, tind;
     
     
@@ -104,6 +104,7 @@ void pc_partition(double *a, double *b, double *c, double *d, int *indarr,
         tb = b[ibeg - 1];
         tc = c[ibeg - 1];
         td = d[ibeg - 1];
+        tw = w[ibeg - 1];
         tind = indarr[ibeg - 1];
         a[ibeg - 1] = val;
         upper = ibeg;
@@ -119,6 +120,7 @@ void pc_partition(double *a, double *b, double *c, double *d, int *indarr,
                 b[upper - 1] = b[lower - 1];
                 c[upper - 1] = c[lower - 1];
                 d[upper - 1] = d[lower - 1];
+                w[upper - 1] = w[lower - 1];
                 indarr[upper - 1] = indarr[lower - 1];
             }
             
@@ -131,6 +133,7 @@ void pc_partition(double *a, double *b, double *c, double *d, int *indarr,
                 b[lower - 1] = b[upper - 1];
                 c[lower - 1] = c[upper - 1];
                 d[lower - 1] = d[upper - 1];
+                w[lower - 1] = w[upper - 1];
                 indarr[lower - 1] = indarr[upper - 1];
             }
         }
@@ -148,6 +151,7 @@ void pc_partition(double *a, double *b, double *c, double *d, int *indarr,
         b[upper - 1] = tb;
         c[upper - 1] = tc;
         d[upper - 1] = td;
+        w[upper - 1] = tw;
         indarr[upper - 1] = tind;
         
     } else if (ibeg == iend) {
