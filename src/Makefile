@@ -46,6 +46,13 @@ bin:
 	mv $(TARGET) $(OUTDIR)$(TARGET)
 	mv $(TARGETA) $(OUTDIR)$(TARGETA)
 	mv $(TARGETB) $(OUTDIR)$(TARGETB)
+	
+tests: testQuadratureWeights.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o \
+	 treedriver.o partition.o xmalloc.o sort.o
+	$(CC) $(CFLAGS) $(LIBS) $(OFILES) -o $@
+	
+testQuadratureWeights.o: xmalloc.h globvars.h tnode.h batch.h particles.h \
+		  tools.h partition.h tree.h
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h
