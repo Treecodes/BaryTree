@@ -288,7 +288,6 @@ int main(int argc, char **argv)
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
 
-    printf("Filling target")
     /* Calling main treecode subroutine to calculate approximate energy */
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,

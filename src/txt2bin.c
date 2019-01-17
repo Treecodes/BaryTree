@@ -82,6 +82,9 @@ int main()
     }
 	fclose(fp);
 
+    printf("Done reading in sources...\n");
+
+
     //sortTargets(xS, yS, zS, iS, numparsS, 0);
 
     if (intype == 0)
