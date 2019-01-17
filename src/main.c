@@ -247,7 +247,7 @@ int main(int argc, char **argv)
         
         /* Reading in coordinates and charges for the source particles*/
         MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*4*sizeof(double)), MPI_SEEK_SET);
+        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*5*sizeof(double)), MPI_SEEK_SET);
         for (i = 0; i < numparsSloc; i++) {
             MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
             sources->x[i] = buf[0];
@@ -288,7 +288,7 @@ int main(int argc, char **argv)
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
 
-
+    printf("Filling target")
     /* Calling main treecode subroutine to calculate approximate energy */
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
