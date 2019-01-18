@@ -8,6 +8,9 @@ TARGETA = direct.exe
 OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
 
+#OFILESLIB = treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o partition.o xmalloc.o sort.o 
+#TARGET = tree.exe
+
 OUTDIR = ../bin/
 CC = mpicc
 #CC = /usr/local/Cellar/open-mpi/4.0.0/bin/mpicc
@@ -27,7 +30,7 @@ LIBS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_
 endif
 
 
-all: $(TARGET) $(TARGETA) $(TARGETB) bin
+all: $(TARGET) $(TARGETA) $(TARGETB) bin library
 
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(LIBS) $(OFILES) -o $@
@@ -41,18 +44,16 @@ $(TARGETB): $(OFILESB)
 clean:
 	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA) $(OFILESB) $(TARGETB) 
 	rm -f $(OUTDIR)*
+	rm -f ../lib/*
 
 bin:                                                                                         
 	mv $(TARGET) $(OUTDIR)$(TARGET)
 	mv $(TARGETA) $(OUTDIR)$(TARGETA)
 	mv $(TARGETB) $(OUTDIR)$(TARGETB)
 	
-tests: testQuadratureWeights.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o \
-	 treedriver.o partition.o xmalloc.o sort.o
-	$(CC) $(CFLAGS) $(LIBS) $(OFILES) -o $@
-	
-testQuadratureWeights.o: xmalloc.h globvars.h tnode.h batch.h particles.h \
-		  tools.h partition.h tree.h
+
+library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o partition.o xmalloc.o sort.o
+	$(CC) $(CFLAGS) $(LIBS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h
@@ -73,3 +74,5 @@ xmalloc.o: xmalloc.c xmalloc.h
 sort.o: sort.c
 main-direct.o: main-direct.c array.h xmalloc.h tools.h
 txt2bin.o: txt2bin.c array.h xmalloc.h
+
+treedriverWrapper.o: treedriverWrapper.c

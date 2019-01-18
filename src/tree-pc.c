@@ -678,39 +678,39 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 } /* END function cp_comp_ms */
 
 
-void pc_comp_weights(struct tnode *p)
-{
-	int i;
-    double x0, x1, y0, y1, z0, z1;
-    double *scaledWeightsX;
-    double *scaledWeightsY;
-    double *scaledWeightsZ;
-
-    make_vector(scaledWeightsX, torderlim);
-    make_vector(scaledWeightsY, torderlim);
-    make_vector(scaledWeightsZ, torderlim);
-
-
-    x0 = p->x_min;
-    x1 = p->x_max;
-    y0 = p->y_min;
-    y1 = p->y_max;
-    z0 = p->z_min;
-    z1 = p->z_max;
-
-    for (i=0;i<torderlim;i++){
-    	scaledWeightsX[i] = (x1-x0)/2.0*unscaledQuadratureWeights[i];
-    	scaledWeightsY[i] = (y1-y0)/2.0*unscaledQuadratureWeights[i];
-    	scaledWeightsZ[i] = (z1-z0)/2.0*unscaledQuadratureWeights[i];
-    }
-
-	p->wx = scaledWeightsX;
-	p->wy = scaledWeightsY;
-	p->wz = scaledWeightsZ;  // the product wx[i]*wy[j]*wz[k] will give the quadrature weight at interpolation point (i,j,k)
-
-    return;
-
-} /* END function cp_comp_weights */
+//void pc_comp_weights(struct tnode *p)
+//{
+//	int i;
+//    double x0, x1, y0, y1, z0, z1;
+//    double *scaledWeightsX;
+//    double *scaledWeightsY;
+//    double *scaledWeightsZ;
+//
+//    make_vector(scaledWeightsX, torderlim);
+//    make_vector(scaledWeightsY, torderlim);
+//    make_vector(scaledWeightsZ, torderlim);
+//
+//
+//    x0 = p->x_min;
+//    x1 = p->x_max;
+//    y0 = p->y_min;
+//    y1 = p->y_max;
+//    z0 = p->z_min;
+//    z1 = p->z_max;
+//
+//    for (i=0;i<torderlim;i++){
+//    	scaledWeightsX[i] = (x1-x0)/2.0*unscaledQuadratureWeights[i];
+//    	scaledWeightsY[i] = (y1-y0)/2.0*unscaledQuadratureWeights[i];
+//    	scaledWeightsZ[i] = (z1-z0)/2.0*unscaledQuadratureWeights[i];
+//    }
+//
+//	p->wx = scaledWeightsX;
+//	p->wy = scaledWeightsY;
+//	p->wz = scaledWeightsZ;  // the product wx[i]*wy[j]*wz[k] will give the quadrature weight at interpolation point (i,j,k)
+//
+//    return;
+//
+//} /* END function cp_comp_weights */
 
 
 
