@@ -22,22 +22,30 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *outputArray, int pot_type, double kappa,
 		int order, double theta, int maxparnode, int batch_size) {
 
+	int particleOrder[numTargets];
+	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}
+
 	// Assemble the arrays of data into the particle structs.
 	struct particles *sources = NULL;
 	struct particles *targets = NULL;
 	sources = malloc(sizeof(struct particles));
 	targets = malloc(sizeof(struct particles));
 
+	targets->num = numTargets;
 	targets->x = targetX;
 	targets->y = targetY;
 	targets->z = targetZ;
 	targets->q = targetValue;
+	targets->order=particleOrder;
 
+
+	sources->num = numSources;
 	sources->x = sourceX;
 	sources->y = sourceY;
 	sources->z = sourceZ;
 	sources->q = sourceValue;
 	sources->w = sourceWeight;
+	sources->order=particleOrder;
 
 
 	// Set other things, like *timetree and pot_type...

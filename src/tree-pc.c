@@ -522,19 +522,23 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
     int i, ii;
     double tx, ty, tz;
 	
-    double d_peng;
+    double d_peng, r;
 
 //    #pragma acc data present(xS, yS, zS, qS)
 //    #pragma acc kernels loop
+#pragma omp parallel for private(i, d_peng,tx,ty,tz,r)
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;
         for (i = ibeg - 1; i < iend; i++) {
             tx = xS[i] - xT[ii];
             ty = yS[i] - yT[ii];
             tz = zS[i] - zT[ii];
-            
-            d_peng += qS[i] * wS[i] / sqrt(tx*tx + ty*ty + tz*tz);
+            r = sqrt(tx*tx + ty*ty + tz*tz);
+            if (r > 1e-10){
+            	d_peng += qS[i] * wS[i] / sqrt(tx*tx + ty*ty + tz*tz);
+            }
         }
+//        printf("d_peng from direct sum: %12.5e\n", d_peng);
         EnP[ii] += d_peng;
     }
 
