@@ -337,8 +337,8 @@ void compute_pc(struct tnode *p,
             for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++)
                 p->ms[i] = 0.0;
 
-            pc_comp_ms(p, xS, yS, zS, qS);
-            pc_comp_weights(p);
+            pc_comp_ms(p, xS, yS, zS, qS, wS);
+//            pc_comp_weights(p);
             p->exist_ms = 1;
         }
         
@@ -533,7 +533,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
             ty = yS[i] - yT[ii];
             tz = zS[i] - zT[ii];
             
-            d_peng += qS[i] / sqrt(tx*tx + ty*ty + tz*tz);
+            d_peng += qS[i] * wS[i] / sqrt(tx*tx + ty*ty + tz*tz);
         }
         EnP[ii] += d_peng;
     }
@@ -548,7 +548,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 /*
  * cp_comp_ms computes the moments for node p needed in the Taylor approximation
  */
-void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
+void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, double *w)
 {
 
     int i, j, k1, k2, k3, kk;
@@ -556,7 +556,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     double x0, x1, y0, y1, z0, z1;
     double sumA1, sumA2, sumA3;
     double xx, yy, zz;
-    double *xibeg, *yibeg, *zibeg, *qibeg;
+    double *xibeg, *yibeg, *zibeg, *qibeg, *wibeg;
     
     double *w1i, *w2j, *w3k, *dj, *Dd;
     double **a1i, **a2j, **a3k;
@@ -565,6 +565,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
     yibeg = &(y[p->ibeg-1]);
     zibeg = &(z[p->ibeg-1]);
     qibeg = &(q[p->ibeg-1]);
+    wibeg = &(w[p->ibeg-1]);
     
     x0 = p->x_min;
     x1 = p->x_max;
@@ -648,7 +649,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
                 kk++;
                 for (i = 0; i < p->numpar; i++) {
                     p->ms[kk] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i]
-                               * Dd[i] * qibeg[i];
+                               * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
                     
                     //if (p->ms[kk] != p->ms[kk])
                     //    printf("%d, %d, %d, %d: %f, %f, %f, %f, %f, %f\n", k1, k2, k3, i,

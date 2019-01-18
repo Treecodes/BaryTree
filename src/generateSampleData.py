@@ -9,6 +9,10 @@ numTargets = 100000
 sourcesTXT = '../examples/S%ipy.txt' %numSources
 targetsTXT = '../examples/T%ipy.txt' %numTargets
 
+sourcesTXT = '/Users/nathanvaughn/Documents/testData/H2Sources.txt'
+targetsTXT = '/Users/nathanvaughn/Documents/testData/H2Targets.txt'
+
+
 Sources = np.random.rand(numSources,5)
 Targets = np.random.rand(numTargets,4)
 

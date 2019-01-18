@@ -71,8 +71,8 @@ void compute_pc_yuk(struct tnode *p,
                 p->ms[i] = 0.0;
             }
             
-            pc_comp_ms(p, xS, yS, zS, qS);
-            p->exist_ms = 1;
+//            pc_comp_ms(p, xS, yS, zS, qS);
+//            p->exist_ms = 1;
         }
         
         for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {

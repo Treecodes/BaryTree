@@ -86,7 +86,7 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
                     double x_mid, double y_mid, double z_mid,
                     int ind[8][2]);
 
-void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q);
+void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, double *w);
 
 void pc_comp_weights(struct tnode *p);
 
