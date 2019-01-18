@@ -133,7 +133,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         }
     } else if (tree_type == 1) {
         if (pot_type == 0) {
-        
+        	printf("Entering tree_type=1, pot_type=0.\n");
             make_matrix(tree_inter_list, batches->num, numnodes);
             make_matrix(direct_inter_list, batches->num, numleaves);
             

@@ -275,6 +275,7 @@ void pc_treecode(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets,
                  double *tpeng, double *EnP)
 {
+//	printf("Entered pc_treecoode.\n");
     /* local variables */
     int i, j;
 
@@ -282,6 +283,7 @@ void pc_treecode(struct tnode *p, struct batch *batches,
         EnP[i] = 0.0;
     
     for (i = 0; i < batches->num; i++) {
+//    	printf("\nWorking on batch %d.\n\n", i);
         for (j = 0; j < p->num_children; j++) {
             compute_pc(p->child[j],
                 batches->index[i], batches->center[i], batches->radius[i],
@@ -289,6 +291,8 @@ void pc_treecode(struct tnode *p, struct batch *batches,
                 targets->x, targets->y, targets->z, targets->q, EnP);
         }
     }
+
+//    printf("Completed loop in pc_treecode.\n");
 
     *tpeng = sum(EnP, targets->num);
 
@@ -304,6 +308,7 @@ void compute_pc(struct tnode *p,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT, double *EnP)
 {
+//	printf("Entering compute_cp.  Batch start: %d.  Batch end: %d.\n", batch_ind[0]-1, batch_ind[1]);
     /* local variables */
     double dist;
     double tx, ty, tz;
@@ -322,26 +327,33 @@ void compute_pc(struct tnode *p,
      * If MAC is accepted and there is more than n0 particles
      * in the box, use the expansion for the approximation.
      */
+//    	printf("MAC accepted, performing particle-cluster approximation...\n");
      
         make_vector(temp_i, torderlim);
         make_vector(temp_j, torderlim);
         make_vector(temp_k, torderlim);
 
+//        printf("Does p->exist_ms? %d\n", p->exist_ms);
         if (p->exist_ms == 0) {
             make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
             make_vector(p->tx, torderlim);
             make_vector(p->ty, torderlim);
             make_vector(p->tz, torderlim);
             
+//            printf("Allocated vectors for ms, tx, ty, tz.\n");
+
 
             for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++)
                 p->ms[i] = 0.0;
+//            printf("Zeroed out p->ms \n");
 
             pc_comp_ms(p, xS, yS, zS, qS, wS);
 //            pc_comp_weights(p);
             p->exist_ms = 1;
+//            printf("Created 'moments' for node.\n");
         }
         
+
 //        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
 //
 //            for (i = 0; i < torderlim; i++) {
@@ -399,6 +411,7 @@ void compute_pc(struct tnode *p,
 
 
         // Fill in the interpolation point coordinate vectors.  Not necessary, but helps modularize the next step, filling the kernel matrix.
+
         int kk = -1;
         int k1, k2, k3;
 		for (k3 = 0; k3 < torderlim; k3++) {
@@ -413,6 +426,7 @@ void compute_pc(struct tnode *p,
 				}
 			}
 		}
+//		printf("Filled in the interpolation point coordinates.\n");
 
 		// Zero out the interactionResult array.  Probably not necessary
 		for (i = 0; i < numberOfTargets; i++) {
@@ -422,7 +436,7 @@ void compute_pc(struct tnode *p,
 
 		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
         double dx, dy, dz;
-
+#pragma omp parallel for private(j,dx,dy,dz)
         for (i = 0; i < numberOfTargets; i++){
 
         	for (j = 0; j < numberOfInterpolationPoints; j++){
@@ -438,7 +452,7 @@ void compute_pc(struct tnode *p,
         	}
 
         }
-
+//		printf("Filled in the interaction matrix.\n");
 
 //        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
 //        double tempSum;
@@ -465,7 +479,7 @@ void compute_pc(struct tnode *p,
         int incX = 1;
         int incY = 1;
 
-
+//        printf("Calling CBLAS_DGEMV.\n");
         cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
         		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
 
@@ -492,10 +506,14 @@ void compute_pc(struct tnode *p,
      * If MAC fails check to see if there are children. If not, perform direct
      * calculation. If there are children, call routine recursively for each.
      */
+
+
         if (p->num_children == 0) {
+//        	printf("MAC rejected, and node has no children.  Calling pc_comp_dierct()...\n");
             pc_comp_direct(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
                            xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
         } else {
+//        	printf("MAC rejected, recursing over children...\n");
             for (i = 0; i < p->num_children; i++) {
                 compute_pc(p->child[i], batch_ind, batch_mid, batch_rad,
                 			xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
@@ -583,9 +601,9 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
         p->ty[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         p->tz[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
 
-        p->wx[i] = 0.0;
-        p->wy[i] = 0.0;
-        p->wz[i] = 0.0;  // the product wx[i]*wy[j]*wz[k] will give the quadrature weight at interpolation point (i,j,k)
+//        p->wx[i] = 0.0;
+//        p->wy[i] = 0.0;
+//        p->wz[i] = 0.0;  // the product wx[i]*wy[j]*wz[k] will give the quadrature weight at interpolation point (i,j,k)
 
     }
     
