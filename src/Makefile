@@ -68,7 +68,7 @@ tree-cp-yuk.o: tree-cp-yuk.c array.h xmalloc.h globvars.h tnode.h batch.h partic
 		  tools.h partition.h tree.h
 tree-pc.o: tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
-tree-pc-yuk.o: tree-pc-yuk.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
+tree-pc-yuk.o: tree-pc-yuk.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
 xmalloc.o: xmalloc.c xmalloc.h
 sort.o: sort.c

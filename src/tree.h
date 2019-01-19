@@ -123,13 +123,13 @@ void pc_treecode_yuk(struct tnode *p, struct batch *batches,
 
 void compute_pc_yuk(struct tnode *p,
                     int *batch_ind, double *batch_mid, double batch_rad,
-                    double *xS, double *yS, double *zS, double *qS,
-                    double *xT, double *yT, double *zT,
+                    double *xS, double *yS, double *zS, double *qS, double *wS,
+                    double *xT, double *yT, double *zT, double *qT,
                     double kappa, double *EnP);
 
 void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                        double *xS, double *yS, double *zS, double *qS,
-                        double *xT, double *yT, double *zT,
+                        double *xS, double *yS, double *zS, double *qS, double *wS,
+                        double *xT, double *yT, double *zT, double *qT,
                         double kappa, double *EnP);
 
 

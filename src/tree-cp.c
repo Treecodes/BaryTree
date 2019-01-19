@@ -50,7 +50,7 @@ void setup(struct particles *particles, int order, double theta,
            double *xyzminmax)
 {
     /* local variables */
-    int i, j;
+    int i;
     double t1;
 
     /* changing values of our extern variables */
@@ -74,33 +74,33 @@ void setup(struct particles *particles, int order, double theta,
         tt[i] = cos(i * M_PI / torder);
 
     /* initializing array for Clenshaw-Curtis weights */
-    double CCtheta, b;
-    make_vector(unscaledQuadratureWeights, torderlim);
-
-    for ( i = 0; i < torderlim; i++ ){
-          CCtheta = ( double ) ( i ) * M_PI / ( double ) ( torderlim - 1 );
-
-          unscaledQuadratureWeights[i] = 1.0;
-
-          for ( j = 1; j <= ( torderlim - 1 ) / 2; j++ )
-          {
-            if ( 2 * j == ( torderlim - 1 ) ){
-              b = 1.0;
-            }
-
-            else{
-              b = 2.0;
-            }
-
-            unscaledQuadratureWeights[i] = unscaledQuadratureWeights[i] - b * cos ( 2.0 * ( double ) ( j ) * CCtheta )/ ( double ) ( 4 * j * j - 1 );
-          }
-        }
-
-    unscaledQuadratureWeights[0] = unscaledQuadratureWeights[0] / ( double ) ( torderlim - 1 );
-	for ( i = 1; i < torderlim - 1; i++ ){
-		unscaledQuadratureWeights[i] = 2.0 * unscaledQuadratureWeights[i] / ( double ) ( torderlim - 1 );
-	}
-	unscaledQuadratureWeights[torderlim-1] = unscaledQuadratureWeights[torderlim-1] / ( double ) ( torderlim - 1 );
+//    double CCtheta, b;
+//    make_vector(unscaledQuadratureWeights, torderlim);
+//
+//    for ( i = 0; i < torderlim; i++ ){
+//          CCtheta = ( double ) ( i ) * M_PI / ( double ) ( torderlim - 1 );
+//
+//          unscaledQuadratureWeights[i] = 1.0;
+//
+//          for ( j = 1; j <= ( torderlim - 1 ) / 2; j++ )
+//          {
+//            if ( 2 * j == ( torderlim - 1 ) ){
+//              b = 1.0;
+//            }
+//
+//            else{
+//              b = 2.0;
+//            }
+//
+//            unscaledQuadratureWeights[i] = unscaledQuadratureWeights[i] - b * cos ( 2.0 * ( double ) ( j ) * CCtheta )/ ( double ) ( 4 * j * j - 1 );
+//          }
+//        }
+//
+//    unscaledQuadratureWeights[0] = unscaledQuadratureWeights[0] / ( double ) ( torderlim - 1 );
+//	for ( i = 1; i < torderlim - 1; i++ ){
+//		unscaledQuadratureWeights[i] = 2.0 * unscaledQuadratureWeights[i] / ( double ) ( torderlim - 1 );
+//	}
+//	unscaledQuadratureWeights[torderlim-1] = unscaledQuadratureWeights[torderlim-1] / ( double ) ( torderlim - 1 );
 
 
     /* initializing arrays for Taylor sums and coefficients */

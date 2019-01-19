@@ -72,7 +72,8 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (pot_type == 0) {
             setup(sources, order, theta, xyzminmax);
         } else if (pot_type == 1) {
-            setup_yuk(sources, order, theta, xyzminmax);
+//            setup_yuk(sources, order, theta, xyzminmax);
+            setup(sources, order, theta, xyzminmax);  // call the non-Yukawa setup.  This has the Chebyshev parts.
         }
         
         pc_create_tree_n0(&troot, sources, 1, sources->num,
@@ -142,6 +143,11 @@ void treedriver(struct particles *sources, struct particles *targets,
             pc_treecode(troot, batches, sources, targets, tpeng, tEn);
             
         } else if (pot_type == 1) {
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
+			make_matrix(tree_inter_list, batches->num, numnodes);
+			make_matrix(direct_inter_list, batches->num, numleaves);
+
+			pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
             pc_treecode_yuk(troot, batches, sources, targets,
                             kappa, tpeng, tEn);
         }
