@@ -163,7 +163,8 @@ void compute_pc_coulomb_SS(struct tnode *p,
         		kernelMatrix[i*numberOfInterpolationPoints + j] = 1.0 / r;
 
         		// Perform the singularity subtraction piece here
-        		EnP[batch_ind[0] - 1 + i] -= qT[ batch_ind[0] - 1 + i]*Weights2[j]*exp(-r*r/kappaSq) / r;
+//        		EnP[batch_ind[0] - 1 + i] -= qT[ batch_ind[0] - 1 + i]*Weights2[j]*exp(-r*r/kappaSq) / r;
+        		EnP[batch_ind[0] - 1 + i] +=  ( Weights1[j] - Weights2[j]*qT[ batch_ind[0] - 1 + i]*exp(-r*r/kappaSq) ) / r;
 
 //        		if (EnP[batch_ind[0] - 1 + i] > 1e6){printf("EnP blew up for target %d.  r = %12.5f, qT = %12.5f, Weight2 = %12.5f.\n",batch_ind[0] - 1 + i, r, qT[ batch_ind[0] - 1 + i],Weights2[j]);}
 
@@ -172,26 +173,26 @@ void compute_pc_coulomb_SS(struct tnode *p,
         }
 
 
-        // Multiply with CBLAS
-        double alpha=1;
-        double beta=0;
-
-        int incX = 1;
-        int incY = 1;
-
-//        printf("Calling CBLAS_DGEMV.\n");
-        // Call CBAS for the f_j*w_j piece
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
-        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights1, incX, beta, interactionResult, incY );
-
-
-
-        // Add result to EnP, starting at index batch_ind[0] - 1
-//		printf("Batch starting at: %d\n", batch_ind[0]-1);
-		for (i = 0; i < numberOfTargets; i++){
-//			printf("Interation Result entry %d: %12.5e\n", batch_ind[0] - 1 + i, interactionResult[i]);
-			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
-		}
+//        // Multiply with CBLAS
+//        double alpha=1;
+//        double beta=0;
+//
+//        int incX = 1;
+//        int incY = 1;
+//
+////        printf("Calling CBLAS_DGEMV.\n");
+//        // Call CBAS for the f_j*w_j piece
+//        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
+//        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights1, incX, beta, interactionResult, incY );
+//
+//
+//
+//        // Add result to EnP, starting at index batch_ind[0] - 1
+////		printf("Batch starting at: %d\n", batch_ind[0]-1);
+//		for (i = 0; i < numberOfTargets; i++){
+////			printf("Interation Result entry %d: %12.5e\n", batch_ind[0] - 1 + i, interactionResult[i]);
+//			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
+//		}
 
 		mkl_free(kernelMatrix);
 		mkl_free(interactionResult);

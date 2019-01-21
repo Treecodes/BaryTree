@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <mpi.h>
+//#include <mpi.h>
 #include <limits.h>
 
 #include "array.h"
@@ -36,7 +36,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     double time1, time2;
 
     
-    time1 = MPI_Wtime();
+//    time1 = MPI_Wtime();
     
     level = 0;
     numleaves = 0;
@@ -96,8 +96,8 @@ void treedriver(struct particles *sources, struct particles *targets,
                             batch_size, batch_lim);
     }
 
-    time2 = MPI_Wtime();
-    timetree[0] = time2-time1;
+//    time2 = MPI_Wtime();
+//    timetree[0] = time2-time1;
 
     printf("Tree created.\n\n");
     printf("Tree information: \n\n");
@@ -120,7 +120,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     printf("            number of leaves: %d\n", numleaves);
     printf("             number of nodes: %d\n", numnodes);
 
-    time1 = MPI_Wtime();
+//    time1 = MPI_Wtime();
 
     /* Copy source arrays to GPU */
 	//#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
@@ -161,8 +161,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     }
 
 
-    time2 = MPI_Wtime();
-    timetree[3] = time2-time1 + timetree[0];
+//    time2 = MPI_Wtime();
+//    timetree[3] = time2-time1 + timetree[0];
 
     printf("Deallocating tree structure... \n\n");
 

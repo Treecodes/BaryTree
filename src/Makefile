@@ -27,6 +27,7 @@ ifeq ($(UNAME),Darwin)
 MKLROOT = /opt/intel/mkl
 CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include 
 LIBS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl
+#LIBS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_core -ldl
 endif
 
 

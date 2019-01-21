@@ -162,7 +162,7 @@ void compute_pc_yuk_SS(struct tnode *p,
         		kernelMatrix[i*numberOfInterpolationPoints + j] = exp(-kappa*r) / r;
 
         		// Perform the singularity subtraction piece here
-        		EnP[batch_ind[0] - 1 + i] -= qT[ batch_ind[0] - 1 + i]*p->ms2[j]*exp(-kappa*r) / r;
+        		EnP[batch_ind[0] - 1 + i] -= qT[ batch_ind[0] - 1 + i]*Weights2[j]*exp(-kappa*r) / r;
 
         	}
 
@@ -250,7 +250,7 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
             tz = zS[i] - zT[ii];
             r = sqrt(tx*tx + ty*ty + tz*tz);
             if (r > 1e-10){
-            	d_peng += (qS[i] - qT[ii]) * wS[i] * exp(-kappa*r) / sqrt(tx*tx + ty*ty + tz*tz);
+            	d_peng += (qS[i] - qT[ii]) * wS[i] * exp(-kappa*r) / r;
             }
         }
 //        printf("d_peng from direct sum: %12.5e\n", d_peng);
