@@ -16,9 +16,9 @@
 
 
 
-void pc_treecode_yuk(struct tnode *p, struct batch *batches,
+void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets,
-                     double kappa, double *tpeng, double *EnP)
+                     double kappaSq, double *tpeng, double *EnP)
 {
     /* local variables */
     int i, j;
@@ -28,10 +28,10 @@ void pc_treecode_yuk(struct tnode *p, struct batch *batches,
     
     for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
-            compute_pc_yuk(p->child[j],
+            compute_pc_coulomb_SS(p->child[j],
                 batches->index[i], batches->center[i], batches->radius[i],
                 sources->x, sources->y, sources->z, sources->q, sources->w,
-                targets->x, targets->y, targets->z, targets->q, kappa, EnP);
+                targets->x, targets->y, targets->z, targets->q, kappaSq, EnP);
         }
     }
     
@@ -44,10 +44,10 @@ void pc_treecode_yuk(struct tnode *p, struct batch *batches,
 
 
 
-void compute_pc_yuk(struct tnode *p,
+void compute_pc_coulomb_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP)
+                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP)
 {
 //	printf("Entering compute_cp.  Batch start: %d.  Batch end: %d.\n", batch_ind[0]-1, batch_ind[1]);
     /* local variables */
@@ -85,8 +85,10 @@ void compute_pc_yuk(struct tnode *p,
 //            printf("Allocated vectors for ms, tx, ty, tz.\n");
 
 
-            for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++)
+            for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
                 p->ms[i] = 0.0;
+                p->ms2[i] = 0.0;
+            }
 //            printf("Zeroed out p->ms \n");
 
             pc_comp_ms(p, xS, yS, zS, qS, wS);
@@ -114,7 +116,8 @@ void compute_pc_yuk(struct tnode *p,
         double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
         double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
+        double *Weights1	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
+        double *Weights2	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
 
 
 
@@ -129,7 +132,8 @@ void compute_pc_yuk(struct tnode *p,
 					interpolationX[kk] = p->tx[k1];
 					interpolationY[kk] = p->ty[k2];
 					interpolationZ[kk] = p->tz[k3];
-					Weights[kk] = p->ms[kk];
+					Weights1[kk] = p->ms[kk];
+					Weights2[kk] = p->ms2[kk];
 
 				}
 			}
@@ -154,8 +158,14 @@ void compute_pc_yuk(struct tnode *p,
         		dy = yT[ batch_ind[0] - 1 + i] - interpolationY[j];
         		dz = zT[ batch_ind[0] - 1 + i] - interpolationZ[j];
         		r = sqrt( dx*dx + dy*dy + dz*dz);
+//        		if (r<1e-14){ printf("r is very small for a cluster-approx.  Why?\n");}
         		// Evaluate Kernel, store in kernelMatrix[i][j]
-        		kernelMatrix[i*numberOfInterpolationPoints + j] = exp(-kappa*r) / r;
+        		kernelMatrix[i*numberOfInterpolationPoints + j] = 1.0 / r;
+
+        		// Perform the singularity subtraction piece here
+        		EnP[batch_ind[0] - 1 + i] -= qT[ batch_ind[0] - 1 + i]*Weights2[j]*exp(-r*r/kappaSq) / r;
+
+//        		if (EnP[batch_ind[0] - 1 + i] > 1e6){printf("EnP blew up for target %d.  r = %12.5f, qT = %12.5f, Weight2 = %12.5f.\n",batch_ind[0] - 1 + i, r, qT[ batch_ind[0] - 1 + i],Weights2[j]);}
 
         	}
 
@@ -170,8 +180,9 @@ void compute_pc_yuk(struct tnode *p,
         int incY = 1;
 
 //        printf("Calling CBLAS_DGEMV.\n");
+        // Call CBAS for the f_j*w_j piece
         cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
-        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
+        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights1, incX, beta, interactionResult, incY );
 
 
 
@@ -184,7 +195,8 @@ void compute_pc_yuk(struct tnode *p,
 
 		mkl_free(kernelMatrix);
 		mkl_free(interactionResult);
-		mkl_free(Weights);
+		mkl_free(Weights1);
+		mkl_free(Weights2);
 		free(interpolationX);
 		free(interpolationY);
 		free(interpolationZ);
@@ -200,13 +212,13 @@ void compute_pc_yuk(struct tnode *p,
 
         if (p->num_children == 0) {
 //        	printf("MAC rejected, and node has no children.  Calling pc_comp_dierct()...\n");
-            pc_comp_direct_yuk(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
-                           xS, yS, zS, qS, wS, xT, yT, zT, qT, kappa, EnP);
+            pc_comp_direct_coulomb_SS(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
+                           xS, yS, zS, qS, wS, xT, yT, zT, qT, kappaSq, EnP);
         } else {
 //        	printf("MAC rejected, recursing over children...\n");
             for (i = 0; i < p->num_children; i++) {
-            	compute_pc_yuk(p->child[i], batch_ind, batch_mid, batch_rad,
-                			xS, yS, zS, qS, wS, xT, yT, zT, qT, kappa, EnP);
+            	compute_pc_coulomb_SS(p->child[i], batch_ind, batch_mid, batch_rad,
+                			xS, yS, zS, qS, wS, xT, yT, zT, qT, kappaSq, EnP);
             }
         }
     }
@@ -222,9 +234,9 @@ void compute_pc_yuk(struct tnode *p,
  * comp_direct directly computes the potential on the targets in the current
  * cluster due to the current source, determined by the global variable TARPOS
  */
-void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
+void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
-                    double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP)
+                    double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP)
 {
     /* local variables */
     int i, ii;
@@ -232,8 +244,6 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
     double d_peng, r;
 
-//    #pragma acc data present(xS, yS, zS, qS)
-//    #pragma acc kernels loop
 #pragma omp parallel for private(i, d_peng,tx,ty,tz,r)
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;
@@ -242,12 +252,20 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
             ty = yS[i] - yT[ii];
             tz = zS[i] - zT[ii];
             r = sqrt(tx*tx + ty*ty + tz*tz);
+//    		if (r<1e-10){ printf("r is very small for a direct sum piece, target %d and source %d\n",ii,i);}
+
             if (r > 1e-10){
-            	d_peng += qS[i] * wS[i] * exp(-kappa*r) / r;
+
+            	d_peng += wS[i]* ( qS[i] - qT[ii]* exp(-r*r/kappaSq) )  / r;
+//                V_Hartree_new[globalID] += weight_s * (rho_s -   rho_t * exp(- r*r / alphasq )   ) / r  # increment the new wavefunction value
+
+//                if (d_peng > 1e10){printf("d_peng just blew up for target %d when interacting with source %d. r = %12.5f\n",ii,i,r);}
+
             }
         }
 //        printf("d_peng from direct sum: %12.5e\n", d_peng);
         EnP[ii] += d_peng;
+//        if (EnP[ii] > 1e5){printf("EnP just blew up for target %d when interacting with source %d\n",ii,i);}
     }
 
     return;

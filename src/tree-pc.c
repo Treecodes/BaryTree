@@ -336,6 +336,7 @@ void compute_pc(struct tnode *p,
 //        printf("Does p->exist_ms? %d\n", p->exist_ms);
         if (p->exist_ms == 0) {
             make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
+            make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
             make_vector(p->tx, torderlim);
             make_vector(p->ty, torderlim);
             make_vector(p->tz, torderlim);
@@ -343,8 +344,10 @@ void compute_pc(struct tnode *p,
 //            printf("Allocated vectors for ms, tx, ty, tz.\n");
 
 
-            for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++)
+            for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
                 p->ms[i] = 0.0;
+            	p->ms2[i] = 0.0;
+            }
 //            printf("Zeroed out p->ms \n");
 
             pc_comp_ms(p, xS, yS, zS, qS, wS);
@@ -553,7 +556,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
             tz = zS[i] - zT[ii];
             r = sqrt(tx*tx + ty*ty + tz*tz);
             if (r > 1e-10){
-            	d_peng += qS[i] * wS[i] / sqrt(tx*tx + ty*ty + tz*tz);
+            	d_peng += qS[i] * wS[i] / r;
             }
         }
 //        printf("d_peng from direct sum: %12.5e\n", d_peng);
@@ -670,8 +673,8 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
             for (k1 = 0; k1 < torderlim; k1++) {
                 kk++;
                 for (i = 0; i < p->numpar; i++) {
-                    p->ms[kk] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i]
-                               * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
+                    p->ms[kk] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
+                    p->ms2[kk] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
                     
                     //if (p->ms[kk] != p->ms[kk])
                     //    printf("%d, %d, %d, %d: %f, %f, %f, %f, %f, %f\n", k1, k2, k3, i,

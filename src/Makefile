@@ -1,4 +1,4 @@
-OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o \
+OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o \
 	 treedriver.o partition.o xmalloc.o sort.o 
 TARGET = tree.exe
 
@@ -52,8 +52,8 @@ bin:
 	mv $(TARGETB) $(OUTDIR)$(TARGETB)
 	
 
-library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o partition.o xmalloc.o sort.o
-	$(CC) $(CFLAGS) $(LIBS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
+library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
+	$(CC) $(CFLAGS) $(LIBS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h
@@ -70,9 +70,12 @@ tree-pc.o: tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
 tree-pc-yuk.o: tree-pc-yuk.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
+tree-pc-yuk-SS.o: tree-pc-yuk-SS.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
+		  tools.h partition.h tree.h
+tree-pc-coulomb-SS.o: tree-pc-coulomb-SS.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
+		  tools.h partition.h tree.h
 xmalloc.o: xmalloc.c xmalloc.h
 sort.o: sort.c
 main-direct.o: main-direct.c array.h xmalloc.h tools.h
 txt2bin.o: txt2bin.c array.h xmalloc.h
-
 treedriverWrapper.o: treedriverWrapper.c

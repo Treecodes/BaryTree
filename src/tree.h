@@ -33,7 +33,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
                        int level);
 
-void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
+void cp_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl,
                     double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid,
@@ -116,7 +116,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xT, double *yT, double *zT, double *qT, double *EnP);
 
 
-/* used by cluster-particle Yukawa */
+/* used by particle-cluster Yukawa */
 void pc_treecode_yuk(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets,
                      double kappa, double *tpeng, double *EnP);
@@ -132,6 +132,37 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
                         double *xT, double *yT, double *zT, double *qT,
                         double kappa, double *EnP);
 
+/* used by particle-cluster Yukawa w/ singularity subtraction */
+
+void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
+                     struct particles *sources, struct particles *targets,
+                     double kappa, double *tpeng, double *EnP);
+
+void compute_pc_yuk_SS(struct tnode *p,
+                int *batch_ind, double *batch_mid, double batch_rad,
+                double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP);
+
+void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
+                    double *xS, double *yS, double *zS, double *qS, double *wS,
+                    double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP);
+
+
+/* used by particle-cluster Coulomb kernel w/ singularity subtraction */
+
+void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
+                     struct particles *sources, struct particles *targets,
+                     double kappaSq, double *tpeng, double *EnP);
+
+void compute_pc_coulomb_SS(struct tnode *p,
+                int *batch_ind, double *batch_mid, double batch_rad,
+                double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP);
+
+void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
+                    double *xS, double *yS, double *zS, double *qS, double *wS,
+                    double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP);
+
 
 /* batch functions */
 void setup_batch(struct batch **batches, double *batch_lim,
@@ -140,7 +171,7 @@ void setup_batch(struct batch **batches, double *batch_lim,
 void create_target_batch(struct batch *batches, struct particles *particles,
                      int ibeg, int iend, int maxparnode, double *xyzmm);
 
-void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
+void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
                     int *batch_reorder);

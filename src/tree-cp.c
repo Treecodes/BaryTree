@@ -243,7 +243,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
-        cp_partition_8(targets->x, targets->y, targets->z,
+        cp_partition_8(targets->x, targets->y, targets->z, targets->q,
                        xyzmms, xl, yl, zl, lmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
@@ -277,7 +277,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
 
 
 
-void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
+void cp_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2])
 {
@@ -290,7 +290,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
     critlen = lmax / sqrt(2.0);
 
     if (xl >= critlen) {
-        cp_partition(x, y, z, orderarr, ind[0][0], ind[0][1],
+        cp_partition(x, y, z, q, orderarr, ind[0][0], ind[0][1],
                      x_mid, &temp_ind);
 
         ind[1][0] = temp_ind + 1;
@@ -307,7 +307,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (yl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(y, x, z, orderarr, ind[i][0], ind[i][1],
+            cp_partition(y, x, z, q, orderarr, ind[i][0], ind[i][1],
                          y_mid, &temp_ind);
                         
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -326,7 +326,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (zl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(z, x, y, orderarr, ind[i][0], ind[i][1],
+            cp_partition(z, x, y, q, orderarr, ind[i][0], ind[i][1],
                          z_mid, &temp_ind);
                         
             ind[*numposchild + i][0] = temp_ind + 1;

@@ -69,12 +69,14 @@ void treedriver(struct particles *sources, struct particles *targets,
         
     } else if (tree_type == 1) {
     
-        if (pot_type == 0) {
-            setup(sources, order, theta, xyzminmax);
-        } else if (pot_type == 1) {
-//            setup_yuk(sources, order, theta, xyzminmax);
-            setup(sources, order, theta, xyzminmax);  // call the non-Yukawa setup.  This has the Chebyshev parts.
-        }
+//        if (pot_type == 0) {
+//            setup(sources, order, theta, xyzminmax);
+//        } else if (pot_type == 1) {
+////            setup_yuk(sources, order, theta, xyzminmax);
+//            setup(sources, order, theta, xyzminmax);  // call the non-Yukawa setup.  This has the Chebyshev parts.
+//        }
+
+    	setup(sources, order, theta, xyzminmax);
         
         pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
@@ -133,23 +135,26 @@ void treedriver(struct particles *sources, struct particles *targets,
                             tpeng, tEn, &timetree[1]);
         }
     } else if (tree_type == 1) {
+    	make_matrix(tree_inter_list, batches->num, numnodes);
+		make_matrix(direct_inter_list, batches->num, numleaves);
+
+		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
         if (pot_type == 0) {
-        	printf("Entering tree_type=1, pot_type=0.\n");
-            make_matrix(tree_inter_list, batches->num, numnodes);
-            make_matrix(direct_inter_list, batches->num, numleaves);
-            
-            pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
-            
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
             pc_treecode(troot, batches, sources, targets, tpeng, tEn);
             
         } else if (pot_type == 1) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
-			make_matrix(tree_inter_list, batches->num, numnodes);
-			make_matrix(direct_inter_list, batches->num, numleaves);
-
-			pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
             pc_treecode_yuk(troot, batches, sources, targets,
                             kappa, tpeng, tEn);
+        }else if (pot_type == 2) {
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
+        	pc_treecode_coulomb_SS(troot, batches, sources, targets,
+        	                            kappa, tpeng, tEn);
+        }else if (pot_type == 3) {
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
+        	pc_treecode_yuk_SS(troot, batches, sources, targets,
+        	                            kappa, tpeng, tEn);
         }
         
         reorder_energies(batches->reorder, targets->num, tEn);

@@ -10,11 +10,11 @@
  * iend, or a(ibeg:iend) > val then midind is returned as ibeg-1.
  */
 
-void cp_partition(double *a, double *b, double *c, int *indarr,
+void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
                   int ibeg, int iend, double val, int *midind)
 {
         /* local variables */
-        double ta, tb, tc;
+        double ta, tb, tc, td;
         int lower, upper, tind;
 
         if (ibeg < iend) {
@@ -26,6 +26,7 @@ void cp_partition(double *a, double *b, double *c, int *indarr,
                 ta = a[ibeg - 1];
                 tb = b[ibeg - 1];
                 tc = c[ibeg - 1];
+                td = d[ibeg - 1];
                 tind = indarr[ibeg - 1];
                 a[ibeg - 1] = val;
                 upper = ibeg;
@@ -40,6 +41,7 @@ void cp_partition(double *a, double *b, double *c, int *indarr,
                                 a[upper - 1] = a[lower - 1];
                                 b[upper - 1] = b[lower - 1];
                                 c[upper - 1] = c[lower - 1];
+                                d[upper - 1] = d[lower - 1];
                                 indarr[upper - 1] = indarr[lower - 1];
                         }
 
@@ -51,6 +53,7 @@ void cp_partition(double *a, double *b, double *c, int *indarr,
                                 a[lower - 1] = a[upper - 1];
                                 b[lower - 1] = b[upper - 1];
                                 c[lower - 1] = c[upper - 1];
+                                d[lower - 1] = d[upper - 1];
                                 indarr[lower - 1] = indarr[upper - 1];
                         }
                 }
@@ -66,6 +69,7 @@ void cp_partition(double *a, double *b, double *c, int *indarr,
                 a[upper - 1] = ta;
                 b[upper - 1] = tb;
                 c[upper - 1] = tc;
+                d[upper - 1] = td;
                 indarr[upper - 1] = tind;
 
         } else if (ibeg == iend) {
