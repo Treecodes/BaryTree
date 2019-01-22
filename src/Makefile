@@ -20,13 +20,17 @@ ifeq ($(UNAME),Darwin)
 CFLAGS = -Wall
 endif
 
+#note: if mpicc doesn't properly pull the libraries and headers, look here:
+#CFLAGS = -I/usr/local/Cellar/open-mpi/4.0.0/include
+#LDFLAGS = -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/4.0.0/lib -lmpi
+
 all: $(TARGET) $(TARGETA) $(TARGETB) bin
 
 $(TARGET): $(OFILES)
-	$(CC) $(CFLAGS) $(OFILES) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@
 
 $(TARGETA): $(OFILESA)
-	$(CC) $(CFLAGS) $(OFILESA) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILESA) -o $@
 
 $(TARGETB): $(OFILESB)
 	$(CC) $(CFLAGS) $(OFILESB) -o $@

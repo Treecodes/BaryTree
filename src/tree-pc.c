@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -511,9 +512,9 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q)
             sumA2 += a2j[j][i];
             sumA3 += a3k[j][i];
             
-            if (fabs(xx - p->tx[j]) < 1e-10) a1exactind = j;
-            if (fabs(yy - p->ty[j]) < 1e-10) a2exactind = j;
-            if (fabs(zz - p->tz[j]) < 1e-10) a3exactind = j;
+            if (fabs(xx - p->tx[j]) < DBL_MIN) a1exactind = j;
+            if (fabs(yy - p->ty[j]) < DBL_MIN) a2exactind = j;
+            if (fabs(zz - p->tz[j]) < DBL_MIN) a3exactind = j;
         }
         
         if (a1exactind > -1) {
