@@ -41,6 +41,10 @@ double ***a1 = NULL;
 /* variable used by kernel independent moment computation */
 double *tt;
 
+double *unscaledQuadratureWeights;
+
+
+
 
 void setup(struct particles *particles, int order, double theta,
            double *xyzminmax)
@@ -64,9 +68,40 @@ void setup(struct particles *particles, int order, double theta,
     
     make_vector(tt, torderlim);
     
+
     /* initializing array for Chev points */
     for (i = 0; i < torderlim; i++)
         tt[i] = cos(i * M_PI / torder);
+
+    /* initializing array for Clenshaw-Curtis weights */
+//    double CCtheta, b;
+//    make_vector(unscaledQuadratureWeights, torderlim);
+//
+//    for ( i = 0; i < torderlim; i++ ){
+//          CCtheta = ( double ) ( i ) * M_PI / ( double ) ( torderlim - 1 );
+//
+//          unscaledQuadratureWeights[i] = 1.0;
+//
+//          for ( j = 1; j <= ( torderlim - 1 ) / 2; j++ )
+//          {
+//            if ( 2 * j == ( torderlim - 1 ) ){
+//              b = 1.0;
+//            }
+//
+//            else{
+//              b = 2.0;
+//            }
+//
+//            unscaledQuadratureWeights[i] = unscaledQuadratureWeights[i] - b * cos ( 2.0 * ( double ) ( j ) * CCtheta )/ ( double ) ( 4 * j * j - 1 );
+//          }
+//        }
+//
+//    unscaledQuadratureWeights[0] = unscaledQuadratureWeights[0] / ( double ) ( torderlim - 1 );
+//	for ( i = 1; i < torderlim - 1; i++ ){
+//		unscaledQuadratureWeights[i] = 2.0 * unscaledQuadratureWeights[i] / ( double ) ( torderlim - 1 );
+//	}
+//	unscaledQuadratureWeights[torderlim-1] = unscaledQuadratureWeights[torderlim-1] / ( double ) ( torderlim - 1 );
+
 
     /* initializing arrays for Taylor sums and coefficients */
     for (i = 0; i < torder + 1; i++)
@@ -208,7 +243,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
-        cp_partition_8(targets->x, targets->y, targets->z,
+        cp_partition_8(targets->x, targets->y, targets->z, targets->q,
                        xyzmms, xl, yl, zl, lmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
@@ -242,7 +277,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
 
 
 
-void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
+void cp_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2])
 {
@@ -255,7 +290,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
     critlen = lmax / sqrt(2.0);
 
     if (xl >= critlen) {
-        cp_partition(x, y, z, orderarr, ind[0][0], ind[0][1],
+        cp_partition(x, y, z, q, orderarr, ind[0][0], ind[0][1],
                      x_mid, &temp_ind);
 
         ind[1][0] = temp_ind + 1;
@@ -272,7 +307,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (yl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(y, x, z, orderarr, ind[i][0], ind[i][1],
+            cp_partition(y, x, z, q, orderarr, ind[i][0], ind[i][1],
                          y_mid, &temp_ind);
                         
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -291,7 +326,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (zl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(z, x, y, orderarr, ind[i][0], ind[i][1],
+            cp_partition(z, x, y, q, orderarr, ind[i][0], ind[i][1],
                          z_mid, &temp_ind);
                         
             ind[*numposchild + i][0] = temp_ind + 1;

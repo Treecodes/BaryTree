@@ -9,10 +9,10 @@
  * iend, or a(ibeg:iend) > val then midind is returned as ibeg-1.
  */
 
-void cp_partition(double *a, double *b, double *c, int *indarr,
+void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
                   int ibeg, int iend, double val, int *midind);
 
-void pc_partition(double *a, double *b, double *c, double *d, int *indarr,
+void pc_partition(double *a, double *b, double *c, double *d, double *w, int *indarr,
                   int ibeg, int iend, double val, int *midind);
 
 

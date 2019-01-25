@@ -129,7 +129,7 @@ void create_target_batch(struct batch *batches, struct particles *particles,
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
-        cp_partition_batch(particles->x, particles->y, particles->z,
+        cp_partition_batch(particles->x, particles->y, particles->z, particles->q,
                            xyzmms, xl, yl, zl, lmax, &numposchild,
                            x_mid, y_mid, z_mid, ind, batches->reorder);
 
@@ -241,7 +241,7 @@ void create_source_batch(struct batch *batches, struct particles *particles,
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
-        pc_partition_batch(particles->x, particles->y, particles->z, particles->q,
+        pc_partition_batch(particles->x, particles->y, particles->z, particles->q, particles->w,
                            xyzmms, xl, yl, zl, lmax, &numposchild,
                            x_mid, y_mid, z_mid, ind, batches->reorder);
 
@@ -277,7 +277,7 @@ void create_source_batch(struct batch *batches, struct particles *particles,
 
 
 
-void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
+void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
                     int *batch_reorder)
@@ -291,7 +291,7 @@ void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
     critlen = lmax / sqrt(2.0);
 
     if (xl >= critlen) {
-        cp_partition(x, y, z, batch_reorder, ind[0][0], ind[0][1],
+        cp_partition(x, y, z, q, batch_reorder, ind[0][0], ind[0][1],
                      x_mid, &temp_ind);
 
         ind[1][0] = temp_ind + 1;
@@ -308,7 +308,7 @@ void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (yl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(y, x, z, batch_reorder, ind[i][0], ind[i][1],
+            cp_partition(y, x, z, q, batch_reorder, ind[i][0], ind[i][1],
                          y_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -327,7 +327,7 @@ void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (zl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(z, x, y, batch_reorder, ind[i][0], ind[i][1],
+            cp_partition(z, x, y, q, batch_reorder, ind[i][0], ind[i][1],
                          z_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -352,7 +352,7 @@ void cp_partition_batch(double *x, double *y, double *z, double xyzmms[6][8],
 
 
 
-void pc_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
+void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
                     int *batch_reorder)
@@ -366,7 +366,7 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double xyzmm
     critlen = lmax / sqrt(2.0);
 
     if (xl >= critlen) {
-        pc_partition(x, y, z, q, batch_reorder, ind[0][0], ind[0][1],
+        pc_partition(x, y, z, q, w, batch_reorder, ind[0][0], ind[0][1],
                      x_mid, &temp_ind);
 
         ind[1][0] = temp_ind + 1;
@@ -383,7 +383,7 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double xyzmm
 
     if (yl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            pc_partition(y, x, z, q, batch_reorder, ind[i][0], ind[i][1],
+            pc_partition(y, x, z, q, w, batch_reorder, ind[i][0], ind[i][1],
                          y_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -402,7 +402,7 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double xyzmm
 
     if (zl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            pc_partition(z, x, y, q, batch_reorder, ind[i][0], ind[i][1],
+            pc_partition(z, x, y, q, w, batch_reorder, ind[i][0], ind[i][1],
                          z_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;

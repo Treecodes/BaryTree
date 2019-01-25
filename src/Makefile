@@ -1,4 +1,4 @@
-OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o \
+OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o \
 	 treedriver.o partition.o xmalloc.o sort.o 
 TARGET = tree.exe
 
@@ -8,23 +8,33 @@ TARGETA = direct.exe
 OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
 
+#OFILESLIB = treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-batch.o partition.o xmalloc.o sort.o 
+#TARGET = tree.exe
+
 OUTDIR = ../bin/
-CC = mpicc 
+CC = mpicc
+#CC = /usr/local/Cellar/open-mpi/4.0.0/bin/mpicc
 
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
-CFLAGS = -acc -Minfo=accel -ta=tesla,time
+CFLAGS = -fopenmp -lm
+LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -ldl
 endif
+
 ifeq ($(UNAME),Darwin)
-CFLAGS = -Wall
+MKLROOT = /opt/intel/mkl
+CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include 
+LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl
+#LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_core -ldl
 endif
+
 
 #note: if mpicc doesn't properly pull the libraries and headers, look here:
 #CFLAGS = -I/usr/local/Cellar/open-mpi/4.0.0/include
 #LDFLAGS = -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/4.0.0/lib -lmpi
 
-all: $(TARGET) $(TARGETA) $(TARGETB) bin
+all: $(TARGET) $(TARGETA) $(TARGETB) bin library
 
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@
@@ -38,11 +48,16 @@ $(TARGETB): $(OFILESB)
 clean:
 	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA) $(OFILESB) $(TARGETB) 
 	rm -f $(OUTDIR)*
+	rm -f ../lib/*
 
 bin:                                                                                         
-	cp $(TARGET) $(OUTDIR)$(TARGET)
-	cp $(TARGETA) $(OUTDIR)$(TARGETA)
-	cp $(TARGETB) $(OUTDIR)$(TARGETB)
+	mv $(TARGET) $(OUTDIR)$(TARGET)
+	mv $(TARGETA) $(OUTDIR)$(TARGETA)
+	mv $(TARGETB) $(OUTDIR)$(TARGETB)
+	
+
+library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
+	$(CC) $(CFLAGS) $(LIBS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h
@@ -57,9 +72,14 @@ tree-cp-yuk.o: tree-cp-yuk.c array.h xmalloc.h globvars.h tnode.h batch.h partic
 		  tools.h partition.h tree.h
 tree-pc.o: tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
-tree-pc-yuk.o: tree-pc-yuk.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
+tree-pc-yuk.o: tree-pc-yuk.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
+		  tools.h partition.h tree.h
+tree-pc-yuk-SS.o: tree-pc-yuk-SS.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
+		  tools.h partition.h tree.h
+tree-pc-coulomb-SS.o: tree-pc-coulomb-SS.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
 xmalloc.o: xmalloc.c xmalloc.h
 sort.o: sort.c
 main-direct.o: main-direct.c array.h xmalloc.h tools.h
 txt2bin.o: txt2bin.c array.h xmalloc.h
+treedriverWrapper.o: treedriverWrapper.c
