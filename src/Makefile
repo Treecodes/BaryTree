@@ -18,13 +18,13 @@ CC = mpicc
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
-CFLAGS = -fopenmp -lm
+CFLAGS = -fopenmp -lm -std=gnu99
 LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -ldl
 endif
 
 ifeq ($(UNAME),Darwin)
 MKLROOT = /opt/intel/mkl
-CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include 
+CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include -std=gnu99
 LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl
 #LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_core -ldl
 endif
@@ -57,7 +57,7 @@ bin:
 	
 
 library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
-	$(CC) $(CFLAGS) $(LIBS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
+	$(CC) $(CFLAGS) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h

@@ -314,7 +314,6 @@ void compute_pc(struct tnode *p,
     double dist;
     double tx, ty, tz;
     int i, j;
-    double *temp_i, *temp_j, *temp_k;
 
     /* determine DIST for MAC test */
     tx = batch_mid[0] - p->x_mid;
@@ -329,12 +328,7 @@ void compute_pc(struct tnode *p,
      * in the box, use the expansion for the approximation.
      */
 //    	printf("MAC accepted, performing particle-cluster approximation...\n");
-     
-        make_vector(temp_i, torderlim);
-        make_vector(temp_j, torderlim);
-        make_vector(temp_k, torderlim);
-
-//        printf("Does p->exist_ms? %d\n", p->exist_ms);
+    
         if (p->exist_ms == 0) {
             make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
             make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
@@ -379,10 +373,6 @@ void compute_pc(struct tnode *p,
 //                }
 //            }
 //        }
-//
-//      free_vector(temp_i);
-//		free_vector(temp_j);
-//		free_vector(temp_k);
 
 
 
@@ -556,7 +546,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
             ty = yS[i] - yT[ii];
             tz = zS[i] - zT[ii];
             r = sqrt(tx*tx + ty*ty + tz*tz);
-            if (r > 1e-10){
+            if (r > DBL_MIN) {
             	d_peng += qS[i] * wS[i] / r;
             }
         }
@@ -585,8 +575,8 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
     double xx, yy, zz;
     double *xibeg, *yibeg, *zibeg, *qibeg, *wibeg;
     
-    double *w1i, *w2j, *w3k, *dj, *Dd;
-    double **a1i, **a2j, **a3k;
+    double w1i[torderlim], w2j[torderlim], w3k[torderlim], dj[torderlim];
+    double *Dd, **a1i, **a2j, **a3k;
     
     xibeg = &(x[p->ibeg-1]);
     yibeg = &(y[p->ibeg-1]);
@@ -612,15 +602,9 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 
     }
     
-    make_vector(w1i, torderlim);
-    make_vector(w2j, torderlim);
-    make_vector(w3k, torderlim);
-    make_vector(dj, torderlim);
-    
     make_matrix(a1i, torderlim, p->numpar);
     make_matrix(a2j, torderlim, p->numpar);
     make_matrix(a3k, torderlim, p->numpar);
-    
     make_vector(Dd, p->numpar);
     
     dj[0] = 0.5;
@@ -712,18 +696,9 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
         }
     }
     
-    
-    
-    free_vector(w1i);
-    free_vector(w2j);
-    free_vector(w3k);
-    
-    free_vector(dj);
-    
     free_matrix(a1i);
     free_matrix(a2j);
     free_matrix(a3k);
-
     free_vector(Dd);
     
     return;
