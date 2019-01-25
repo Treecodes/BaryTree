@@ -16,7 +16,7 @@ int main()
     int i, numparsS, intype, j;
     char c1[10], c2[10], c3[10], c4[10], c5[10], c6[10], c7[10];
     double a1, a2, a3, a4, a5;
-	double *xS, *yS, *zS, *qS, *mS;
+	double *xS, *yS, *zS, *qS, *wS; //, *mS;
     int *iS;
 
     printf("Enter name of input file: \n");
@@ -38,9 +38,10 @@ int main()
     make_vector(yS,numparsS);
     make_vector(zS,numparsS);
     make_vector(qS,numparsS);
+    make_vector(wS,numparsS);
     make_vector(iS,numparsS);
 
-    printf("xS, yS, zS, qS, mS allocated\n");
+    printf("xS, yS, zS, qS, wS, iS allocated\n");
 
     printf("Reading in sources...\n");
 
@@ -48,35 +49,41 @@ int main()
     fp = fopen(sampin1, "r");
     if (intype == 0)
     {
+        while (fscanf(fp, " %lf %lf %lf %lf %lf",
+                  &a1, &a2, &a3, &a4, &a5) != EOF) {
+            xS[i] = a1;
+            yS[i] = a2;
+            zS[i] = a3;
+            qS[i] = a4;
+            wS[i] = a5;
+            i++;
+        }
+    } else if (intype == 1) {
+        while (fscanf(fp, "%s %s %s %s %s %lf %lf %lf %lf %lf %s %s",
+                      c1, c2, c3, c4, c5, &a1, &a2, &a3, &a4, &a5, c6, c7) != EOF) {
+            if (strncmp(c1, "ATOM", 4) == 0) {
+                xS[i] = a1;
+                yS[i] = a2;
+                zS[i] = a3;
+                qS[i] = a4;
+                wS[i] = a5;
+                i++;
+            }
+        }
+    } else {
         while (fscanf(fp, " %lf %lf %lf %lf",
-                  &a1, &a2, &a3, &a4) != EOF) {
+                      &a1, &a2, &a3, &a4) != EOF) {
             xS[i] = a1;
             yS[i] = a2;
             zS[i] = a3;
             qS[i] = a4;
             i++;
         }
-    } else if (intype == 1) {
-        while (fscanf(fp, "%s %s %s %s %s %lf %lf %lf %lf %s %s",
-                      c1, c2, c3, c4, c5, &a1, &a2, &a3, &a4, c6, c7) != EOF) {
-            if (strncmp(c1, "ATOM", 4) == 0) {
-                xS[i] = a1;
-                yS[i] = a2;
-                zS[i] = a3;
-                qS[i] = a4;
-                i++;
-            }
-        }
-    } else {
-        while (fscanf(fp, " %lf %lf %lf",
-                      &a1, &a2, &a3) != EOF) {
-            xS[i] = a1;
-            yS[i] = a2;
-            zS[i] = a3;
-            i++;
-        }
     }
 	fclose(fp);
+
+    printf("Done reading in sources...\n");
+
 
     //sortTargets(xS, yS, zS, iS, numparsS, 0);
 
@@ -94,8 +101,9 @@ int main()
         fwrite(&xS[j], sizeof(double), 1, fp);
         fwrite(&yS[j], sizeof(double), 1, fp);
         fwrite(&zS[j], sizeof(double), 1, fp);
+        fwrite(&qS[j], sizeof(double), 1, fp);
         if (intype == 0)
-            fwrite(&qS[j], sizeof(double), 1, fp);
+            fwrite(&wS[j], sizeof(double), 1, fp);
     }
     fclose(fp);
 
@@ -103,6 +111,7 @@ int main()
     free_vector(yS);
     free_vector(zS);
     free_vector(qS);
+    free_vector(wS);
     free_vector(iS);
 
 	return 0;

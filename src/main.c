@@ -135,12 +135,14 @@ int main(int argc, char **argv)
         make_vector(sources->y, numparsS);
         make_vector(sources->z, numparsS);
         make_vector(sources->q, numparsS);
+        make_vector(sources->w, numparsS);
         
         if (rank == 0) {
             targets->num = numparsT;
             make_vector(targets->x, numparsT);
             make_vector(targets->y, numparsT);
             make_vector(targets->z, numparsT);
+            make_vector(targets->q, numparsT);
             make_vector(targets->order, numparsT);
         
             make_vector(tenergy, numparsT);
@@ -154,6 +156,7 @@ int main(int argc, char **argv)
             make_vector(targets->x, numparsTloc);
             make_vector(targets->y, numparsTloc);
             make_vector(targets->z, numparsTloc);
+            make_vector(targets->q, numparsTloc);
         
             make_vector(tenergy, numparsTloc);
         }
@@ -163,20 +166,21 @@ int main(int argc, char **argv)
             MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
             MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
             for (i = 0; i < numparsT; i++) {
-                MPI_File_read(fpmpi, buf, 3, MPI_DOUBLE, &status);
+                MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
                 targets->x[i] = buf[0];
                 targets->y[i] = buf[1];
                 targets->z[i] = buf[2];
+                targets->q[i] = buf[3];
                 targets->order[i] = i;
             }
             MPI_File_close(&fpmpi);
         
             if (sflag == 0) {
-                sortTargets(targets->x, targets->y, targets->z,
+                sortTargets(targets->x, targets->y, targets->z, targets->q,
                             targets->order, numparsT, dflag);
             }
             if (sflag == 1 && gflag == 1) {
-                interleaveGridTargets(targets->x, targets->y, targets->z,
+                interleaveGridTargets(targets->x, targets->y, targets->z, targets->q,
                                       targets->order, numparsT, p);
             }
 
@@ -203,16 +207,19 @@ int main(int argc, char **argv)
                      targets->y, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Scatterv(&(targets->z[maxparsTloc]), scounts, displs, MPI_DOUBLE,
                      targets->z, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(&(targets->q[maxparsTloc]), scounts, displs, MPI_DOUBLE,
+					 targets->q, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     
         /* Reading in coordinates and charges for the source particles*/
         MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         for (i = 0; i < numparsS; i++) {
-            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+            MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
             sources->x[i] = buf[0];
             sources->y[i] = buf[1];
             sources->z[i] = buf[2];
             sources->q[i] = buf[3];
+            sources->w[i] = buf[4];
         }
         MPI_File_close(&fpmpi);
 
@@ -228,23 +235,26 @@ int main(int argc, char **argv)
         make_vector(sources->y, numparsSloc);
         make_vector(sources->z, numparsSloc);
         make_vector(sources->q, numparsSloc);
+        make_vector(sources->w, numparsSloc);
     
         targets->num = numparsT;
         make_vector(targets->x, numparsT);
         make_vector(targets->y, numparsT);
         make_vector(targets->z, numparsT);
+        make_vector(targets->q, numparsT);
         make_vector(targets->order, numparsT);
         make_vector(tenergy, numparsT);
         
         /* Reading in coordinates and charges for the source particles*/
         MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*4*sizeof(double)), MPI_SEEK_SET);
+        MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsS/p)*5*sizeof(double)), MPI_SEEK_SET);
         for (i = 0; i < numparsSloc; i++) {
-            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+            MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
             sources->x[i] = buf[0];
             sources->y[i] = buf[1];
             sources->z[i] = buf[2];
             sources->q[i] = buf[3];
+            sources->w[i] = buf[4];
         }
         MPI_File_close(&fpmpi);
 
@@ -253,10 +263,11 @@ int main(int argc, char **argv)
         MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         for (i = 0; i < numparsT; i++) {
-            MPI_File_read(fpmpi, buf, 3, MPI_DOUBLE, &status);
+            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
             targets->x[i] = buf[0];
             targets->y[i] = buf[1];
             targets->z[i] = buf[2];
+            targets->q[i] = buf[3];
             targets->order[i] = i;
         }
         MPI_File_close(&fpmpi);
@@ -276,7 +287,6 @@ int main(int argc, char **argv)
 
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
-
 
     /* Calling main treecode subroutine to calculate approximate energy */
     treedriver(sources, targets,
