@@ -1,0 +1,45 @@
+####  PBS preamble
+
+#PBS -N scaling-study
+#PBS -M njvaughn@umich.edu
+#PBS -m a
+
+#PBS -A krasny_fluxg
+#PBS -l qos=flux
+#PBS -q fluxg
+
+#PBS -l nodes=1:gpus=1,mem=4gb
+#PBS -l walltime=06:00:00
+#PBS -j oe
+#PBS -V
+
+####  End PBS preamble
+
+if [ -s "$PBS_NODEFILE" ] ; then
+    echo "Running on"
+    uniq -c $PBS_NODEFILE
+fi
+
+if [ -d "$PBS_O_WORKDIR" ] ; then
+    cd $PBS_O_WORKDIR
+    echo "Running from $PBS_O_WORKDIR"
+fi
+
+#  Put your job commands after this line
+cd /home/njvaughn/hybrid-gpu-treecode/examples
+module load cuda cupti pgi openmpi/1.10.2/pgi/16.4
+export PGI_ACC_TIME=0
+
+
+# testing across methods
+#echo ~~~~~~~~~~~~~~~~~~~~~~CPU TREECODE~~~~~~~~~~~~~~~~~~~~~~~~~
+#../bin_cpu/tree_cpu.exe /scratch/krasny_fluxg/lwwilson/S10000000.bin /scratch/krasny_fluxg/lwwilson/T10000000.bin /scratch/krasny_fluxg/lwwilson/ex_s6_t5_0_p1.bin out.tsv 3200000 3200000 0.5 5 1 1000 0 0 0 1 0 1
+#echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+echo ~~~~~~~~~~~~~~~~~~~~~GPU DIRECT SUM~~~~~~~~~~~~~~~~~~~~~~~~
+../bin/tree.exe         /scratch/krasny_fluxg/lwwilson/S10000000.bin /scratch/krasny_fluxg/lwwilson/T10000000.bin /scratch/krasny_fluxg/lwwilson/ex_s6_t5_0_p1.bin out.tsv 800000 800000 0.0 5 1 100000 0 0 0 1 0 4000
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+echo ~~~~~~~~~~~~~~~~~~~~~~GPU TREECODE~~~~~~~~~~~~~~~~~~~~~~~~~
+../bin/tree.exe         /scratch/krasny_fluxg/lwwilson/S10000000.bin /scratch/krasny_fluxg/lwwilson/T10000000.bin /scratch/krasny_fluxg/lwwilson/ex_s6_t5_0_p1.bin out.tsv 800000 800000 0.5 5 1 100000 0 0 0 1 0 4000
+echo ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~	

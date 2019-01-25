@@ -18,26 +18,29 @@ CC = mpicc
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
-#CFLAGS = -acc -Minfo=accel -ta=tesla,time 
 CFLAGS = -fopenmp -lm
-LIBS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -ldl
+LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -ldl
 endif
 
 ifeq ($(UNAME),Darwin)
 MKLROOT = /opt/intel/mkl
 CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include 
-LIBS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl
-#LIBS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_core -ldl
+LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl
+#LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_core -ldl
 endif
 
+
+#note: if mpicc doesn't properly pull the libraries and headers, look here:
+#CFLAGS = -I/usr/local/Cellar/open-mpi/4.0.0/include
+#LDFLAGS = -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/4.0.0/lib -lmpi
 
 all: $(TARGET) $(TARGETA) $(TARGETB) bin library
 
 $(TARGET): $(OFILES)
-	$(CC) $(CFLAGS) $(LIBS) $(OFILES) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@
 
 $(TARGETA): $(OFILESA)
-	$(CC) $(CFLAGS) $(LIBS) $(OFILESA) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILESA) -o $@
 
 $(TARGETB): $(OFILESB)
 	$(CC) $(CFLAGS) $(OFILESB) -o $@

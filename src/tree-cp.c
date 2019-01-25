@@ -114,12 +114,12 @@ void setup(struct particles *particles, int order, double theta,
     }
 
     /* find bounds of Cartesian box enclosing the particles */
-    xyzminmax[0] = minval(particles->x, particles->num)-0.00001;
-    xyzminmax[1] = maxval(particles->x, particles->num)+0.00001;
-    xyzminmax[2] = minval(particles->y, particles->num)-0.00001;
-    xyzminmax[3] = maxval(particles->y, particles->num)+0.00001;
-    xyzminmax[4] = minval(particles->z, particles->num)-0.00001;
-    xyzminmax[5] = maxval(particles->z, particles->num)+0.00001;
+    xyzminmax[0] = minval(particles->x, particles->num);
+    xyzminmax[1] = maxval(particles->x, particles->num);
+    xyzminmax[2] = minval(particles->y, particles->num);
+    xyzminmax[3] = maxval(particles->y, particles->num);
+    xyzminmax[4] = minval(particles->z, particles->num);
+    xyzminmax[5] = maxval(particles->z, particles->num);
 
     make_vector(orderarr, particles->num);
 
