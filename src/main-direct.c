@@ -219,9 +219,9 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
         double tx, ty, tz, xi, yi, zi, teng, rad;
 
         *dpeng = 0.0;
-
         if (pot_type == 0) {
-                for (i = 0; i < numparsT; i++) {
+#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+        	for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];
                         zi = zT[i];
@@ -231,12 +231,16 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                                 tx = xi - xS[j];
                                 ty = yi - yS[j];
                                 tz = zi - zS[j];
-                                teng = teng + qS[j]*wS[j] / sqrt(tx*tx + ty*ty + tz*tz);
+                                rad = sqrt(tx*tx + ty*ty + tz*tz);
+                                if (rad>1e-14){
+                                	teng = teng + qS[j]*wS[j] / rad;
+                                }
                         }
                         denergy[i] = teng;
                 }
 
         } else if (pot_type == 1) {
+#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
                 for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];
@@ -248,11 +252,21 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                                 ty = yi - yS[j];
                                 tz = zi - zS[j];
                                 rad = sqrt(tx*tx + ty*ty + tz*tz);
-                                teng = teng + qS[j]*wS[j] * exp(-kappa * rad) / rad;
+                                if (rad>1e-14){
+                                	teng = teng + qS[j]*wS[j] * exp(-kappa * rad) / rad;
+                                }
                         }
                         denergy[i] = teng;
                 }
         }
+
+        // Instead of summing pointwise values of the potential, can integrate with the quadrature weights.  This way, as the mesh is refined, dpeng converges to some value.
+        // Not necessary for simply testing if treecode is working.
+//        *dpeng = 0.0;
+//        for (i = 0; i < numparsT; i++){
+//        	*dpeng += denergy[i] * wS[i]; // assumes targets = sources.  wS are the quadrature weights
+//        }
+
 
         *dpeng = sum(denergy, numparsT);
 
