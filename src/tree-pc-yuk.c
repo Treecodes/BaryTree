@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -229,7 +230,6 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
     /* local variables */
     int i, ii;
     double tx, ty, tz;
-
     double d_peng, r;
 
 //    #pragma acc data present(xS, yS, zS, qS)
@@ -242,7 +242,7 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
             ty = yS[i] - yT[ii];
             tz = zS[i] - zT[ii];
             r = sqrt(tx*tx + ty*ty + tz*tz);
-            if (r > 1e-10){
+            if (r > DBL_MIN) {
             	d_peng += qS[i] * wS[i] * exp(-kappa*r) / r;
             }
         }
