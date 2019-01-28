@@ -97,6 +97,7 @@ int main(int argc, char **argv)
             printf("         pflag:  distribute 0--targets, 1--sources \n");         // 0
             printf("         sflag:  on distr 0--sort, 1--no sort \n");              // 0
             printf("         dflag:  if sorted, direction 0--x, 1--y, 2--z \n");     // 0
+            printf("         batch_size:  size of target batches \n");     // 0
         }
         return 0;
     }

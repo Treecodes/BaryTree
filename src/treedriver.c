@@ -119,6 +119,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     printf("                tree minpars: %d\n", minpars);
     printf("            number of leaves: %d\n", numleaves);
     printf("             number of nodes: %d\n", numnodes);
+    printf("           target batch size: %d\n", batch_size);
+    printf("           number of batches: %d\n\n", batches->num);
 
     time1 = MPI_Wtime();
 

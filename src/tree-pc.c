@@ -429,16 +429,18 @@ void compute_pc(struct tnode *p,
 
 
 		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
-        double dx, dy, dz;
-#pragma omp parallel for private(j,dx,dy,dz)
+        double dx, dy, dz, xi,yi,zi;
+//#pragma omp parallel for private(j,dx,dy,dz,xi,yi,zi)
         for (i = 0; i < numberOfTargets; i++){
-
+        	xi = xT[ batch_ind[0] - 1 + i];
+        	yi = yT[ batch_ind[0] - 1 + i];
+        	zi = zT[ batch_ind[0] - 1 + i];
         	for (j = 0; j < numberOfInterpolationPoints; j++){
 
         		// Compute x, y, and z distances between target i and interpolation point j
-        		dx = xT[ batch_ind[0] - 1 + i] - interpolationX[j];
-        		dy = yT[ batch_ind[0] - 1 + i] - interpolationY[j];
-        		dz = zT[ batch_ind[0] - 1 + i] - interpolationZ[j];
+        		dx = xi - interpolationX[j];
+        		dy = yi - interpolationY[j];
+        		dz = zi - interpolationZ[j];
 
         		// Evaluate Kernel, store in kernelMatrix[i][j]
         		kernelMatrix[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
@@ -448,7 +450,7 @@ void compute_pc(struct tnode *p,
         }
 //		printf("Filled in the interaction matrix.\n");
 
-//        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
+        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
 //        double tempSum;
 //
 //#pragma omp parallel for private(j,tempSum)
@@ -466,7 +468,7 @@ void compute_pc(struct tnode *p,
 //        }
 
 
-        // Multiply with CBLAS
+//        // Multiply with CBLAS
         double alpha=1;
         double beta=0;
 
@@ -538,7 +540,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 //    #pragma acc data present(xS, yS, zS, qS)
 //    #pragma acc kernels loop
-#pragma omp parallel for private(i, d_peng,tx,ty,tz,r)
+//#pragma omp parallel for private(i, d_peng,tx,ty,tz,r)
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;
         for (i = ibeg - 1; i < iend; i++) {
