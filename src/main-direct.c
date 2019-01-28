@@ -8,8 +8,8 @@
 #include "tools.h"
 
 
-void direct_eng(double *xS, double *yS, double *zS, double *qS, 
-                double *xT, double *yT, double *zT,
+void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
                 int pot_type, double kappa);
 
@@ -33,11 +33,13 @@ int main(int argc, char **argv)
     double *yS = NULL;
     double *zS = NULL;
     double *qS = NULL;
+    double *wS = NULL;
 
     /* target particles */
     double *xT = NULL;
     double *yT = NULL;
     double *zT = NULL;
+    double *qT = NULL;
 
     /* exact energy */
     double *denergy = NULL;
@@ -103,10 +105,12 @@ int main(int argc, char **argv)
     make_vector(yS,numparsS);
     make_vector(zS,numparsS);
     make_vector(qS,numparsS);
+    make_vector(wS,numparsS);
 
     make_vector(xT,numparsTloc);
     make_vector(yT,numparsTloc);
     make_vector(zT,numparsTloc);
+    make_vector(qT,numparsTloc);
 
     make_vector(denergy,numparsTloc);
 
@@ -115,23 +119,25 @@ int main(int argc, char **argv)
     MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
     MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
     for (i = 0; i < numparsS; i++) {
-        MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+        MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
         xS[i] = buf[0];
         yS[i] = buf[1];
         zS[i] = buf[2];
         qS[i] = buf[3];
+        wS[i] = buf[4];
     }
     MPI_File_close(&fpmpi);
     
 
     /* Reading in coordinates for the targets */
     MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-    MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*3*sizeof(double), MPI_SEEK_SET);
+    MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*4*sizeof(double), MPI_SEEK_SET);
     for (i = 0; i < numparsTloc; i++) {
-        MPI_File_read(fpmpi, buf, 3, MPI_DOUBLE, &status);
+        MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
         xT[i] = buf[0];
         yT[i] = buf[1];
         zT[i] = buf[2];
+        qT[i] = buf[3];
     }
     MPI_File_close(&fpmpi);
 
@@ -140,7 +146,7 @@ int main(int argc, char **argv)
 
     time1 = MPI_Wtime();
 
-    direct_eng(xS, yS, zS, qS, xT, yT, zT, numparsS, numparsTloc,
+    direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, numparsS, numparsTloc,
                 denergy, &dpeng, pot_type, kappa);
 
     time2 = MPI_Wtime();
@@ -203,8 +209,8 @@ int main(int argc, char **argv)
 
 
 
-void direct_eng(double *xS, double *yS, double *zS, double *qS, 
-                double *xT, double *yT, double *zT,
+void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
                 int pot_type, double kappa)
 {
@@ -225,7 +231,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS,
                                 tx = xi - xS[j];
                                 ty = yi - yS[j];
                                 tz = zi - zS[j];
-                                teng = teng + qS[j] / sqrt(tx*tx + ty*ty + tz*tz);
+                                teng = teng + qS[j]*wS[j] / sqrt(tx*tx + ty*ty + tz*tz);
                         }
                         denergy[i] = teng;
                 }
@@ -242,7 +248,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS,
                                 ty = yi - yS[j];
                                 tz = zi - zS[j];
                                 rad = sqrt(tx*tx + ty*ty + tz*tz);
-                                teng = teng + qS[j] * exp(-kappa * rad) / rad;
+                                teng = teng + qS[j]*wS[j] * exp(-kappa * rad) / rad;
                         }
                         denergy[i] = teng;
                 }

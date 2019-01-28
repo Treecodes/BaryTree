@@ -19,8 +19,8 @@ UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
 #CFLAGS = -acc -Minfo=accel -ta=tesla,time 
-CFLAGS = -fopenmp -lm
-LIBS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -ldl
+CFLAGS = -lm
+LIBS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_sequential -lmkl_core -lpthread -ldl -liomp5
 endif
 
 ifeq ($(UNAME),Darwin)
