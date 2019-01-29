@@ -431,7 +431,7 @@ void compute_pc(struct tnode *p,
 
 		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
         double dx, dy, dz, xi,yi,zi;
-//#pragma omp parallel for private(j,dx,dy,dz,xi,yi,zi)
+#pragma omp parallel for private(j,dx,dy,dz,xi,yi,zi)
         for (i = 0; i < numberOfTargets; i++){
         	xi = xT[ batch_ind[0] - 1 + i];
         	yi = yT[ batch_ind[0] - 1 + i];
@@ -584,7 +584,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 	// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
 	double dx, dy, dz, xi, yi, zi, r;
-//#pragma omp parallel for private(xi,yi,zi,j,dx,dy,dz,r)
+#pragma omp parallel for private(xi,yi,zi,j,dx,dy,dz,r)
 	for (i = 0; i < numberOfTargets; i++){
 		xi = xT[ batch_ibeg-1 + i]; // check these -1's
 		yi = yT[ batch_ibeg-1 + i];

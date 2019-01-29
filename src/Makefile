@@ -24,12 +24,13 @@ endif
 
 ifeq ($(UNAME),Darwin)
 MKLROOT = /opt/intel/mkl
-#CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include -std=gnu99
-#LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl
+CFLAGS = -Wall -fopenmp -lm -I${MKLROOT}/include -std=gnu99
+LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
 #LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_core -ldl
+#LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_core -ldl -lpthread
 
-CFLAGS = -Wall -fopenmp -std=gnu99 -DMKL_ILP64 -m64 -I${MKLROOT}/include
-LDFLAGS = -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lgomp -lpthread -lm -ldl
+#CFLAGS = -Wall -fopenmp -std=gnu99 -DMKL_ILP64 -m64 -I${MKLROOT}/include
+#LDFLAGS = -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lgomp -lpthread -lm -ldl
 endif
 
 

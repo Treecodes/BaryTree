@@ -8,11 +8,11 @@
 
 
 echo multiple threads
-export OMP_NUM_THREADS=2
+export OMP_NUM_THREADS=4
 ../bin/tree.exe ../examplesOxygenAtom/S79576.bin ../examplesOxygenAtom/T79576.bin ../examplesOxygenAtom/ex_st79576_coulomb.bin ../examplesOxygenAtom/out.tsv 79576 79576 0.9 6 1 500 0.0 0 1 0 0 500
 
 
-#echo single thread
-#export OMP_NUM_THREADS=1
-#../bin_singleThread/tree.exe ../examplesOxygenAtom/S79576.bin ../examplesOxygenAtom/T79576.bin ../examplesOxygenAtom/ex_st79576_coulomb.bin ../examplesOxygenAtom/out.tsv 79576 79576 0.9 6 1 500 0.0 0 1 0 0 500
+echo single thread
+export OMP_NUM_THREADS=1
+../bin_singleThread/tree.exe ../examplesOxygenAtom/S79576.bin ../examplesOxygenAtom/T79576.bin ../examplesOxygenAtom/ex_st79576_coulomb.bin ../examplesOxygenAtom/out.tsv 79576 79576 0.9 6 1 500 0.0 0 1 0 0 500
         
