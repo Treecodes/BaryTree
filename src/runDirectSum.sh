@@ -1,5 +1,5 @@
 #!/bin/bash
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=4
 
 
 #../bin/direct.exe   ../examplesOxygenAtom/S21952.bin ../examplesOxygenAtom/T21952.bin ../examplesOxygenAtom/ex_st21952_coulomb.bin out.tsv 21952 21952 0.0 0

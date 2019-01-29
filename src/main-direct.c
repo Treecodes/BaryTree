@@ -220,7 +220,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 
         *dpeng = 0.0;
         if (pot_type == 0) {
-#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+//#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
         	for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];
@@ -240,7 +240,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                 }
 
         } else if (pot_type == 1) {
-#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+//#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
                 for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];

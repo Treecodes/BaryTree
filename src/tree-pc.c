@@ -17,6 +17,7 @@
 #include "tree.h"
 
 #include "mkl.h"
+#include <omp.h>
 
 
 void pc_create_tree_n0(struct tnode **p, struct particles *sources,
@@ -471,11 +472,9 @@ void compute_pc(struct tnode *p,
 //        // Multiply with CBLAS
         double alpha=1;
         double beta=0;
-
         int incX = 1;
         int incY = 1;
 
-//        printf("Calling CBLAS_DGEMV.\n");
         cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
         		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
 
@@ -532,29 +531,104 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
                     double *xT, double *yT, double *zT, double *qT, double *EnP)
 {
-    /* local variables */
-    int i, ii;
-    double tx, ty, tz;
-	
-    double d_peng, r;
+//    /* local variables */
+//    int i, ii;
+//    double tx, ty, tz;
+//
+//    double d_peng, r;
+//
+//
+//    for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
+//        d_peng = 0.0;
+//        for (i = ibeg - 1; i < iend; i++) {
+//            tx = xS[i] - xT[ii];
+//            ty = yS[i] - yT[ii];
+//            tz = zS[i] - zT[ii];
+//            r = sqrt(tx*tx + ty*ty + tz*tz);
+//            if (r > DBL_MIN) {
+//            	d_peng += qS[i] * wS[i] / r;
+//            }
+//        }
+////        printf("d_peng from direct sum: %12.5e\n", d_peng);
+//        EnP[ii] += d_peng;
+//    }
 
-//    #pragma acc data present(xS, yS, zS, qS)
-//    #pragma acc kernels loop
-//#pragma omp parallel for private(i, d_peng,tx,ty,tz,r)
-    for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
-        d_peng = 0.0;
-        for (i = ibeg - 1; i < iend; i++) {
-            tx = xS[i] - xT[ii];
-            ty = yS[i] - yT[ii];
-            tz = zS[i] - zT[ii];
-            r = sqrt(tx*tx + ty*ty + tz*tz);
-            if (r > DBL_MIN) {
-            	d_peng += qS[i] * wS[i] / r;
-            }
-        }
-//        printf("d_peng from direct sum: %12.5e\n", d_peng);
-        EnP[ii] += d_peng;
-    }
+
+    // Matrix-vector product for direct sum calculation, same as particle-cluster approx.
+	int i,j;
+    int numberOfTargets = batch_iend - batch_ibeg +1;  // need this +1?
+	int numberOfClusterPoints = iend - ibeg +1;
+
+	double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfClusterPoints * sizeof(double),64);
+	double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
+
+
+	double *clusterX = (double *)malloc(numberOfClusterPoints * sizeof(double));
+	double *clusterY = (double *)malloc(numberOfClusterPoints * sizeof(double));
+	double *clusterZ = (double *)malloc(numberOfClusterPoints * sizeof(double));
+	double *Weights	 = (double *)mkl_malloc(numberOfClusterPoints * sizeof(double),64);
+
+	// Zero out the interactionResult array.  Probably not necessary
+	for (i = 0; i < numberOfTargets; i++) {
+		interactionResult[i] = 0.0;
+		}
+
+	// Fill in cluster arrays so xS, yS, etc. only need to be accessed once per entry
+	for (j = 0; j < numberOfClusterPoints; j++) {
+		clusterX[j] = xS[ibeg-1+j];
+		clusterY[j] = yS[ibeg-1+j];
+		clusterZ[j] = zS[ibeg-1+j];
+		Weights[j] = qS[ibeg-1+j]*wS[ibeg-1+j];
+		}
+
+
+	// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
+	double dx, dy, dz, xi, yi, zi, r;
+//#pragma omp parallel for private(xi,yi,zi,j,dx,dy,dz,r)
+	for (i = 0; i < numberOfTargets; i++){
+		xi = xT[ batch_ibeg-1 + i]; // check these -1's
+		yi = yT[ batch_ibeg-1 + i];
+		zi = zT[ batch_ibeg-1 + i];
+		for (j = 0; j < numberOfClusterPoints; j++){
+
+			// Compute x, y, and z distances between target i and interpolation point j
+			dx = xi - clusterX[j];
+			dy = yi - clusterY[j];
+			dz = zi - clusterZ[j];
+
+			r = sqrt( dx*dx + dy*dy + dz*dz);
+			if (r > DBL_MIN) {
+			// Evaluate Kernel, store in kernelMatrix[i][j]
+				kernelMatrix[i*numberOfClusterPoints + j] = 1 / r;
+			}else{
+				kernelMatrix[i*numberOfClusterPoints + j] = 0.0;
+			}
+
+		}
+
+	}
+
+
+	// Multiply with CBLAS
+	double alpha=1;
+	double beta=0;
+	int incX = 1;
+	int incY = 1;
+
+	cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfClusterPoints,
+			alpha, kernelMatrix, numberOfClusterPoints, Weights, incX, beta, interactionResult, incY );
+
+	for (i = 0; i < numberOfTargets; i++){
+			EnP[batch_ibeg-1 + i] += interactionResult[i];
+	}
+
+	mkl_free(kernelMatrix);
+	mkl_free(interactionResult);
+	mkl_free(Weights);
+	free(clusterX);
+	free(clusterY);
+	free(clusterZ);
+
 
     return;
 
@@ -708,39 +782,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 } /* END function cp_comp_ms */
 
 
-//void pc_comp_weights(struct tnode *p)
-//{
-//	int i;
-//    double x0, x1, y0, y1, z0, z1;
-//    double *scaledWeightsX;
-//    double *scaledWeightsY;
-//    double *scaledWeightsZ;
-//
-//    make_vector(scaledWeightsX, torderlim);
-//    make_vector(scaledWeightsY, torderlim);
-//    make_vector(scaledWeightsZ, torderlim);
-//
-//
-//    x0 = p->x_min;
-//    x1 = p->x_max;
-//    y0 = p->y_min;
-//    y1 = p->y_max;
-//    z0 = p->z_min;
-//    z1 = p->z_max;
-//
-//    for (i=0;i<torderlim;i++){
-//    	scaledWeightsX[i] = (x1-x0)/2.0*unscaledQuadratureWeights[i];
-//    	scaledWeightsY[i] = (y1-y0)/2.0*unscaledQuadratureWeights[i];
-//    	scaledWeightsZ[i] = (z1-z0)/2.0*unscaledQuadratureWeights[i];
-//    }
-//
-//	p->wx = scaledWeightsX;
-//	p->wy = scaledWeightsY;
-//	p->wz = scaledWeightsZ;  // the product wx[i]*wy[j]*wz[k] will give the quadrature weight at interpolation point (i,j,k)
-//
-//    return;
-//
-//} /* END function cp_comp_weights */
+
 
 
 
