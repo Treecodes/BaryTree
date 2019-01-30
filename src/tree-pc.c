@@ -645,7 +645,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 
     int i, j, k1, k2, k3, kk;
     int a1exactind, a2exactind, a3exactind;
-    double dx, dy, dz, tx, ty, tz, qloc;
+//    double dx, dy, dz, tx, ty, tz, qloc;
     double x0, x1, y0, y1, z0, z1;
     double sumA1, sumA2, sumA3;
     double xx, yy, zz;
