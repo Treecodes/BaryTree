@@ -148,7 +148,7 @@ void compute_pc_yuk_SS(struct tnode *p,
 
 		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
         double dx, dy, dz, r;
-//#pragma omp parallel for private(j,dx,dy,dz,r)
+#pragma omp parallel for private(j,dx,dy,dz,r)
         for (i = 0; i < numberOfTargets; i++){
 
         	for (j = 0; j < numberOfInterpolationPoints; j++){
@@ -241,7 +241,7 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
     double d_peng, r;
 
-//#pragma omp parallel for private(i, d_peng,tx,ty,tz,r)
+#pragma omp parallel for private(i, d_peng,tx,ty,tz,r)
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;
         for (i = ibeg - 1; i < iend; i++) {
