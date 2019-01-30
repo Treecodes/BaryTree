@@ -12,3 +12,6 @@ pgaccelinfo (to get details of the detected accelerator)
 
 
 Modules needed
+1) mkl/2017.0.1   2) gcc/5.4.0   3) openmpi/3.0.0/gcc/5.4.0
+
+module load mkl gcc/5.4.0 openmpi/3.0.0/gcc/5.4.0 allinea_forge

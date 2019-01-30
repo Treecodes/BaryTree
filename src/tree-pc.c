@@ -323,7 +323,8 @@ void compute_pc(struct tnode *p,
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
     
-    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)) {
+    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (torderlim*torderlim*torderlim < p->numpar) ) {
+//	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) ) {
     /*
      * If MAC is accepted and there is more than n0 particles
      * in the box, use the expansion for the approximation.

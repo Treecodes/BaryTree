@@ -18,7 +18,7 @@ CC = mpicc
 UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
-CFLAGS = -fopenmp -O3 -lm -std=gnu99 -fPIC
+CFLAGS = -fopenmp -O3 -g -lm -std=gnu99 -fPIC
 LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
 endif
 
@@ -38,7 +38,7 @@ endif
 #CFLAGS = -I/usr/local/Cellar/open-mpi/4.0.0/include
 #LDFLAGS = -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/4.0.0/lib -lmpi
 
-all: $(TARGET) $(TARGETA) $(TARGETB) bin library
+all: $(TARGET) $(TARGETA) $(TARGETB) bin #library
 
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@
