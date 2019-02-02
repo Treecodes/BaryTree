@@ -218,9 +218,14 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
         int i, j;
         double tx, ty, tz, xi, yi, zi, teng, rad;
 
-        *dpeng = 0.0;
+#pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
+		xT [ 0 : numparsT ] , yT [ 0 : numparsT ] , zT [ 0 : numparsT ] , qT [ 0 : numparsT ]
+        {
+
+
         if (pot_type == 0) {
 #pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+#pragma acc kernels
         	for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];
@@ -241,6 +246,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 
         } else if (pot_type == 1) {
 #pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+#pragma acc kernels
                 for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];
@@ -267,6 +273,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 //        	*dpeng += denergy[i] * wS[i]; // assumes targets = sources.  wS are the quadrature weights
 //        }
 
+        }
 
         *dpeng = sum(denergy, numparsT);
 
