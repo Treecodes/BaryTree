@@ -1,5 +1,7 @@
-OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o \
-	 treedriver.o partition.o xmalloc.o sort.o 
+OFILES = main.o tools.o tree-cp.o tree-pc.o tree-batch.o \
+	 treedriver.o partition.o xmalloc.o sort.o
+#OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o \
+#	 treedriver.o partition.o xmalloc.o sort.o 
 TARGET = tree.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
@@ -40,7 +42,7 @@ MKLROOT = /opt/intel/mkl
 CFLAGS = -Wall -O3 -fopenmp -lm -I${MKLROOT}/include -std=gnu99
 LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
 
-endif
+endif 
 
 
 #note: if mpicc doesn't properly pull the libraries and headers, look here:

@@ -17,7 +17,7 @@
 #include "tree.h"
 
 #include "mkl.h"
-//#include <omp.h>
+#include <omp.h>
 
 
 void pc_create_tree_n0(struct tnode **p, struct particles *sources,
@@ -284,6 +284,9 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
     
+#pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
+
     for (i = 0; i < batches->num; i++) {
 //    	printf("\nWorking on batch %d.\n\n", i);
         for (j = 0; j < p->num_children; j++) {
@@ -314,7 +317,9 @@ void compute_pc(struct tnode *p,
     /* local variables */
     double dist;
     double tx, ty, tz;
-    int i, j;
+    int i, j, k, ii, kk;
+    double dxt,dyt,dzt;
+    double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
 
     /* determine DIST for MAC test */
     tx = batch_mid[0] - p->x_mid;
@@ -322,7 +327,7 @@ void compute_pc(struct tnode *p,
     tz = batch_mid[2] - p->z_mid;
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    
+
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (torderlim*torderlim*torderlim < p->numpar) ) {
 //	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) ) {
     /*
@@ -330,14 +335,14 @@ void compute_pc(struct tnode *p,
      * in the box, use the expansion for the approximation.
      */
 //    	printf("MAC accepted, performing particle-cluster approximation...\n");
-    
+
         if (p->exist_ms == 0) {
             make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
             make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
             make_vector(p->tx, torderlim);
             make_vector(p->ty, torderlim);
             make_vector(p->tz, torderlim);
-            
+
 //            printf("Allocated vectors for ms, tx, ty, tz.\n");
 
 
@@ -352,7 +357,30 @@ void compute_pc(struct tnode *p,
             p->exist_ms = 1;
 //            printf("Created 'moments' for node.\n");
         }
-        
+
+
+        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+
+            for (i = 0; i < torderlim; i++) {
+                dxt = xT[ii] - p->tx[i];
+                dyt = yT[ii] - p->ty[i];
+                dzt = zT[ii] - p->tz[i];
+                temp_i[i] = dxt * dxt;
+                temp_j[i] = dyt * dyt;
+                temp_k[i] = dzt * dzt;
+            }
+
+            kk = -1;
+            for (k = 0; k < torderlim; k++) {
+                for (j = 0; j < torderlim; j++) {
+                    for (i = 0; i < torderlim; i++) {
+                        kk++;
+                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
+                    }
+                }
+            }
+        }
+
 
 //        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
 //
@@ -380,19 +408,19 @@ void compute_pc(struct tnode *p,
 
         // Allocate the matrices and vectors
 //        printf("Working on batch from %d to %d\n\n", batch_ind[0] - 1,batch_ind[1]);
-        int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
-        int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
-
-        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
-//        double *kernelMatrix 		= (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
-        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
-//        double *interactionResult 	= (double *)malloc(numberOfTargets * sizeof(double));
-
-
-        double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-        double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-        double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
+//        int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
+//        int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
+//
+//        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
+////        double *kernelMatrix 		= (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
+//        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
+////        double *interactionResult 	= (double *)malloc(numberOfTargets * sizeof(double));
+//
+//
+//        double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+//        double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+//        double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
+//        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
 //        double *Weights 	   = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
 
 //        if (kernelMatrix == NULL || interactionResult == NULL || Weights == NULL) {
@@ -404,52 +432,52 @@ void compute_pc(struct tnode *p,
 //			free(interpolationY);
 //			free(interpolationZ);
 //        }
-
-
-        // Fill in the interpolation point coordinate vectors.  Not necessary, but helps modularize the next step, filling the kernel matrix.
-
-        int kk = -1;
-        int k1, k2, k3;
-		for (k3 = 0; k3 < torderlim; k3++) {
-			for (k2 = 0; k2 < torderlim; k2++) {
-				for (k1 = 0; k1 < torderlim; k1++) {
-					kk++;
-					interpolationX[kk] = p->tx[k1];
-					interpolationY[kk] = p->ty[k2];
-					interpolationZ[kk] = p->tz[k3];
-					Weights[kk] = p->ms[kk];
-
-				}
-			}
-		}
-//		printf("Filled in the interpolation point coordinates.\n");
-
-		// Zero out the interactionResult array.  Probably not necessary
-		for (i = 0; i < numberOfTargets; i++) {
-			interactionResult[i] = 0.0;
-		    }
-
-
-		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
-        double dx, dy, dz, xi,yi,zi;
-#pragma omp parallel for private(j,dx,dy,dz,xi,yi,zi)
-        for (i = 0; i < numberOfTargets; i++){
-        	xi = xT[ batch_ind[0] - 1 + i];
-        	yi = yT[ batch_ind[0] - 1 + i];
-        	zi = zT[ batch_ind[0] - 1 + i];
-        	for (j = 0; j < numberOfInterpolationPoints; j++){
-
-        		// Compute x, y, and z distances between target i and interpolation point j
-        		dx = xi - interpolationX[j];
-        		dy = yi - interpolationY[j];
-        		dz = zi - interpolationZ[j];
-
-        		// Evaluate Kernel, store in kernelMatrix[i][j]
-        		kernelMatrix[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
-
-        	}
-
-        }
+//
+//
+//        // Fill in the interpolation point coordinate vectors.  Not necessary, but helps modularize the next step, filling the kernel matrix.
+//
+//        int kk = -1;
+//        int k1, k2, k3;
+//		for (k3 = 0; k3 < torderlim; k3++) {
+//			for (k2 = 0; k2 < torderlim; k2++) {
+//				for (k1 = 0; k1 < torderlim; k1++) {
+//					kk++;
+//					interpolationX[kk] = p->tx[k1];
+//					interpolationY[kk] = p->ty[k2];
+//					interpolationZ[kk] = p->tz[k3];
+//					Weights[kk] = p->ms[kk];
+//
+//				}
+//			}
+//		}
+////		printf("Filled in the interpolation point coordinates.\n");
+//
+//		// Zero out the interactionResult array.  Probably not necessary
+//		for (i = 0; i < numberOfTargets; i++) {
+//			interactionResult[i] = 0.0;
+//		    }
+//
+//
+//		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
+//        double dx, dy, dz, xi,yi,zi;
+//#pragma omp parallel for private(j,dx,dy,dz,xi,yi,zi)
+//        for (i = 0; i < numberOfTargets; i++){
+//        	xi = xT[ batch_ind[0] - 1 + i];
+//        	yi = yT[ batch_ind[0] - 1 + i];
+//        	zi = zT[ batch_ind[0] - 1 + i];
+//        	for (j = 0; j < numberOfInterpolationPoints; j++){
+//
+//        		// Compute x, y, and z distances between target i and interpolation point j
+//        		dx = xi - interpolationX[j];
+//        		dy = yi - interpolationY[j];
+//        		dz = zi - interpolationZ[j];
+//
+//        		// Evaluate Kernel, store in kernelMatrix[i][j]
+//        		kernelMatrix[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
+//
+//        	}
+//
+//        }
 //		printf("Filled in the interaction matrix.\n");
 
         // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
@@ -468,35 +496,35 @@ void compute_pc(struct tnode *p,
 //			interactionResult[i] = tempSum;
 //
 //        }
+//
+//
+////        // Multiply with CBLAS
+//        double alpha=1;
+//        double beta=0;
+//        int incX = 1;
+//        int incY = 1;
+//
+//        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
+//        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
+//
+//
+//
+//        // Add result to EnP, starting at index batch_ind[0] - 1
+////		printf("Batch starting at: %d\n", batch_ind[0]-1);
+//		for (i = 0; i < numberOfTargets; i++){
+////			printf("Interation Result entry %d: %12.5e\n", batch_ind[0] - 1 + i, interactionResult[i]);
+//			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
+//		}
+//
+//		mkl_free(kernelMatrix);
+//		mkl_free(interactionResult);
+//		mkl_free(Weights);
+//		free(interpolationX);
+//		free(interpolationY);
+//		free(interpolationZ);
 
 
-//        // Multiply with CBLAS
-        double alpha=1;
-        double beta=0;
-        int incX = 1;
-        int incY = 1;
 
-        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
-        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
-
-
-
-        // Add result to EnP, starting at index batch_ind[0] - 1
-//		printf("Batch starting at: %d\n", batch_ind[0]-1);
-		for (i = 0; i < numberOfTargets; i++){
-//			printf("Interation Result entry %d: %12.5e\n", batch_ind[0] - 1 + i, interactionResult[i]);
-			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
-		}
-
-		mkl_free(kernelMatrix);
-		mkl_free(interactionResult);
-		mkl_free(Weights);
-		free(interpolationX);
-		free(interpolationY);
-		free(interpolationZ);
-
-
-        
     } else {
     /*
      * If MAC fails check to see if there are children. If not, perform direct
@@ -521,6 +549,88 @@ void compute_pc(struct tnode *p,
 
 } /* END of function compute_pc */
 
+//void compute_pc(struct tnode *p,
+//                int *batch_ind, double *batch_mid, double batch_rad,
+//                double *xS, double *yS, double *zS, double *qS, double *wS,
+//                double *xT, double *yT, double *zT, double *qT, double *EnP)
+//{
+//    /* local variables */
+//    double dxt, dyt, dzt, dist;
+//    double tx, ty, tz;
+//    int i, j, k, kk, ii;
+//    double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
+//
+//    /* determine DIST for MAC test */
+//    tx = batch_mid[0] - p->x_mid;
+//    ty = batch_mid[1] - p->y_mid;
+//    tz = batch_mid[2] - p->z_mid;
+//    dist = sqrt(tx*tx + ty*ty + tz*tz);
+//
+//    int torder3 = torderlim*torderlim*torderlim;
+//
+//    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)
+//       && (torder3 < p->numpar)) {
+//    /*
+//     * If MAC is accepted and there is more than n0 particles
+//     * in the box, use the expansion for the approximation.
+//     */
+//
+//        if (p->exist_ms == 0) {
+//            make_vector(p->ms, torder3);
+//            make_vector(p->tx, torderlim);
+//            make_vector(p->ty, torderlim);
+//            make_vector(p->tz, torderlim);
+//
+//
+//            for (i = 0; i < torder3; i++)
+//                p->ms[i] = 0.0;
+//
+//            pc_comp_ms(p, xS, yS, zS, qS, wS);
+//            p->exist_ms = 1;
+//        }
+//
+//        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+//
+//            for (i = 0; i < torderlim; i++) {
+//                dxt = xT[ii] - p->tx[i];
+//                dyt = yT[ii] - p->ty[i];
+//                dzt = zT[ii] - p->tz[i];
+//                temp_i[i] = dxt * dxt;
+//                temp_j[i] = dyt * dyt;
+//                temp_k[i] = dzt * dzt;
+//            }
+//
+//            kk = -1;
+//            for (k = 0; k < torderlim; k++) {
+//                for (j = 0; j < torderlim; j++) {
+//                    for (i = 0; i < torderlim; i++) {
+//                        kk++;
+//                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
+//                    }
+//                }
+//            }
+//        }
+//
+//    } else {
+//    /*
+//     * If MAC fails check to see if there are children. If not, perform direct
+//     * calculation. If there are children, call routine recursively for each.
+//     */
+//        if ((p->num_children == 0)) {
+//            pc_comp_direct(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
+//                           xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
+//        } else {
+//            for (i = 0; i < p->num_children; i++) {
+//                compute_pc(p->child[i], batch_ind, batch_mid, batch_rad,
+//                		xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
+//            }
+//        }
+//    }
+//
+//    return;
+//
+//} /* END of function compute_pc */
+
 
 
 
@@ -531,16 +641,21 @@ void compute_pc(struct tnode *p,
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     __restrict__ double *xS,__restrict__ double *yS, __restrict__ double *zS, __restrict__ double *qS, __restrict__ double *wS,
 					__restrict__ double *xT, __restrict__ double *yT, __restrict__ double *zT, __restrict__ double *qT, __restrict__ double *EnP)
+//void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
+//                     double *xS, double *yS,  double *zS,  double *qS,  double *wS,
+//					 double *xT,  double *yT,  double *zT,  double *qT,  double *EnP)
 {
     /* local variables */
     int i, ii;
     double tx, ty, tz;
 
     double d_peng, r;
-
-#pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT)
+# pragma acc region present(xS,yS,zS,qS,wS,xT,yT,zT,qT)
+    {
+	#pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;
+		#pragma acc loop independent
         for (i = ibeg - 1; i < iend; i++) {
             tx = xS[i] - xT[ii];
             ty = yS[i] - yT[ii];
@@ -551,6 +666,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
             }
         }
         EnP[ii] += d_peng;
+    }
     }
     return;
 
@@ -639,11 +755,11 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 //	free(clusterX);
 //	free(clusterY);
 //	free(clusterZ);
-
-
-    return;
-
-} /* END function pc_comp_direct */
+//
+//
+//    return;
+//
+//} /* END function pc_comp_direct */
 
 
 

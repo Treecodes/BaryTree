@@ -1,7 +1,10 @@
 Modules needed
 1) cuda/8.0.44   2) pgi/16.4   3) openmpi/1.10.2/pgi/16.4   4) cupti/8.0.44
 
-module load cuda cupti pgi openmpi/1.10.2/pgi/16.4
+module load cuda cupti pgi openmpi/1.10.2/pgi/16.4 mkl/2017.0.1
+
+For non-GPU compiling with mkl...
+module load gcc/5.4.0 openmpi/3.0.0/gcc/5.4.0 mkl/2017.0.1
 
 To profile, either compile with -ta=nvidia,time or in the command line eneter 
 export PGI_ACC_TIME=1
@@ -12,6 +15,3 @@ pgaccelinfo (to get details of the detected accelerator)
 
 
 Modules needed
-1) mkl/2017.0.1   2) gcc/5.4.0   3) openmpi/3.0.0/gcc/5.4.0
-
-module load mkl gcc/5.4.0 openmpi/3.0.0/gcc/5.4.0 allinea_forge

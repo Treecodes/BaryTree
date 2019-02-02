@@ -56,9 +56,10 @@ void treedriver(struct particles *sources, struct particles *targets,
     if (tree_type == 0) {
         if (pot_type == 0) {
             setup(targets, order, theta, xyzminmax);
-        } else if (pot_type == 1) {
-            setup_yuk(targets, order, theta, xyzminmax);
         }
+//        } else if (pot_type == 1) {
+//            setup_yuk(targets, order, theta, xyzminmax);
+//        }
         
         cp_create_tree_n0(&troot, targets, 1, targets->num,
                           maxparnode, xyzminmax, level);
@@ -125,18 +126,20 @@ void treedriver(struct particles *sources, struct particles *targets,
     time1 = MPI_Wtime();
 
     /* Copy source and target arrays to GPU */
-#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS], wS[numparsS], \
-		xT[numparsT], yT[numparsT], zT[numparsT], qT[numparsT])
+//#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS], wS[numparsS], \
+//		xT[numparsT], yT[numparsT], zT[numparsT], qT[numparsT])
 
 
     if (tree_type == 0) {
-        if (pot_type == 0) {
-            cp_treecode(troot, batches, sources, targets,
-                        tpeng, tEn, &timetree[1]);
-        } else if (pot_type == 1) {
-            cp_treecode_yuk(troot, batches, sources, targets, kappa,
-                            tpeng, tEn, &timetree[1]);
-        }
+    	printf("\nTook hooks out for cp_treecode...\n");
+//        if (pot_type == 0) {
+//            cp_treecode(troot, batches, sources, targets,
+//                        tpeng, tEn, &timetree[1]);
+//        }
+//        } else if (pot_type == 1) {
+//            cp_treecode_yuk(troot, batches, sources, targets, kappa,
+//                            tpeng, tEn, &timetree[1]);
+//        }
     } else if (tree_type == 1) {
     	make_matrix(tree_inter_list, batches->num, numnodes);
 		make_matrix(direct_inter_list, batches->num, numleaves);
@@ -145,20 +148,23 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
             pc_treecode(troot, batches, sources, targets, tpeng, tEn);
-            
-        } else if (pot_type == 1) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
-            pc_treecode_yuk(troot, batches, sources, targets,
-                            kappa, tpeng, tEn);
-        }else if (pot_type == 2) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
-        	pc_treecode_coulomb_SS(troot, batches, sources, targets,
-        	                            kappa, tpeng, tEn);
-        }else if (pot_type == 3) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
-        	pc_treecode_yuk_SS(troot, batches, sources, targets,
-        	                            kappa, tpeng, tEn);
+        }else{
+        	printf("\nRemoved hooks for other potentials.\n");
         }
+//
+//        } else if (pot_type == 1) {
+//        	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
+//            pc_treecode_yuk(troot, batches, sources, targets,
+//                            kappa, tpeng, tEn);
+//        }else if (pot_type == 2) {
+//        	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
+//        	pc_treecode_coulomb_SS(troot, batches, sources, targets,
+//        	                            kappa, tpeng, tEn);
+//        }else if (pot_type == 3) {
+//        	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
+//        	pc_treecode_yuk_SS(troot, batches, sources, targets,
+//        	                            kappa, tpeng, tEn);
+//        }
         
         reorder_energies(batches->reorder, targets->num, tEn);
     }
