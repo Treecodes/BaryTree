@@ -12,25 +12,34 @@ TARGETB = txt2bin.exe
 #TARGET = tree.exe
 
 OUTDIR = ../bin/
-CC = mpicc
 #CC = /usr/local/Cellar/open-mpi/4.0.0/bin/mpicc
 
 UNAME := $(shell uname -s)
 
+#ifeq ($(UNAME),Linux)
+#CC = mpicc
+#CFLAGS = -fopenmp -O3 -g -lm -std=gnu99 -fPIC
+#LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
+#endif
+
 ifeq ($(UNAME),Linux)
-CFLAGS = -fopenmp -O3 -g -lm -std=gnu99 -fPIC
-LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
+CC = mpicc
+CFLAGS = -acc -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
+#CFLAGS = -acc -ta=nvidia -lm -mp  # to supress any openACC details
+#CFLAGS = -O3 -ta=nvidia,time -Minfo=accel -lm  # to supress any openACC details and not use pragmas
+
+ 
+## While testing openACC, drop the mkl business
+#CFLAGS = -fopenmp -O3 -lm -I${MKLROOT}/include -std=gnu99
+#LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
 endif
 
 ifeq ($(UNAME),Darwin)
+CC = mpicc
 MKLROOT = /opt/intel/mkl
 CFLAGS = -Wall -O3 -fopenmp -lm -I${MKLROOT}/include -std=gnu99
 LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
-#LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -lmkl_intel_ilp64 -lmkl_core -ldl
-#LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_core -ldl -lpthread
 
-#CFLAGS = -Wall -fopenmp -std=gnu99 -DMKL_ILP64 -m64 -I${MKLROOT}/include
-#LDFLAGS = -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lgomp -lpthread -lm -ldl
 endif
 
 

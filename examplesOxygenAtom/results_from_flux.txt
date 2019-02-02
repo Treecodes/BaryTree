@@ -1,0 +1,25 @@
+Running direct.exe and tree.exe on a single core with mkl and -O3 versus a single gpu with openACC pragmas.
+
+
+Test case: ex_st21952_coulomb, Direct potential energy:  10682.602965
+	Total direct time CPU: 		  				 2.125829 seconds
+	Total direct time GPU K40m-GPU: 			 0.244159 seconds
+	
+	Total tree time CPU: 		  				 1.990043 seconds
+	
+
+
+Test case: ex_st79576_coulomb, Direct potential energy:  133916.975001
+	Total direct time CPU:  					25.749405 seconds
+	Total direct time K40m-GPU: 			  	 0.945800 seconds
+	
+
+	Total tree time CPU: 		  				19.024088 seconds
+	
+	
+Test case: ex_st348488_coulomb, Direct potential energy:  2292405.878307
+	Total direct time CPU:  					489.253008 seconds
+	Total direct time GPU K40m-GPU: 			 15.005856 seconds
+
+	Total tree time CPU: 		  				142.845444 seconds
+

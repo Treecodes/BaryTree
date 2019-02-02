@@ -207,10 +207,8 @@ int main(int argc, char **argv)
 }
 
 
-
-
-void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT,
+void direct_eng( double *xS,  double *yS,  double *zS,  double *qS,  double *wS,
+		 double *xT,  double *yT,  double *zT,  double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
                 int pot_type, double kappa)
 {
@@ -218,14 +216,11 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
         int i, j;
         double tx, ty, tz, xi, yi, zi, teng, rad;
 
-#pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
-		xT [ 0 : numparsT ] , yT [ 0 : numparsT ] , zT [ 0 : numparsT ] , qT [ 0 : numparsT ]
-        {
 
 
         if (pot_type == 0) {
-#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
-#pragma acc kernels
+//#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+
         	for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];
@@ -242,11 +237,11 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                                 }
                         }
                         denergy[i] = teng;
-                }
+
+        	}
 
         } else if (pot_type == 1) {
-#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
-#pragma acc kernels
+//#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
                 for (i = 0; i < numparsT; i++) {
                         xi = xT[i];
                         yi = yT[i];
@@ -266,17 +261,77 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                 }
         }
 
-        // Instead of summing pointwise values of the potential, can integrate with the quadrature weights.  This way, as the mesh is refined, dpeng converges to some value.
-        // Not necessary for simply testing if treecode is working.
-//        *dpeng = 0.0;
-//        for (i = 0; i < numparsT; i++){
-//        	*dpeng += denergy[i] * wS[i]; // assumes targets = sources.  wS are the quadrature weights
-//        }
 
-        }
+
 
         *dpeng = sum(denergy, numparsT);
 
         return;
+
+//void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ double *zS, __restrict__ double *qS, __restrict__ double *wS,
+//		__restrict__ double *xT, __restrict__ double *yT, __restrict__ double *zT, __restrict__ double *qT,
+//                int numparsS, int numparsT, double *denergy, double *dpeng,
+//                int pot_type, double kappa)
+//{
+//        /* local variables */
+//        int i, j;
+//        double tx, ty, tz, xi, yi, zi, teng, rad;
+//
+//#pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
+//		xT [ 0 : numparsT ] , yT [ 0 : numparsT ] , zT [ 0 : numparsT ] , qT [ 0 : numparsT ] )
+//        {
+//
+//        if (pot_type == 0) {
+////#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+//# pragma acc region
+//        	{
+//#pragma acc loop independent
+//        	for (i = 0; i < numparsT; i++) {
+//                        xi = xT[i];
+//                        yi = yT[i];
+//                        zi = zT[i];
+//                        teng = 0.0;
+//
+//                        for (j = 0; j < numparsS; j++) {
+//                                tx = xi - xS[j];
+//                                ty = yi - yS[j];
+//                                tz = zi - zS[j];
+//                                rad = sqrt(tx*tx + ty*ty + tz*tz);
+//                                if (rad>1e-14){
+//                                	teng = teng + qS[j]*wS[j] / rad;
+//                                }
+//                        }
+//                        denergy[i] = teng;
+//                }
+//        	}
+//
+//        } else if (pot_type == 1) {
+////#pragma omp parallel for private(xi,yi,zi,teng,j,rad,tx,ty,tz)
+//#pragma acc kernels
+//                for (i = 0; i < numparsT; i++) {
+//                        xi = xT[i];
+//                        yi = yT[i];
+//                        zi = zT[i];
+//                        teng = 0.0;
+//
+//                        for (j = 0; j < numparsS; j++) {
+//                                tx = xi - xS[j];
+//                                ty = yi - yS[j];
+//                                tz = zi - zS[j];
+//                                rad = sqrt(tx*tx + ty*ty + tz*tz);
+//                                if (rad>1e-14){
+//                                	teng = teng + qS[j]*wS[j] * exp(-kappa * rad) / rad;
+//                                }
+//                        }
+//                        denergy[i] = teng;
+//                }
+//        }
+//
+//
+//        }
+//
+//        *dpeng = sum(denergy, numparsT);
+//
+//        return;
 
 }

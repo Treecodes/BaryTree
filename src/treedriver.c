@@ -124,8 +124,9 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     time1 = MPI_Wtime();
 
-    /* Copy source arrays to GPU */
-	//#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS])
+    /* Copy source and target arrays to GPU */
+#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS], wS[numparsS], \
+		xT[numparsT], yT[numparsT], zT[numparsT], qT[numparsT])
 
 
     if (tree_type == 0) {
