@@ -24,4 +24,20 @@ Test case: ex_st348488_coulomb, Direct potential energy:  2292405.878307
 
 	Total tree time CPU: 		  				142.845444 seconds, absolute error 1.659030e-02 
 	Total tree time K40m-GPU: 			  	 	 40.549366 seconds
+	
+	Total tree time K40m-GPU 
+	(higher order, higher MAC, larger leaves):  28.389755 seconds, 1.246e-02 error		  	 	 
 
+
+
+Test case:
+	Total direct time CPU:  					~1600 seconds
+	Total direct time GPU K40m-GPU: 			 49.171158 seconds
+
+	Total tree time CPU: 		  				 941.975988
+	Total tree time K40m-GPU: 			  	 	 40-60 seconds to achieve relative total error ~1e-06 
+	941.975988
+
+
+copyin clusterX, clusterY, and clusterZ: compute device time 3,800,000, copyin time 1,380,000
+copyin clusterXYZM performed way worse... compute device time 100,000,000.  Don't know why...

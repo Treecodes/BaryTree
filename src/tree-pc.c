@@ -364,7 +364,7 @@ void compute_pc(struct tnode *p,
 	int k1,k2,k3;
 
 	double clusterX[numberOfInterpolationPoints], clusterY[numberOfInterpolationPoints], clusterZ[numberOfInterpolationPoints], localMoments[numberOfInterpolationPoints];
-
+	double clusterXYZM[4*numberOfInterpolationPoints];
 
 	kk = -1;
 	for (k3 = 0; k3 < torderlim; k3++) {
@@ -375,6 +375,10 @@ void compute_pc(struct tnode *p,
 				clusterX[kk] = p->tx[k1];
 				clusterY[kk] = p->ty[k2];
 				clusterZ[kk] = p->tz[k3];
+//				clusterXYZM[4*kk+0] = p->tx[k1];
+//				clusterXYZM[4*kk+1] = p->ty[k2];
+//				clusterXYZM[4*kk+2] = p->tz[k3];
+//				clusterXYZM[4*kk+3] = p->ms[kk];
 			}
 		}
 	}
@@ -386,6 +390,7 @@ void compute_pc(struct tnode *p,
 //	}
 
 	double xi,yi,zi;
+	double pointvals[4];
 # pragma acc region present(xT,yT,zT,qT)
     {
 	#pragma acc loop independent
@@ -401,10 +406,19 @@ void compute_pc(struct tnode *p,
 			dyt = yi - clusterY[j];
 			dzt = zi - clusterZ[j];
 
+//			pointvals = clusterXYZM[4*j];
+//			dxt = xi - pointvals[0];
+//			dyt = yi - pointvals[1];
+//			dzt = zi - pointvals[2];
+//			dxt = xi - clusterXYZM[4*j+0];
+//			dyt = yi - clusterXYZM[4*j+1];
+//			dzt = zi - clusterXYZM[4*j+2];
+
 
 //			tempPotential += localMoments[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
 //			tempPotential += localMoments[kk] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 			tempPotential += localMoments[j] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+//			tempPotential += pointvals[3] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 
 						}
 
