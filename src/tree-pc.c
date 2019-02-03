@@ -318,7 +318,7 @@ void compute_pc(struct tnode *p,
     double dist;
     double tx, ty, tz;
     int i, j, k, ii, kk;
-    double dxt,dyt,dzt;
+    double dxt,dyt,dzt,tempPotential;
     double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
 
     /* determine DIST for MAC test */
@@ -359,27 +359,78 @@ void compute_pc(struct tnode *p,
         }
 
 
-        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+	int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
+	int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
+	int k1,k2,k3;
 
-            for (i = 0; i < torderlim; i++) {
-                dxt = xT[ii] - p->tx[i];
-                dyt = yT[ii] - p->ty[i];
-                dzt = zT[ii] - p->tz[i];
-                temp_i[i] = dxt * dxt;
-                temp_j[i] = dyt * dyt;
-                temp_k[i] = dzt * dzt;
-            }
+	double clusterX[numberOfInterpolationPoints], clusterY[numberOfInterpolationPoints], clusterZ[numberOfInterpolationPoints], localMoments[numberOfInterpolationPoints];
 
-            kk = -1;
-            for (k = 0; k < torderlim; k++) {
-                for (j = 0; j < torderlim; j++) {
-                    for (i = 0; i < torderlim; i++) {
-                        kk++;
-                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
-                    }
-                }
-            }
-        }
+
+	kk = -1;
+	for (k3 = 0; k3 < torderlim; k3++) {
+		for (k2 = 0; k2 < torderlim; k2++) {
+			for (k1 = 0; k1 < torderlim; k1++) {
+				kk++;
+				localMoments[kk] = p->ms[kk];
+				clusterX[kk] = p->tx[k1];
+				clusterY[kk] = p->ty[k2];
+				clusterZ[kk] = p->tz[k3];
+			}
+		}
+	}
+
+//	for (i = 0; i < torderlim; i++) {
+//		clusterX[i] = p->tx[i];
+//		clusterY[i] = p->ty[i];
+//		clusterZ[i] = p->tz[i];
+//	}
+
+	double xi,yi,zi;
+# pragma acc region present(xT,yT,zT,qT)
+    {
+	#pragma acc loop independent
+	for (i = 0; i < numberOfTargets; i++){
+		tempPotential = 0.0;
+		xi = xT[ batch_ind[0] - 1 + i];
+		yi = yT[ batch_ind[0] - 1 + i];
+		zi = zT[ batch_ind[0] - 1 + i];
+		for (j = 0; j < numberOfInterpolationPoints; j++){
+
+			// Compute x, y, and z distances between target i and interpolation point j
+			dxt = xi - clusterX[j];
+			dyt = yi - clusterY[j];
+			dzt = zi - clusterZ[j];
+
+
+//			tempPotential += localMoments[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
+//			tempPotential += localMoments[kk] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+			tempPotential += localMoments[j] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+
+						}
+
+		EnP[i] += tempPotential;
+	}
+    }
+//        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
+//            tempPotential = 0.0;
+//            kk = -1;
+//            for (k = 0; k < torderlim; k++) {
+//            	dzt = zT[ii] - clusterX[k];
+//                for (j = 0; j < torderlim; j++) {
+//                	dyt = yT[ii] - clusterY[j];
+//                    for (i = 0; i < torderlim; i++) {
+//                    	dxt = xT[ii] - clusterZ[i];
+//                        kk++;
+////                        tempPotential += localMoments[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
+//                        tempPotential += localMoments[kk] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+////                        tempPotential += localMoments[k*torderlim*torderlim + j*torderlim + i] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+//
+//                    }
+//                }
+//            }
+//            EnP[ii] += tempPotential;
+//        }
+//    }
 
 
 //        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
