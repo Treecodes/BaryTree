@@ -284,11 +284,12 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
     
-#pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
+#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], EnP[0:targets->num]) \
+		copyout(EnP[0:targets->num])
+    {
 
     for (i = 0; i < batches->num; i++) {
-//    	printf("\nWorking on batch %d.\n\n", i);
         for (j = 0; j < p->num_children; j++) {
             compute_pc(p->child[j],
                 batches->index[i], batches->center[i], batches->radius[i],
@@ -296,9 +297,11 @@ void pc_treecode(struct tnode *p, struct batch *batches,
                 targets->x, targets->y, targets->z, targets->q, EnP);
         }
     }
+}
 
 //    printf("Completed loop in pc_treecode.\n");
-
+//#pragma acc data copyout(EnP[0:targets->num])
+//#pragma acc update self(EnP[0:targets->num])
     *tpeng = sum(EnP, targets->num);
 
     return;
@@ -391,7 +394,7 @@ void compute_pc(struct tnode *p,
 
 	double xi,yi,zi;
 	double pointvals[4];
-# pragma acc region present(xT,yT,zT,qT)
+# pragma acc region present(xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
 	for (i = 0; i < numberOfTargets; i++){
@@ -715,7 +718,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
     double tx, ty, tz;
 
     double d_peng, r;
-# pragma acc region present(xS,yS,zS,qS,wS,xT,yT,zT,qT)
+# pragma acc region present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
