@@ -49,6 +49,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     int **direct_inter_list;
     struct tnode_array *tree_array = NULL;
     numnodes = 0;
+    struct particles *clusters = NULL;
+	clusters = malloc(sizeof(struct particles));
     
     printf("Creating tree... \n\n");
 
@@ -95,6 +97,13 @@ void treedriver(struct particles *sources, struct particles *targets,
         setup_batch(&batches, batch_lim, targets, batch_size);
         create_target_batch(batches, targets, 1, targets->num,
                             batch_size, batch_lim);
+
+
+
+
+        fill_in_cluster_data(clusters, sources, troot, order);
+
+
     }
 
     time2 = MPI_Wtime();
@@ -147,7 +156,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
-            pc_treecode(troot, batches, sources, targets, tpeng, tEn);
+            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn);
         }else{
         	printf("\nRemoved hooks for other potentials.\n");
         }

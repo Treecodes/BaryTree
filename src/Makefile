@@ -26,8 +26,8 @@ UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
 CC = mpicc
-#CFLAGS = -acc -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
-CFLAGS = -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
+CFLAGS = -acc -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
+#CFLAGS = -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 #CFLAGS = -acc -ta=nvidia -lm -mp  # to supress any openACC details
 #CFLAGS = -O3 -ta=nvidia,time -Minfo=accel -lm  # to supress any openACC details and not use pragmas
 
@@ -42,9 +42,8 @@ CC = mpicc
 MKLROOT = /opt/intel/mkl
 CFLAGS = -Wall -O3 -fopenmp -lm -I${MKLROOT}/include -std=gnu99
 LDFLAGS =  -DMKL_ILP64 -m64 -L${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/lib -Wl,-rpath,${MKLROOT}/../compiler/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
-
 endif 
-
+ 
 
 #note: if mpicc doesn't properly pull the libraries and headers, look here:
 #CFLAGS = -I/usr/local/Cellar/open-mpi/4.0.0/include

@@ -18,6 +18,10 @@ void cleanup(struct tnode *p);
 void setup(struct particles *particles, int order, double theta,
            double *xyzminmax);
 
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
+
+void addNodeToArray(double *x, double *y, double *z, double *q, struct tnode *p, struct particles *sources, int order, int numInterpPoints, int pointsPerCluster);
+
 void comp_tcoeff(double dx, double dy, double dz);
 
 
@@ -103,13 +107,14 @@ void pc_compute_interaction_list(struct tnode *p,
 
 /* used by particle-cluster Coulomb */
 void pc_treecode(struct tnode *p, struct batch *batches,
-                 struct particles *sources, struct particles *targets,
+                 struct particles *sources, struct particles *targets, struct particles *clusters,
                  double *tpeng, double *EnP);
 
 void compute_pc(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double *EnP);
+                double *xT, double *yT, double *zT, double *qT, double *EnP,
+				double *clusterX, double *clusterY, double *clusterZ, double *clusterM);
 
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
