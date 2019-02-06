@@ -38,7 +38,6 @@ export PGI_ACC_TIME=0
 SOURCES=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S636608.bin
 TARGETS=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T636608.bin
 DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_openACC.bin
-OUTFILE=out636608.csv
 NUMSOURCES=636608
 NUMTARGETS=636608
 TREETYPE=1
@@ -48,19 +47,16 @@ SFLAG=1
 PFLAG=0
 DFLAG=0
 
+OUTFILE=out636608_testinPreprocTime.csv
 
-BATCHSIZE=500
-MAXPARNODE=5000
-#THETA=0.9
-#ORDER=7
 
-for BATCHSIZE in 2000 4000
+for BATCHSIZE in 8000
 do
-	for MAXPARNODE in 1000 2000 4000 8000 16000
+	for MAXPARNODE in 32000
 	  do
-		for ORDER in {5..10..1}
+		for ORDER in 8
 		  do 
-		     for THETA in 0.6 0.7 0.8
+		     for THETA in 0.9
 		     	do
 		     		../bin_openACC/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
 		     done
