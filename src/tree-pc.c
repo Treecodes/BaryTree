@@ -305,8 +305,8 @@ void addNodeToArray(double *x, double *y, double *z, double *q, struct tnode *p,
 		p->ms2[i] = 0.0;
 	}
 
-	if (p->node_index>8){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
-	pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w);
+	if (p->node_index>0){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
+		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w);
 		p->exist_ms = 1;
 
 
@@ -899,7 +899,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
  */
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, double *w)
 {
-
+//	printf("Entering pc_comp_ms.\n");
     int i, j, k1, k2, k3, kk;
     int a1exactind, a2exactind, a3exactind;
 //    double dx, dy, dz, tx, ty, tz, qloc;
@@ -932,21 +932,19 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
         p->ty[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         p->tz[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
 
-//        p->wx[i] = 0.0;
-//        p->wy[i] = 0.0;
-//        p->wz[i] = 0.0;  // the product wx[i]*wy[j]*wz[k] will give the quadrature weight at interpolation point (i,j,k)
-
     }
     
 //    make_matrix(a1i, torderlim, p->numpar);
 //    make_matrix(a2j, torderlim, p->numpar);
 //    make_matrix(a3k, torderlim, p->numpar);
 
-    make_vector(a1i, torderlim *p->numpar);
-    make_vector(a2j, torderlim * p->numpar);
-	make_vector(a3k, torderlim * p->numpar);
+	int pointsInNode = p->numpar;
 
-    make_vector(Dd, p->numpar);
+    make_vector(a1i, torderlim *pointsInNode);
+    make_vector(a2j, torderlim * pointsInNode);
+	make_vector(a3k, torderlim * pointsInNode);
+
+    make_vector(Dd, pointsInNode);
     make_vector(node_x, torderlim);
     make_vector(node_y, torderlim);
     make_vector(node_z, torderlim);
@@ -966,14 +964,16 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
     sumA2 = 0.0;
     sumA3 = 0.0;
     
-    int pointsInNode = p->numpar;
+
     for (i=0;i<torderlim;i++){
     	node_x[i] = p->tx[i];
     	node_y[i] = p->ty[i];
     	node_z[i] = p->tz[i];
     }
-
-//#pragma acc parallel loop independent
+//# pragma acc region copyout(a1i[:torderlim *pointsInNode],a2j[:torderlim *pointsInNode],a3k[:torderlim *pointsInNode])
+//    {
+//
+//#pragma acc loop independent //reduction(min:a1exactind) reduction(min:a2exactind) reduction(min:a3exactind)
     for (i = 0; i < pointsInNode; i++) {
         xx = xibeg[i];
         yy = yibeg[i];
@@ -985,11 +985,11 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 //#pragma acc loop independent
         for (j = 0; j < torderlim; j++) {
 //            a1i[j][i] = w1i[j] / (xx - node_x[j]);
-            a1i[i*pointsInNode + j] = w1i[j] / (xx - node_x[j]);
+            a1i[i*torderlim + j] = w1i[j] / (xx - node_x[j]);
 //            a2j[j][i] = w2j[j] / (yy - node_y[j]);
-            a2j[i*pointsInNode + j] = w2j[j] / (yy - node_y[j]);
+            a2j[i*torderlim + j] = w2j[j] / (yy - node_y[j]);
 //            a3k[j][i] = w3k[j] / (zz - node_z[j]);
-            a3k[i*pointsInNode + j] = w3k[j] / (zz - node_z[j]);
+            a3k[i*torderlim + j] = w3k[j] / (zz - node_z[j]);
             
             //if (isinf(a2j[j][i - p->ibeg + 1]))
             //    printf("a2j %d, %d: %f, %f, %f\n", i, j, a2j[j][i - p->ibeg + 1], yy, p->ty[j]);
@@ -1004,9 +1004,9 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 //            sumA2 += a2j[j][i];
 //            sumA3 += a3k[j][i];
 
-            sumA1 += a1i[i*pointsInNode + j];
-			sumA2 += a2j[i*pointsInNode + j];
-			sumA3 += a3k[i*pointsInNode + j];
+            sumA1 += a1i[i*torderlim + j];
+			sumA2 += a2j[i*torderlim + j];
+			sumA3 += a3k[i*torderlim + j];
             
             if (fabs(xx - node_x[j]) < DBL_MIN) a1exactind = j;
             if (fabs(yy - node_y[j]) < DBL_MIN) a2exactind = j;
@@ -1015,20 +1015,20 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
         
         if (a1exactind > -1) {
             sumA1 = 1.0;
-            for (j = 0; j < torderlim; j++) a1i[i*pointsInNode + j] = 0.0;
-            a1i[i*pointsInNode + a1exactind] = 1.0;
+            for (j = 0; j < torderlim; j++) a1i[i*torderlim + j] = 0.0;
+            a1i[i*torderlim + a1exactind] = 1.0;
         }
-        
+
         if (a2exactind > -1) {
             sumA2 = 1.0;
-            for (j = 0; j < torderlim; j++) a2j[i*pointsInNode + j] = 0.0;
-            a2j[i*pointsInNode + a2exactind] = 1.0;
+            for (j = 0; j < torderlim; j++) a2j[i*torderlim + j] = 0.0;
+            a2j[i*torderlim + a2exactind] = 1.0;
         }
-        
+
         if (a3exactind > -1) {
             sumA3 = 1.0;
-            for (j = 0; j < torderlim; j++) a3k[i*pointsInNode + j] = 0.0;
-            a3k[i*pointsInNode + a3exactind] = 1.0;
+            for (j = 0; j < torderlim; j++) a3k[i*torderlim + j] = 0.0;
+            a3k[i*torderlim + a3exactind] = 1.0;
         }
         
         Dd[i] = 1.0 / (sumA1 * sumA2 * sumA3);
@@ -1037,6 +1037,7 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
         sumA2 = 0.0;
         sumA3 = 0.0;
     }
+//    }
     
 //    kk = -1;
 
@@ -1047,9 +1048,9 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 //                kk++;
                 for (i = 0; i < p->numpar; i++) {
 //                	d_ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
-                	p->ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*pointsInNode + k1] * a2j[i*pointsInNode + k2] * a3k[i*pointsInNode + k3] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
+                	p->ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*torderlim + k1] * a2j[i*torderlim + k2] * a3k[i*torderlim + k3] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
 //                	d_ms2[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
-                    p->ms2[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*pointsInNode + k1] * a2j[i*pointsInNode + k2] * a3k[i*pointsInNode + k3] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
+                    p->ms2[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*torderlim + k1] * a2j[i*torderlim + k2] * a3k[i*torderlim + k3] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
                     
                     //if (p->ms[kk] != p->ms[kk])
                     //    printf("%d, %d, %d, %d: %f, %f, %f, %f, %f, %f\n", k1, k2, k3, i,

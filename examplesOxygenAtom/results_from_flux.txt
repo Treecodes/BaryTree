@@ -5,8 +5,9 @@ Test case: ex_st21952_coulomb, Direct potential energy:  10682.602965
 	Total direct time CPU: 		  				 2.125829 seconds
 	Total direct time GPU K40m-GPU: 			 0.244159 seconds
 	
-	Total tree time CPU: 		  				 1.990043 seconds, absolute error 1.512433e-03
+	Total tree time CPU:(order 6, MAC 0.8): 	 1.990043 seconds, absolute error 1.512433e-03
 	Total tree time K40m-GPU: 			  	 	 0.491545 seconds
+	Total tree time K40m-GPU (no EnP copies):    0.381781 seconds
 
 
 Test case: ex_st79576_coulomb, Direct potential energy:  133916.975001
@@ -16,14 +17,16 @@ Test case: ex_st79576_coulomb, Direct potential energy:  133916.975001
 
 	Total tree time CPU: 		  				19.024088 seconds, abolsute error 7.786895e-03
 	Total tree time K40m-GPU: 			  	 	 3.495958 seconds
+	Total tree time K40m-GPU (no EnP copies):    2.341283 seconds
 	
 	
 Test case: ex_st348488_coulomb, Direct potential energy:  2292405.878307
 	Total direct time CPU:  					489.253008 seconds
-	Total direct time GPU K40m-GPU: 			 15.005856 seconds
+	Total direct time GPU K40m-GPU: 			 15.005856 secondsqme
 
-	Total tree time CPU: 		  				142.845444 seconds, absolute error 1.659030e-02 
-	Total tree time K40m-GPU: 			  	 	 40.549366 seconds
+	Total tree time CPU:(order 6, MAC 0.8): 	 142.845444 seconds, absolute error 1.659030e-02 
+	Total tree time K40m-GPU: 			  	 	 19 seconds
+	Total tree time K40m-GPU (no EnP copies):    15.748894 seconds
 	
 	Total tree time K40m-GPU 
 	(higher order, higher MAC, larger leaves):  28.389755 seconds, 1.246e-02 error		  	 	 
@@ -34,9 +37,9 @@ Test case:
 	Total direct time CPU:  					~1600 seconds
 	Total direct time GPU K40m-GPU: 			 49.171158 seconds
 
-	Total tree time CPU: 		  				 941.975988
+	Total tree time CPU (order 6, MAC 0.8): 	 941.975988
 	Total tree time K40m-GPU: 			  	 	 40-60 seconds to achieve relative total error ~1e-06 
-	941.975988
+	Total tree time K40m-GPU (no EnP copies):    42.785195 seconds
 
 
 copyin clusterX, clusterY, and clusterZ: compute device time 3,800,000, copyin time 1,380,000

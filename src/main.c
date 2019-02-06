@@ -391,31 +391,52 @@ int main(int argc, char **argv)
     }
     
     
+//    if (rank == 0) {
+//        fp = fopen(sampout, "a");
+//        fprintf(fp, "%s \t %s \t %s \t %d \t %d \t %f \t %d \t %d \t %d \t"
+//                "%f \t %d \t %d \t %d \t"
+//                "%d \t %f \t %f \t %f \t %f \t %f \t %f \t %f \t"
+//                "%f \t %f \t %f \t %f \t %f \t %f \t %f \t"
+//                "%e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \n",
+//                sampin1, sampin2, sampin3, numparsS, numparsT,
+//                theta, order, tree_type, maxparnode,
+//                kappa, pot_type, sflag, pflag, //2 ends
+//                p, time_preproc,The
+//                time_tree_glob[0][0], time_tree_glob[1][0],
+//                time_tree_glob[2][0]/(double)p,
+//                time_tree_glob[0][1], time_tree_glob[1][1],
+//                time_tree_glob[2][1]/(double)p, //3 ends
+//                time_tree_glob[0][2], time_tree_glob[1][2],
+//                time_tree_glob[2][2]/(double)p,
+//                time_tree_glob[0][3], time_tree_glob[1][3],
+//                time_tree_glob[2][3]/(double)p,
+//                time_tree_glob[1][3] + time_preproc, //4 ends
+//                dpengglob, tpengglob, fabs(tpengglob-dpengglob),
+//                fabs((tpengglob-dpengglob)/dpengglob),
+//                inferr, relinferr, n2err, reln2err); //5 ends
+//        fclose(fp);
+//    }
     if (rank == 0) {
-        fp = fopen(sampout, "a");
-        fprintf(fp, "%s \t %s \t %s \t %d \t %d \t %f \t %d \t %d \t %d \t"
-                "%f \t %d \t %d \t %d \t"
-                "%d \t %f \t %f \t %f \t %f \t %f \t %f \t %f \t"
-                "%f \t %f \t %f \t %f \t %f \t %f \t %f \t"
-                "%e \t %e \t %e \t %e \t %e \t %e \t %e \t %e \n",
-                sampin1, sampin2, sampin3, numparsS, numparsT,
-                theta, order, tree_type, maxparnode,
-                kappa, pot_type, sflag, pflag, //2 ends
-                p, time_preproc,
-                time_tree_glob[0][0], time_tree_glob[1][0],
-                time_tree_glob[2][0]/(double)p,
-                time_tree_glob[0][1], time_tree_glob[1][1],
-                time_tree_glob[2][1]/(double)p, //3 ends
-                time_tree_glob[0][2], time_tree_glob[1][2],
-                time_tree_glob[2][2]/(double)p,
-                time_tree_glob[0][3], time_tree_glob[1][3],
-                time_tree_glob[2][3]/(double)p,
-                time_tree_glob[1][3] + time_preproc, //4 ends
-                dpengglob, tpengglob, fabs(tpengglob-dpengglob),
-                fabs((tpengglob-dpengglob)/dpengglob),
-                inferr, relinferr, n2err, reln2err); //5 ends
-        fclose(fp);
-    }
+            fp = fopen(sampout, "a");
+            fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e\n",
+                    sampin1, sampin2, sampin3, numparsS, numparsT,
+                    theta, order, tree_type, maxparnode,batch_size,
+                    kappa, pot_type, sflag, pflag, //2 ends
+                    p, time_preproc,
+                    time_tree_glob[0][0], time_tree_glob[1][0],
+                    time_tree_glob[2][0]/(double)p,
+                    time_tree_glob[0][1], time_tree_glob[1][1],
+                    time_tree_glob[2][1]/(double)p, //3 ends
+                    time_tree_glob[0][2], time_tree_glob[1][2],
+                    time_tree_glob[2][2]/(double)p,
+                    time_tree_glob[0][3], time_tree_glob[1][3],
+                    time_tree_glob[2][3]/(double)p,
+                    time_tree_glob[1][3] + time_preproc, //4 ends
+                    dpengglob, tpengglob, fabs(tpengglob-dpengglob),
+                    fabs((tpengglob-dpengglob)/dpengglob),
+                    inferr, relinferr, n2err, reln2err); //5 ends
+            fclose(fp);
+        }
     
     
     free_vector(sources->x);

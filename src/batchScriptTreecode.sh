@@ -1,6 +1,6 @@
 ####  PBS preamble
 
-#PBS -N batchGreenIterations
+#PBS -N treecodeTesting
 #PBS -M njvaughn@umich.edu
 #PBS -m a
 
@@ -9,8 +9,8 @@
 #PBS -q fluxg
 
 
-#PBS -l nodes=1:gpus=1:titanv,mem=8gb
-#PBS -l walltime=00:10:00
+#PBS -l nodes=1:gpus=1,mem=8gb
+#PBS -l walltime=10:00:00
 #PBS -j oe
 #PBS -V
 
@@ -35,13 +35,35 @@ nvidia-smi
 export PGI_ACC_TIME=0
 
 
-../bin_openACC/direct.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S21952.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T21952.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st21952_coulomb_openACC_titanv.bin  out.tsv 21952  21952
-../bin_openACC/direct.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S79576.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T79576.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st79576_coulomb_openACC_titanv.bin  out.tsv 79576  79576
-../bin_openACC/direct.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S348488.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T348488.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st348488_coulomb_openACC_titanv.bin out.tsv 348488 348488
-../bin_openACC/direct.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S636608.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T636608.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_openACC_titanv.bin out.tsv 636608 636608
+SOURCES=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S636608.bin
+TARGETS=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T636608.bin
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_openACC.bin
+OUTFILE=out636608.csv
+NUMSOURCES=636608
+NUMTARGETS=636608
+TREETYPE=1
+KAPPA=0.0
+POTENTIALTYPE=0
+SFLAG=1
+PFLAG=0
+DFLAG=0
 
 
-../bin_openACC/tree.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S21952.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T21952.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st21952_coulomb_openACC_titanv.bin  out.tsv 21952  21952  0.8 6 1 5000 0.0 0 1 0 0 500
-../bin_openACC/tree.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S79576.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T79576.bin  /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st79576_coulomb_openACC_titanv.bin  out.tsv 79576  79576  0.8 6 1 5000 0.0 0 1 0 0 500
-../bin_openACC/tree.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S348488.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T348488.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st348488_coulomb_openACC_titanv.bin out.tsv 348488 348488 0.8 6 1 5000 0.0 0 1 0 0 500
-../bin_openACC/tree.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S636608.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T636608.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_openACC_titanv.bin out.tsv 636608 636608 0.8 6 1 50000 0.0 0 1 0 0 3000
+BATCHSIZE=500
+MAXPARNODE=5000
+#THETA=0.9
+#ORDER=7
+
+for BATCHSIZE in 2000 4000
+do
+	for MAXPARNODE in 1000 2000 4000 8000 16000
+	  do
+		for ORDER in {5..10..1}
+		  do 
+		     for THETA in 0.6 0.7 0.8
+		     	do
+		     		../bin_openACC/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+		     done
+		 done
+	done
+done
