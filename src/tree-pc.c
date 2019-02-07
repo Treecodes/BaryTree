@@ -287,11 +287,11 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 		clusters->q[i]=0.0;
 	}
 
-	addNodeToArray( clusters->x, clusters->y, clusters->z, clusters->q, troot, sources, order, numInterpPoints, pointsPerCluster);
+	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 	return;
 }
 
-void addNodeToArray(double *x, double *y, double *z, double *q, struct tnode *p, struct particles *sources, int order, int numInterpPoints, int pointsPerCluster)
+void addNodeToArray(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster)
 {
 	int torderlim = order+1;
 	int startingIndex = p->node_index * pointsPerCluster;
@@ -300,9 +300,9 @@ void addNodeToArray(double *x, double *y, double *z, double *q, struct tnode *p,
 	// compute moments
 //	make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
 //	make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
-	make_vector(p->tx, torderlim);
-	make_vector(p->ty, torderlim);
-	make_vector(p->tz, torderlim);
+//	make_vector(p->tx, torderlim);
+//	make_vector(p->ty, torderlim);
+//	make_vector(p->tz, torderlim);
 
 //	for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
 //		p->ms[i] = 0.0;
@@ -315,27 +315,33 @@ void addNodeToArray(double *x, double *y, double *z, double *q, struct tnode *p,
 //	}
 
 	if (p->node_index>-1){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
-		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, q);
+//		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, q);
+		pc_comp_ms_gpu(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+				clusters->x,clusters->y,clusters->z,clusters->q);
+		printf("Exiting pc_comp_ms_gpu.\n");
 		p->exist_ms = 1;
 
 
-		// fill in arrays, starting at startingIndex
-		int k1,k2,k3;
-		int kk = -1;
-		for (k3 = 0; k3 < torderlim; k3++) {
-			for (k2 = 0; k2 < torderlim; k2++) {
-				for (k1 = 0; k1 < torderlim; k1++) {
-					kk++;
-//					q[kk+startingIndex] = p->ms[kk];
-					x[kk+startingIndex] = p->tx[k1];
-					y[kk+startingIndex] = p->ty[k2];
-					z[kk+startingIndex] = p->tz[k3];
-				}
-			}
-		}
+//		// fill in arrays, starting at startingIndex
+//		int k1,k2,k3;
+//		int kk = -1;
+//		for (k3 = 0; k3 < torderlim; k3++) {
+//			for (k2 = 0; k2 < torderlim; k2++) {
+//				for (k1 = 0; k1 < torderlim; k1++) {
+//					kk++;
+////					q[kk+startingIndex] = p->ms[kk];
+//					x[kk+startingIndex] = p->tx[k1];
+//					y[kk+startingIndex] = p->ty[k2];
+//					z[kk+startingIndex] = p->tz[k3];
+//				}
+//			}
+//		}
+
 	}
+
 	for (i = 0; i < p->num_children; i++) {
-		addNodeToArray(x,y,z,q,p->child[i],sources,order,numInterpPoints,pointsPerCluster);
+		printf("Calling addNodeToArray on child.\n");
+		addNodeToArray(p->child[i],sources,clusters,order,numInterpPoints,pointsPerCluster);
 	}
 
 	return;
@@ -402,34 +408,6 @@ void compute_pc(struct tnode *p,
 
 
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (torderlim*torderlim*torderlim < p->numpar) ) {
-//	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) ) {
-    /*
-     * If MAC is accepted and there is more than n0 particles
-     * in the box, use the expansion for the approximation.
-     */
-//    	printf("MAC accepted, performing particle-cluster approximation...\n");
-
-//        if (p->exist_ms == 0) {
-//            make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
-//            make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
-//            make_vector(p->tx, torderlim);
-//            make_vector(p->ty, torderlim);
-//            make_vector(p->tz, torderlim);
-//
-////            printf("Allocated vectors for ms, tx, ty, tz.\n");
-//
-//
-//            for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
-//                p->ms[i] = 0.0;
-//            	p->ms2[i] = 0.0;
-//            }
-////            printf("Zeroed out p->ms \n");
-//
-//            pc_comp_ms(p, xS, yS, zS, qS, wS);
-////            pc_comp_weights(p);
-//            p->exist_ms = 1;
-////            printf("Created 'moments' for node.\n");
-//        }
 
 
 	int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
@@ -477,14 +455,6 @@ void compute_pc(struct tnode *p,
 			dyt = yi - clusterY[clusterStart + j];
 			dzt = zi - clusterZ[clusterStart + j];
 
-//			pointvals = clusterXYZM[4*j];
-//			dxt = xi - pointvals[0];
-//			dyt = yi - pointvals[1];
-//			dzt = zi - pointvals[2];
-//			dxt = xi - clusterXYZM[4*j+0];
-//			dyt = yi - clusterXYZM[4*j+1];
-//			dzt = zi - clusterXYZM[4*j+2];
-
 
 //			tempPotential += localMoments[j] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 			tempPotential += clusterM[clusterStart + j] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
@@ -494,168 +464,6 @@ void compute_pc(struct tnode *p,
 		EnP[batchStart + i] += tempPotential;
 	}
     }
-//        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
-//            tempPotential = 0.0;
-//            kk = -1;
-//            for (k = 0; k < torderlim; k++) {
-//            	dzt = zT[ii] - clusterX[k];
-//                for (j = 0; j < torderlim; j++) {
-//                	dyt = yT[ii] - clusterY[j];
-//                    for (i = 0; i < torderlim; i++) {
-//                    	dxt = xT[ii] - clusterZ[i];
-//                        kk++;
-////                        tempPotential += localMoments[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
-//                        tempPotential += localMoments[kk] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-////                        tempPotential += localMoments[k*torderlim*torderlim + j*torderlim + i] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-//
-//                    }
-//                }
-//            }
-//            EnP[ii] += tempPotential;
-//        }
-//    }
-
-
-//        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
-//
-//            for (i = 0; i < torderlim; i++) {
-//                dxt = xT[ii] - p->tx[i];
-//                dyt = yT[ii] - p->ty[i];
-//                dzt = zT[ii] - p->tz[i];
-//                temp_i[i] = dxt * dxt;
-//                temp_j[i] = dyt * dyt;
-//                temp_k[i] = dzt * dzt;
-//            }
-//
-//            kk = -1;
-//            for (k = 0; k < torderlim; k++) {
-//                for (j = 0; j < torderlim; j++) {
-//                    for (i = 0; i < torderlim; i++) {
-//                        kk++;
-//                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
-//                    }
-//                }
-//            }
-//        }
-
-
-
-        // Allocate the matrices and vectors
-//        printf("Working on batch from %d to %d\n\n", batch_ind[0] - 1,batch_ind[1]);
-//        int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
-//        int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
-//
-//        double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double),64);
-////        double *kernelMatrix 		= (double *)malloc(numberOfTargets * numberOfInterpolationPoints * sizeof(double));
-//        double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
-////        double *interactionResult 	= (double *)malloc(numberOfTargets * sizeof(double));
-//
-//
-//        double *interpolationX = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-//        double *interpolationY = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-//        double *interpolationZ = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-//        double *Weights 	   = (double *)mkl_malloc(numberOfInterpolationPoints * sizeof(double),64);
-//        double *Weights 	   = (double *)malloc(numberOfInterpolationPoints * sizeof(double));
-
-//        if (kernelMatrix == NULL || interactionResult == NULL || Weights == NULL) {
-//			printf( "\n ERROR: Can't allocate memory for matrices. Aborting... \n\n");
-//			mkl_free(kernelMatrix);
-//			mkl_free(interactionResult);
-//			mkl_free(Weights);
-//			free(interpolationX);
-//			free(interpolationY);
-//			free(interpolationZ);
-//        }
-//
-//
-//        // Fill in the interpolation point coordinate vectors.  Not necessary, but helps modularize the next step, filling the kernel matrix.
-//
-//        int kk = -1;
-//        int k1, k2, k3;
-//		for (k3 = 0; k3 < torderlim; k3++) {
-//			for (k2 = 0; k2 < torderlim; k2++) {
-//				for (k1 = 0; k1 < torderlim; k1++) {
-//					kk++;
-//					interpolationX[kk] = p->tx[k1];
-//					interpolationY[kk] = p->ty[k2];
-//					interpolationZ[kk] = p->tz[k3];
-//					Weights[kk] = p->ms[kk];
-//
-//				}
-//			}
-//		}
-////		printf("Filled in the interpolation point coordinates.\n");
-//
-//		// Zero out the interactionResult array.  Probably not necessary
-//		for (i = 0; i < numberOfTargets; i++) {
-//			interactionResult[i] = 0.0;
-//		    }
-//
-//
-//		// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
-//        double dx, dy, dz, xi,yi,zi;
-//#pragma omp parallel for private(j,dx,dy,dz,xi,yi,zi)
-//        for (i = 0; i < numberOfTargets; i++){
-//        	xi = xT[ batch_ind[0] - 1 + i];
-//        	yi = yT[ batch_ind[0] - 1 + i];
-//        	zi = zT[ batch_ind[0] - 1 + i];
-//        	for (j = 0; j < numberOfInterpolationPoints; j++){
-//
-//        		// Compute x, y, and z distances between target i and interpolation point j
-//        		dx = xi - interpolationX[j];
-//        		dy = yi - interpolationY[j];
-//        		dz = zi - interpolationZ[j];
-//
-//        		// Evaluate Kernel, store in kernelMatrix[i][j]
-//        		kernelMatrix[i*numberOfInterpolationPoints + j] = 1 / sqrt( dx*dx + dy*dy + dz*dz);
-//
-//        	}
-//
-//        }
-//		printf("Filled in the interaction matrix.\n");
-
-        // Multiply kernel matrix with the vector of cluster weights.  Note, this can/should be replaced with a BLAS or cuBLAS call.
-//        double tempSum;
-//
-//#pragma omp parallel for private(j,tempSum)
-//        for (i = 0; i < numberOfTargets; i++){
-//
-//        	tempSum = 0.0;
-//
-//			for (j = 0; j < numberOfInterpolationPoints; j++){
-//
-//				tempSum += kernelMatrix[i*numberOfInterpolationPoints + j] * Weights[j];
-//			}
-//
-//			interactionResult[i] = tempSum;
-//
-//        }
-//
-//
-////        // Multiply with CBLAS
-//        double alpha=1;
-//        double beta=0;
-//        int incX = 1;
-//        int incY = 1;
-//
-//        cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfInterpolationPoints,
-//        		alpha, kernelMatrix, numberOfInterpolationPoints, Weights, incX, beta, interactionResult, incY );
-//
-//
-//
-//        // Add result to EnP, starting at index batch_ind[0] - 1
-////		printf("Batch starting at: %d\n", batch_ind[0]-1);
-//		for (i = 0; i < numberOfTargets; i++){
-////			printf("Interation Result entry %d: %12.5e\n", batch_ind[0] - 1 + i, interactionResult[i]);
-//			EnP[batch_ind[0] - 1 + i] += interactionResult[i];
-//		}
-//
-//		mkl_free(kernelMatrix);
-//		mkl_free(interactionResult);
-//		mkl_free(Weights);
-//		free(interpolationX);
-//		free(interpolationY);
-//		free(interpolationZ);
 
 
 
@@ -684,87 +492,7 @@ void compute_pc(struct tnode *p,
 
 } /* END of function compute_pc */
 
-//void compute_pc(struct tnode *p,
-//                int *batch_ind, double *batch_mid, double batch_rad,
-//                double *xS, double *yS, double *zS, double *qS, double *wS,
-//                double *xT, double *yT, double *zT, double *qT, double *EnP)
-//{
-//    /* local variables */
-//    double dxt, dyt, dzt, dist;
-//    double tx, ty, tz;
-//    int i, j, k, kk, ii;
-//    double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
-//
-//    /* determine DIST for MAC test */
-//    tx = batch_mid[0] - p->x_mid;
-//    ty = batch_mid[1] - p->y_mid;
-//    tz = batch_mid[2] - p->z_mid;
-//    dist = sqrt(tx*tx + ty*ty + tz*tz);
-//
-//    int torder3 = torderlim*torderlim*torderlim;
-//
-//    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)
-//       && (torder3 < p->numpar)) {
-//    /*
-//     * If MAC is accepted and there is more than n0 particles
-//     * in the box, use the expansion for the approximation.
-//     */
-//
-//        if (p->exist_ms == 0) {
-//            make_vector(p->ms, torder3);
-//            make_vector(p->tx, torderlim);
-//            make_vector(p->ty, torderlim);
-//            make_vector(p->tz, torderlim);
-//
-//
-//            for (i = 0; i < torder3; i++)
-//                p->ms[i] = 0.0;
-//
-//            pc_comp_ms(p, xS, yS, zS, qS, wS);
-//            p->exist_ms = 1;
-//        }
-//
-//        for (ii = batch_ind[0] - 1; ii < batch_ind[1]; ii++) {
-//
-//            for (i = 0; i < torderlim; i++) {
-//                dxt = xT[ii] - p->tx[i];
-//                dyt = yT[ii] - p->ty[i];
-//                dzt = zT[ii] - p->tz[i];
-//                temp_i[i] = dxt * dxt;
-//                temp_j[i] = dyt * dyt;
-//                temp_k[i] = dzt * dzt;
-//            }
-//
-//            kk = -1;
-//            for (k = 0; k < torderlim; k++) {
-//                for (j = 0; j < torderlim; j++) {
-//                    for (i = 0; i < torderlim; i++) {
-//                        kk++;
-//                        EnP[ii] += p->ms[kk] / sqrt(temp_i[i] + temp_j[j] + temp_k[k]);
-//                    }
-//                }
-//            }
-//        }
-//
-//    } else {
-//    /*
-//     * If MAC fails check to see if there are children. If not, perform direct
-//     * calculation. If there are children, call routine recursively for each.
-//     */
-//        if ((p->num_children == 0)) {
-//            pc_comp_direct(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
-//                           xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
-//        } else {
-//            for (i = 0; i < p->num_children; i++) {
-//                compute_pc(p->child[i], batch_ind, batch_mid, batch_rad,
-//                		xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
-//            }
-//        }
-//    }
-//
-//    return;
-//
-//} /* END of function compute_pc */
+
 
 
 
@@ -815,91 +543,6 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 
 
-//void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
-//                        double *xS, double *yS, double *zS, double *qS, double *wS,
-//                        double *xT, double *yT, double *zT, double *qT, double *EnP)
-//    {
-//
-//
-//    // Matrix-vector product for direct sum calculation, same as particle-cluster approx.
-//	int i,j;
-//    int numberOfTargets = batch_iend - batch_ibeg +1;  // need this +1?
-//	int numberOfClusterPoints = iend - ibeg +1;
-//
-//	double *kernelMatrix 		= (double *)mkl_malloc(numberOfTargets * numberOfClusterPoints * sizeof(double),64);
-//	double *interactionResult 	= (double *)mkl_malloc(numberOfTargets * sizeof(double),64);
-//
-//
-//	double *clusterX = (double *)malloc(numberOfClusterPoints * sizeof(double));
-//	double *clusterY = (double *)malloc(numberOfClusterPoints * sizeof(double));
-//	double *clusterZ = (double *)malloc(numberOfClusterPoints * sizeof(double));
-//	double *Weights	 = (double *)mkl_malloc(numberOfClusterPoints * sizeof(double),64);
-//
-//	// Zero out the interactionResult array.  Probably not necessary
-//	for (i = 0; i < numberOfTargets; i++) {
-//		interactionResult[i] = 0.0;
-//		}
-//
-//	// Fill in cluster arrays so xS, yS, etc. only need to be accessed once per entry
-//	for (j = 0; j < numberOfClusterPoints; j++) {
-//		clusterX[j] = xS[ibeg-1+j];
-//		clusterY[j] = yS[ibeg-1+j];
-//		clusterZ[j] = zS[ibeg-1+j];
-//		Weights[j] = qS[ibeg-1+j]*wS[ibeg-1+j];
-//		}
-//
-//
-//	// Fill the matrix of target - interpolation point kernel evaluations.  Note, this can/should be replaced with a threaded implementation on CPU or GPU.
-//	double dx, dy, dz, xi, yi, zi, r;
-//#pragma omp parallel for private(xi,yi,zi,j,dx,dy,dz,r)
-//	for (i = 0; i < numberOfTargets; i++){
-//		xi = xT[ batch_ibeg-1 + i]; // check these -1's
-//		yi = yT[ batch_ibeg-1 + i];
-//		zi = zT[ batch_ibeg-1 + i];
-//		for (j = 0; j < numberOfClusterPoints; j++){
-//
-//			// Compute x, y, and z distances between target i and interpolation point j
-//			dx = xi - clusterX[j];
-//			dy = yi - clusterY[j];
-//			dz = zi - clusterZ[j];
-//
-//			r = sqrt( dx*dx + dy*dy + dz*dz);
-//			if (r > DBL_MIN) {
-//			// Evaluate Kernel, store in kernelMatrix[i][j]
-//				kernelMatrix[i*numberOfClusterPoints + j] = 1 / r;
-//			}else{
-//				kernelMatrix[i*numberOfClusterPoints + j] = 0.0;
-//			}
-//
-//		}
-//
-//	}
-//
-//
-//	// Multiply with CBLAS
-//	double alpha=1;
-//	double beta=0;
-//	int incX = 1;
-//	int incY = 1;
-//
-//	cblas_dgemv(CblasRowMajor, CblasNoTrans, numberOfTargets, numberOfClusterPoints,
-//			alpha, kernelMatrix, numberOfClusterPoints, Weights, incX, beta, interactionResult, incY );
-//
-//	for (i = 0; i < numberOfTargets; i++){
-//			EnP[batch_ibeg-1 + i] += interactionResult[i];
-//	}
-//
-//	mkl_free(kernelMatrix);
-//	mkl_free(interactionResult);
-//	mkl_free(Weights);
-//	free(clusterX);
-//	free(clusterY);
-//	free(clusterZ);
-//
-//
-//    return;
-//
-//} /* END function pc_comp_direct */
 
 
 
@@ -1152,6 +795,129 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
     return;
     
 } /* END function cp_comp_ms */
+
+
+//void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
+//		double __restrict__ *clusterX, double __restrict__ *clusterY, double __restrict__ *clusterZ, double __restrict__ *clusterQ)
+void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
+{
+
+	int pointsPerCluster = torderlim*torderlim*torderlim;
+	int pointsInNode = p->numpar;
+	int startingIndexInClusters = p->node_index * pointsPerCluster;
+    int startingIndexInSources = p->ibeg-1;
+
+
+//	printf("Entering pc_comp_ms.\n");
+    int i, j, k;
+
+    double x0, x1, y0, y1, z0, z1;  // bounding box
+    double sumA1, sumA2, sumA3;
+    double xx, yy, zz, qq, ww;
+
+    double w3d[torderlim*torderlim*torderlim], w1i[torderlim], w2j[torderlim], w3k[torderlim], dj[torderlim];
+    double denominator, numerator, ak;
+
+
+
+    // Set the bounding box.
+    x0 = p->x_min-1e-4/(p->x_max-p->x_min);
+    x1 = p->x_max+1e-4/(p->x_max-p->x_min);
+    y0 = p->y_min-1e-4/(p->y_max-p->y_min);
+    y1 = p->y_max+1e-4/(p->y_max-p->y_min);
+    z0 = p->z_min-1e-4/(p->z_max-p->z_min);
+    z1 = p->z_max+1e-4/(p->z_max-p->z_min);
+
+
+    //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
+    double nodeX[torderlim], nodeY[torderlim], nodeZ[torderlim];
+    for (i = 0; i < torderlim; i++) {
+    	nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
+    	nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
+    	nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+    }
+
+    // Compute weights
+    dj[0] = 0.5;
+	dj[torder] = 0.5;
+	for (j = 1; j < torder; j++){
+		dj[j] = 1.0;
+	}
+    for (j = 0; j < torderlim; j++) {
+            w1i[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
+            w2j[j] = w1i[j];
+            w3k[j] = w1i[j];
+	}
+
+    // Fill in the global arrays of cluster point data.  This cluster only fills a portion.   Also fill local array of weights (outer product of 1d weights)
+    int kk = -1;
+    for (k=0;k<torderlim;k++){
+    	for (j=0;j<torderlim;j++){
+    		for (i=0;i<torderlim;i++){
+				clusterX[kk+startingIndexInClusters] = nodeX[i];
+				clusterY[kk+startingIndexInClusters] = nodeY[j];
+				clusterZ[kk+startingIndexInClusters] = nodeZ[k];
+				w3d[kk] = w3k[k]*w2j[j]*w1i[i];
+    		}
+    	}
+    }
+
+
+    double cx, cy, cz, cw, px, py, pz, pw, pq;  // coordinates of cluster interpolation point and particle
+//    printf("Entering double loop.\n");
+    for (i = 0; i < pointsPerCluster; i++) {
+//    	printf("Working on cluster point %i corresponding to cluster array position %i.\n", i,startingIndexInClusters+i );
+
+        for (j = 0; j < pointsInNode; j++) {
+
+
+        	px = xS[startingIndexInSources + j];
+        	py = yS[startingIndexInSources + j];
+        	pz = zS[startingIndexInSources + j];
+        	pq = qS[startingIndexInSources + j];
+        	pw = wS[startingIndexInSources + j];
+
+
+
+			// Compute the denominator
+        	sumA1 = 0.0;
+			sumA2 = 0.0;
+			sumA3 = 0.0;
+			for (k=0; k<torderlim;k++){
+				cx = nodeX[k];
+				cy = nodeY[k];
+				cz = nodeZ[k];
+				sumA1 += w1i[k] / (px - cx);
+				sumA2 += w2j[k] / (py - cy);
+				sumA3 += w3k[k] / (pz - cz);
+			}
+			denominator = (sumA1 * sumA2 * sumA3);
+
+
+
+			// Compute the numerator
+			cx = clusterX[startingIndexInClusters+i];
+			cy = clusterY[startingIndexInClusters+i];
+			cz = clusterZ[startingIndexInClusters+i];
+			cw = w3d[i]; // product of the three 1-dimensional weights
+
+			numerator = cw / (px - cx) / (py - cy) / (pz - cz);
+
+			// Construct weight
+			ak = numerator / denominator;
+
+			// Increment modified weight by adding contribution from j^th point
+			clusterQ[startingIndexInClusters + i] += ak * pq * pw;
+//			printf("Incrementing element %i of clusterQ.\n", startingIndexInClusters + i);
+        }
+
+    }
+    printf("Completed i loop. About to return.\n");
+
+    return;
+
+} /* END function cp_comp_ms_gpu */
 
 
 
