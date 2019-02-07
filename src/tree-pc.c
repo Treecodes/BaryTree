@@ -287,7 +287,11 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 		clusters->q[i]=0.0;
 	}
 
+//#pragma acc data region copyin(clusters->x[0:numInterpPoints],clusters->y[0:numInterpPoints],clusters->z[0:numInterpPoints],clusters->q[0:numInterpPoints], \
+//	sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num] )
+//	{
 	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
+//	}
 
 //	for (int i=0;i<numInterpPoints;i++){
 //		printf("Q value: %f\n", clusters->q[i]);
@@ -304,9 +308,9 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 	// compute moments
 //	make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
 //	make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
-//	make_vector(p->tx, torderlim);
-//	make_vector(p->ty, torderlim);
-//	make_vector(p->tz, torderlim);
+	make_vector(p->tx, torderlim);
+	make_vector(p->ty, torderlim);
+	make_vector(p->tz, torderlim);
 
 //	for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
 //		p->ms[i] = 0.0;
@@ -318,30 +322,29 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //		p->ms2[i] = 0.0;
 //	}
 
-	if (p->node_index>-1){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
-//		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, q);
-		pc_comp_ms_gpu(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
-				clusters->x,clusters->y,clusters->z,clusters->q);
-//		fflush(stdout);
-//		printf("Exiting pc_comp_ms_gpu.\n");
-//		fflush(stdout);
+	if (torderlim*torderlim*torderlim < p->numpar){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
+//	if (p->numpar> -1){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
+		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q);
+//		pc_comp_ms_gpu(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+//				clusters->x,clusters->y,clusters->z,clusters->q);
+
 		p->exist_ms = 1;
 
 
-//		// fill in arrays, starting at startingIndex
-//		int k1,k2,k3;
-//		int kk = -1;
-//		for (k3 = 0; k3 < torderlim; k3++) {
-//			for (k2 = 0; k2 < torderlim; k2++) {
-//				for (k1 = 0; k1 < torderlim; k1++) {
-//					kk++;
-////					q[kk+startingIndex] = p->ms[kk];
-//					x[kk+startingIndex] = p->tx[k1];
-//					y[kk+startingIndex] = p->ty[k2];
-//					z[kk+startingIndex] = p->tz[k3];
-//				}
-//			}
-//		}
+		// fill in arrays, starting at startingIndex
+		int k1,k2,k3;
+		int kk = -1;
+		for (k3 = 0; k3 < torderlim; k3++) {
+			for (k2 = 0; k2 < torderlim; k2++) {
+				for (k1 = 0; k1 < torderlim; k1++) {
+					kk++;
+//					q[kk+startingIndex] = p->ms[kk];
+					clusters->x[kk+startingIndex] = p->tx[k1];
+					clusters->y[kk+startingIndex] = p->ty[k2];
+					clusters->z[kk+startingIndex] = p->tz[k3];
+				}
+			}
+		}
 
 	}
 
@@ -803,10 +806,10 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 } /* END function cp_comp_ms */
 
 
-//void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
-//		double __restrict__ *clusterX, double __restrict__ *clusterY, double __restrict__ *clusterZ, double __restrict__ *clusterQ)
-void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
+void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
+		double __restrict__ *clusterX, double __restrict__ *clusterY, double __restrict__ *clusterZ, double __restrict__ *clusterQ)
+//void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+//		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
 
 	int pointsPerCluster = torderlim*torderlim*torderlim;
@@ -879,9 +882,11 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
 
 
     double cx, cy, cz, cw, px, py, pz, pw, pq;  // coordinates of cluster interpolation point and particle
+#pragma acc region present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ)
+	#pragma acc loop independent
     for (i = 0; i < pointsPerCluster; i++) {
 
-
+		#pragma acc loop independent
         for (j = 0; j < pointsInNode; j++) {
 
 
@@ -897,6 +902,7 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
         	sumA1 = 0.0;
 			sumA2 = 0.0;
 			sumA3 = 0.0;
+			#pragma acc loop independent
 			for (k=0; k<torderlim;k++){
 				cx = nodeX[k];
 				cy = nodeY[k];
