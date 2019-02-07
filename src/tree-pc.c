@@ -1006,23 +1006,23 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
     	node_z[i] = p->tz[i];
     }
 
-
-    double * qMatrix;
-    make_vector(qMatrix, pointsInNode*torderlim*torderlim*torderlim );
+//
+//    double * qMatrix;
+//    make_vector(qMatrix, pointsInNode*torderlim*torderlim*torderlim );
 //    for (i=0; i< pointsInNode*torderlim*torderlim*torderlim; i++){
 //    	qMatrix[i]=0.0;
 //    }
 
-#pragma acc region copy(clusterQ[startingIndex:startingIndex+torderlim*torderlim*torderlim])  \
-    create(qMatrix[0:pointsInNode*torderlim*torderlim*torderlim], a1i[0:torderlim], a2j[0:torderlim], a3k[0:torderlim]) present(xS,yS,zS,qS,wS)
-    {
+//#pragma acc region copy(clusterQ[startingIndex:startingIndex+torderlim*torderlim*torderlim])  \
+//    create(qMatrix[0:pointsInNode*torderlim*torderlim*torderlim], a1i[0:torderlim], a2j[0:torderlim], a3k[0:torderlim]) present(xS,yS,zS,qS,wS)
+//    {
+//
+//   	#pragma acc loop independent
+//    for (i=0; i< pointsInNode*torderlim*torderlim*torderlim; i++){
+//    	qMatrix[i]=0.0;
+//    }
 
-   	#pragma acc loop independent
-    for (i=0; i< pointsInNode*torderlim*torderlim*torderlim; i++){
-    	qMatrix[i]=0.0;
-    }
-
-   	#pragma acc loop independent
+//   	#pragma acc loop independent
     for (i = 0; i < pointsInNode; i++) {
 //        xx = xibeg[i];
 //        yy = yibeg[i];
@@ -1038,7 +1038,7 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 //        a1exactind = -1;
 //        a2exactind = -1;
 //        a3exactind = -1;
-		#pragma acc loop independent
+//		#pragma acc loop independent
         for (j = 0; j < torderlim; j++) {
 //            a1i[i*torderlim + j] = w1i[j] / (xx - node_x[j]);
 //            a2j[i*torderlim + j] = w2j[j] / (yy - node_y[j]);
@@ -1092,9 +1092,8 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 				for (k1 = 0; k1 < torderlim; k1++) {
 					j=k3*torderlim*torderlim + k2*torderlim + k1;
 //					#pragma acc atomic update
-//					clusterQ[startingIndex + k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
-//					qMatrix[i*torderlim*torderlim*torderlim + k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
-					qMatrix[i*torderlim*torderlim*torderlim + j] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
+					clusterQ[startingIndex + k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
+//					qMatrix[i*torderlim*torderlim*torderlim + j] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
 //					p->ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qibeg[i] * wibeg[i] ;
 				}
 			}
@@ -1108,17 +1107,17 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 //    printf("Filled qMatrix.\n");
 
 
-    double tempSum;
-	#pragma acc loop independent
-    for (j = 0;j<torderlim*torderlim*torderlim;j++){
-		tempSum=0.0;
-		#pragma acc loop independent
-	    for (i = 0; i < pointsInNode; i++) {
-	    	tempSum += qMatrix[i*torderlim*torderlim*torderlim + j];
-    	}
-	    clusterQ[startingIndex + j] = tempSum;
-    }
-    } // end acc data region
+//    double tempSum;
+//	#pragma acc loop independent
+//    for (j = 0;j<torderlim*torderlim*torderlim;j++){
+//		tempSum=0.0;
+//		#pragma acc loop independent
+//	    for (i = 0; i < pointsInNode; i++) {
+//	    	tempSum += qMatrix[i*torderlim*torderlim*torderlim + j];
+//    	}
+//	    clusterQ[startingIndex + j] = tempSum;
+//    }
+//    } // end acc data region
 
 //    }
     
@@ -1147,7 +1146,7 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
     free_vector(a1i);
     free_vector(a2j);
     free_vector(a3k);
-    free_vector(qMatrix);
+//    free_vector(qMatrix);
 //    free_vector(Dd);
     
     return;
