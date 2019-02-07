@@ -318,7 +318,9 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, q);
 		pc_comp_ms_gpu(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 				clusters->x,clusters->y,clusters->z,clusters->q);
+		fflush(stdout);
 		printf("Exiting pc_comp_ms_gpu.\n");
+		fflush(stdout);
 		p->exist_ms = 1;
 
 
@@ -816,7 +818,14 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
     double sumA1, sumA2, sumA3;
     double xx, yy, zz, qq, ww;
 
-    double w3d[torderlim*torderlim*torderlim], w1i[torderlim], w2j[torderlim], w3k[torderlim], dj[torderlim];
+//    double w1i[torderlim], w2j[torderlim], w3k[torderlim], dj[torderlim];
+    double *w1i, *w2j, *w3k, *dj;
+    double *w3d;
+    make_vector(w1i,torderlim);
+    make_vector(w2j,torderlim);
+    make_vector(w3k,torderlim);
+    make_vector(dj,torderlim);
+    make_vector(w3d,torderlim*torderlim*torderlim);
     double denominator, numerator, ak;
 
 
@@ -867,6 +876,7 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
     double cx, cy, cz, cw, px, py, pz, pw, pq;  // coordinates of cluster interpolation point and particle
 //    printf("Entering double loop.\n");
     for (i = 0; i < pointsPerCluster; i++) {
+
 //    	printf("Working on cluster point %i corresponding to cluster array position %i.\n", i,startingIndexInClusters+i );
 
         for (j = 0; j < pointsInNode; j++) {
@@ -910,10 +920,17 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
 			// Increment modified weight by adding contribution from j^th point
 			clusterQ[startingIndexInClusters + i] += ak * pq * pw;
 //			printf("Incrementing element %i of clusterQ.\n", startingIndexInClusters + i);
+			fflush(stdout);
         }
 
     }
-    printf("Completed i loop. About to return.\n");
+	fflush(stdout);
+    printf("Completed i loop.\n");
+    fflush(stdout);
+    free_vector(w3d);
+    fflush(stdout);
+    printf("Freed w3d vector.  Returning.\n");
+    fflush(stdout);
 
     return;
 
