@@ -288,6 +288,10 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 	}
 
 	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
+
+//	for (int i=0;i<numInterpPoints;i++){
+//		printf("Q value: %f\n", clusters->q[i]);
+//	}
 	return;
 }
 
@@ -318,9 +322,9 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, q);
 		pc_comp_ms_gpu(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 				clusters->x,clusters->y,clusters->z,clusters->q);
-		fflush(stdout);
-		printf("Exiting pc_comp_ms_gpu.\n");
-		fflush(stdout);
+//		fflush(stdout);
+//		printf("Exiting pc_comp_ms_gpu.\n");
+//		fflush(stdout);
 		p->exist_ms = 1;
 
 
@@ -342,7 +346,7 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 	}
 
 	for (i = 0; i < p->num_children; i++) {
-		printf("Calling addNodeToArray on child.\n");
+//		printf("Calling addNodeToArray on child.\n");
 		addNodeToArray(p->child[i],sources,clusters,order,numInterpPoints,pointsPerCluster);
 	}
 
@@ -825,18 +829,18 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
     make_vector(w2j,torderlim);
     make_vector(w3k,torderlim);
     make_vector(dj,torderlim);
-    make_vector(w3d,torderlim*torderlim*torderlim);
+    make_vector(w3d,pointsPerCluster);
     double denominator, numerator, ak;
 
 
 
     // Set the bounding box.
-    x0 = p->x_min-1e-4/(p->x_max-p->x_min);
-    x1 = p->x_max+1e-4/(p->x_max-p->x_min);
-    y0 = p->y_min-1e-4/(p->y_max-p->y_min);
-    y1 = p->y_max+1e-4/(p->y_max-p->y_min);
-    z0 = p->z_min-1e-4/(p->z_max-p->z_min);
-    z1 = p->z_max+1e-4/(p->z_max-p->z_min);
+    x0 = p->x_min-1e-3*(p->x_max-p->x_min);
+    x1 = p->x_max+1e-3*(p->x_max-p->x_min);
+    y0 = p->y_min-1e-3*(p->y_max-p->y_min);
+    y1 = p->y_max+1e-3*(p->y_max-p->y_min);
+    z0 = p->z_min-1e-3*(p->z_max-p->z_min);
+    z1 = p->z_max+1e-3*(p->z_max-p->z_min);
 
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
@@ -864,6 +868,7 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
     for (k=0;k<torderlim;k++){
     	for (j=0;j<torderlim;j++){
     		for (i=0;i<torderlim;i++){
+    			kk++;
 				clusterX[kk+startingIndexInClusters] = nodeX[i];
 				clusterY[kk+startingIndexInClusters] = nodeY[j];
 				clusterZ[kk+startingIndexInClusters] = nodeZ[k];
@@ -874,10 +879,8 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
 
 
     double cx, cy, cz, cw, px, py, pz, pw, pq;  // coordinates of cluster interpolation point and particle
-//    printf("Entering double loop.\n");
     for (i = 0; i < pointsPerCluster; i++) {
 
-//    	printf("Working on cluster point %i corresponding to cluster array position %i.\n", i,startingIndexInClusters+i );
 
         for (j = 0; j < pointsInNode; j++) {
 
@@ -902,8 +905,8 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
 				sumA2 += w2j[k] / (py - cy);
 				sumA3 += w3k[k] / (pz - cz);
 			}
-			denominator = (sumA1 * sumA2 * sumA3);
 
+			denominator = (sumA1 * sumA2 * sumA3);
 
 
 			// Compute the numerator
@@ -912,25 +915,25 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
 			cz = clusterZ[startingIndexInClusters+i];
 			cw = w3d[i]; // product of the three 1-dimensional weights
 
+
 			numerator = cw / (px - cx) / (py - cy) / (pz - cz);
 
 			// Construct weight
 			ak = numerator / denominator;
 
+
 			// Increment modified weight by adding contribution from j^th point
 			clusterQ[startingIndexInClusters + i] += ak * pq * pw;
-//			printf("Incrementing element %i of clusterQ.\n", startingIndexInClusters + i);
-			fflush(stdout);
         }
 
     }
-	fflush(stdout);
-    printf("Completed i loop.\n");
-    fflush(stdout);
+
+    free_vector(w1i);
+    free_vector(w2j);
+    free_vector(w3k);
+    free_vector(dj);
     free_vector(w3d);
-    fflush(stdout);
-    printf("Freed w3d vector.  Returning.\n");
-    fflush(stdout);
+
 
     return;
 
