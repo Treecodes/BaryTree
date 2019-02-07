@@ -280,8 +280,12 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 	make_vector(clusters->y, numInterpPoints);
 	make_vector(clusters->z, numInterpPoints);
 	make_vector(clusters->q, numInterpPoints);
+//	memset(clusters->q,0,numInterpPoints*sizeof(double));
 	clusters->num=numInterpPoints;
 
+	for (int i=0; i< numInterpPoints; i++){
+		clusters->q[i]=0.0;
+	}
 
 	addNodeToArray( clusters->x, clusters->y, clusters->z, clusters->q, troot, sources, order, numInterpPoints, pointsPerCluster);
 	return;
@@ -294,19 +298,24 @@ void addNodeToArray(double *x, double *y, double *z, double *q, struct tnode *p,
 	int i;
 
 	// compute moments
-	make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
-	make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
+//	make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
+//	make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
 	make_vector(p->tx, torderlim);
 	make_vector(p->ty, torderlim);
 	make_vector(p->tz, torderlim);
 
-	for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
-		p->ms[i] = 0.0;
-		p->ms2[i] = 0.0;
-	}
+//	for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
+//		p->ms[i] = 0.0;
+//		p->ms2[i] = 0.0;
+//	}
 
-	if (p->node_index>0){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
-		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w);
+//	for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
+//		p->ms[i] = 0.0;
+//		p->ms2[i] = 0.0;
+//	}
+
+	if (p->node_index>-1){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
+		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, q);
 		p->exist_ms = 1;
 
 
@@ -317,7 +326,7 @@ void addNodeToArray(double *x, double *y, double *z, double *q, struct tnode *p,
 			for (k2 = 0; k2 < torderlim; k2++) {
 				for (k1 = 0; k1 < torderlim; k1++) {
 					kk++;
-					q[kk+startingIndex] = p->ms[kk];
+//					q[kk+startingIndex] = p->ms[kk];
 					x[kk+startingIndex] = p->tx[k1];
 					y[kk+startingIndex] = p->ty[k2];
 					z[kk+startingIndex] = p->tz[k3];
@@ -345,8 +354,8 @@ void pc_treecode(struct tnode *p, struct batch *batches,
         EnP[i] = 0.0;
     
 #pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], EnP[0:targets->num], \
-		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num]) \
+		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
+		EnP[0:targets->num], clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num]) \
 		copyout(EnP[0:targets->num])
     {
 
@@ -361,6 +370,7 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     }
 }
 
+    printf("Exited the main comp_pc call.\n");
     *tpeng = sum(EnP, targets->num);
 
     return;
@@ -897,38 +907,56 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 /*
  * cp_comp_ms computes the moments for node p needed in the Taylor approximation
  */
-void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, double *w)
+void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS, double __restrict__ *clusterQ)
 {
+
+	int pointsPerCluster = torderlim*torderlim*torderlim;
+	int startingIndex = p->node_index * pointsPerCluster;
+
 //	printf("Entering pc_comp_ms.\n");
     int i, j, k1, k2, k3, kk;
     int a1exactind, a2exactind, a3exactind;
 //    double dx, dy, dz, tx, ty, tz, qloc;
     double x0, x1, y0, y1, z0, z1;
     double sumA1, sumA2, sumA3;
-    double xx, yy, zz;
-    double *xibeg, *yibeg, *zibeg, *qibeg, *wibeg;
+    double xx, yy, zz, qq, ww;
+//    double *xibeg, *yibeg, *zibeg, *qibeg, *wibeg;
+    int xibeg, yibeg, zibeg, qibeg, wibeg;
     
     double w1i[torderlim], w2j[torderlim], w3k[torderlim], dj[torderlim];
-    double *Dd; //, **a1i, **a2j, **a3k;
+    double Dd; //, **a1i, **a2j, **a3k;
     double *a1i, *a2j, *a3k;
     double *node_x, *node_y, *node_z;
     
 
-    xibeg = &(x[p->ibeg-1]);
-    yibeg = &(y[p->ibeg-1]);
-    zibeg = &(z[p->ibeg-1]);
-    qibeg = &(q[p->ibeg-1]);
-    wibeg = &(w[p->ibeg-1]);
+//    xibeg = &(x[p->ibeg-1]);
+//    yibeg = &(y[p->ibeg-1]);
+//    zibeg = &(z[p->ibeg-1]);
+//    qibeg = &(q[p->ibeg-1]);
+//    wibeg = &(w[p->ibeg-1]);
+
+    xibeg = p->ibeg-1;
+	yibeg = p->ibeg-1;
+	zibeg = p->ibeg-1;
+	qibeg = p->ibeg-1;
+	wibeg = p->ibeg-1;
     
-    x0 = p->x_min;
-    x1 = p->x_max;
-    y0 = p->y_min;
-    y1 = p->y_max;
-    z0 = p->z_min;
-    z1 = p->z_max;
+    x0 = p->x_min-1e-6/(p->x_max-p->x_min);
+    x1 = p->x_max+1e-6/(p->x_max-p->x_min);
+    y0 = p->y_min-1e-6/(p->y_max-p->y_min);
+    y1 = p->y_max+1e-6/(p->y_max-p->y_min);
+    z0 = p->z_min-1e-6/(p->z_max-p->z_min);
+    z1 = p->z_max+1e-6/(p->z_max-p->z_min);
+
+//    x0 = p->x_min;
+//    x1 = p->x_max;
+//    y0 = p->y_min;
+//    y1 = p->y_max;
+//    z0 = p->z_min;
+//    z1 = p->z_max;
     
     for (i = 0; i < torderlim; i++) {
-        p->tx[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);  // what is tt?
+    	p->tx[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         p->ty[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         p->tz[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
 
@@ -940,11 +968,15 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
 
 	int pointsInNode = p->numpar;
 
-    make_vector(a1i, torderlim *pointsInNode);
-    make_vector(a2j, torderlim * pointsInNode);
-	make_vector(a3k, torderlim * pointsInNode);
+//    make_vector(a1i, torderlim *pointsInNode);
+//    make_vector(a2j, torderlim * pointsInNode);
+//	make_vector(a3k, torderlim * pointsInNode);
 
-    make_vector(Dd, pointsInNode);
+	make_vector(a1i, torderlim );
+	make_vector(a2j, torderlim );
+	make_vector(a3k, torderlim );
+
+//    make_vector(Dd, pointsInNode);
     make_vector(node_x, torderlim);
     make_vector(node_y, torderlim);
     make_vector(node_z, torderlim);
@@ -958,6 +990,9 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
         w1i[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
         w2j[j] = w1i[j];
         w3k[j] = w1i[j];
+        a1i[j]=0.0;
+        a2j[j]=0.0;
+        a3k[j]=0.0;
     }
     
     sumA1 = 0.0;
@@ -970,101 +1005,150 @@ void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, dou
     	node_y[i] = p->ty[i];
     	node_z[i] = p->tz[i];
     }
-//# pragma acc region copyout(a1i[:torderlim *pointsInNode],a2j[:torderlim *pointsInNode],a3k[:torderlim *pointsInNode])
-//    {
-//
-//#pragma acc loop independent //reduction(min:a1exactind) reduction(min:a2exactind) reduction(min:a3exactind)
+
+
+    double * qMatrix;
+    make_vector(qMatrix, pointsInNode*torderlim*torderlim*torderlim );
+//    for (i=0; i< pointsInNode*torderlim*torderlim*torderlim; i++){
+//    	qMatrix[i]=0.0;
+//    }
+
+#pragma acc region copy(clusterQ[startingIndex:startingIndex+torderlim*torderlim*torderlim])  \
+    create(qMatrix[0:pointsInNode*torderlim*torderlim*torderlim], a1i[0:torderlim], a2j[0:torderlim], a3k[0:torderlim]) present(xS,yS,zS,qS,wS)
+    {
+
+   	#pragma acc loop independent
+    for (i=0; i< pointsInNode*torderlim*torderlim*torderlim; i++){
+    	qMatrix[i]=0.0;
+    }
+
+   	#pragma acc loop independent
     for (i = 0; i < pointsInNode; i++) {
-        xx = xibeg[i];
-        yy = yibeg[i];
-        zz = zibeg[i];
+//        xx = xibeg[i];
+//        yy = yibeg[i];
+//        zz = zibeg[i];
+//        qq = qibeg[i];
+//        ww = wibeg[i];
+    	xx = xS[xibeg+i];
+		yy = yS[yibeg+i];
+		zz = zS[zibeg+i];
+		qq = qS[qibeg+i];
+		ww = wS[wibeg+i];
         
-        a1exactind = -1;
-        a2exactind = -1;
-        a3exactind = -1;
-//#pragma acc loop independent
+//        a1exactind = -1;
+//        a2exactind = -1;
+//        a3exactind = -1;
+		#pragma acc loop independent
         for (j = 0; j < torderlim; j++) {
-//            a1i[j][i] = w1i[j] / (xx - node_x[j]);
-            a1i[i*torderlim + j] = w1i[j] / (xx - node_x[j]);
-//            a2j[j][i] = w2j[j] / (yy - node_y[j]);
-            a2j[i*torderlim + j] = w2j[j] / (yy - node_y[j]);
-//            a3k[j][i] = w3k[j] / (zz - node_z[j]);
-            a3k[i*torderlim + j] = w3k[j] / (zz - node_z[j]);
-            
-            //if (isinf(a2j[j][i - p->ibeg + 1]))
-            //    printf("a2j %d, %d: %f, %f, %f\n", i, j, a2j[j][i - p->ibeg + 1], yy, p->ty[j]);
-            
-            //if (isinf(a1i[j][i - p->ibeg + 1]))
-            //    printf("a1i %d, %d: %f, %f, %f\n", i, j, a1i[j][i - p->ibeg + 1], xx, p->tx[j]);
+//            a1i[i*torderlim + j] = w1i[j] / (xx - node_x[j]);
+//            a2j[i*torderlim + j] = w2j[j] / (yy - node_y[j]);
+//            a3k[i*torderlim + j] = w3k[j] / (zz - node_z[j]);
 
-            //if (isinf(a3k[j][i - p->ibeg + 1]))
-            //    printf("a3k %d, %d: %f, %f, %f\n", i, j, a3k[j][i - p->ibeg + 1], zz, p->tz[j]);
-
-//            sumA1 += a1i[j][i];
-//            sumA2 += a2j[j][i];
-//            sumA3 += a3k[j][i];
-
-            sumA1 += a1i[i*torderlim + j];
-			sumA2 += a2j[i*torderlim + j];
-			sumA3 += a3k[i*torderlim + j];
+        	a1i[j] = w1i[j] / (xx - node_x[j]);
+			a2j[j] = w2j[j] / (yy - node_y[j]);
+			a3k[j] = w3k[j] / (zz - node_z[j]);
             
-            if (fabs(xx - node_x[j]) < DBL_MIN) a1exactind = j;
-            if (fabs(yy - node_y[j]) < DBL_MIN) a2exactind = j;
-            if (fabs(zz - node_z[j]) < DBL_MIN) a3exactind = j;
+
+
+//            sumA1 += a1i[i*torderlim + j];
+//			sumA2 += a2j[i*torderlim + j];
+//			sumA3 += a3k[i*torderlim + j];
+
+			sumA1 += a1i[j];
+			sumA2 += a2j[j];
+			sumA3 += a3k[j];
+            
+//            if (fabs(xx - node_x[j]) < DBL_MIN) a1exactind = j;
+//            if (fabs(yy - node_y[j]) < DBL_MIN) a2exactind = j;
+//            if (fabs(zz - node_z[j]) < DBL_MIN) a3exactind = j;
         }
         
-        if (a1exactind > -1) {
-            sumA1 = 1.0;
-            for (j = 0; j < torderlim; j++) a1i[i*torderlim + j] = 0.0;
-            a1i[i*torderlim + a1exactind] = 1.0;
-        }
+//        if (a1exactind > -1) {
+//            sumA1 = 1.0;
+//            for (j = 0; j < torderlim; j++) a1i[j] = 0.0;
+//            a1i[a1exactind] = 1.0;
+//        }
+//
+//        if (a2exactind > -1) {
+//            sumA2 = 1.0;
+//            for (j = 0; j < torderlim; j++) a2j[j] = 0.0;
+//            a2j[a2exactind] = 1.0;
+//        }
+//
+//        if (a3exactind > -1) {
+//            sumA3 = 1.0;
+//            for (j = 0; j < torderlim; j++) a3k[j] = 0.0;
+//            a3k[a3exactind] = 1.0;
+//        }
 
-        if (a2exactind > -1) {
-            sumA2 = 1.0;
-            for (j = 0; j < torderlim; j++) a2j[i*torderlim + j] = 0.0;
-            a2j[i*torderlim + a2exactind] = 1.0;
-        }
 
-        if (a3exactind > -1) {
-            sumA3 = 1.0;
-            for (j = 0; j < torderlim; j++) a3k[i*torderlim + j] = 0.0;
-            a3k[i*torderlim + a3exactind] = 1.0;
+        Dd = 1.0 / (sumA1 * sumA2 * sumA3);
+
+		#pragma acc loop independent
+        for (k3 = 0; k3 < torderlim; k3++) {
+			#pragma acc loop independent
+			for (k2 = 0; k2 < torderlim; k2++) {
+				#pragma acc loop independent
+				for (k1 = 0; k1 < torderlim; k1++) {
+					j=k3*torderlim*torderlim + k2*torderlim + k1;
+//					#pragma acc atomic update
+//					clusterQ[startingIndex + k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
+//					qMatrix[i*torderlim*torderlim*torderlim + k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
+					qMatrix[i*torderlim*torderlim*torderlim + j] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qq * ww ;
+//					p->ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1] * a2j[k2] * a3k[k3] * Dd * qibeg[i] * wibeg[i] ;
+				}
+			}
         }
-        
-        Dd[i] = 1.0 / (sumA1 * sumA2 * sumA3);
-        
         sumA1 = 0.0;
         sumA2 = 0.0;
         sumA3 = 0.0;
     }
+//    } // end acc data region
+
+//    printf("Filled qMatrix.\n");
+
+
+    double tempSum;
+	#pragma acc loop independent
+    for (j = 0;j<torderlim*torderlim*torderlim;j++){
+		tempSum=0.0;
+		#pragma acc loop independent
+	    for (i = 0; i < pointsInNode; i++) {
+	    	tempSum += qMatrix[i*torderlim*torderlim*torderlim + j];
+    	}
+	    clusterQ[startingIndex + j] = tempSum;
+    }
+    } // end acc data region
+
 //    }
     
 //    kk = -1;
 
-//#pragma acc parallel loop
-    for (k3 = 0; k3 < torderlim; k3++) {
-        for (k2 = 0; k2 < torderlim; k2++) {
-            for (k1 = 0; k1 < torderlim; k1++) {
-//                kk++;
-                for (i = 0; i < p->numpar; i++) {
-//                	d_ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
-                	p->ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*torderlim + k1] * a2j[i*torderlim + k2] * a3k[i*torderlim + k3] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
-//                	d_ms2[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
-                    p->ms2[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*torderlim + k1] * a2j[i*torderlim + k2] * a3k[i*torderlim + k3] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
-                    
-                    //if (p->ms[kk] != p->ms[kk])
-                    //    printf("%d, %d, %d, %d: %f, %f, %f, %f, %f, %f\n", k1, k2, k3, i,
-                    //    p->ms[kk], Dd[i], q[p->ibeg-1+i], a1i[k1][i], a2j[k2][i], a3k[k3][i]);
-                }
-            }
-        }
-    }
+////#pragma acc parallel loop
+//    for (k3 = 0; k3 < torderlim; k3++) {
+//        for (k2 = 0; k2 < torderlim; k2++) {
+//            for (k1 = 0; k1 < torderlim; k1++) {
+////                kk++;
+//                for (i = 0; i < p->numpar; i++) {
+////                	d_ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
+//                	p->ms[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*torderlim + k1] * a2j[i*torderlim + k2] * a3k[i*torderlim + k3] * Dd[i] * qibeg[i] * wibeg[i] ;  // in this case, multiple the function value by the quadrature weight.  Revisit for sing. subt.
+////                	d_ms2[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[k1][i] * a2j[k2][i] * a3k[k3][i] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
+//                    p->ms2[k3*torderlim*torderlim + k2*torderlim + k1] += a1i[i*torderlim + k1] * a2j[i*torderlim + k2] * a3k[i*torderlim + k3] * Dd[i] *  wibeg[i] ;  // Anterpolate only the quadrature weights w_i for ms2, instead of w_i*f_i
+//
+//                    //if (p->ms[kk] != p->ms[kk])
+//                    //    printf("%d, %d, %d, %d: %f, %f, %f, %f, %f, %f\n", k1, k2, k3, i,
+//                    //    p->ms[kk], Dd[i], q[p->ibeg-1+i], a1i[k1][i], a2j[k2][i], a3k[k3][i]);
+//                }
+//            }
+//        }
+//    }
     
 
     free_vector(a1i);
     free_vector(a2j);
     free_vector(a3k);
-    free_vector(Dd);
+    free_vector(qMatrix);
+//    free_vector(Dd);
     
     return;
     

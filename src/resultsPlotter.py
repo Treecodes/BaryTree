@@ -6,10 +6,6 @@ Header = ["Sources", "Targets", "DirectSumComparison","NumSources","NumTargets",
           "time6", "time7", "time8", "time9", "time10", "time11", "TreecodeTime", "time13",
           "dpengglob", "tpengglob", "abs_pengerr", "RelativeError", "inferr", "relinferr", "n2err", "reln2err"]
 
-# Header = ["Sources", "Targets", "DirectSumComparison","NumSources","NumTargets","Theta","Order","TreeType","MaxParNode", "Kappa",
-#           "PotentialType","sflag","pflag","p","time_preproc", "TreeBuildTime", "time2", "time3", "time4", "time5",
-#           "time6", "time7", "time8", "time9", "time10", "time11", "TreecodeTime", "time13",
-#           "dpengglob", "tpengglob", "abs_pengerr", "RelativeError", "inferr", "relinferr", "n2err", "reln2err"]
 
 def AversusB(df,A,B,save=False):
     fig, ax = plt.subplots(figsize=(8,6))
@@ -77,18 +73,19 @@ def logAversusLogBcolorbyC(df,A,B,C,save=False):
 if __name__=="__main__":
     resultsDir='/Users/nathanvaughn/Desktop/TreecodeTests/OxygenAtomTests/'
 #     resultsFile = 'out636608_noBatchSizeColumn.csv'
-    resultsFile = 'out636608_MaxParNode_32k.csv'
+#     resultsFile = 'out636608_MaxParNode_32k.csv'
+    resultsFile = 'out636608.csv'
     df = pd.read_csv(resultsDir + resultsFile, names=Header)
     print(df)
     
 #     df = df.loc[df['Theta'].isin([0.6])]
 #     df = df.loc[df['Order'].isin([5])]
 #     df = df.loc[df['MaxParNode'].isin([32000])]
-#     df = df.loc[df['BatchSize'].isin([4000])]
+#     df = df.loc[df['BatchSize'].isin([2000 , 4000])]
     
-#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Order')
-    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'MaxParNode')
+    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Order')
+#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'MaxParNode')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
-    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'BatchSize')
+#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
 #     logAversusLogBcolorbyC(df,'TreeBuildTime','RelativeError', 'Order')
     

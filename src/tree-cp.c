@@ -741,8 +741,9 @@ void remove_node(struct tnode *p)
     /* local variables */
     int i;
 
-    if (p->exist_ms == 1)
-        free(p->ms);
+//    if (p->exist_ms == 1)
+//        free(p->ms);
+//    	free(p->ms2);
 
     if (p->num_children > 0) {
         for (i = 0; i < p->num_children; i++) {

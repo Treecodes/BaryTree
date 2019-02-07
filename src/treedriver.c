@@ -100,9 +100,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
 
-
+#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
+        {
         fill_in_cluster_data(clusters, sources, troot, order);
-
+        }
 
     }
 
@@ -189,7 +191,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //    printf("Time: %12.5f\n\n",timetree[3]);
 
     cleanup(troot);
-
+    printf("Finished cleanup of troot.\n");
     return;
 
 } /* END function treecode */
