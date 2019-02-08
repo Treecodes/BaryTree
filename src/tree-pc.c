@@ -322,8 +322,7 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //		p->ms2[i] = 0.0;
 //	}
 
-	if (torderlim*torderlim*torderlim < p->numpar){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
-//	if (p->numpar> -1){ // experiment with not computing moments for top of tree, which are unlikely to be needed.
+	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
 		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q);
 //		pc_comp_ms_gpu(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 //				clusters->x,clusters->y,clusters->z,clusters->q);
