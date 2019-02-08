@@ -100,10 +100,15 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
 
-#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
-        {
-        fill_in_cluster_data(clusters, sources, troot, order);
+//#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+//		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
+//        {
+
+        if ( (pot_type == 0) || (pot_type==1)) {
+        	fill_in_cluster_data(clusters, sources, troot, order);
+        }else if  ( (pot_type == 2) || (pot_type==3)){
+        	printf("Calling fill_in_cluster_data_SS().\n");
+			fill_in_cluster_data_SS(clusters, sources, troot, order);
         }
 
     }
@@ -159,23 +164,19 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
             pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn);
-        }else{
-        	printf("\nRemoved hooks for other potentials.\n");
+        } else if (pot_type == 1) {
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
+            pc_treecode_yuk(troot, batches, sources, targets, clusters,
+                            kappa, tpeng, tEn);
+        }else if (pot_type == 2) {
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
+        	pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
+        	                            kappa, tpeng, tEn);
+        }else if (pot_type == 3) {
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
+        	pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
+        	                            kappa, tpeng, tEn);
         }
-//
-//        } else if (pot_type == 1) {
-//        	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
-//            pc_treecode_yuk(troot, batches, sources, targets,
-//                            kappa, tpeng, tEn);
-//        }else if (pot_type == 2) {
-//        	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
-//        	pc_treecode_coulomb_SS(troot, batches, sources, targets,
-//        	                            kappa, tpeng, tEn);
-//        }else if (pot_type == 3) {
-//        	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
-//        	pc_treecode_yuk_SS(troot, batches, sources, targets,
-//        	                            kappa, tpeng, tEn);
-//        }
         
         reorder_energies(batches->reorder, targets->num, tEn);
     }

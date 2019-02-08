@@ -280,6 +280,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 	make_vector(clusters->y, numInterpPoints);
 	make_vector(clusters->z, numInterpPoints);
 	make_vector(clusters->q, numInterpPoints);
+	make_vector(clusters->w, numInterpPoints);  // will be used in singularity subtraction
 //	memset(clusters->q,0,numInterpPoints*sizeof(double));
 	clusters->num=numInterpPoints;
 
@@ -287,15 +288,9 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 		clusters->q[i]=0.0;
 	}
 
-//#pragma acc data region copyin(clusters->x[0:numInterpPoints],clusters->y[0:numInterpPoints],clusters->z[0:numInterpPoints],clusters->q[0:numInterpPoints], \
-//	sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num] )
-//	{
-	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
-//	}
 
-//	for (int i=0;i<numInterpPoints;i++){
-//		printf("Q value: %f\n", clusters->q[i]);
-//	}
+	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
+
 	return;
 }
 
@@ -305,22 +300,11 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 	int startingIndex = p->node_index * pointsPerCluster;
 	int i;
 
-	// compute moments
-//	make_vector(p->ms, (torderlim)*(torderlim)*(torderlim));
-//	make_vector(p->ms2, (torderlim)*(torderlim)*(torderlim));
+
 	make_vector(p->tx, torderlim);
 	make_vector(p->ty, torderlim);
 	make_vector(p->tz, torderlim);
 
-//	for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
-//		p->ms[i] = 0.0;
-//		p->ms2[i] = 0.0;
-//	}
-
-//	for (i = 0; i < (torderlim)*(torderlim)*(torderlim); i++){
-//		p->ms[i] = 0.0;
-//		p->ms2[i] = 0.0;
-//	}
 
 	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
 		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q);
@@ -337,7 +321,6 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 			for (k2 = 0; k2 < torderlim; k2++) {
 				for (k1 = 0; k1 < torderlim; k1++) {
 					kk++;
-//					q[kk+startingIndex] = p->ms[kk];
 					clusters->x[kk+startingIndex] = p->tx[k1];
 					clusters->y[kk+startingIndex] = p->ty[k2];
 					clusters->z[kk+startingIndex] = p->tz[k3];
@@ -348,12 +331,14 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 	}
 
 	for (i = 0; i < p->num_children; i++) {
-//		printf("Calling addNodeToArray on child.\n");
 		addNodeToArray(p->child[i],sources,clusters,order,numInterpPoints,pointsPerCluster);
 	}
 
 	return;
 }
+
+
+
 
 
 void pc_treecode(struct tnode *p, struct batch *batches,
@@ -592,19 +577,19 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 	qibeg = p->ibeg-1;
 	wibeg = p->ibeg-1;
     
-    x0 = p->x_min-1e-6/(p->x_max-p->x_min);
-    x1 = p->x_max+1e-6/(p->x_max-p->x_min);
-    y0 = p->y_min-1e-6/(p->y_max-p->y_min);
-    y1 = p->y_max+1e-6/(p->y_max-p->y_min);
-    z0 = p->z_min-1e-6/(p->z_max-p->z_min);
-    z1 = p->z_max+1e-6/(p->z_max-p->z_min);
+//    x0 = p->x_min-1e-6/(p->x_max-p->x_min);
+//    x1 = p->x_max+1e-6/(p->x_max-p->x_min);
+//    y0 = p->y_min-1e-6/(p->y_max-p->y_min);
+//    y1 = p->y_max+1e-6/(p->y_max-p->y_min);
+//    z0 = p->z_min-1e-6/(p->z_max-p->z_min);
+//    z1 = p->z_max+1e-6/(p->z_max-p->z_min);
 
-//    x0 = p->x_min;
-//    x1 = p->x_max;
-//    y0 = p->y_min;
-//    y1 = p->y_max;
-//    z0 = p->z_min;
-//    z1 = p->z_max;
+    x0 = p->x_min;
+    x1 = p->x_max;
+    y0 = p->y_min;
+    y1 = p->y_max;
+    z0 = p->z_min;
+    z1 = p->z_max;
     
     for (i = 0; i < torderlim; i++) {
     	p->tx[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
@@ -686,9 +671,9 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 		qq = qS[qibeg+i];
 		ww = wS[wibeg+i];
         
-//        a1exactind = -1;
-//        a2exactind = -1;
-//        a3exactind = -1;
+        a1exactind = -1;
+        a2exactind = -1;
+        a3exactind = -1;
 //		#pragma acc loop independent
         for (j = 0; j < torderlim; j++) {
 //            a1i[i*torderlim + j] = w1i[j] / (xx - node_x[j]);
@@ -709,28 +694,28 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 			sumA2 += a2j[j];
 			sumA3 += a3k[j];
             
-//            if (fabs(xx - node_x[j]) < DBL_MIN) a1exactind = j;
-//            if (fabs(yy - node_y[j]) < DBL_MIN) a2exactind = j;
-//            if (fabs(zz - node_z[j]) < DBL_MIN) a3exactind = j;
+            if (fabs(xx - node_x[j]) < DBL_MIN) a1exactind = j;
+            if (fabs(yy - node_y[j]) < DBL_MIN) a2exactind = j;
+            if (fabs(zz - node_z[j]) < DBL_MIN) a3exactind = j;
         }
         
-//        if (a1exactind > -1) {
-//            sumA1 = 1.0;
-//            for (j = 0; j < torderlim; j++) a1i[j] = 0.0;
-//            a1i[a1exactind] = 1.0;
-//        }
-//
-//        if (a2exactind > -1) {
-//            sumA2 = 1.0;
-//            for (j = 0; j < torderlim; j++) a2j[j] = 0.0;
-//            a2j[a2exactind] = 1.0;
-//        }
-//
-//        if (a3exactind > -1) {
-//            sumA3 = 1.0;
-//            for (j = 0; j < torderlim; j++) a3k[j] = 0.0;
-//            a3k[a3exactind] = 1.0;
-//        }
+        if (a1exactind > -1) {
+            sumA1 = 1.0;
+            for (j = 0; j < torderlim; j++) a1i[j] = 0.0;
+            a1i[a1exactind] = 1.0;
+        }
+
+        if (a2exactind > -1) {
+            sumA2 = 1.0;
+            for (j = 0; j < torderlim; j++) a2j[j] = 0.0;
+            a2j[a2exactind] = 1.0;
+        }
+
+        if (a3exactind > -1) {
+            sumA3 = 1.0;
+            for (j = 0; j < torderlim; j++) a3k[j] = 0.0;
+            a3k[a3exactind] = 1.0;
+        }
 
 
         Dd = 1.0 / (sumA1 * sumA2 * sumA3);

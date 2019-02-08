@@ -19,8 +19,10 @@ void setup(struct particles *particles, int order, double theta,
            double *xyzminmax);
 
 void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
+void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
 void addNodeToArray(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
+void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void comp_tcoeff(double dx, double dy, double dz);
 
 
@@ -90,6 +92,7 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
                     int ind[8][2]);
 
 void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, double *w, double *clusterQ);
+void pc_comp_ms_SS(struct tnode *p, double *x, double *y, double *z, double *q, double *w, double *clusterQ, double *clusterQ2);
 
 void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
 		double __restrict__ *clusterX, double __restrict__ *clusterY, double __restrict__ *clusterZ, double __restrict__ *clusterQ);
@@ -125,14 +128,14 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 /* used by particle-cluster Yukawa */
 void pc_treecode_yuk(struct tnode *p, struct batch *batches,
-                     struct particles *sources, struct particles *targets,
+                     struct particles *sources, struct particles *targets, struct particles *clusters,
                      double kappa, double *tpeng, double *EnP);
 
 void compute_pc_yuk(struct tnode *p,
-                    int *batch_ind, double *batch_mid, double batch_rad,
-                    double *xS, double *yS, double *zS, double *qS, double *wS,
-                    double *xT, double *yT, double *zT, double *qT,
-                    double kappa, double *EnP);
+                int *batch_ind, double *batch_mid, double batch_rad,
+                double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP,
+				double * clusterX, double * clusterY, double * clusterZ, double * clusterM );
 
 void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
                         double *xS, double *yS, double *zS, double *qS, double *wS,
@@ -142,13 +145,14 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
 /* used by particle-cluster Yukawa w/ singularity subtraction */
 
 void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
-                     struct particles *sources, struct particles *targets,
+                     struct particles *sources, struct particles *targets, struct particles *clusters,
                      double kappa, double *tpeng, double *EnP);
 
 void compute_pc_yuk_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP);
+                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP,
+				double * clusterX, double * clusterY, double * clusterZ, double * clusterM , double * clusterM2);
 
 void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
@@ -158,13 +162,14 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
 /* used by particle-cluster Coulomb kernel w/ singularity subtraction */
 
 void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
-                     struct particles *sources, struct particles *targets,
+                     struct particles *sources, struct particles *targets, struct particles *clusters,
                      double kappaSq, double *tpeng, double *EnP);
 
 void compute_pc_coulomb_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP);
+                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP,
+				double * clusterX, double * clusterY, double * clusterZ, double * clusterM, double * clusterM2 );
 
 void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
