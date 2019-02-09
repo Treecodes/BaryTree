@@ -181,7 +181,7 @@ int main(int argc, char **argv)
         printf("   Total direct time (s) on %d procs:  %f\n\n", p, time_direct_tot);
     
         /* Calculating value dpeng by summing all values in denergy */
-        printf("             Direct potential energy:  %f\n\n\n", dpengglob);
+        printf("             Direct potential energy:  %.15f\n\n\n", dpengglob);
     }
 
     
@@ -400,8 +400,15 @@ void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ d
 
         }
         }
+        // Instead of just summing the final values, use their quadrature weights (assuming targets=sources)
+		  for (i=0;i<numparsT;i++){
+			  denergy[i] *= wS[i];
+		  }
 
         *dpeng = sum(denergy, numparsT);
+
+
+
 
         return;
 

@@ -125,6 +125,7 @@ int main(int argc, char **argv)
     
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
+    double *originalWeights;
 
     if (pflag == 0) {
 
@@ -138,6 +139,12 @@ int main(int argc, char **argv)
         make_vector(sources->q, numparsS);
         make_vector(sources->w, numparsS);
         
+
+		make_vector(originalWeights, numparsS);
+
+		for (i=0;i<numparsT;i++)
+			originalWeights[i] = sources->w[i];
+
         if (rank == 0) {
             targets->num = numparsT;
             make_vector(targets->x, numparsT);
@@ -237,6 +244,8 @@ int main(int argc, char **argv)
         make_vector(sources->z, numparsSloc);
         make_vector(sources->q, numparsSloc);
         make_vector(sources->w, numparsSloc);
+
+
     
         targets->num = numparsT;
         make_vector(targets->x, numparsT);
@@ -359,18 +368,28 @@ int main(int argc, char **argv)
                    MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     }
 
+//    for (j=0;j<numparsT;j++){
+//    	tenergyglob[j] = tenergyglob[j]*originalWeights[targets->order[j]];
+//    }
+
     if (rank == 0)
     {
         inferr = 0.0;
         relinferr = 0.0;
         n2err = 0.0;
         reln2err = 0.0;
+        double x,y,z;
 
         for (j = 0; j < numparsT; j++) {
             temp = fabs(denergyglob[targets->order[j]] - tenergyglob[j]);
         
-            if (temp >= inferr)
+            if (temp >= inferr){
                 inferr = temp;
+                x = targets->x[targets->order[j]];
+                y = targets->y[targets->order[j]];
+                z = targets->z[targets->order[j]];
+            }
+
 
             if (fabs(denergyglob[j]) >= relinferr)
                 relinferr = fabs(denergyglob[j]);
@@ -388,6 +407,8 @@ int main(int argc, char **argv)
         printf("Relative inf norm error in potential:  %e \n\n", relinferr);
         printf("  Absolute 2 norm error in potential:  %e \n", n2err);
         printf("  Relative 2 norm error in potential:  %e \n\n", reln2err);
+
+        printf("inf error occurring at %f, %f, %f \n\n", x, y,z);
     }
     
     

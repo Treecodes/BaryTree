@@ -1,7 +1,7 @@
-OFILES = main.o tools.o tree-cp.o tree-pc.o tree-batch.o \
-	 treedriver.o partition.o xmalloc.o sort.o
-#OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o \
-#	 treedriver.o partition.o xmalloc.o sort.o 
+#OFILES = main.o tools.o tree-cp.o tree-pc.o tree-batch.o \
+#	 treedriver.o partition.o xmalloc.o sort.o
+OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o \
+	 treedriver.o partition.o xmalloc.o sort.o 
 TARGET = tree.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
@@ -25,10 +25,10 @@ UNAME := $(shell uname -s)
 #endif
 
 ifeq ($(UNAME),Linux)
-CC = mpicc
-CFLAGS = -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
+CC = mpicc -fPIC
+#CFLAGS = -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 #CFLAGS = -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
-#CFLAGS = -acc -ta=nvidia -lm -mp  # to supress any openACC details
+CFLAGS = -acc -ta=nvidia -lm -mp  # to supress any openACC details
 #CFLAGS = -O3 -ta=nvidia,time -Minfo=accel -lm  # to supress any openACC details and not use pragmas
 
  
@@ -49,7 +49,7 @@ endif
 #CFLAGS = -I/usr/local/Cellar/open-mpi/4.0.0/include
 #LDFLAGS = -L/usr/local/opt/libevent/lib -L/usr/local/Cellar/open-mpi/4.0.0/lib -lmpi
 
-all: $(TARGET) $(TARGETA) $(TARGETB) bin #library
+all: $(TARGET) $(TARGETA) $(TARGETB) bin library
 
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@

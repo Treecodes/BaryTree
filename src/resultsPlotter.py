@@ -78,7 +78,8 @@ if __name__=="__main__":
 #     resultsFile = 'out636608_MaxParNode_32k.csv'
 #     resultsFile = 'out636608.csv'
 #     resultsFile='out636608_yukawa0p5_versus_Coulomb.csv'
-    resultsFile='out636608_SS_testing.csv'
+#     resultsFile='out636608_SS_testing.csv'
+    resultsFile='out636608_SS_testing_weighingOutput.csv'
 
 
     df = pd.read_csv(resultsDir + resultsFile, names=Header)
@@ -89,13 +90,13 @@ if __name__=="__main__":
 #     df = df.loc[df['MaxParNode'].isin([8000])]
 #     df = df.loc[df['BatchSize'].isin([4000])]
 #     df = df.loc[df['Theta'].isin([0.7])]
-    df = df.loc[df['PotentialType'].isin([3])]
+#     df = df.loc[df['PotentialType'].isin([3])]
     
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Order')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'PotentialType')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'BatchSize')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'MaxParNode')
-#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
-    logAversusLogBcolorbyC(df,'TreecodeTime','relinferr', 'Theta')
+    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
+#     logAversusLogBcolorbyC(df,'TreecodeTime','relinferr', 'Theta')
 #     logAversusLogBcolorbyC(df,'TreeBuildTime','RelativeError', 'Order')
     
