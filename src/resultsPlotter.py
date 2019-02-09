@@ -85,7 +85,7 @@ if __name__=="__main__":
     print(df)
     
 #     df = df.loc[df['Theta'].isin([0.6])]
-#     df = df.loc[df['Order'].isin([5])]
+#     df = df.loc[df['Order'].isin([6])]
 #     df = df.loc[df['MaxParNode'].isin([8000])]
 #     df = df.loc[df['BatchSize'].isin([4000])]
 #     df = df.loc[df['Theta'].isin([0.7])]
@@ -96,6 +96,6 @@ if __name__=="__main__":
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'BatchSize')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'MaxParNode')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
-    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
+    logAversusLogBcolorbyC(df,'TreecodeTime','relinferr', 'Theta')
 #     logAversusLogBcolorbyC(df,'TreeBuildTime','RelativeError', 'Order')
     

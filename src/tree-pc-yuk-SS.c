@@ -45,6 +45,9 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
     }
     }
     
+    for (i=0;i<targets->num;i++){
+    	EnP[i] *= sources->w[i];
+    }
     *tpeng = sum(EnP, targets->num);
     
     return;
