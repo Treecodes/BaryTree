@@ -7,3 +7,12 @@ lib/*
 *.ptp*
 bin_cpu/*
 *.tsv
+*.csv
+*.o
+*.xml
+*.prefs
+org.eclipse.*
+*.cproject
+*.exe
+bin_openACC/*
+bin_noAcc/*
