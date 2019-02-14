@@ -12,7 +12,7 @@ bin_cpu/*
 *.xml
 *.prefs
 org.eclipse.*
-*.cproject
+.cproject
 *.exe
 bin_openACC/*
 bin_noAcc/*

@@ -79,8 +79,10 @@ void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct partic
 	return;
 }
 
-void pc_comp_ms_SS(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
-		double __restrict__ *clusterQ, double __restrict__ *clusterQ2)
+//void pc_comp_ms_SS(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
+//		double __restrict__ *clusterQ, double __restrict__ *clusterQ2)
+void pc_comp_ms_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterQ, double *clusterQ2)
 {
 
 	int pointsPerCluster = torderlim*torderlim*torderlim;
@@ -261,9 +263,9 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
         }
     }
     }
-    for (i=0;i<targets->num;i++){
-		EnP[i] *= sources->w[i];
-	}
+//    for (i=0;i<targets->num;i++){
+//		EnP[i] *= sources->w[i];
+//	}
     *tpeng = sum(EnP, targets->num);
     
     return;
@@ -374,7 +376,7 @@ void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_ien
     double tx, ty, tz;
     double d_peng, r;
 
-# pragma acc region present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {

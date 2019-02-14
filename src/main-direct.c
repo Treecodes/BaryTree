@@ -290,8 +290,12 @@ int main(int argc, char **argv)
 //
 //        return;
 
-void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ double *zS, __restrict__ double *qS, __restrict__ double *wS,
-		__restrict__ double *xT, __restrict__ double *yT, __restrict__ double *zT, __restrict__ double *qT,
+//void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ double *zS, __restrict__ double *qS, __restrict__ double *wS,
+//		__restrict__ double *xT, __restrict__ double *yT, __restrict__ double *zT, __restrict__ double *qT,
+//                int numparsS, int numparsT, double *denergy, double *dpeng,
+//                int pot_type, double kappa)
+void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
+				double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
                 int pot_type, double kappa)
 {
@@ -304,7 +308,7 @@ void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ d
         {
 
         if (pot_type == 0) {
-#pragma acc region
+#pragma acc kernels
         	{
 #pragma acc loop independent
         	for (i = 0; i < numparsT; i++) {
@@ -327,7 +331,7 @@ void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ d
         	}
 
         } else if (pot_type == 1) {
-#pragma acc region
+#pragma acc kernels
         	{
 #pragma acc loop independent
         		for (i = 0; i < numparsT; i++) {
@@ -351,7 +355,7 @@ void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ d
 
         } else if (pot_type == 2) {
         	double kappaSq = kappa*kappa;
-#pragma acc region
+#pragma acc kernels
         	{
 #pragma acc loop independent
         		for (i = 0; i < numparsT; i++) {
@@ -375,7 +379,7 @@ void direct_eng(__restrict__ double *xS, __restrict__ double *yS, __restrict__ d
         }
 
         } else if (pot_type == 3) {
-#pragma acc region
+#pragma acc kernels
         	{
 #pragma acc loop independent
 			for (i = 0; i < numparsT; i++) {

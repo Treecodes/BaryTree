@@ -45,9 +45,9 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
     }
     }
     
-    for (i=0;i<targets->num;i++){
-    	EnP[i] *= sources->w[i];
-    }
+//    for (i=0;i<targets->num;i++){
+//    	EnP[i] *= sources->w[i];
+//    }
     *tpeng = sum(EnP, targets->num);
     
     return;
@@ -158,7 +158,7 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
     double tx, ty, tz;
     double d_peng, r;
 
-# pragma acc region present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {

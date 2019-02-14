@@ -90,13 +90,13 @@ if __name__=="__main__":
 #     df = df.loc[df['MaxParNode'].isin([8000])]
 #     df = df.loc[df['BatchSize'].isin([4000])]
 #     df = df.loc[df['Theta'].isin([0.7])]
-#     df = df.loc[df['PotentialType'].isin([3])]
+#     df = df.loc[df['PotentialType'].isin([0,1])]
     
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Order')
-#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'PotentialType')
+    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'PotentialType')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'BatchSize')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'MaxParNode')
-    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
+#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','relinferr', 'Theta')
 #     logAversusLogBcolorbyC(df,'TreeBuildTime','RelativeError', 'Order')
     

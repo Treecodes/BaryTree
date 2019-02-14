@@ -46,34 +46,35 @@ PFLAG=0
 DFLAG=0
 
 #OUTFILE=out636608_yukawa0p5_versus_Coulomb.csv
-OUTFILE=out636608_SS_testing.csv
+OUTFILE=out636608_yukawa0p5_versus_Coulomb_weightedOutput.csv
 
 
 #DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_yukawa0p5_openACC.bin
 #KAPPA=0.5
 #POTENTIALTYPE=1
 
-#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_yukawa_SS_0p5_openACC.bin
-#KAPPA=0.5
-#POTENTIALTYPE=3
-
-DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_SS_0p5_openACC.bin
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_yukawa_SS_0p5_openACC.bin
 KAPPA=0.5
-POTENTIALTYPE=2
+POTENTIALTYPE=3
+
+#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_SS_0p5_openACC.bin
+#KAPPA=0.5
+#POTENTIALTYPE=2
 
 
+../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS 0.7 6 $TREETYPE 8000 0.5 3 $SFLAG $PFLAG $DFLAG 8000
 
 
-for BATCHSIZE in 4000 8000
-do
-	for MAXPARNODE in 8000 16000
-	  do
-		for ORDER in 5 6 7 8 9
-		  do 
-		     for THETA in 0.6 0.7 0.8 0.9
-		     	do
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
-		     done
-		 done
-	done
-done
+#for BATCHSIZE in 4000 8000
+#do
+#	for MAXPARNODE in 8000 16000
+#	  do
+#		for ORDER in 5 6 7 8 9
+#		  do 
+#		     for THETA in 0.6 0.7 0.8 0.9
+#		     	do
+#		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+#		     done
+#		 done
+#	done
+#done

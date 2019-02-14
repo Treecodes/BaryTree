@@ -151,7 +151,7 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
     double tx, ty, tz;
     double d_peng, r;
 
-# pragma acc region present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {

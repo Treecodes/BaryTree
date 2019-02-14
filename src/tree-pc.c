@@ -310,6 +310,8 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q);
 //		pc_comp_ms_gpu(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 //				clusters->x,clusters->y,clusters->z,clusters->q);
+//		pc_comp_ms_denomArrays(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+//				clusters->x,clusters->y,clusters->z,clusters->q);
 
 		p->exist_ms = 1;
 
@@ -352,7 +354,7 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
     
-#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+#pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
 		EnP[0:targets->num], clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num]) \
 		copyout(EnP[0:targets->num])
@@ -433,7 +435,7 @@ void compute_pc(struct tnode *p,
 	double xi,yi,zi;
 	int batchStart = batch_ind[0] - 1;
 //	double pointvals[4];
-# pragma acc region present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
+# pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
     {
 	#pragma acc loop independent
 	for (i = 0; i < numberOfTargets; i++){
@@ -512,7 +514,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
     int source_end=iend;
 
     double d_peng, r;
-# pragma acc region present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_start; ii < batch_end; ii++) {
@@ -543,7 +545,8 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 /*
  * cp_comp_ms computes the moments for node p needed in the Taylor approximation
  */
-void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS, double __restrict__ *clusterQ)
+//void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS, double __restrict__ *clusterQ)
+void pc_comp_ms(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS, double *clusterQ)
 {
 
 	int pointsPerCluster = torderlim*torderlim*torderlim;
@@ -790,10 +793,10 @@ void pc_comp_ms(struct tnode *p, double __restrict__ *xS, double __restrict__ *y
 } /* END function cp_comp_ms */
 
 
-void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
-		double __restrict__ *clusterX, double __restrict__ *clusterY, double __restrict__ *clusterZ, double __restrict__ *clusterQ)
-//void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-//		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
+//void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict__ *yS, double __restrict__ *zS, double __restrict__ *qS, double __restrict__ *wS,
+//		double __restrict__ *clusterX, double __restrict__ *clusterY, double __restrict__ *clusterZ, double __restrict__ *clusterQ)
+void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
 
 	int pointsPerCluster = torderlim*torderlim*torderlim;
@@ -822,12 +825,12 @@ void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict_
 
 
     // Set the bounding box.
-    x0 = p->x_min-1e-3*(p->x_max-p->x_min);
-    x1 = p->x_max+1e-3*(p->x_max-p->x_min);
-    y0 = p->y_min-1e-3*(p->y_max-p->y_min);
-    y1 = p->y_max+1e-3*(p->y_max-p->y_min);
-    z0 = p->z_min-1e-3*(p->z_max-p->z_min);
-    z1 = p->z_max+1e-3*(p->z_max-p->z_min);
+    x0 = p->x_min-1e-4*(p->x_max-p->x_min);
+    x1 = p->x_max+1e-4*(p->x_max-p->x_min);
+    y0 = p->y_min-1e-4*(p->y_max-p->y_min);
+    y1 = p->y_max+1e-4*(p->y_max-p->y_min);
+    z0 = p->z_min-1e-4*(p->z_max-p->z_min);
+    z1 = p->z_max+1e-4*(p->z_max-p->z_min);
 
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
@@ -866,7 +869,7 @@ void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict_
 
 
     double cx, cy, cz, cw, px, py, pz, pw, pq;  // coordinates of cluster interpolation point and particle
-#pragma acc region present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ)
+#pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ)
 	#pragma acc loop independent
     for (i = 0; i < pointsPerCluster; i++) {
 
@@ -930,6 +933,183 @@ void pc_comp_ms_gpu(struct tnode *p, double __restrict__ *xS, double __restrict_
 } /* END function cp_comp_ms_gpu */
 
 
+
+void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ){
+
+	int i,j,k;
+	int pointsPerCluster = torderlim*torderlim*torderlim;
+	int pointsInNode = p->numpar;
+	int startingIndexInClusters = p->node_index * pointsPerCluster;
+	int startingIndexInSources = p->ibeg-1;
+
+	double x0, x1, y0, y1, z0, z1;  // bounding box
+//	double xx, yy, zz, qq, ww;
+
+	double *weights, *dj;
+	make_vector(weights,torderlim);
+	make_vector(dj,torderlim);
+
+
+
+	// Set the bounding box.
+//	x0 = p->x_min-1e-6/(p->x_max-p->x_min);
+//	x1 = p->x_max+1e-6/(p->x_max-p->x_min);
+//	y0 = p->y_min-1e-6/(p->y_max-p->y_min);
+//	y1 = p->y_max+1e-6/(p->y_max-p->y_min);
+//	z0 = p->z_min-1e-6/(p->z_max-p->z_min);
+//	z1 = p->z_max+1e-6/(p->z_max-p->z_min);
+
+	x0 = p->x_min;
+	x1 = p->x_max;
+	y0 = p->y_min;
+	y1 = p->y_max;
+	z0 = p->z_min;
+	z1 = p->z_max;
+
+	// Make and zero-out arrays to store denominator sums
+	double *sumX, *sumY, *sumZ;
+	double *modifiedF;
+//	make_vector(sumX, pointsInNode);
+//	make_vector(sumY, pointsInNode);
+//	make_vector(sumZ, pointsInNode);
+	make_vector(modifiedF,pointsInNode);
+	for (j=0;j<pointsInNode;j++){
+//		sumX[j]=0.0;
+//		sumY[j]=0.0;
+//		sumZ[j]=0.0;
+		modifiedF[j] =
+	}
+
+	//  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
+	double nodeX[torderlim], nodeY[torderlim], nodeZ[torderlim];
+	for (i = 0; i < torderlim; i++) {
+		nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
+		nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
+		nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+	}
+
+	// Compute weights
+	dj[0] = 0.5;
+	dj[torder] = 0.5;
+	for (j = 1; j < torder; j++){
+		dj[j] = 1.0;
+	}
+	for (j = 0; j < torderlim; j++) {
+			weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
+	}
+
+
+	// Fill in denominator sum arrays
+	double sx,sy,sz,cx,cy,cz;
+	int xexactind,yexactind,zexactind;
+
+	for (i=0; i<pointsInNode;i++){ // loop through the source points
+
+		xexactind=-1; yexactind=-1; zexactind=-1;
+
+		sx = xS[startingIndexInSources+i];
+		sy = yS[startingIndexInSources+i];
+		sz = zS[startingIndexInSources+i];
+
+		for (j=0;j<torderlim;j++){  // loop through the degree
+
+			cx = nodeX[j];
+			cy = nodeY[j];
+			cz = nodeZ[j];
+			// Increment the sums
+			sumX[i] += weights[j] / (sx - cx);
+			sumY[i] += weights[j] / (sy - cy);
+			sumZ[i] += weights[j] / (sz - cz);
+
+			if (fabs(sx - cx) < DBL_MIN) xexactind = j;
+			if (fabs(sy - cy) < DBL_MIN) yexactind = j;
+			if (fabs(sz - cz) < DBL_MIN) zexactind = j;
+
+		}
+
+		if (xexactind > -1) {
+			sumX[i] = 1.0;
+		}
+		if (yexactind > -1) {
+			sumY[i] = 1.0;
+		}
+		if (zexactind > -1) {
+			sumZ[i] = 1.0;
+		}
+
+	}
+//	printf("\n\n\n");
+
+
+	// Compute moments for each interpolation point
+	double fi;
+	int k1, k2, k3;
+
+	double *numX, *numY, *numZ;
+	make_vector(numX,pointsInNode);
+	make_vector(numY,pointsInNode);
+	make_vector(numZ,pointsInNode);
+
+	for (k3=0;k3<torderlim;k3++){ // loop over interpolation points, set (cx,cy,cz) for this point
+		cz = nodeZ[k3];
+		for (k2=0;k2<torderlim;k2++){
+			cy = nodeY[k2];
+			for (k1=0;k1<torderlim;k1++){
+				cx = nodeX[k1];
+
+				j = k3*torderlim*torderlim + k2*torderlim + k1;
+
+				for (i=0;i<pointsInNode; i++){
+					sx = xS[startingIndexInSources+i];
+					sy = yS[startingIndexInSources+i];
+					sz = zS[startingIndexInSources+i];
+					if (fabs(sx - cx) > DBL_MIN){
+						numX[i] = weights[k1] / (sx - cx);
+					}else{
+						numX[i]=1.0;
+					}
+					if (fabs(sy - cy) > DBL_MIN){
+						numY[i] = weights[k2] / (sy - cy);
+					}else{
+						numY[i]=1.0;
+					}
+					if (fabs(sz - cz) > DBL_MIN){
+						numZ[i] = weights[k3] / (sz - cz);
+					}else{
+						numZ[i]=1.0;
+					}
+
+				}
+				// could I instead just say "if sumX[i]==1.0; then set numX[i]==1.0".  Or could sumX[i]==1.0 for reasons other than that it was artificially set to be that?
+
+
+				for (i=0;i<pointsInNode; i++){  // loop over source points
+//					sx = xS[startingIndexInSources+i];
+//					sy = yS[startingIndexInSources+i];
+//					sz = zS[startingIndexInSources+i];
+					fi = qS[startingIndexInSources+i]*wS[startingIndexInSources+i];
+
+//					clusterQ[startingIndexInClusters + j] += fi * (weights[k1] / (sx - cx)) * (weights[k2] / (sy - cy)) * (weights[k3] / (sz - cz)) / sumX[i] / sumY[i] / sumZ[i];
+					clusterQ[startingIndexInClusters + j] += fi * numX[i] * numY[i] * numZ[i] / sumX[i] / sumY[i] / sumZ[i];
+
+				}
+			}
+		}
+	}
+
+	free_vector(weights);
+	free_vector(sumX);
+	free_vector(sumY);
+	free_vector(sumZ);
+	free_vector(numX);
+	free_vector(numY);
+	free_vector(numZ);
+	free_vector(dj);
+
+
+	return;
+}
 
 
 

@@ -107,7 +107,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         if ( (pot_type == 0) || (pot_type==1)) {
         	fill_in_cluster_data(clusters, sources, troot, order);
         }else if  ( (pot_type == 2) || (pot_type==3)){
-        	printf("Calling fill_in_cluster_data_SS().\n");
+//        	printf("Calling fill_in_cluster_data_SS().\n");
 			fill_in_cluster_data_SS(clusters, sources, troot, order);
         }
 
@@ -185,14 +185,14 @@ void treedriver(struct particles *sources, struct particles *targets,
     time2 = MPI_Wtime();
     timetree[3] = time2-time1 + timetree[0];
 
-    printf("Deallocating tree structure... \n\n");
+//    printf("Deallocating tree structure... \n\n");
 //    printf("Time1: %12.5f\n",time1);
 //    printf("Time2: %12.5f\n",time2);
 //    printf("Timetree[0]: %12.5f\n",timetree[0]);
 //    printf("Time: %12.5f\n\n",timetree[3]);
 
     cleanup(troot);
-    printf("Finished cleanup of troot.\n");
+//    printf("Finished cleanup of troot.\n");
     return;
 
 } /* END function treecode */
