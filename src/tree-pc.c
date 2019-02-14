@@ -309,8 +309,8 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 	make_vector(testingQ,numInterpPoints);
 //	printf("number of interpolation points: %i\n\n", numInterpPoints);
 
-	if (torderlim*torderlim*torderlim < 1e10){ // don't compute moments for clusters that won't get used
-//	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
+//	if (torderlim*torderlim*torderlim < 1e10){ // don't compute moments for clusters that won't get used
+	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
 		pc_comp_ms(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q);
 
 
@@ -322,18 +322,20 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 		pc_comp_ms_denomArrays(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 				clusters->x,clusters->y,clusters->z,clusters->q);
 
-		for (i=startingIndex;i<startingIndex+torderlim*torderlim*torderlim;i++) testingQ[i] -= clusters->q[i];
+//		for (i=startingIndex;i<startingIndex+torderlim*torderlim*torderlim;i++) testingQ[i] = clusters->q[i];
 
 		double maxDiff=0.0;
+		double relDiff=0.0;
 		int errindex;
 		for (i=startingIndex;i<startingIndex+torderlim*torderlim*torderlim;i++){
-			if (fabs(testingQ[i])>maxDiff){
-				maxDiff=fabs(testingQ[i]);
+			if (fabs(testingQ[i]-clusters->q[i])>maxDiff){
+				maxDiff=fabs(testingQ[i]-clusters->q[i]);
+				relDiff=fabs(testingQ[i]-clusters->q[i])/fabs(clusters->q[i]);
 				errindex = i-startingIndex;
 			}
 		}
 //		printf("Starting index: %i\n", startingIndex);
-		printf("MaxDiff %e for node %i at index %i\n", maxDiff, p->node_index, errindex);
+		printf("MaxDiff %e relDiff %e for node %i at index %i\n", maxDiff, relDiff, p->node_index, errindex);
 
 		p->exist_ms = 1;
 
@@ -602,19 +604,20 @@ void pc_comp_ms(struct tnode *p, double *xS, double *yS, double *zS, double *qS,
 	qibeg = p->ibeg-1;
 	wibeg = p->ibeg-1;
     
-//    x0 = p->x_min-1e-6/(p->x_max-p->x_min);
-//    x1 = p->x_max+1e-6/(p->x_max-p->x_min);
-//    y0 = p->y_min-1e-6/(p->y_max-p->y_min);
-//    y1 = p->y_max+1e-6/(p->y_max-p->y_min);
-//    z0 = p->z_min-1e-6/(p->z_max-p->z_min);
-//    z1 = p->z_max+1e-6/(p->z_max-p->z_min);
 
-    x0 = p->x_min;
-    x1 = p->x_max;
-    y0 = p->y_min;
-    y1 = p->y_max;
-    z0 = p->z_min;
-    z1 = p->z_max;
+//    x0 = p->x_min;
+//    x1 = p->x_max;
+//    y0 = p->y_min;
+//    y1 = p->y_max;
+//    z0 = p->z_min;
+//    z1 = p->z_max;
+
+	x0 = p->x_min-1e-6*(p->x_max-p->x_min);
+	x1 = p->x_max+1e-6*(p->x_max-p->x_min);
+	y0 = p->y_min-1e-6*(p->y_max-p->y_min);
+	y1 = p->y_max+1e-6*(p->y_max-p->y_min);
+	z0 = p->z_min-1e-6*(p->z_max-p->z_min);
+	z1 = p->z_max+1e-6*(p->z_max-p->z_min);
     
     for (i = 0; i < torderlim; i++) {
     	p->tx[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
@@ -993,6 +996,7 @@ void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS,
 
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
+	int xflag=0,yflag=0,zflag=0;
 	double *modifiedF;
 
 	make_vector(modifiedF,pointsInNode);
@@ -1045,25 +1049,37 @@ void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS,
 			cz = nodeZ[j];
 
 			// Increment the sums
-//			sumX += weights[j] / (sx - cx);
-//			sumY += weights[j] / (sy - cy);
-//			sumZ += weights[j] / (sz - cz);
+			sumX += weights[j] / (sx - cx);
+			sumY += weights[j] / (sy - cy);
+			sumZ += weights[j] / (sz - cz);
 
-			if (fabs(sx - cx)>DBL_MIN){
-				sumX += weights[j] / (sx - cx);
-			}else{ sumX = 1.0/0.0;}
-			if (fabs(sy - cy)>DBL_MIN){
-				sumY += weights[j] / (sy - cy);
-			}else{ sumY = 1.0/0.0;}
-			if (fabs(sz - cz)>DBL_MIN){
-				sumZ += weights[j] / (sz - cz);
-			}else{ sumZ = 1.0/0.0;}
+//			if (fabs(sx - cx)>DBL_MIN){
+//				sumX += weights[j] / (sx - cx);
+//			}else{ sumX = 1.0/0.0;}
+//			if (fabs(sy - cy)>DBL_MIN){
+//				sumY += weights[j] / (sy - cy);
+//			}else{ sumY = 1.0/0.0;}
+//			if (fabs(sz - cz)>DBL_MIN){
+//				sumZ += weights[j] / (sz - cz);
+//			}else{ sumZ = 1.0/0.0;}
 
 		}
+//		printf("originalF[i]: %e\n", modifiedF[i]);
 
-		if ( isnormal(sumX)) modifiedF[i] /= sumX;
-		if ( isnormal(sumY)) modifiedF[i] /= sumY;
-		if ( isnormal(sumZ)) modifiedF[i] /= sumZ;
+		if ( isnormal(sumX)){
+			modifiedF[i] /= sumX;
+		} else{ xflag=1;}
+		if ( isnormal(sumY)){
+			modifiedF[i] /= sumY;
+		}else{ yflag=1; }
+		if ( isnormal(sumZ)){
+			modifiedF[i] /= sumZ;
+		}else{ zflag=1;}
+
+//		printf("sumX: %e\n", sumX);
+//		printf("sumY: %e\n", sumY);
+//		printf("sumZ: %e\n", sumZ);
+//		printf("modifiedF[i]: %e\n\n", modifiedF[i]);
 
 //		if ( fabs(sumX)<1e6) modifiedF[i] /= sumX;
 //		if ( fabs(sumY)<1e6) modifiedF[i] /= sumY;
@@ -1085,6 +1101,7 @@ void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS,
 				cx = nodeX[k1];
 
 				j = k3*torderlim*torderlim + k2*torderlim + k1;
+//				j = k1*torderlim*torderlim + k2*torderlim + k3;
 
 				// Fill cluster X, Y, and Z arrays
 				clusterX[startingIndexInClusters + j] = cx;
@@ -1108,9 +1125,13 @@ void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS,
 //					if (isnormal(yn)) numerator*=yn;
 //					if (isnormal(zn)) numerator*=zn;
 
-					if (fabs(sx - cx)>DBL_MIN) numerator*=xn;
-					if (fabs(sy - cy)>DBL_MIN) numerator*=yn;
-					if (fabs(sz - cz)>DBL_MIN) numerator*=zn;
+//					if (fabs(sx - cx)>DBL_MIN) numerator*=xn;
+//					if (fabs(sy - cy)>DBL_MIN) numerator*=yn;
+//					if (fabs(sz - cz)>DBL_MIN) numerator*=zn;
+
+					if (xflag==0) numerator*=xn;
+					if (yflag==0) numerator*=yn;
+					if (zflag==0) numerator*=zn;
 
 					temp += numerator*modifiedF[i];
 
