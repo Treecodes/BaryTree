@@ -405,9 +405,9 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
         }
         }
         // Instead of just summing the final values, use their quadrature weights (assuming targets=sources)
-		  for (i=0;i<numparsT;i++){
-			  denergy[i] *= wS[i];
-		  }
+//		  for (i=0;i<numparsT;i++){
+//			  denergy[i] *= wS[i];
+//		  }
 
         *dpeng = sum(denergy, numparsT);
 

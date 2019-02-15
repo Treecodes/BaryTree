@@ -29,8 +29,8 @@ CC = mpicc -fPIC
 #CFLAGS = -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 #CFLAGS = -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 
-#CFLAGS = -acc -ta=nvidia -lm -mp  # to supress any openACC details
-CFLAGS = -acc -ta=tesla:cc70 -lm -mp  # to compile for the titanv
+CFLAGS = -acc -ta=nvidia -lm -mp  # to supress any openACC details
+#CFLAGS = -acc -ta=tesla:cc70 -lm -mp  # to compile for the titanv
 
 #CFLAGS = -O3 -ta=nvidia,time -Minfo=accel -lm  # to supress any openACC details and not use pragmas
 CXXFLAGS='-fPIC'
