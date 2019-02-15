@@ -1089,54 +1089,103 @@ void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS,
 
 	// Compute moments for each interpolation point
 	double numerator, xn, yn, zn, temp;
-	int k1, k2, k3;
+	int k1, k2, k3, kk;
 	double w1,w2,w3;
 
 	#pragma acc loop independent
-	for (k3=0;k3<torderlim;k3++){ // loop over interpolation points, set (cx,cy,cz) for this point
+	for (j=0;j<pointsPerCluster;j++){ // loop over interpolation points, set (cx,cy,cz) for this point
+		// compute k1, k2, k3 from j
+		k1 = j%torderlim;
+		kk = (j-k1)/torderlim;
+		k2 = kk%torderlim;
+		kk = kk - k2;
+		k3 = kk / torderlim;
+
 		cz = nodeZ[k3];
 		w3 = weights[k3];
+
+		cy = nodeY[k2];
+		w2 = weights[k2];
+
+		cx = nodeX[k1];
+		w1 = weights[k1];
+
+
+		// Fill cluster X, Y, and Z arrays
+		clusterX[startingIndexInClusters + j] = cx;
+		clusterY[startingIndexInClusters + j] = cy;
+		clusterZ[startingIndexInClusters + j] = cz;
+
+
+		// Increment cluster Q array
+		temp = 0.0;
 		#pragma acc loop independent
-		for (k2=0;k2<torderlim;k2++){
-			cy = nodeY[k2];
-			w2 = weights[k2];
-			#pragma acc loop independent
-			for (k1=0;k1<torderlim;k1++){
-				cx = nodeX[k1];
-				w1 = weights[k1];
+		for (i=0;i<pointsInNode; i++){  // loop over source points
+			sx = xS[startingIndexInSources+i];
+			sy = yS[startingIndexInSources+i];
+			sz = zS[startingIndexInSources+i];
 
-				j = k3*torderlim*torderlim + k2*torderlim + k1;
-
-				// Fill cluster X, Y, and Z arrays
-				clusterX[startingIndexInClusters + j] = cx;
-				clusterY[startingIndexInClusters + j] = cy;
-				clusterZ[startingIndexInClusters + j] = cz;
-
-
-				// Increment cluster Q array
-				temp = 0.0;
-				#pragma acc loop independent
-				for (i=0;i<pointsInNode; i++){  // loop over source points
-					sx = xS[startingIndexInSources+i];
-					sy = yS[startingIndexInSources+i];
-					sz = zS[startingIndexInSources+i];
-
-					numerator=1.0;
-					numerator *=  w1 / (sx - cx);
-					numerator *=  w2 / (sy - cy);
-					numerator *=  w3 / (sz - cz);
+			numerator=1.0;
+			numerator *=  w1 / (sx - cx);
+			numerator *=  w2 / (sy - cy);
+			numerator *=  w3 / (sz - cz);
 
 
 
-					temp += numerator*modifiedF[i];
+			temp += numerator*modifiedF[i];
 
 
-				}
-
-				clusterQ[startingIndexInClusters + j] += temp;
-			}
 		}
+
+		clusterQ[startingIndexInClusters + j] += temp;
+
 	}
+
+
+//	for (k3=0;k3<torderlim;k3++){ // loop over interpolation points, set (cx,cy,cz) for this point
+//		cz = nodeZ[k3];
+//		w3 = weights[k3];
+//		#pragma acc loop independent
+//		for (k2=0;k2<torderlim;k2++){
+//			cy = nodeY[k2];
+//			w2 = weights[k2];
+//			#pragma acc loop independent
+//			for (k1=0;k1<torderlim;k1++){
+//				cx = nodeX[k1];
+//				w1 = weights[k1];
+//
+//				j = k3*torderlim*torderlim + k2*torderlim + k1;
+//
+//				// Fill cluster X, Y, and Z arrays
+//				clusterX[startingIndexInClusters + j] = cx;
+//				clusterY[startingIndexInClusters + j] = cy;
+//				clusterZ[startingIndexInClusters + j] = cz;
+//
+//
+//				// Increment cluster Q array
+//				temp = 0.0;
+//				#pragma acc loop independent
+//				for (i=0;i<pointsInNode; i++){  // loop over source points
+//					sx = xS[startingIndexInSources+i];
+//					sy = yS[startingIndexInSources+i];
+//					sz = zS[startingIndexInSources+i];
+//
+//					numerator=1.0;
+//					numerator *=  w1 / (sx - cx);
+//					numerator *=  w2 / (sy - cy);
+//					numerator *=  w3 / (sz - cz);
+//
+//
+//
+//					temp += numerator*modifiedF[i];
+//
+//
+//				}
+//
+//				clusterQ[startingIndexInClusters + j] += temp;
+//			}
+//		}
+//	}
 	}
 
 
