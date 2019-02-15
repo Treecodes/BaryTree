@@ -290,7 +290,6 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 	}
 
 #pragma acc data copyin(tt[0:torderlim], \
-		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num], \
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
 		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num])
 
@@ -312,7 +311,6 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //	make_vector(testingQ,numInterpPoints);
 //	printf("number of interpolation points: %i\n\n", numInterpPoints);
 
-//	if (torderlim*torderlim*torderlim < 1e10){ // don't compute moments for clusters that won't get used
 	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
 
 //		make_vector(p->tx, torderlim);
@@ -340,7 +338,7 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //				clusters->x,clusters->y,clusters->z,clusters->q);
 
 
-		pc_comp_ms_denomArrays(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+		pc_comp_ms_modifiedF(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 				clusters->x,clusters->y,clusters->z,clusters->q);
 
 //		for (i=startingIndex;i<startingIndex+torderlim*torderlim*torderlim;i++) testingQ[i] = clusters->q[i];
@@ -977,7 +975,7 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
 
 
 
-void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ){
 
 	int i,j,k;
@@ -1002,12 +1000,7 @@ void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS,
 
 
 	// Set the bounding box.
-//	x0 = p->x_min;
-//	x1 = p->x_max;
-//	y0 = p->y_min;
-//	y1 = p->y_max;
-//	z0 = p->z_min;
-//	z1 = p->z_max;
+
 
 	x0 = p->x_min-1e-15*(p->x_max-p->x_min);
 	x1 = p->x_max+1e-15*(p->x_max-p->x_min);
@@ -1142,59 +1135,9 @@ void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS,
 	}
 
 
-//	for (k3=0;k3<torderlim;k3++){ // loop over interpolation points, set (cx,cy,cz) for this point
-//		cz = nodeZ[k3];
-//		w3 = weights[k3];
-//		#pragma acc loop independent
-//		for (k2=0;k2<torderlim;k2++){
-//			cy = nodeY[k2];
-//			w2 = weights[k2];
-//			#pragma acc loop independent
-//			for (k1=0;k1<torderlim;k1++){
-//				cx = nodeX[k1];
-//				w1 = weights[k1];
-//
-//				j = k3*torderlim*torderlim + k2*torderlim + k1;
-//
-//				// Fill cluster X, Y, and Z arrays
-//				clusterX[startingIndexInClusters + j] = cx;
-//				clusterY[startingIndexInClusters + j] = cy;
-//				clusterZ[startingIndexInClusters + j] = cz;
-//
-//
-//				// Increment cluster Q array
-//				temp = 0.0;
-//				#pragma acc loop independent
-//				for (i=0;i<pointsInNode; i++){  // loop over source points
-//					sx = xS[startingIndexInSources+i];
-//					sy = yS[startingIndexInSources+i];
-//					sz = zS[startingIndexInSources+i];
-//
-//					numerator=1.0;
-//					numerator *=  w1 / (sx - cx);
-//					numerator *=  w2 / (sy - cy);
-//					numerator *=  w3 / (sz - cz);
-//
-//
-//
-//					temp += numerator*modifiedF[i];
-//
-//
-//				}
-//
-//				clusterQ[startingIndexInClusters + j] += temp;
-//			}
-//		}
-//	}
 	}
 
-
-//	free_vector(weights);
-//	free_vector(dj);
 	free_vector(modifiedF);
-//	free_vector(nodeX);
-//	free_vector(nodeY);
-//	free_vector(nodeZ);
 
 
 	return;

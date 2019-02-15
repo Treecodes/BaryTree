@@ -97,8 +97,11 @@ void pc_comp_ms_SS(struct tnode *p, double *x, double *y, double *z, double *q, 
 void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
-void pc_comp_ms_denomArrays(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
+
+void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ , double *clusterW);
 
 void pc_comp_weights(struct tnode *p);
 

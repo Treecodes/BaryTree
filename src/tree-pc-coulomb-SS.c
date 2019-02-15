@@ -32,6 +32,11 @@ void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sourc
 		clusters->w[i]=0.0;
 	}
 
+#pragma acc data copyin(tt[0:torderlim], \
+		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
+		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num])
+
+
 
 	addNodeToArray_SS(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 
@@ -45,30 +50,35 @@ void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct partic
 	int i;
 
 
-	make_vector(p->tx, torderlim);
-	make_vector(p->ty, torderlim);
-	make_vector(p->tz, torderlim);
+//	make_vector(p->tx, torderlim);
+//	make_vector(p->ty, torderlim);
+//	make_vector(p->tz, torderlim);
 
 
 	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
-		pc_comp_ms_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q, clusters->w);
+//		pc_comp_ms_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q, clusters->w);
+
+		pc_comp_ms_modifiedF_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+				clusters->x,clusters->y,clusters->z,clusters->q,clusters->w);
 
 		p->exist_ms = 1;
 
 
-		// fill in arrays, starting at startingIndex
-		int k1,k2,k3;
-		int kk = -1;
-		for (k3 = 0; k3 < torderlim; k3++) {
-			for (k2 = 0; k2 < torderlim; k2++) {
-				for (k1 = 0; k1 < torderlim; k1++) {
-					kk++;
-					clusters->x[kk+startingIndex] = p->tx[k1];
-					clusters->y[kk+startingIndex] = p->ty[k2];
-					clusters->z[kk+startingIndex] = p->tz[k3];
-				}
-			}
-		}
+
+
+//		// fill in arrays, starting at startingIndex
+//		int k1,k2,k3;
+//		int kk = -1;
+//		for (k3 = 0; k3 < torderlim; k3++) {
+//			for (k2 = 0; k2 < torderlim; k2++) {
+//				for (k1 = 0; k1 < torderlim; k1++) {
+//					kk++;
+//					clusters->x[kk+startingIndex] = p->tx[k1];
+//					clusters->y[kk+startingIndex] = p->ty[k2];
+//					clusters->z[kk+startingIndex] = p->tz[k3];
+//				}
+//			}
+//		}
 
 	}
 
@@ -237,6 +247,175 @@ void pc_comp_ms_SS(struct tnode *p, double *xS, double *yS, double *zS, double *
     return;
 
 } /* END function cp_comp_ms_SS */
+
+void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW){
+
+	int i,j,k;
+	int pointsPerCluster = torderlim*torderlim*torderlim;
+	int pointsInNode = p->numpar;
+	int startingIndexInClusters = p->node_index * pointsPerCluster;
+	int startingIndexInSources = p->ibeg-1;
+
+	double x0, x1, y0, y1, z0, z1;  // bounding box
+
+	double weights[torderlim];
+	double dj[torderlim];
+	double *modifiedF, *modifiedF2;
+	make_vector(modifiedF,pointsInNode);
+	make_vector(modifiedF2,pointsInNode);
+
+	double nodeX[torderlim], nodeY[torderlim], nodeZ[torderlim];
+
+
+
+	// Set the bounding box.
+	x0 = p->x_min-1e-15*(p->x_max-p->x_min);
+	x1 = p->x_max+1e-15*(p->x_max-p->x_min);
+	y0 = p->y_min-1e-15*(p->y_max-p->y_min);
+	y1 = p->y_max+1e-15*(p->y_max-p->y_min);
+	z0 = p->z_min-1e-15*(p->z_max-p->z_min);
+	z1 = p->z_max+1e-15*(p->z_max-p->z_min);
+
+	// Make and zero-out arrays to store denominator sums
+	double sumX, sumY, sumZ;
+
+
+#pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
+	create(modifiedF[0:pointsInNode],modifiedF2[0:pointsInNode],nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
+	{
+
+	#pragma acc loop independent
+	for (j=0;j<pointsInNode;j++){
+		modifiedF[j] = qS[startingIndexInSources+j]*wS[startingIndexInSources+j];
+		modifiedF2[j] = wS[startingIndexInSources+j];
+	}
+
+	//  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
+	#pragma acc loop independent
+	for (i = 0; i < torderlim; i++) {
+		nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
+		nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
+		nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+
+	}
+
+	// Compute weights
+	dj[0] = 0.5;
+	dj[torder] = 0.5;
+	#pragma acc loop independent
+	for (j = 1; j < torder; j++){
+		dj[j] = 1.0;
+	}
+	#pragma acc loop independent
+	for (j = 0; j < torderlim; j++) {
+		weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
+	}
+
+
+	// Compute modified f values
+	double sx,sy,sz,cx,cy,cz,denominator,w;
+
+
+
+	#pragma acc loop independent
+	for (i=0; i<pointsInNode;i++){ // loop through the source points
+
+		sumX=0.0;
+		sumY=0.0;
+		sumZ=0.0;
+
+		sx = xS[startingIndexInSources+i];
+		sy = yS[startingIndexInSources+i];
+		sz = zS[startingIndexInSources+i];
+		#pragma acc loop independent
+		for (j=0;j<torderlim;j++){  // loop through the degree
+
+			cx = nodeX[j];
+			cy = nodeY[j];
+			cz = nodeZ[j];
+
+			// Increment the sums
+			w = weights[j];
+			sumX += w / (sx - cx);
+			sumY += w / (sy - cy);
+			sumZ += w / (sz - cz);
+
+		}
+
+		denominator = sumX*sumY*sumZ;
+		modifiedF[i] /= denominator;
+		modifiedF2[i] /= denominator;
+
+	}
+
+
+	// Compute moments for each interpolation point
+	double numerator, xn, yn, zn, temp, temp2;
+	int k1, k2, k3, kk;
+	double w1,w2,w3;
+
+	#pragma acc loop independent
+	for (j=0;j<pointsPerCluster;j++){ // loop over interpolation points, set (cx,cy,cz) for this point
+		// compute k1, k2, k3 from j
+		k1 = j%torderlim;
+		kk = (j-k1)/torderlim;
+		k2 = kk%torderlim;
+		kk = kk - k2;
+		k3 = kk / torderlim;
+
+		cz = nodeZ[k3];
+		w3 = weights[k3];
+
+		cy = nodeY[k2];
+		w2 = weights[k2];
+
+		cx = nodeX[k1];
+		w1 = weights[k1];
+
+
+		// Fill cluster X, Y, and Z arrays
+		clusterX[startingIndexInClusters + j] = cx;
+		clusterY[startingIndexInClusters + j] = cy;
+		clusterZ[startingIndexInClusters + j] = cz;
+
+
+		// Increment cluster Q array
+		temp = 0.0;
+		temp2 = 0.0;
+		#pragma acc loop independent
+		for (i=0;i<pointsInNode; i++){  // loop over source points
+			sx = xS[startingIndexInSources+i];
+			sy = yS[startingIndexInSources+i];
+			sz = zS[startingIndexInSources+i];
+
+			numerator=1.0;
+			numerator *=  w1 / (sx - cx);
+			numerator *=  w2 / (sy - cy);
+			numerator *=  w3 / (sz - cz);
+
+
+
+			temp += numerator*modifiedF[i];
+			temp2 += numerator*modifiedF2[i];
+
+
+		}
+
+		clusterQ[startingIndexInClusters + j] += temp;
+		clusterW[startingIndexInClusters + j] += temp2;
+
+	}
+
+
+	}
+
+	free_vector(modifiedF);
+	free_vector(modifiedF2);
+
+
+	return;
+}
 
 void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,

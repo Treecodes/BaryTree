@@ -58,12 +58,16 @@ def logAversusLogBcolorbyC(df,A,B,C,save=False):
         
     plt.xlabel(B)
     plt.ylabel(A)
-    plt.axhline(y=49.17,color='g', label='Coulomb DS Time')    # GPU Direct Sum for 636000 points
-    plt.axhline(y=61.402522,color='r', label='Yukawa DS Time')    # GPU Direct Sum for 636000 points Yukawa 0.5
+#     plt.axhline(y=49.17,color='g', label='Coulomb DS Time')    # GPU Direct Sum for 636000 points
+#     plt.axhline(y=61.402522,color='r', label='Yukawa DS Time')    # GPU Direct Sum for 636000 points Yukawa 0.5
+    
+    plt.axhline(y=78.54,color='g', label='Coulomb_SS DS Time')    # GPU Direct Sum for 636000 points
+    plt.axhline(y=75.96,color='r', label='Yukawa_SS DS Time')    # GPU Direct Sum for 636000 points
+    
 #     plt.axhline(y=1600,color='r')     # CPU Direct Sum for 636000 points
 #     plt.axhline(y=940,color='r')      # CPU Treecode achieveing 1e-6 relative error
     plt.grid()
-    plt.ylim([20,80])
+    plt.ylim([20,100])
     
     plt.legend(loc = 'best')
 
@@ -78,22 +82,22 @@ if __name__=="__main__":
 #     resultsFile = 'out636608_MaxParNode_32k.csv'
 #     resultsFile = 'out636608.csv'
 #     resultsFile='out636608_yukawa0p5_versus_Coulomb.csv'
-#     resultsFile='out636608_SS_testing.csv'
-    resultsFile='out636608_SS_testing_weighingOutput.csv'
+    resultsFile='out636608_SS_testing.csv'
+#     resultsFile='out636608_SS_testing_weighingOutput.csv'
 
 
     df = pd.read_csv(resultsDir + resultsFile, names=Header)
     print(df)
     
 #     df = df.loc[df['Theta'].isin([0.6])]
-#     df = df.loc[df['Order'].isin([6])]
+#     df = df.loc[df['Order'].isin([7])]
 #     df = df.loc[df['MaxParNode'].isin([8000])]
 #     df = df.loc[df['BatchSize'].isin([4000])]
 #     df = df.loc[df['Theta'].isin([0.7])]
-#     df = df.loc[df['PotentialType'].isin([0,1])]
+#     df = df.loc[df['PotentialType'].isin([0])]
     
-#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Order')
-    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'PotentialType')
+    logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Order')
+#     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'PotentialType')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'BatchSize')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'MaxParNode')
 #     logAversusLogBcolorbyC(df,'TreecodeTime','RelativeError', 'Theta')
