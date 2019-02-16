@@ -293,7 +293,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
 		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num])
 
-			addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
+	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 
 	return;
 }
@@ -312,6 +312,7 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //	printf("number of interpolation points: %i\n\n", numInterpPoints);
 
 	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
+//	if (torderlim*torderlim*torderlim < 1e10){ // don't compute moments for clusters that won't get used
 
 //		make_vector(p->tx, torderlim);
 //		make_vector(p->ty, torderlim);
@@ -388,8 +389,8 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     
 #pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
-		EnP[0:targets->num], clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num]) \
-		copyout(EnP[0:targets->num])
+		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num]) \
+		copy(EnP[0:targets->num])
     {
 //#pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], EnP[0:targets->num]) \
 //		copyout(EnP[0:targets->num]) \
@@ -437,6 +438,7 @@ void compute_pc(struct tnode *p,
     ty = batch_mid[1] - p->y_mid;
     tz = batch_mid[2] - p->z_mid;
     dist = sqrt(tx*tx + ty*ty + tz*tz);
+
 
 
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (torderlim*torderlim*torderlim < p->numpar) ) {
@@ -986,9 +988,6 @@ void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, d
 
 	double x0, x1, y0, y1, z0, z1;  // bounding box
 
-//	double *weights, *dj;
-//	make_vector(weights,torderlim);
-//	make_vector(dj,torderlim);
 
 	double weights[torderlim];
 	double dj[torderlim];
@@ -1003,11 +1002,11 @@ void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, d
 
 
 	x0 = p->x_min-1e-15*(p->x_max-p->x_min);
-	x1 = p->x_max+1e-15*(p->x_max-p->x_min);
+	x1 = p->x_max+2e-15*(p->x_max-p->x_min);
 	y0 = p->y_min-1e-15*(p->y_max-p->y_min);
-	y1 = p->y_max+1e-15*(p->y_max-p->y_min);
+	y1 = p->y_max+2e-15*(p->y_max-p->y_min);
 	z0 = p->z_min-1e-15*(p->z_max-p->z_min);
-	z1 = p->z_max+1e-15*(p->z_max-p->z_min);
+	z1 = p->z_max+2e-15*(p->z_max-p->z_min);
 
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
