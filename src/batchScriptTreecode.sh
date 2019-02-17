@@ -8,9 +8,9 @@
 #PBS -l qos=flux
 #PBS -q fluxg
 
-
-#PBS -l nodes=1:gpus=1,mem=8gb
-#PBS -l walltime=10:00:00
+ 
+#PBS -l nodes=1:gpus=1:titanv,mem=8gb
+#PBS -l walltime=03:00:00
 #PBS -j oe
 #PBS -V
 
@@ -29,8 +29,10 @@ fi
 cd /home/njvaughn/hybrid-gpu-treecode/src
 
 
-module purge
-module load cuda cupti pgi openmpi/1.10.2/pgi/16.4 mkl/2017.0.1
+#module purge
+#module load cuda cupti pgi openmpi/1.10.2/pgi/16.4 mkl/2017.0.1
+
+pgititan
 nvidia-smi
 export PGI_ACC_TIME=0
 
@@ -46,35 +48,30 @@ PFLAG=0
 DFLAG=0
 
 #OUTFILE=out636608_yukawa0p5_versus_Coulomb.csv
-OUTFILE=out636608_yukawa0p5_versus_Coulomb_weightedOutput.csv
+OUTFILE=out636608_titanTimingTests.csv
 
 
-#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_yukawa0p5_openACC.bin
-#KAPPA=0.5
-#POTENTIALTYPE=1
 
-DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_yukawa_SS_0p5_openACC.bin
-KAPPA=0.5
-POTENTIALTYPE=3
+#../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS 0.7 8 $TREETYPE 8000 $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG 8000
+#../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS 0.8 8 $TREETYPE 8000 $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG 8000
 
-#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_SS_0p5_openACC.bin
-#KAPPA=0.5
-#POTENTIALTYPE=2
+#../binTitan/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS 0.7 8 $TREETYPE 8000 $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG 8000
+#../binTitan/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS 0.8 8 $TREETYPE 8000 $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG 8000
 
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_titan.bin
+KAPPA=0.0
+POTENTIALTYPE=0
 
-../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS 0.7 6 $TREETYPE 8000 0.5 3 $SFLAG $PFLAG $DFLAG 8000
-
-
-#for BATCHSIZE in 4000 8000
-#do
-#	for MAXPARNODE in 8000 16000
-#	  do
-#		for ORDER in 5 6 7 8 9
-#		  do 
-#		     for THETA in 0.6 0.7 0.8 0.9
-#		     	do
-#		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
-#		     done
-#		 done
-#	done
-#done
+for BATCHSIZE in 4000 8000
+do
+	for MAXPARNODE in 8000 16000
+	  do
+		for ORDER in 5 6 7 8 9
+		  do 
+		     for THETA in 0.6 0.7 0.8 0.9
+		     	do
+		     		../binTitan/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+		     done
+		 done
+	done
+done
