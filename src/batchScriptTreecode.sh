@@ -48,7 +48,7 @@ PFLAG=0
 DFLAG=0
 
 #OUTFILE=out636608_yukawa0p5_versus_Coulomb.csv
-OUTFILE=out636608_titanTimingTests.csv
+OUTFILE=out636608_titanTimingTests_coulombSS.csv
 
 
 
@@ -59,10 +59,10 @@ OUTFILE=out636608_titanTimingTests.csv
 #../binTitan/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS 0.8 8 $TREETYPE 8000 $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG 8000
 
 DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_titan.bin
-KAPPA=0.0
-POTENTIALTYPE=0
+KAPPA=0.5
+POTENTIALTYPE=2
 
-for BATCHSIZE in 4000 8000
+for BATCHSIZE in 8000
 do
 	for MAXPARNODE in 8000 16000
 	  do

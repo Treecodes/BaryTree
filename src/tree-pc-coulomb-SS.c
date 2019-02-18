@@ -58,12 +58,13 @@ void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct partic
 	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
 //		pc_comp_ms_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q, clusters->w);
 
+		if (p->node_index > 0){
 		pc_comp_ms_modifiedF_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 				clusters->x,clusters->y,clusters->z,clusters->q,clusters->w);
 
 		p->exist_ms = 1;
 
-
+		}
 
 
 //		// fill in arrays, starting at startingIndex
@@ -271,17 +272,17 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 
 	// Set the bounding box.
 	x0 = p->x_min-1e-15*(p->x_max-p->x_min);
-	x1 = p->x_max+1e-15*(p->x_max-p->x_min);
+	x1 = p->x_max+2e-15*(p->x_max-p->x_min);
 	y0 = p->y_min-1e-15*(p->y_max-p->y_min);
-	y1 = p->y_max+1e-15*(p->y_max-p->y_min);
+	y1 = p->y_max+2e-15*(p->y_max-p->y_min);
 	z0 = p->z_min-1e-15*(p->z_max-p->z_min);
-	z1 = p->z_max+1e-15*(p->z_max-p->z_min);
+	z1 = p->z_max+2e-15*(p->z_max-p->z_min);
 
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
 
 
-#pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
+#pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ, clusterW, tt) \
 	create(modifiedF[0:pointsInNode],modifiedF2[0:pointsInNode],nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
 	{
 
