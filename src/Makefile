@@ -61,11 +61,11 @@ all: $(TARGET) $(TARGETA) $(TARGETB) library bin
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@
 	
-$(TARGET35): $(OFILES)
-	$(CC) $(CFLAGS35) $(LDFLAGS) $(OFILES) -o $@
+#$(TARGET35): $(OFILES)
+#	$(CC) $(CFLAGS35) $(LDFLAGS) $(OFILES) -o $@
 	
-$(TARGET70): $(OFILES)
-	$(CC) $(CFLAGS70) $(LDFLAGS) $(OFILES) -o $@
+#$(TARGET70): $(OFILES)
+#	$(CC) $(CFLAGS70) $(LDFLAGS) $(OFILES) -o $@
 
 $(TARGETA): $(OFILESA)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILESA) -o $@
@@ -89,11 +89,11 @@ bin:
 library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
 	$(CC) $(CFLAGS) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
 
-library35: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
-	$(CC) $(CFLAGS35) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib35/libtreedriverWrapper.so
+#library35: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
+#	$(CC) $(CFLAGS35) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib35/libtreedriverWrapper.so
 
-library70: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
-	$(CC) $(CFLAGS70) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib70/libtreedriverWrapper.so
+#library70: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
+#	$(CC) $(CFLAGS70) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib70/libtreedriverWrapper.so
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h
