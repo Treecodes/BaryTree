@@ -464,10 +464,15 @@ int main(int argc, char **argv)
     free_vector(sources->y);
     free_vector(sources->z);
     free_vector(sources->q);
+    free_vector(sources->w);
+    free_vector(sources->order);
+
     
     free_vector(targets->x);
     free_vector(targets->y);
     free_vector(targets->z);
+    free_vector(targets->q);
+    free_vector(targets->w);
     free_vector(targets->order);
     
     free(sources);
