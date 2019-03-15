@@ -206,8 +206,17 @@ void treedriver(struct particles *sources, struct particles *targets,
 	free_vector(tree_array->x_mid);
 	free_vector(tree_array->y_mid);
 	free_vector(tree_array->z_mid);
-
     free(tree_array);
+
+
+
+
+	free_vector((batches)->reorder);
+	free_vector((batches)->index);
+	free_vector((batches)->center);
+	free_vector((batches)->radius);
+	free(batches);
+
     return;
 
 } /* END function treecode */
