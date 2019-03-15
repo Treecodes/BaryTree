@@ -244,6 +244,9 @@ void pc_comp_ms_SS(struct tnode *p, double *xS, double *yS, double *zS, double *
     free_vector(a1i);
     free_vector(a2j);
     free_vector(a3k);
+    free_vector(node_x);
+    free_vector(node_y);
+    free_vector(node_z);
 
     return;
 

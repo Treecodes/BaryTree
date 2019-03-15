@@ -63,6 +63,9 @@ void treedriverWrapper(int numTargets, int numSources,
 			   pot_type, kappa, tree_type,
 			   outputArray, &tpeng, time_tree);
 
+	free(sources);
+	free(targets);
+
 	return;
 
 }
