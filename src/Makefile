@@ -30,7 +30,7 @@ ifeq ($(UNAME),Linux)
 CC = mpicc -fPIC
 
 
-#CFLAGS = -O3 -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
+#CFLAGS = -O3 -acc -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 #CFLAGS = -O3 -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 #
 CFLAGS = -O3 -acc -ta=nvidia -lm -mp  # to supress any openACC details

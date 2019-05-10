@@ -30,9 +30,9 @@ for BATCHSIZE in 1000
 do
 	for MAXPARNODE in 1000
 	  do
-		for ORDER in 7
+		for ORDER in 8
 		  do 
-		     for THETA in 0.9
+		     for THETA in 0.8
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
 		     done
@@ -47,13 +47,13 @@ NUMSOURCES=79576
 NUMTARGETS=79576
 DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st79576_coulomb_titan.bin
 
-for BATCHSIZE in 2000 
+for BATCHSIZE in 1000 
 do
-	for MAXPARNODE in 2000
+	for MAXPARNODE in 1000
 	  do
-		for ORDER in 7
+		for ORDER in 8
 		  do 
-		     for THETA in 0.9
+		     for THETA in 0.8
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
 		     done
@@ -71,9 +71,9 @@ for BATCHSIZE in 2000
 do
 	for MAXPARNODE in 4000
 	  do
-		for ORDER in 7
+		for ORDER in 8
 		  do 
-		     for THETA in 0.9
+		     for THETA in 0.8
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
 		     done
@@ -91,9 +91,9 @@ for BATCHSIZE in 8000
 do
 	for MAXPARNODE in 8000
 	  do
-		for ORDER in 7
+		for ORDER in 8
 		  do 
-		     for THETA in 0.9
+		     for THETA in 0.8
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
 		     done
@@ -118,11 +118,11 @@ for BATCHSIZE in 8000
 do
 	for MAXPARNODE in 8000
 	  do
-		for ORDER in 7
+		for ORDER in 8
 		  do 
-		     for THETA in 0.9
+		     for THETA in 0.8
 		     	do
-		     		../bin_noAcc/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
 		     done
 		 done
 	done

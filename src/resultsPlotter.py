@@ -158,8 +158,10 @@ if __name__=="__main__":
 
 
     #### MICDE DATA ####
-    resultsFile='tc.csv'
-    resultsDir='/Users/nathanvaughn/Documents/synchronizedDataFiles/MICDE_Data_2019/gpu_treecode/'
+    resultsFile='ds_yukawa.csv' 
+#     resultsDir='/Users/nathanvaughn/Documents/synchronizedDataFiles/MICDE_Data_2019/gpu_treecode/'
+    resultsDir='/Users/nathanvaughn/Documents/synchronizedDataFiles/paperData/treecode-single-convolution/'
+#     paperData/treecode-single-convolution/ds_yukawa.tsv
     df_gpu = pd.read_csv(resultsDir + resultsFile, names=Header)
     resultsFile='tc.csv'
     resultsDir='/Users/nathanvaughn/Documents/synchronizedDataFiles/MICDE_Data_2019/cpu_treecode/'
