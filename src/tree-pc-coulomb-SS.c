@@ -244,6 +244,9 @@ void pc_comp_ms_SS(struct tnode *p, double *xS, double *yS, double *zS, double *
     free_vector(a1i);
     free_vector(a2j);
     free_vector(a3k);
+    free_vector(node_x);
+    free_vector(node_y);
+    free_vector(node_z);
 
     return;
 
@@ -268,28 +271,43 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 
 	double nodeX[torderlim], nodeY[torderlim], nodeZ[torderlim];
 
+	int *exactIndX, *exactIndY, *exactIndZ;
+	make_vector(exactIndX, pointsInNode);
+	make_vector(exactIndY, pointsInNode);
+	make_vector(exactIndZ, pointsInNode);
 
 
 	// Set the bounding box.
-	x0 = p->x_min-1e-15*(p->x_max-p->x_min);
-	x1 = p->x_max+2e-15*(p->x_max-p->x_min);
-	y0 = p->y_min-1e-15*(p->y_max-p->y_min);
-	y1 = p->y_max+2e-15*(p->y_max-p->y_min);
-	z0 = p->z_min-1e-15*(p->z_max-p->z_min);
-	z1 = p->z_max+2e-15*(p->z_max-p->z_min);
+//	x0 = p->x_min-1e-13*(p->x_max-p->x_min);
+//	x1 = p->x_max+2e-13*(p->x_max-p->x_min);
+//	y0 = p->y_min-1e-13*(p->y_max-p->y_min);
+//	y1 = p->y_max+2e-13*(p->y_max-p->y_min);
+//	z0 = p->z_min-1e-13*(p->z_max-p->z_min);
+//	z1 = p->z_max+2e-13*(p->z_max-p->z_min);
+
+	x0 = p->x_min;
+	x1 = p->x_max;
+	y0 = p->y_min;
+	y1 = p->y_max;
+	z0 = p->z_min;
+	z1 = p->z_max;
 
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
 
 
 #pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ, clusterW, tt) \
-	create(modifiedF[0:pointsInNode],modifiedF2[0:pointsInNode],nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
+	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
+			modifiedF2[0:pointsInNode],nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
 	{
 
 	#pragma acc loop independent
 	for (j=0;j<pointsInNode;j++){
 		modifiedF[j] = qS[startingIndexInSources+j]*wS[startingIndexInSources+j];
 		modifiedF2[j] = wS[startingIndexInSources+j];
+		exactIndX[j] = -1;
+		exactIndY[j] = -1;
+		exactIndZ[j] = -1;
 	}
 
 	//  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
@@ -332,19 +350,30 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 		#pragma acc loop independent
 		for (j=0;j<torderlim;j++){  // loop through the degree
 
-			cx = nodeX[j];
-			cy = nodeY[j];
-			cz = nodeZ[j];
+			cx = sx - nodeX[j];
+			cy = sy - nodeY[j];
+			cz = sz - nodeZ[j];
+
+			if (fabs(cx)<DBL_MIN) exactIndX[i]=j;
+			if (fabs(cy)<DBL_MIN) exactIndY[i]=j;
+			if (fabs(cz)<DBL_MIN) exactIndZ[i]=j;
 
 			// Increment the sums
 			w = weights[j];
-			sumX += w / (sx - cx);
-			sumY += w / (sy - cy);
-			sumZ += w / (sz - cz);
+			sumX += w / (cx);
+			sumY += w / (cy);
+			sumZ += w / (cz);
 
 		}
 
-		denominator = sumX*sumY*sumZ;
+//		denominator = sumX*sumY*sumZ;
+
+		denominator = 1.0;
+		if (exactIndX[i]==-1) denominator *= sumX;
+		if (exactIndY[i]==-1) denominator *= sumY;
+		if (exactIndZ[i]==-1) denominator *= sumZ;
+
+
 		modifiedF[i] /= denominator;
 		modifiedF2[i] /= denominator;
 
@@ -391,9 +420,30 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 			sz = zS[startingIndexInSources+i];
 
 			numerator=1.0;
-			numerator *=  w1 / (sx - cx);
-			numerator *=  w2 / (sy - cy);
-			numerator *=  w3 / (sz - cz);
+
+			if (exactIndX[i]==-1){
+				numerator *=  w1 / (sx - cx);
+			}else{
+//				printf("ExactIndX != -1\n");
+				if (exactIndX[i]!=k1) numerator *= 0;
+			}
+
+			if (exactIndY[i]==-1){
+				numerator *=  w2 / (sy - cy);
+			}else{
+				if (exactIndY[i]!=k2) numerator *= 0;
+			}
+
+			if (exactIndZ[i]==-1){
+				numerator *=  w3 / (sz - cz);
+			}else{
+				if (exactIndZ[i]!=k3) numerator *= 0;
+			}
+
+
+//			numerator *=  w1 / (sx - cx);
+//			numerator *=  w2 / (sy - cy);
+//			numerator *=  w3 / (sz - cz);
 
 
 
@@ -413,6 +463,9 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 
 	free_vector(modifiedF);
 	free_vector(modifiedF2);
+	free_vector(exactIndX);
+	free_vector(exactIndY);
+	free_vector(exactIndZ);
 
 
 	return;

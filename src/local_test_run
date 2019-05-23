@@ -2,3 +2,101 @@
 #../bin/tree.exe /scratch/krasny_fluxg/lwwilson/tree_data/S100000.bin /scratch/krasny_fluxg/lwwilson/tree_data/T10000.bin /scratch/krasny_fluxg/lwwilson/tree_data/ex_s5_t4_0_p1.bin ../examples/out.tsv 100000 10000 0.9 5 1 5000 0 0 0 1 0 500
 
 ../bin/tree.exe ../examples/S10000py.bin ../examples/T1000py.bin ../examples/ex_s4_t4_0_p1.bin ../examples/out.tsv 10000 1000 0.5 3 1 500 0 0 1 0 0 500
+
+
+
+SOURCES=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S21952.bin
+TARGETS=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T21952.bin  
+NUMSOURCES=21952
+NUMTARGETS=21952
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st21952_coulomb_titan.bin
+
+KAPPA=0.0
+POTENTIALTYPE=0 
+
+for BATCHSIZE in 2000 
+do
+	for MAXPARNODE in 2000
+	  do
+		for ORDER in 5 7 9
+		  do 
+		     for THETA in 0.5 0.7 0.9
+		     	do
+		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+		     done
+		 done
+	done
+done
+
+
+SOURCES=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S79576.bin
+TARGETS=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T79576.bin
+NUMSOURCES=79576
+NUMTARGETS=79576
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st79576_coulomb_titan.bin
+
+KAPPA=0.0
+POTENTIALTYPE=0 
+
+for BATCHSIZE in 2000 
+do
+	for MAXPARNODE in 5000
+	  do
+		for ORDER in 5 7 9
+		  do 
+		     for THETA in 0.5 0.7 0.9
+		     	do
+		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+		     done
+		 done
+	done
+done
+
+SOURCES=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S348488.bin
+TARGETS=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T348488.bin
+NUMSOURCES=348488
+NUMTARGETS=348488
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st348488_coulomb_titan.bin
+
+
+KAPPA=0.0
+POTENTIALTYPE=0 
+
+for BATCHSIZE in 4000 
+do
+	for MAXPARNODE in 8000
+	  do
+		for ORDER in 5 7 9
+		  do 
+		     for THETA in 0.5 0.7 0.9
+		     	do
+		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+		     done
+		 done
+	done
+done
+
+
+SOURCES=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S636608.bin
+TARGETS=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T636608.bin
+NUMSOURCES=636608
+NUMTARGETS=636608
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st636608_coulomb_titan.bin
+
+
+KAPPA=0.0
+POTENTIALTYPE=0 
+
+for BATCHSIZE in 8000 
+do
+	for MAXPARNODE in 8000
+	  do
+		for ORDER in 5 7 9
+		  do 
+		     for THETA in 0.5 0.7 0.9
+		     	do
+		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
+		     done
+		 done
+	done
+done

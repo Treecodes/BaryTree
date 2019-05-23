@@ -63,6 +63,23 @@ void treedriverWrapper(int numTargets, int numSources,
 			   pot_type, kappa, tree_type,
 			   outputArray, &tpeng, time_tree);
 
+
+//	free_vector(sources->x);
+//	free_vector(sources->y);
+//	free_vector(sources->z);
+//	free_vector(sources->q);
+//	free_vector(sources->w);
+//	free_vector(sources->order);
+	free(sources);
+
+//	free_vector(targets->x);
+//	free_vector(targets->y);
+//	free_vector(targets->z);
+//	free_vector(targets->q);
+//	free_vector(targets->w);
+//	free_vector(targets->order);
+	free(targets);
+
 	return;
 
 }

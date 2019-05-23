@@ -310,7 +310,7 @@ int main(int argc, char **argv)
     MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
-    if (rank == 0) dpengglob = sum(denergyglob, numparsT);
+    if (rank == 0) dpengglob = sum(denergyglob*sources->w, numparsT);
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     
@@ -395,8 +395,8 @@ int main(int argc, char **argv)
                 relinferr = fabs(denergyglob[j]);
 
             n2err = n2err + pow(denergyglob[targets->order[j]]
-                              - tenergyglob[j], 2.0);
-            reln2err = reln2err + pow(denergyglob[j], 2.0);
+                              - tenergyglob[j], 2.0)*sources->w[j];
+            reln2err = reln2err + pow(denergyglob[j], 2.0)*sources->w[j];
         }
 
         relinferr = inferr / relinferr;
@@ -458,21 +458,29 @@ int main(int argc, char **argv)
                     inferr, relinferr, n2err, reln2err); //5 ends
             fclose(fp);
         }
+    printf("Wrote to output file.\n");
     
     
     free_vector(sources->x);
     free_vector(sources->y);
     free_vector(sources->z);
     free_vector(sources->q);
-    
+    free_vector(sources->w);
+//    free_vector(sources->order);
+
+    printf("Freed sources.\n");
     free_vector(targets->x);
     free_vector(targets->y);
     free_vector(targets->z);
+    free_vector(targets->q);
+//    free_vector(targets->w);
     free_vector(targets->order);
+    printf("Freed targets.\n");
     
     free(sources);
     free(targets);
     free_vector(tenergy);
+    free_vector(originalWeights);
 
     if (rank == 0) {
         free_vector(denergyglob);
@@ -482,8 +490,10 @@ int main(int argc, char **argv)
             free_vector(scounts);
         }
     }
-    
+    printf("Freed other vectors.\n");
+
     MPI_Finalize();
+    printf("Final.\n");
     return 0;
     
 }
