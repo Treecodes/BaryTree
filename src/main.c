@@ -138,20 +138,15 @@ int main(int argc, char **argv)
         maxparsTloc = numparsTloc + (numparsS - (numparsS / p) * p);
     
         sources->num = numparsS;
-        printf("About to make source vectors.\n");
         make_vector(sources->x, numparsS);
         make_vector(sources->y, numparsS);
         make_vector(sources->z, numparsS);
         make_vector(sources->q, numparsS);
-        printf("Made source xyzq vectors.c\n");
         make_vector(sources->w, numparsS);
         
 
 		make_vector(originalWeights, numparsS);
 
-
-//		for (i=0;i<numparsT;i++)
-//			originalWeights[i] = sources->w[i];
 
         if (rank == 0) {
             targets->num = numparsT;
@@ -238,7 +233,7 @@ int main(int argc, char **argv)
             sources->q[i] = buf[3];
             sources->w[i] = buf[4];
         }
-        printf("Filled source vectors.c\n");
+//        printf("Filled source vectors.c\n");
         MPI_File_close(&fpmpi);
 
         if (rank == 0) numparsTloc = maxparsTloc;
@@ -254,8 +249,8 @@ int main(int argc, char **argv)
         make_vector(sources->z, numparsSloc);
         make_vector(sources->q, numparsSloc);
         make_vector(sources->w, numparsSloc);
-        printf("Made source vectors.c\n");
-        make_vector(originalWeights, numparsS);
+//        printf("Made source vectors.c\n");
+//        make_vector(originalWeights, numparsS);
 
     
         targets->num = numparsT;
@@ -265,7 +260,7 @@ int main(int argc, char **argv)
         make_vector(targets->q, numparsT);
         make_vector(targets->order, numparsT);
         make_vector(tenergy, numparsT);
-        printf("Made target vectors.c\n");
+//        printf("Made target vectors.c\n");
         
         /* Reading in coordinates and charges for the source particles*/
         MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
