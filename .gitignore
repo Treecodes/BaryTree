@@ -5,14 +5,15 @@ bin/*
 lib/*
 .DS_store
 *.ptp*
+*.cproject
+*org.eclipse*
+*.settings*
 bin_cpu/*
 *.tsv
 *.csv
 *.o
 *.xml
 *.prefs
-org.eclipse.*
-.cproject
 *.exe
 bin_openACC/*
 bin_noAcc/*
