@@ -20,7 +20,7 @@ extern int xglobdim, yglobdim, zglobdim;
 
 extern int numnodes;
 
-extern double *tt;
+extern double *tt, *ww;
 
 extern double *unscaledQuadratureWeights;
 

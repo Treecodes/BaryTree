@@ -109,35 +109,38 @@ void treedriver(struct particles *sources, struct particles *targets,
         }else if  ( (pot_type == 2) || (pot_type==3)){
 //        	printf("Calling fill_in_cluster_data_SS().\n");
 			fill_in_cluster_data_SS(clusters, sources, troot, order);
-        }
+        }else if  ( (pot_type == 4) || (pot_type==5)){
+        	printf("Calling fill_in_cluster_data_hermite().\n");
+			fill_in_cluster_data_hermite(clusters, sources, troot, order);
+		}
 
     }
 
     time2 = MPI_Wtime();
     timetree[0] = time2-time1;
 
-//    printf("Tree created.\n\n");
-//    printf("Tree information: \n\n");
-//
-//    printf("                      numpar: %d\n", troot->numpar);
-//    printf("                       x_mid: %e\n", troot->x_mid);
-//    printf("                       y_mid: %e\n", troot->y_mid);
-//    printf("                       z_mid: %e\n\n", troot->z_mid);
-//    printf("                      radius: %f\n\n", troot->radius);
-//    printf("                       x_len: %e\n", troot->x_max - troot->x_min);
-//    printf("                       y_len: %e\n", troot->y_max - troot->y_min);
-//    printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
-//    printf("                      torder: %d\n", torder);
-//    printf("                       theta: %f\n", theta);
-//    printf("                  maxparnode: %d\n", maxparnode);
-//    printf("               tree maxlevel: %d\n", maxlevel);
-//    printf("               tree minlevel: %d\n", minlevel);
-//    printf("                tree maxpars: %d\n", maxpars);
-//    printf("                tree minpars: %d\n", minpars);
-//    printf("            number of leaves: %d\n", numleaves);
-//    printf("             number of nodes: %d\n", numnodes);
-//    printf("           target batch size: %d\n", batch_size);
-//    printf("           number of batches: %d\n\n", batches->num);
+    printf("Tree created.\n\n");
+    printf("Tree information: \n\n");
+
+    printf("                      numpar: %d\n", troot->numpar);
+    printf("                       x_mid: %e\n", troot->x_mid);
+    printf("                       y_mid: %e\n", troot->y_mid);
+    printf("                       z_mid: %e\n\n", troot->z_mid);
+    printf("                      radius: %f\n\n", troot->radius);
+    printf("                       x_len: %e\n", troot->x_max - troot->x_min);
+    printf("                       y_len: %e\n", troot->y_max - troot->y_min);
+    printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
+    printf("                      torder: %d\n", torder);
+    printf("                       theta: %f\n", theta);
+    printf("                  maxparnode: %d\n", maxparnode);
+    printf("               tree maxlevel: %d\n", maxlevel);
+    printf("               tree minlevel: %d\n", minlevel);
+    printf("                tree maxpars: %d\n", maxpars);
+    printf("                tree minpars: %d\n", minpars);
+    printf("            number of leaves: %d\n", numleaves);
+    printf("             number of nodes: %d\n", numnodes);
+    printf("           target batch size: %d\n", batch_size);
+    printf("           number of batches: %d\n\n", batches->num);
 
     time1 = MPI_Wtime();
 
@@ -157,10 +160,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 //                            tpeng, tEn, &timetree[1]);
 //        }
     } else if (tree_type == 1) {
-//    	make_matrix(tree_inter_list, batches->num, numnodes);
-//		make_matrix(direct_inter_list, batches->num, numleaves);
-//
-//		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+    	make_matrix(tree_inter_list, batches->num, numnodes);
+		make_matrix(direct_inter_list, batches->num, numleaves);
+
+		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
             pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn);
@@ -176,6 +179,9 @@ void treedriver(struct particles *sources, struct particles *targets,
         	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
         	pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
         	                            kappa, tpeng, tEn);
+        }else if (pot_type == 4) {
+        	printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Coulomb Hermite).\n");
+        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn);
         }
         
         reorder_energies(batches->reorder, targets->num, tEn);
@@ -193,30 +199,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     cleanup(troot);
 //    printf("Finished cleanup of troot.\n");
-
-    free_vector(clusters->x);
-    free_vector(clusters->y);
-    free_vector(clusters->z);
-    free_vector(clusters->q);
-    free_vector(clusters->w);
-    free(clusters);
-
-    free_vector(tree_array->ibeg);
-    free_vector(tree_array->iend);
-	free_vector(tree_array->x_mid);
-	free_vector(tree_array->y_mid);
-	free_vector(tree_array->z_mid);
-    free(tree_array);
-
-
-
-
-	free_vector((batches)->reorder);
-	free_vector((batches)->index);
-	free_vector((batches)->center);
-	free_vector((batches)->radius);
-	free(batches);
-
     return;
 
 } /* END function treecode */

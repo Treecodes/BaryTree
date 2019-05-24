@@ -20,8 +20,10 @@ void setup(struct particles *particles, int order, double theta,
 
 void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
+void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
 void addNodeToArray(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
+void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void comp_tcoeff(double dx, double dy, double dz);
 
@@ -100,6 +102,9 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
 void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
+void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
+
 void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ , double *clusterW);
 
@@ -130,6 +135,16 @@ void compute_pc(struct tnode *p,
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
                     double *xT, double *yT, double *zT, double *qT, double *EnP);
+
+void pc_treecode_hermite(struct tnode *p, struct batch *batches,
+                 struct particles *sources, struct particles *targets, struct particles *clusters,
+                 double *tpeng, double *EnP);
+
+void compute_pc_hermite(struct tnode *p,
+                int *batch_ind, double *batch_mid, double batch_rad,
+                double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT, double *EnP,
+				double *clusterX, double *clusterY, double *clusterZ, double *clusterM);
 
 
 /* used by particle-cluster Yukawa */

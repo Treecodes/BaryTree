@@ -39,7 +39,7 @@ double *cf3 = NULL;
 double ***a1 = NULL;
 
 /* variable used by kernel independent moment computation */
-double *tt;
+double *tt, *ww;
 
 double *unscaledQuadratureWeights;
 
@@ -51,7 +51,7 @@ void setup(struct particles *particles, int order, double theta,
 {
     /* local variables */
     int i;
-    double t1;
+    double t1, xx;
 
     /* changing values of our extern variables */
     torder = order;
@@ -67,11 +67,20 @@ void setup(struct particles *particles, int order, double theta,
     make_3array(b1, torderlim, torderlim, torderlim);
     
     make_vector(tt, torderlim);
+    make_vector(ww, torderlim);
     
 
     /* initializing array for Chev points */
     for (i = 0; i < torderlim; i++)
         tt[i] = cos(i * M_PI / torder);
+
+    ww[0] = 0.25 * (torder*torder/3.0 + 1.0/6.0);
+    ww[torder] = -ww[0];
+
+    for (i = 1; i < torder; i++) {
+        xx = i * M_PI / torder;
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
+    }
 
     /* initializing array for Clenshaw-Curtis weights */
 //    double CCtheta, b;
