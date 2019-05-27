@@ -20,22 +20,22 @@ UNAME := $(shell uname -s)
 
 #ifeq ($(UNAME),Linux)
 #CC = mpicc
-#CFLAGS = -fopenmp -O3 -g -lm -std=gnu99 -fPIC
+#CFLAGS = -fopenmp -O3 -g -lm -std=gnu99 -fPIC  
 #LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
 #endif
 
 ifeq ($(UNAME),Linux)
 CC = mpicc -fPIC
-#CFLAGS = -O3 -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
+CFLAGS = -O3 -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 #CFLAGS = -O3 -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 
-CFLAGS = -O3 -acc -ta=nvidia -lm -mp  # to supress any openACC details
+#CFLAGS = -O3 -acc -ta=nvidia -lm -mp  # to supress any openACC details
 CFLAGS35 = -O3 -acc -ta=tesla:cc35 -lm -mp  # to supress any openACC details
 CFLAGS70 = -O3 -acc -ta=tesla:cc70 -lm -mp  # to supress any openACC details
 #CFLAGS = -O3 -acc -ta=tesla:cc70 -lm -mp  # to compile for the titanv
 
 #CFLAGS = -O3 -ta=nvidia,time -Minfo=accel -lm  # to supress any openACC details and not use pragmas
-CXXFLAGS='-fPIC'
+CXXFLAGS='-fPIC' 
 
  
 ## While testing openACC, drop the mkl business

@@ -473,7 +473,7 @@ void compute_pc(struct tnode *p,
 
 
 
-	double xi,yi,zi;
+	double xi,yi,zi ;
 	int batchStart = batch_ind[0] - 1;
 //	double pointvals[4];
 # pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
