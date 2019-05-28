@@ -123,7 +123,7 @@ void compute_pc_hermite(struct tnode *p,
 
 
 
-    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (torderlim*torderlim*torderlim < p->numpar) ) {
+    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (2*torderlim*torderlim*torderlim < p->numpar) ) {
 
 
 	int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
@@ -155,31 +155,26 @@ void compute_pc_hermite(struct tnode *p,
 
 //			tempPotential += localMoments[j] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 			rinv = 1 / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-//			r3inv = rinv*rinv*rinv;
-//			r5inv = r3inv*rinv*rinv;
-//			r7inv = r5inv*rinv*rinv;
+			r3inv = rinv*rinv*rinv;
+			r5inv = r3inv*rinv*rinv;
+			r7inv = r5inv*rinv*rinv;
 
 
 
-//			tempPotential +=       rinv  * ( clusterM[8*sourceIdx+0]
-//											+      rinv*rinv * ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
-//											+ 3 *  r5inv * ( clusterM[8*sourceIdx+4]*dyt*dzt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
-//											+ 15 * r7inv *   clusterM[8*sourceIdx+7]*dxt*dyt*dzt
-//											);
-//			tempPotential +=      rinv *  ( clusterM[8*sourceIdx+0]
-//								+ rinv*rinv * ( ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
-//								+ 3*rinv*rinv*(( clusterM[8*sourceIdx+4]*dxt*dyt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
-//								+ 5*rinv*rinv*clusterM[8*sourceIdx+7]*dxt*dyt*dzt)  )  ) ;
+			tempPotential +=       rinv  * ( clusterM[sourceIdx])
+											+      r3inv * ( clusterMx[sourceIdx]*dxt +  clusterMy[sourceIdx]*dyt +  clusterMz[sourceIdx]*dzt )
+											+ 3 *  r5inv * ( clusterMxy[sourceIdx]*dxt*dyt +  clusterMyz[sourceIdx]*dyt*dzt +  clusterMxz[sourceIdx]*dxt*dzt )
+											+ 15 * r7inv *   clusterMxyz[sourceIdx]*dxt*dyt*dzt
+											;
 
 
-			tempPotential +=      rinv *  ( clusterM[sourceIdx]
-									+ rinv*rinv * ( ( clusterMx[sourceIdx]*dxt +  clusterMy[sourceIdx]*dyt +  clusterMz[sourceIdx]*dzt )
-									+ 3*rinv*rinv*(( clusterMxy[sourceIdx]*dxt*dyt +  clusterMyz[sourceIdx]*dyt*dzt +  clusterMxz[sourceIdx]*dxt*dzt )
-									+ 5*rinv*rinv*clusterMxyz[sourceIdx]*dxt*dyt*dzt)  )  ) ;
+//			tempPotential +=      rinv *  ( clusterM[sourceIdx]
+//									+ rinv*rinv * ( ( clusterMx[sourceIdx]*dxt +  clusterMy[sourceIdx]*dyt +  clusterMz[sourceIdx]*dzt )
+//									+ 3*rinv*rinv*(( clusterMxy[sourceIdx]*dxt*dyt +  clusterMyz[sourceIdx]*dyt*dzt +  clusterMxz[sourceIdx]*dxt*dzt )
+//									+ 5*rinv*rinv*clusterMxyz[sourceIdx]*dxt*dyt*dzt)  )  ) ;
 
 						}
-//		printf("%1.2e \n", tempPotential);
-		EnP[batchStart + i] += tempPotential;
+		EnP[batchStart +i] += tempPotential;
 	}
     }
 
