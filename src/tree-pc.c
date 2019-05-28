@@ -1005,20 +1005,6 @@ void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, d
 
 
 
-
-
-
-
-	// Set the bounding box.
-
-
-//	x0 = p->x_min-1e-13*(p->x_max-p->x_min);  // 1e-15 fails for large meshes, mysteriously.
-//	x1 = p->x_max+2e-13*(p->x_max-p->x_min);
-//	y0 = p->y_min-1e-13*(p->y_max-p->y_min);
-//	y1 = p->y_max+2e-13*(p->y_max-p->y_min);
-//	z0 = p->z_min-1e-13*(p->z_max-p->z_min);
-//	z1 = p->z_max+2e-13*(p->z_max-p->z_min);
-
 	x0 = p->x_min;  // 1e-15 fails for large meshes, mysteriously.
 	x1 = p->x_max;
 	y0 = p->y_min;

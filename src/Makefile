@@ -26,16 +26,16 @@ UNAME := $(shell uname -s)
 
 ifeq ($(UNAME),Linux)
 CC = mpicc -fPIC
-CFLAGS = -O3 -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
+#CFLAGS = -O3 -acc=strict -ta=nvidia,time -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 #CFLAGS = -O3 -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 
-#CFLAGS = -O3 -acc -ta=nvidia -lm -mp  # to supress any openACC details
+CFLAGS = -O3 -acc -ta=nvidia -lm -mp  # to supress any openACC details
 CFLAGS35 = -O3 -acc -ta=tesla:cc35 -lm -mp  # to supress any openACC details
 CFLAGS70 = -O3 -acc -ta=tesla:cc70 -lm -mp  # to supress any openACC details
 #CFLAGS = -O3 -acc -ta=tesla:cc70 -lm -mp  # to compile for the titanv
 
 #CFLAGS = -O3 -ta=nvidia,time -Minfo=accel -lm  # to supress any openACC details and not use pragmas
-CXXFLAGS='-fPIC' 
+CXXFLAGS='-fPIC'
 
  
 ## While testing openACC, drop the mkl business
@@ -75,10 +75,10 @@ $(TARGETB): $(OFILESB)
 	$(CC) $(CFLAGS) $(OFILESB) -o $@
 
 clean:
-	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA) $(OFILESB) $(TARGETB) $(library)
+	rm -f $(OFILES) $(TARGET) $(OFILESA) $(TARGETA) $(OFILESB) $(TARGETB) #$(library)
 	rm -f $(OUTDIR)*
 	rm -f ../libTest/*
-	rm -f *.so 
+	rm -f *.so    
 	rm -f *.o 
 
 bin:                                                                                            

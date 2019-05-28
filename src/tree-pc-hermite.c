@@ -142,18 +142,21 @@ void compute_pc_hermite(struct tnode *p,
 
 //			tempPotential += localMoments[j] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 			rinv = 1 / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-			r3inv = rinv*rinv*rinv;
-			r5inv = r3inv*rinv*rinv;
-			r7inv = r5inv*rinv*rinv;
+//			r3inv = rinv*rinv*rinv;
+//			r5inv = r3inv*rinv*rinv;
+//			r7inv = r5inv*rinv*rinv;
 
 
-//			printf("%1.2e \n", clusterM[8*sourceIdx+0]);
-//			printf("%1.2e \n\n", clusterM[8*sourceIdx+7]);
-			tempPotential += 	(      rinv  *   clusterM[8*sourceIdx+0]
-								+      r3inv * ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
-								+ 3 *  r5inv * ( clusterM[8*sourceIdx+4]*dxt*dzt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
-								+ 15 * r7inv *   clusterM[8*sourceIdx+7]*dxt*dyt*dzt
-								);
+
+//			tempPotential +=       rinv  * ( clusterM[8*sourceIdx+0]
+//											+      rinv*rinv * ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
+//											+ 3 *  r5inv * ( clusterM[8*sourceIdx+4]*dyt*dzt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
+//											+ 15 * r7inv *   clusterM[8*sourceIdx+7]*dxt*dyt*dzt
+//											);
+			tempPotential +=      rinv *  ( clusterM[8*sourceIdx+0]
+								+ rinv*rinv * ( ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
+								+ 3*rinv*rinv*(( clusterM[8*sourceIdx+4]*dxt*dyt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
+								+ 5*rinv*rinv*clusterM[8*sourceIdx+7]*dxt*dyt*dzt)  )  ) ;
 
 						}
 //		printf("%1.2e \n", tempPotential);
@@ -392,7 +395,10 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 				numerator7 *=  Bx; 					// Bbb
 
 			}else{
-				if (exactIndX[i]!=k1){ numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0; numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;}
+				if (exactIndX[i]!=k1){ numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0; numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+				}else{
+					numerator1 *= 0; numerator4 *= 0;numerator6 *= 0; numerator7 *= 0;
+				}
 			}
 
 			if (exactIndY[i]==-1){
@@ -409,7 +415,11 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 				numerator7 *=  By; 					// bBb
 
 			}else{
-				if (exactIndY[i]!=k2) { numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0; numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;}
+				if (exactIndY[i]!=k2) { numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0; numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+				}else{
+					numerator2 *= 0; numerator4 *= 0;numerator5 *= 0; numerator7 *= 0;
+				}
+
 			}
 
 			if (exactIndZ[i]==-1){
@@ -426,7 +436,10 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 				numerator7 *=  Bz; 					// bbB
 
 			}else{
-				if (exactIndZ[i]!=k3) { numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0; numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;}
+				if (exactIndZ[i]!=k3) { numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0; numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+				}else{
+					numerator3 *= 0; numerator5 *= 0;numerator6 *= 0; numerator7 *= 0;
+				}
 			}
 
 

@@ -26,7 +26,7 @@ do
 		  do 
 		     for THETA in 0.7
 		     	do
-		     	for POTENTIALTYPE in 4
+		     	for POTENTIALTYPE in 0 4
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
 		     	done
