@@ -158,6 +158,12 @@ void compute_pc_hermite(struct tnode *p,
 								+ 3*rinv*rinv*(( clusterM[8*sourceIdx+4]*dxt*dyt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
 								+ 5*rinv*rinv*clusterM[8*sourceIdx+7]*dxt*dyt*dzt)  )  ) ;
 
+
+//			tempPotential +=      rinv *  ( clusterM[8*sourceIdx+0]
+//									+ rinv*rinv * ( ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
+//									+ 3*rinv*rinv*(( clusterM[8*sourceIdx+4]*dxt*dyt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
+//									+ 5*rinv*rinv*clusterM[8*sourceIdx+7]*dxt*dyt*dzt)  )  ) ;
+
 						}
 //		printf("%1.2e \n", tempPotential);
 		EnP[batchStart + i] += tempPotential;

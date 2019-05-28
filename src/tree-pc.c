@@ -916,7 +916,7 @@ void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double 
     double cx, cy, cz, cw, px, py, pz, pw, pq;  // coordinates of cluster interpolation point and particle
 #pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ)
 	#pragma acc loop independent
-    for (i = 0; i < pointsPerCluster; i++) {
+    for (i = 0; i < pointsPerCluster;  i++) {
 
 		#pragma acc loop independent
         for (j = 0; j < pointsInNode; j++) {
