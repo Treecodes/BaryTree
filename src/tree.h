@@ -103,7 +103,8 @@ void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, d
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ,
+		double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
 void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ , double *clusterW);
@@ -144,7 +145,8 @@ void compute_pc_hermite(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT, double *EnP,
-				double *clusterX, double *clusterY, double *clusterZ, double *clusterM);
+				double *clusterX, double *clusterY, double *clusterZ, double *clusterM,
+				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
 
 /* used by particle-cluster Yukawa */

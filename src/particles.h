@@ -11,6 +11,16 @@ struct particles
         double *q;
         double *w;  // quadrature weights.  Set equal to 1 if interacting with particles, not performing convolution integral.
         int *order;
+
+        // for hermite only...
+        double *qx;
+        double *qy;
+        double *qz;
+        double *qxy;
+        double *qyz;
+        double *qxz;
+        double *qxyz;
+
 };
 
 #endif /* H_PARTICLES_H */

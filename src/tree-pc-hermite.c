@@ -27,7 +27,14 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 	make_vector(clusters->x, numInterpPoints);
 	make_vector(clusters->y, numInterpPoints);
 	make_vector(clusters->z, numInterpPoints);
-	make_vector(clusters->q, numInterpPoints*8);
+	make_vector(clusters->q, numInterpPoints);
+	make_vector(clusters->qx, numInterpPoints);
+	make_vector(clusters->qy, numInterpPoints);
+	make_vector(clusters->qz, numInterpPoints);
+	make_vector(clusters->qxy, numInterpPoints);
+	make_vector(clusters->qyz, numInterpPoints);
+	make_vector(clusters->qxz, numInterpPoints);
+	make_vector(clusters->qxyz, numInterpPoints);
 	make_vector(clusters->w, numInterpPoints);  // will be used in singularity subtraction
 //	memset(clusters->q,0,numInterpPoints*sizeof(double));
 	clusters->num=numInterpPoints;
@@ -41,7 +48,9 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 
 #pragma acc data copyin(tt[0:torderlim],ww[0:torderlim], \
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
-		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:8*numInterpPoints], clusters->w[0:clusters->num])
+		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:numInterpPoints], clusters->w[0:clusters->num], \
+				clusters->qx[0:numInterpPoints],clusters->qy[0:numInterpPoints],clusters->qz[0:numInterpPoints],clusters->qxy[0:numInterpPoints],clusters->qyz[0:numInterpPoints], \
+				clusters->qxz[0:numInterpPoints], clusters->qxyz[0:numInterpPoints])
 
 	addNodeToArray_hermite(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 
@@ -74,7 +83,9 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                 batches->index[i], batches->center[i], batches->radius[i],
                 sources->x, sources->y, sources->z, sources->q, sources->w,
                 targets->x, targets->y, targets->z, targets->q, EnP,
-				clusters->x, clusters->y, clusters->z, clusters->q);
+				clusters->x, clusters->y, clusters->z, clusters->q,
+				clusters->qx,clusters->qy,clusters->qz,clusters->qxy,
+				clusters->qyz,clusters->qxz,clusters->qxyz);
         }
     }
 }
@@ -93,7 +104,8 @@ void compute_pc_hermite(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterM )
+				double * clusterX, double * clusterY, double * clusterZ, double * clusterM,
+				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMxz,double * clusterMxyz)
 {
 //	printf("Entering compute_cp_hermite.  Batch start: %d.  Batch end: %d.\n", batch_ind[0]-1, batch_ind[1]);
     /* local variables */
@@ -123,7 +135,8 @@ void compute_pc_hermite(struct tnode *p,
 	double xi,yi,zi,rinv,r3inv,r5inv,r7inv;
 	int batchStart = batch_ind[0] - 1, sourceIdx;
 //	double pointvals[4];
-# pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
+# pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, \
+		clusterM,clusterMx,clusterMy,clusterMz,clusterMxy,clusterMyz,clusterMxz,clusterMxyz)
     {
 	#pragma acc loop independent
 	for (i = 0; i < numberOfTargets; i++){
@@ -153,16 +166,16 @@ void compute_pc_hermite(struct tnode *p,
 //											+ 3 *  r5inv * ( clusterM[8*sourceIdx+4]*dyt*dzt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
 //											+ 15 * r7inv *   clusterM[8*sourceIdx+7]*dxt*dyt*dzt
 //											);
-			tempPotential +=      rinv *  ( clusterM[8*sourceIdx+0]
-								+ rinv*rinv * ( ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
-								+ 3*rinv*rinv*(( clusterM[8*sourceIdx+4]*dxt*dyt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
-								+ 5*rinv*rinv*clusterM[8*sourceIdx+7]*dxt*dyt*dzt)  )  ) ;
-
-
 //			tempPotential +=      rinv *  ( clusterM[8*sourceIdx+0]
-//									+ rinv*rinv * ( ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
-//									+ 3*rinv*rinv*(( clusterM[8*sourceIdx+4]*dxt*dyt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
-//									+ 5*rinv*rinv*clusterM[8*sourceIdx+7]*dxt*dyt*dzt)  )  ) ;
+//								+ rinv*rinv * ( ( clusterM[8*sourceIdx+1]*dxt +  clusterM[8*sourceIdx+2]*dyt +  clusterM[8*sourceIdx+3]*dzt )
+//								+ 3*rinv*rinv*(( clusterM[8*sourceIdx+4]*dxt*dyt +  clusterM[8*sourceIdx+5]*dyt*dzt +  clusterM[8*sourceIdx+6]*dxt*dzt )
+//								+ 5*rinv*rinv*clusterM[8*sourceIdx+7]*dxt*dyt*dzt)  )  ) ;
+
+
+			tempPotential +=      rinv *  ( clusterM[sourceIdx]
+									+ rinv*rinv * ( ( clusterMx[sourceIdx]*dxt +  clusterMy[sourceIdx]*dyt +  clusterMz[sourceIdx]*dzt )
+									+ 3*rinv*rinv*(( clusterMxy[sourceIdx]*dxt*dyt +  clusterMyz[sourceIdx]*dyt*dzt +  clusterMxz[sourceIdx]*dxt*dzt )
+									+ 5*rinv*rinv*clusterMxyz[sourceIdx]*dxt*dyt*dzt)  )  ) ;
 
 						}
 //		printf("%1.2e \n", tempPotential);
@@ -188,7 +201,9 @@ void compute_pc_hermite(struct tnode *p,
             for (i = 0; i < p->num_children; i++) {
                 compute_pc_hermite(p->child[i], batch_ind, batch_mid, batch_rad,
                 			xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP,
-							clusterX, clusterY, clusterZ, clusterM);
+							clusterX, clusterY, clusterZ, clusterM,
+							clusterMx,clusterMy,clusterMz,clusterMxy,
+							clusterMyz,clusterMxz,clusterMxyz);
             }
         }
     }
@@ -206,7 +221,9 @@ void compute_pc_hermite(struct tnode *p,
 
 
 void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ){
+		double *clusterX, double *clusterY, double *clusterZ,
+		double *clusterQ, double *clusterQx, double *clusterQy, double *clusterQz, double *clusterQxy,
+		double *clusterQyz, double *clusterQxz, double *clusterQxyz){
 
 	int i,j,k;
 	int pointsPerCluster = torderlim*torderlim*torderlim;
@@ -246,7 +263,8 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 //	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
 //			nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim], \
 //			wx[0:torderlim],wy[0:torderlim],wz[0:torderlim])
-#pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt,ww) \
+#pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ,tt,ww, \
+		clusterQ,clusterQx,clusterQy,clusterQz,clusterQxy,clusterQyz,clusterQxz,clusterQxyz) \
 	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
 			nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],dj[0:torderlim], \
 			wx[0:torderlim],wy[0:torderlim],wz[0:torderlim])
@@ -464,14 +482,14 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 
 		}
 
-		clusterQ[8*interpolationPointIndex + 0] += temp0;
-		clusterQ[8*interpolationPointIndex + 1] += temp1;
-		clusterQ[8*interpolationPointIndex + 2] += temp2;
-		clusterQ[8*interpolationPointIndex + 3] += temp3;
-		clusterQ[8*interpolationPointIndex + 4] += temp4;
-		clusterQ[8*interpolationPointIndex + 5] += temp5;
-		clusterQ[8*interpolationPointIndex + 6] += temp6;
-		clusterQ[8*interpolationPointIndex + 7] += temp7;
+		clusterQ[interpolationPointIndex] += temp0;
+		clusterQx[interpolationPointIndex] += temp1;
+		clusterQy[interpolationPointIndex] += temp2;
+		clusterQz[interpolationPointIndex] += temp3;
+		clusterQxy[interpolationPointIndex] += temp4;
+		clusterQyz[interpolationPointIndex] += temp5;
+		clusterQxz[interpolationPointIndex] += temp6;
+		clusterQxyz[interpolationPointIndex] += temp7;
 
 //		printf("\n\n %1.2e\n", clusterQ[8*(startingIndexInClusters + j) + 0]);
 //		printf("%1.2e\n", clusterQ[8*(startingIndexInClusters + j) + 1]);
@@ -502,10 +520,11 @@ void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct p
 	int i;
 
 
-	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
+	if (torderlim*torderlim*torderlim < p->numpar){
 
 		pc_comp_ms_modifiedF_hermite(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
-				clusters->x,clusters->y,clusters->z,clusters->q);
+				clusters->x,clusters->y,clusters->z,clusters->q,clusters->qx,clusters->qy,clusters->qz,clusters->qxy, \
+				clusters->qyz, clusters->qxz, clusters->qxyz);
 
 		p->exist_ms = 1;
 
