@@ -72,7 +72,15 @@ void compute_pc_yuk(struct tnode *p,
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
 
-    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (torderlim*torderlim*torderlim < p->numpar) ) {
+    int smallEnoughLeaf;
+	if (torderlim*torderlim*torderlim < p->numpar){
+		smallEnoughLeaf=0;
+	}else{
+		smallEnoughLeaf=1;
+	}
+
+
+	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0)  ) {
 
 
 	int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
@@ -117,7 +125,7 @@ void compute_pc_yuk(struct tnode *p,
      */
 
 
-        if (p->num_children == 0) {
+        if ( (p->num_children == 0) | (smallEnoughLeaf==1) ) {
 //        	printf("MAC rejected, and node has no children.  Calling pc_comp_dierct()...\n");
             pc_comp_direct_yuk(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
                            xS, yS, zS, qS, wS, xT, yT, zT, qT, kappa, EnP);
