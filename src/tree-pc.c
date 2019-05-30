@@ -314,7 +314,8 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 //	make_vector(testingQ,numInterpPoints);
 //	printf("number of interpolation points: %i\n\n", numInterpPoints);
 
-	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
+//	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
+	if (1==1){ // don't compute moments for clusters that won't get used
 //	if (torderlim*torderlim*torderlim < 1e10){ // don't compute moments for clusters that won't get used
 
 //		make_vector(p->tx, torderlim);
@@ -443,12 +444,13 @@ void compute_pc(struct tnode *p,
     tz = batch_mid[2] - p->z_mid;
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    int smallEnoughLeaf;
-    if (torderlim*torderlim*torderlim < p->numpar){
-    	smallEnoughLeaf=0;
-    }else{
+    int smallEnoughLeaf=0;
+    if (10*p->numpar < torderlim*torderlim*torderlim){
     	smallEnoughLeaf=1;
+    }else{
+    	smallEnoughLeaf=0;
     }
+
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0) ) {
 //	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) ) {
 

@@ -15,7 +15,7 @@ N=100000
 ## Coulomb: Hermite vs. Lagrange
 KAPPA=0.0 
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/initialTests.csv
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/hermite_vs_lagrange_gpu_check4x_smallEnoughLeaf_$N.csv
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/hermite_vs_lagrange_gpu_noCheck_$N.csv
 
 
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin
@@ -33,11 +33,11 @@ for BATCHSIZE in 1000
 do
 	for MAXPARNODE in 1000
 	  do 
-		for ORDER in {4..14}
-		  do 
+		for ORDER in {8..13}
+		  do  
 		     for THETA in 0.7
 		     	do
-		     	for POTENTIALTYPE in 4   
+		     	for POTENTIALTYPE in 0   
 		     	do
 		     		#../bin_noACC/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
