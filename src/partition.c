@@ -94,6 +94,7 @@ void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
 void pc_partition(double *a, double *b, double *c, double *d, double *w, int *indarr,
                   int ibeg, int iend, double val, int *midind)
 {
+//	printf("Entering pc_partition...\n");
     /* local variables */
     double ta, tb, tc, td, tw;
     int lower, upper, tind;
@@ -170,6 +171,7 @@ void pc_partition(double *a, double *b, double *c, double *d, double *w, int *in
         *midind = ibeg - 1;
         
     }
+//    printf("Exiting pc_partition.\n");
     
     return;
     

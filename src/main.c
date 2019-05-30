@@ -190,6 +190,7 @@ int main(int argc, char **argv)
             if (sflag == 0) {
                 sortTargets(targets->x, targets->y, targets->z, targets->q,
                             targets->order, numparsT, dflag);
+                printf("Done sorting.\n");
             }
             if (sflag == 1 && gflag == 1) {
                 interleaveGridTargets(targets->x, targets->y, targets->z, targets->q,

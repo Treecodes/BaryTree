@@ -56,6 +56,8 @@ void setup_batch(struct batch **batches, double *batch_lim,
 void create_target_batch(struct batch *batches, struct particles *particles,
                          int ibeg, int iend, int maxparnode, double *xyzmm)
 {
+//	printf("Entered create_target_batch.\n");
+	fflush(stdout);
     /*local variables*/
     double x_min, x_max, y_min, y_max, z_min, z_max;
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
@@ -104,6 +106,10 @@ void create_target_batch(struct batch *batches, struct particles *particles,
     y_mid = (y_max + y_min) / 2.0;
     z_mid = (z_max + z_min) / 2.0;
 
+//    printf("xmid, ymid, zmid = %1.2f, %1.2f, %1.2f.\n", x_mid,y_mid,z_mid);
+//	printf("xmin, xmax, ymin, ymax, zmin, zmax = %1.2f, %1.2f, %1.2f, %1.2f, %1.2f, %1.2f.\n", x_min,x_max,y_min,y_max,z_min,z_max);
+
+
     t1 = x_max - x_mid;
     t2 = y_max - y_mid;
     t3 = z_max - z_mid;
@@ -125,6 +131,7 @@ void create_target_batch(struct batch *batches, struct particles *particles,
         xyzmms[3][0] = y_max;
         xyzmms[4][0] = z_min;
         xyzmms[5][0] = z_max;
+
 
         ind[0][0] = ibeg;
         ind[0][1] = iend;

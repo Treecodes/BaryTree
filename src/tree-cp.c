@@ -146,6 +146,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
                        int ibeg, int iend, int maxparnode,
                        double *xyzmm, int level)
 {
+	printf("Entering cp_create_tree_n0.\n");
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
     int i, j, loclev, numposchild;
@@ -279,7 +280,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
         
         numleaves++;
     }
-
+    printf("Exiting cp_create_tree_n0.\n");
     return;
 
 } /* end of function create_tree_n0 */

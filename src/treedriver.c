@@ -71,7 +71,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                             batch_size, batch_lim);
         
     } else if (tree_type == 1) {
-    
+    	printf("Treetype %i\n", tree_type);
 //        if (pot_type == 0) {
 //            setup(sources, order, theta, xyzminmax);
 //        } else if (pot_type == 1) {
@@ -92,12 +92,15 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(tree_array->y_mid, numnodes);
         make_vector(tree_array->z_mid, numnodes);
 
+
         pc_create_tree_array(troot, tree_array);
 
+//        printf("Entering setup_batch.\n");
         setup_batch(&batches, batch_lim, targets, batch_size);
-        create_target_batch(batches, targets, 1, targets->num,
-                            batch_size, batch_lim);
-
+//        printf("Exiting setup_batch.\n");
+//        printf("Entering create_target_batch.\n");
+        create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
+//        printf("Exiting create_target_batch.\n");
 
 
 //#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
@@ -107,7 +110,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         if ( (pot_type == 0) || (pot_type==1)) {
         	fill_in_cluster_data(clusters, sources, troot, order);
         }else if  ( (pot_type == 2) || (pot_type==3)){
-//        	printf("Calling fill_in_cluster_data_SS().\n");
+        	printf("Calling fill_in_cluster_data_SS().\n");
 			fill_in_cluster_data_SS(clusters, sources, troot, order);
         }else if  ( (pot_type == 4) || (pot_type==5)){
         	printf("Calling fill_in_cluster_data_hermite().\n");
