@@ -33,7 +33,7 @@ for BATCHSIZE in 1000
 do
 	for MAXPARNODE in 1000
 	  do 
-		for ORDER in {8..13}
+		for ORDER in {5..13}
 		  do  
 		     for THETA in 0.7
 		     	do

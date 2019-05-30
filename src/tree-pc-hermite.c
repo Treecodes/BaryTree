@@ -120,6 +120,7 @@ void compute_pc_hermite(struct tnode *p,
     double tx, ty, tz;
     int i, j, k, ii, kk;
     double dxt,dyt,dzt,tempPotential;
+    double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
 
     /* determine DIST for MAC test */
     tx = batch_mid[0] - p->x_mid;
@@ -128,11 +129,11 @@ void compute_pc_hermite(struct tnode *p,
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
     int smallEnoughLeaf=0;
-//	if (2*torderlim*torderlim*torderlim < p->numpar){
-//		smallEnoughLeaf=0;
-//	}else{
-//		smallEnoughLeaf=1;
-//	}
+    if (p->numpar < torderlim*torderlim*torderlim){
+    	smallEnoughLeaf=1;
+    }else{
+    	smallEnoughLeaf=0;
+    }
 
 
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0)  ) {
@@ -242,20 +243,11 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 
 
 //	double weights[torderlim];
-	double *weights, *dj, *wx, *wy, *wz;
-	make_vector(weights,torderlim);
-	make_vector(dj,torderlim);
-	make_vector(wx,torderlim);
-	make_vector(wy,torderlim);
-	make_vector(wz,torderlim);
+	double dj[torderlim],wx[torderlim],wy[torderlim],wz[torderlim];
 	double *modifiedF;
 	make_vector(modifiedF,pointsInNode);
 
-//	double nodeX[torderlim], nodeY[torderlim], nodeZ[torderlim];
-	double *nodeX, *nodeY, *nodeZ;
-	make_vector(nodeX,torderlim);
-	make_vector(nodeY,torderlim);
-	make_vector(nodeZ,torderlim);
+	double nodeX[torderlim], nodeY[torderlim], nodeZ[torderlim];
 
 	int *exactIndX, *exactIndY, *exactIndZ;
 	make_vector(exactIndX, pointsInNode);
@@ -306,7 +298,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 	// Compute weights
 
 	#pragma acc loop independent
-	for (j = 0; j < torderlim;  j++){
+	for (j = 0; j < torderlim;j++){
 		dj[j] = 1.0;
 		wx[j] = -4.0 * ww[j] / (x1 - x0);
 		wy[j] = -4.0 * ww[j] / (y1 - y0);
@@ -524,15 +516,6 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 	free_vector(exactIndY);
 	free_vector(exactIndZ);
 
-	free_vector(nodeX);
-	free_vector(nodeY);
-	free_vector(nodeZ);
-
-	free_vector(weights);
-	free_vector(dj);
-	free_vector(wx);
-	free_vector(wy);
-	free_vector(wz);
 
 	return;
 }
@@ -545,16 +528,15 @@ void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct p
 	int i;
 
 
-	if (torderlim*torderlim*torderlim < p->numpar){
+//	if (torderlim*torderlim*torderlim < p->numpar){
 
-		pc_comp_ms_modifiedF_hermite(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
-				clusters->x,clusters->y,clusters->z,clusters->q,clusters->qx,clusters->qy,clusters->qz,clusters->qxy, \
-				clusters->qyz, clusters->qxz, clusters->qxyz);
+	pc_comp_ms_modifiedF_hermite(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+			clusters->x,clusters->y,clusters->z,clusters->q,clusters->qx,clusters->qy,clusters->qz,clusters->qxy, \
+			clusters->qyz, clusters->qxz, clusters->qxyz);
 
-		p->exist_ms = 1;
+	p->exist_ms = 1;
 
 
-	}
 
 	for (i = 0; i < p->num_children; i++) {
 		addNodeToArray_hermite(p->child[i],sources,clusters,order,numInterpPoints,pointsPerCluster);
