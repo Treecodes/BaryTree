@@ -53,11 +53,11 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 		clusters->qxyz[i]=0.0;
 	}
 
-#pragma acc data copyin(tt[0:torderlim],ww[0:torderlim], \
-		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
-		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:numInterpPoints], clusters->w[0:clusters->num], \
-				clusters->qx[0:numInterpPoints],clusters->qy[0:numInterpPoints],clusters->qz[0:numInterpPoints],clusters->qxy[0:numInterpPoints],clusters->qyz[0:numInterpPoints], \
-				clusters->qxz[0:numInterpPoints], clusters->qxyz[0:numInterpPoints])
+#pragma acc data copy(tt[0:torderlim],ww[0:torderlim], \
+		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num], \
+		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
+		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num])
 
 	addNodeToArray_hermite(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 
@@ -77,9 +77,11 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
     
-#pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
-		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:8*(clusters->num)]) \
+#pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
+		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
+		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
+		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num]) \
 		copy(EnP[0:targets->num])
     {
 
@@ -129,11 +131,11 @@ void compute_pc_hermite(struct tnode *p,
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
     int smallEnoughLeaf=0;
-    if (p->numpar < torderlim*torderlim*torderlim){
-    	smallEnoughLeaf=1;
-    }else{
-    	smallEnoughLeaf=0;
-    }
+//    if (p->numpar < torderlim*torderlim*torderlim){
+//    	smallEnoughLeaf=1;
+//    }else{
+//    	smallEnoughLeaf=0;
+//    }
 
 
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0)  ) {
