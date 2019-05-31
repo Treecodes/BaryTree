@@ -445,11 +445,11 @@ void compute_pc(struct tnode *p,
     dist = sqrt(tx*tx + ty*ty + tz*tz);
 
     int smallEnoughLeaf=0;
-//    if (10*p->numpar < torderlim*torderlim*torderlim){
-//    	smallEnoughLeaf=1;
-//    }else{
-//    	smallEnoughLeaf=0;
-//    }
+    if (p->numpar < torderlim*torderlim*torderlim){
+    	smallEnoughLeaf=1;
+    }else{
+    	smallEnoughLeaf=0;
+    }
 
     if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0) ) {
 //	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) ) {
