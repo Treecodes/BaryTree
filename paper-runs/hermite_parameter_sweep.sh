@@ -13,7 +13,7 @@ N=10000000
 
 ## Coulomb: Hermite
 KAPPA=0.0 
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/hermite_batch_node_size_$N.csv
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/hermite_coarse_batch_node_size_$N.csv
 
 
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -31,9 +31,9 @@ for ORDER in 7
 do
 	for THETA in 0.7
 	  do    
-		for BATCHSIZE in {1600..2400..100}
+		for BATCHSIZE in 1000 2000 4000 8000 16000
 		  do       
-		     for MAXPARNODE in {1600..2400..100} 
+		     for MAXPARNODE in 1000 2000 4000 8000 16000 
 		     	do
 		     	for POTENTIALTYPE in 4     
 		     	do
@@ -44,81 +44,3 @@ do
 		 done
 	done
 done
- 
-
-for ORDER in 7  
-do
-	for THETA in 0.7
-	  do    
-		for BATCHSIZE in {1000..16000..500}
-		  do       
-		     for MAXPARNODE in {1000..16000..500} 
-		     	do
-		     	for POTENTIALTYPE in 4     
-		     	do
-		     		#../bin_noACC/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     	done
-		     done
-		 done
-	done
-done
-
-
-
-for ORDER in 7 
-do
-	for THETA in 0.7
-	  do    
-		for BATCHSIZE in {1600..2400..100}
-		  do       
-		     for MAXPARNODE in {1000..16000..500}   
-		     	do
-		     	for POTENTIALTYPE in 4     
-		     	do
-		     		#../bin_noACC/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     	done
-		     done
-		 done
-	done
-done
-
-
-for ORDER in 7 
-do
-	for THETA in 0.7
-	  do    
-		for BATCHSIZE in {1000..16000..500}
-		  do       
-		     for MAXPARNODE in {1600..2400..100} 
-		     	do
-		     	for POTENTIALTYPE in 4     
-		     	do
-		     		#../bin_noACC/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     	done
-		     done
-		 done
-	done
-done
-
-for ORDER in 7 
-do
-	for THETA in 0.7
-	  do    
-		for BATCHSIZE in {1600..2400..100}
-		  do       
-		     for MAXPARNODE in {1600..2400..100} 
-		     	do
-		     	for POTENTIALTYPE in 4     
-		     	do
-		     		#../bin_noACC/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
-		     	done
-		     done
-		 done
-	done
-done
-
-

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <mpi.h>
+#include <omp.h>
 #include <float.h>
 
 
@@ -147,7 +148,6 @@ int main(int argc, char **argv)
     /* Calling main treecode subroutine to calculate approximate energy */
 
     time1 = MPI_Wtime();
-
     direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, numparsS, numparsTloc,
                 denergy, &dpeng, pot_type, kappa);
 
@@ -302,33 +302,62 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
         /* local variables */
         int i, j;
         double tx, ty, tz, xi, yi, zi, qi, teng, rad;
+//        int numDevices = acc_get_num_devices(acc_device_nvidia);
+
+//        int idevtype = acc_get_device_type();
+//        void acc_init ( idevtype );
+#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
+        {
+        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+//        int queue = 1;
 
 #pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
 		xT [ 0 : numparsT ] , yT [ 0 : numparsT ] , zT [ 0 : numparsT ] , qT [ 0 : numparsT ] )
         {
 
-        if (pot_type == 0) {
-#pragma acc kernels
-        	{
-#pragma acc loop independent
-        	for (i = 0; i < numparsT; i++) {
-                        xi = xT[i];
-                        yi = yT[i];
-                        zi = zT[i];
-                        teng = 0.0;
 
-                        for (j = 0; j < numparsS; j++) {
-                                tx = xi - xS[j];
-                                ty = yi - yS[j];
-                                tz = zi - zS[j];
-                                rad = sqrt(tx*tx + ty*ty + tz*tz);
-                                if (rad>1e-14){
-                                	teng = teng + qS[j]*wS[j] / rad;
-                                }
-                        }
-                        denergy[i] = teng;
-                }
+		int numDevices = acc_get_num_devices(acc_get_device_type());
+		printf("numDevices: %i\n", numDevices);
+		int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+		printf("this_thread: %i\n", this_thread);
+		printf("num_threads: %i\n", num_threads);
+
+//		numDevices=1;
+//		num_threads=1;
+
+		int targetStart, targetEnd;
+        if (pot_type == 0) {
+			#pragma omp for schedule(static)
+        	for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
+
+        		targetStart = deviceNumber*numparsT/num_threads;
+        		targetEnd = (deviceNumber+1)*numparsT/num_threads;
+
+				#pragma acc kernels
+				{
+				#pragma acc loop independent
+				for (i = targetStart; i < targetEnd; i++) {
+							xi = xT[i];
+							yi = yT[i];
+							zi = zT[i];
+							teng = 0.0;
+							#pragma acc loop independent
+							for (j = 0; j < numparsS; j++) {
+									tx = xi - xS[j];
+									ty = yi - yS[j];
+									tz = zi - zS[j];
+									rad = sqrt(tx*tx + ty*ty + tz*tz);
+									if (rad>1e-14){
+										teng = teng + qS[j]*wS[j] / rad;
+									}
+							}
+							denergy[i] = teng;
+					}
+				}
+
         	}
+//        	queue = (queue%2)+1;
+
 
         } else if (pot_type == 1) {
 #pragma acc kernels
@@ -412,6 +441,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
         *dpeng = sum(denergy, numparsT);
 
 
+} // end pragma omp parallel
 
 
         return;
