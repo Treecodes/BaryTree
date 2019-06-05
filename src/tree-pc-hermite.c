@@ -249,7 +249,7 @@ void compute_pc_hermite(struct tnode *p,
 //									+ 5*rinv*rinv*clusterMxyz[sourceIdx]*dxt*dyt*dzt)  )  ) ;
 
 						}
-		EnP[batchStart +i ] += tempPotential;
+		EnP[batchStart +i - ompThreadStart] += tempPotential;
 //		EnP[i] += tempPotential;
 	}
     }
