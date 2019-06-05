@@ -64,7 +64,7 @@ endif
 
 
 #all: $(TARGET) $(TARGETA) $(TARGETB) library bin
-all: $(TARGET) $(TARGETA) $(TARGETB) bin
+all: $(TARGET) $(TARGETA) $(TARGETB) bin library
 
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@

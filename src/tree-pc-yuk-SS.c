@@ -75,11 +75,11 @@ void compute_pc_yuk_SS(struct tnode *p,
 	tz = batch_mid[2] - p->z_mid;
 	dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    int smallEnoughLeaf;
-	if (torderlim*torderlim*torderlim < p->numpar){
-		smallEnoughLeaf=0;
-	}else{
+	int smallEnoughLeaf=0;
+	if (p->numpar < torderlim*torderlim*torderlim){
 		smallEnoughLeaf=1;
+	}else{
+		smallEnoughLeaf=0;
 	}
 	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0)  ) {
 
