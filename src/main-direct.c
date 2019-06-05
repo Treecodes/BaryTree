@@ -302,14 +302,11 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
         /* local variables */
         int i, j;
         double tx, ty, tz, xi, yi, zi, qi, teng, rad;
-//        int numDevices = acc_get_num_devices(acc_device_nvidia);
 
-//        int idevtype = acc_get_device_type();
-//        void acc_init ( idevtype );
+
 #pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
         {
         acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-//        int queue = 1;
 
 #pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
 		xT [ 0 : numparsT ] , yT [ 0 : numparsT ] , zT [ 0 : numparsT ] , qT [ 0 : numparsT ] )

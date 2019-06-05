@@ -586,6 +586,44 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 } /* END function pc_comp_direct */
 
 
+void pc_comp_direct_omp(int ibeg, int iend, int batch_ibeg, int batch_iend,
+                     double *xS, double *yS,  double *zS,  double *qS,  double *wS,
+					 double *xT,  double *yT,  double *zT,  double *qT,  double *EnP,
+					 int ompThreadStart)
+{
+    /* local variables */
+    int i, ii;
+    double tx, ty, tz;
+
+    int batch_start=batch_ibeg - 1;
+    int batch_end = batch_iend;
+
+    int source_start=ibeg - 1;
+    int source_end=iend;
+
+    double d_peng, r;
+# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+    {
+	#pragma acc loop independent
+    for (ii = batch_start; ii < batch_end; ii++) {
+        d_peng = 0.0;
+        for (i = source_start; i < source_end; i++) {
+            tx = xS[i] - xT[ii];
+            ty = yS[i] - yT[ii];
+            tz = zS[i] - zT[ii];
+            r = sqrt(tx*tx + ty*ty + tz*tz);
+            if (r > DBL_MIN) {
+            	d_peng += qS[i] * wS[i] / r;
+            }
+        }
+        EnP[ii-ompThreadStart] += d_peng;
+    }
+    }
+    return;
+
+} /* END function pc_comp_direct_omp */
+
+
 
 
 
