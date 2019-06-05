@@ -348,7 +348,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 										teng = teng + qS[j]*wS[j] / rad;
 									}
 							}
-							denergy[i] = teng;
+							denergy[i] =  teng;
 					}
 				}
 

@@ -53,21 +53,13 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 		clusters->qxyz[i]=0.0;
 	}
 
-#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
-	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-
 #pragma acc data copy(tt[0:torderlim],ww[0:torderlim], \
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num], \
 		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
 		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num])
 
-
-
 	addNodeToArray_hermite(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
-
-	}
 
 	return;
 }
@@ -81,42 +73,47 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 	printf("Entered pc_treecoode_hermite.\n");
     /* local variables */
     int i, j;
-
+    double *EnP2;
+    make_vector(EnP2,targets->num);
     for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
+    	EnP2[i] = 0.0;
+
     
 
-//    omp_set_num_threads(1);
-//#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type())) reduction(+:EnP[0:clusters->num])
-#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
-//#pragma omp parallel
+    omp_set_num_threads(1);
+//#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
+#pragma omp parallel
 	{
         acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 
-	int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-	int numDevices = acc_get_num_devices(acc_get_device_type());
-	if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-	if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-	printf("this_thread: %i\n", this_thread);
+        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+		int numDevices = acc_get_num_devices(acc_get_device_type());
+        numDevices=1;
+		num_threads=1;
+		printf("this_thread: %i\n", this_thread);
+		int batchesStart, batchesStop;
+		int numChidlren=p->num_children;
+		batchesStart = this_thread* ( batches->num/num_threads ) ;
+		batchesStop =  (this_thread+1)* (batches->num/num_threads) ;
+		printf("BatchesStart: %i\n", batchesStart);
+		printf("BatchesStop: %i\n", batchesStop);
+		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
 
 
-	int ompThreadStart, ompThreadStop;
-	ompThreadStart = this_thread* ( batches->num/num_threads ) ;
-	ompThreadStop =  (this_thread+1)* (batches->num/num_threads) ;
-	printf("BatchesStart: %i\n", ompThreadStart);
-	printf("BatchesStop: %i\n", ompThreadStop);
+
+
 
 #pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
 		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
 		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num]) \
-		copy(EnP[ompThreadStart:ompThreadStop])
+		copy(EnP[0:targets->num])
     {
 
-
-
-
+//		copy(EnP[batchesStart:batchesStop])
 
 //    int batchesStart, batchesStop;
 //    int numChidlren=p->num_children;
@@ -149,15 +146,19 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 				targets->x, targets->y, targets->z, targets->q, EnP,
 				clusters->x, clusters->y, clusters->z, clusters->q,
 				clusters->qx,clusters->qy,clusters->qz,clusters->qxy,
-				clusters->qyz,clusters->qxz,clusters->qxyz,ompThreadStart,ompThreadStop);
+				clusters->qyz,clusters->qxz,clusters->qxyz);
 			}
 		}
 
 #pragma acc wait
 	}
+//    for (i = 0; i < targets->num; i++)
+//		EnP2[i] += EnP[i];
 
 } // end omp parallel region
 
+//	for (i = 0; i < targets->num; i++)
+//		EnP[i] = EnP2[i];
     printf("Exited the main comp_pc call.\n");
     *tpeng = sum(EnP, targets->num);
 
@@ -173,8 +174,7 @@ void compute_pc_hermite(struct tnode *p,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT, double *EnP,
 				double * clusterX, double * clusterY, double * clusterZ, double * clusterM,
-				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMxz,double * clusterMxyz,
-				int ompThreadStart, int ompThreadStop)
+				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMxz,double * clusterMxyz)
 {
 //	printf("Entering compute_cp_hermite.  Batch start: %d.  Batch end: %d.\n", batch_ind[0]-1, batch_ind[1]);
     /* local variables */
@@ -249,8 +249,7 @@ void compute_pc_hermite(struct tnode *p,
 //									+ 5*rinv*rinv*clusterMxyz[sourceIdx]*dxt*dyt*dzt)  )  ) ;
 
 						}
-		EnP[batchStart +i - ompThreadStart] += tempPotential;
-//		EnP[i] += tempPotential;
+		EnP[batchStart +i] += tempPotential;
 	}
     }
 
@@ -265,10 +264,8 @@ void compute_pc_hermite(struct tnode *p,
 
         if ( (p->num_children == 0) | (smallEnoughLeaf==1) ) {
 //        	printf("MAC rejected, and node has no children.  Calling pc_comp_dierct()...\n");
-//            pc_comp_direct(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
-//                           xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
-            pc_comp_direct_omp(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
-                                       xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP, ompThreadStart);
+            pc_comp_direct(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
+                           xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
         } else {
 //        	printf("MAC rejected, recursing over children...\n");
             for (i = 0; i < p->num_children; i++) {
@@ -276,8 +273,7 @@ void compute_pc_hermite(struct tnode *p,
                 			xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP,
 							clusterX, clusterY, clusterZ, clusterM,
 							clusterMx,clusterMy,clusterMz,clusterMxy,
-							clusterMyz,clusterMxz,clusterMxyz,
-							ompThreadStart,ompThreadStop);
+							clusterMyz,clusterMxz,clusterMxyz);
             }
         }
     }
@@ -337,11 +333,6 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 //	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
 //			nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim], \
 //			wx[0:torderlim],wy[0:torderlim],wz[0:torderlim])
-
-//#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
-//	{
-//        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-
 #pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ,tt,ww, \
 		clusterQ,clusterQx,clusterQy,clusterQz,clusterQxy,clusterQyz,clusterQxz,clusterQxyz) \
 	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
@@ -580,9 +571,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 	}
 
 
-	} // end acc kernels
-
-//	} // end omp parallel
+	}
 
 	free_vector(modifiedF);
 	free_vector(exactIndX);

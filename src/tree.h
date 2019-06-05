@@ -137,10 +137,6 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
                     double *xT, double *yT, double *zT, double *qT, double *EnP);
 
-void pc_comp_direct_omp(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                    double *xS, double *yS, double *zS, double *qS, double *wS,
-                    double *xT, double *yT, double *zT, double *qT, double *EnP, int ompThreadStart);
-
 void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
                  double *tpeng, double *EnP);
@@ -150,8 +146,7 @@ void compute_pc_hermite(struct tnode *p,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT, double *EnP,
 				double *clusterX, double *clusterY, double *clusterZ, double *clusterM,
-				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz,
-				int ompThreadStart, int ompThreadStop);
+				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
 
 /* used by particle-cluster Yukawa */
