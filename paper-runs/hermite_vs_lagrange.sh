@@ -17,7 +17,7 @@ KAPPA=0.0
 OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/hermite_vs_lagrange_gpu_yesCheck_$N.csv
 
 
-SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin
+SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
 TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
 #SOURCES=/scratch/krasny_fluxg/njvaughn/examplesBenzene/S$N.bin
 #TARGETS=/scratch/krasny_fluxg/njvaughn/examplesBenzene/T$N.bin
@@ -33,7 +33,7 @@ do
 	for MAXPARNODE in 10000
 	  do    
 		for ORDER in {1..14}
-		  do  
+		  do   
 		     for THETA in 0.4 0.6 0.8 0.9    
 		     	do
 		     	for POTENTIALTYPE in 0 4     

@@ -16,7 +16,7 @@ DFLAG=0
 OUTFILE=/home/njvaughn/synchronizedDataFiles/MICDE_Data_2019/gpu_treecode/tc5.csv
 
 KAPPA=0.0
-POTENTIALTYPE=0 
+POTENTIALTYPE=3 
 
 
  
