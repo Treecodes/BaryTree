@@ -453,7 +453,7 @@ int main(int argc, char **argv)
 //    }
     if (rank == 0) {
             fp = fopen(sampout, "a");
-            fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e\n",
+            fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e,%d\n",
                     sampin1, sampin2, sampin3, numparsS, numparsT,
                     theta, order, tree_type, maxparnode,batch_size,
                     kappa, pot_type, sflag, pflag, //2 ends
@@ -469,7 +469,7 @@ int main(int argc, char **argv)
                     time_tree_glob[1][3] + time_preproc, //4 ends
                     dpengglob, tpengglob, fabs(tpengglob-dpengglob),
                     fabs((tpengglob-dpengglob)/dpengglob),
-                    inferr, relinferr, n2err, reln2err); //5 ends
+                    inferr, relinferr, n2err, reln2err,numDevices); //5 ends
             fclose(fp);
         }
     printf("Wrote to output file.\n");

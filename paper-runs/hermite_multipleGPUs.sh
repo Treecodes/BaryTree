@@ -6,14 +6,14 @@ DFLAG=0
 
 #N=821000
 #N=2365328
-N=100000
+N=1000000
 #1328096
 
 
 
 ## Coulomb: Hermite
 KAPPA=0.0 
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/K40_hermite_batch_node_size_$N.csv
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/K20_hermite_GPU_parallelized_$N.csv
 
 
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -22,19 +22,18 @@ TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
 #TARGETS=/scratch/krasny_fluxg/njvaughn/examplesBenzene/T$N.bin
 NUMSOURCES=$N
 NUMTARGETS=$N
-#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesBenzene/ex_st$N_coulomb.bin     
-DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st$N_coulomb.bin  
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin  
  
-#../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM   /home/njvaughn/synchronizedDataFiles/KITCpaperData/benzeneData/coulombSpeedup/ds.csv $N $N 0.0 0
+../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM   /home/njvaughn/synchronizedDataFiles/KITCpaperData/benzeneData/coulombSpeedup/ds.csv $N $N 0.0 0 2
 
 POTENTIALTYPE=4
-for ORDER in 7 
+for ORDER in 5 7 9 
 do
-	for THETA in 0.9
+	for THETA in 0.5 0.7 0.9
 	  do    
-		for BATCHSIZE in 2500
+		for BATCHSIZE in 5000
 		  do       
-		     for MAXPARNODE in 2500 
+		     for MAXPARNODE in 5000 
 		     	do
 		     	for NUMDEVICES in 1 2     
 		     	do
