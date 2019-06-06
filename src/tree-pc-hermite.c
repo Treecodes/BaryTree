@@ -73,36 +73,60 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 	printf("Entered pc_treecoode_hermite.\n");
     /* local variables */
     int i, j;
-    double *EnP2;
-    make_vector(EnP2,targets->num);
-    for (i = 0; i < targets->num; i++)
+//    double *EnP2;
+//    make_vector(EnP2,targets->num);
+    for (i = 0; i < targets->num; i++){
         EnP[i] = 0.0;
-    	EnP2[i] = 0.0;
+//    	EnP2[i] = 0.0;
+    }
 
     
 
-    omp_set_num_threads(1);
-//#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
-#pragma omp parallel
+//    omp_set_num_threads(1);
+#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type())) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
+//#pragma omp parallel
 	{
         acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 		int numDevices = acc_get_num_devices(acc_get_device_type());
-        numDevices=1;
-		num_threads=1;
+		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+//        numDevices=1;
+//		num_threads=1;
 		printf("this_thread: %i\n", this_thread);
 		int batchesStart, batchesStop;
 		int numChidlren=p->num_children;
 		batchesStart = this_thread* ( batches->num/num_threads ) ;
-		batchesStop =  (this_thread+1)* (batches->num/num_threads) ;
+		batchesStop =  (this_thread+1)* (batches->num/num_threads)-1 ;
 		printf("BatchesStart: %i\n", batchesStart);
 		printf("BatchesStop: %i\n", batchesStop);
-		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
 
 
+		int * batch_reorder = batches->reorder;
+		int * batch_ind_start = batches->index[batchesStart];  // indices of the first batch for this thread
+		int * batch_ind_end = batches->index[batchesStop];    // indices of the last batch for this thread
+		int * batch_ind_end_m1 = batches->index[batchesStop-1];    // indices of the last batch for this thread
+		int * batch_ind_start_p1 = batches->index[batchesStart+1];  // indices of the first batch for this thread
 
+		int threadStartingIndex = batch_reorder[batch_ind_start[0] - 1];  // index of the first target point in the first batch for this thread
+		int threadEndingIndex = batch_reorder[batch_ind_end[1]]; 		 // index of the last target point in the last batch for this thread
+
+		printf("batch_ind_start: %i, %i\n", batch_ind_start[0]-1, batch_ind_start[1]);
+		printf("batch_ind_start_p1: %i, %i\n", batch_ind_start_p1[0]-1, batch_ind_start_p1[1]);
+		printf("batch_ind_end: %i, %i\n", batch_ind_end[0]-1, batch_ind_end[1]);
+		printf("batch_ind_end_m1: %i, %i\n", batch_ind_end_m1[0]-1, batch_ind_end_m1[1]);
+		printf("First target index: %i\n",threadStartingIndex);
+		printf("Last target index: %i\n",threadEndingIndex);
+
+
+		double *EnP2;
+		make_vector(EnP2,targets->num);
+		for (i = 0; i < targets->num; i++){
+	    	EnP2[i] = 0.0;
+//	    	EnP2[i] = 1.0 + this_thread;
+			if (i<5) printf("Initial EnP2[%i] = %e\n", i, EnP2[i]);
+		    }
 
 
 #pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
@@ -110,20 +134,22 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
 		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
 		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num]) \
-		copy(EnP[0:targets->num])
+		copy(EnP2[0:targets->num])
+//		copyout(EnP[threadStartingIndex:threadEndingIndex])
+		//		copyin(EnP[0:targets->num])
+		//		copyout(EnP[batches[:targets->num])
     {
 
 //		copy(EnP[batchesStart:batchesStop])
 
-//    int batchesStart, batchesStop;
 //    int numChidlren=p->num_children;
-//	#pragma omp for schedule(static) private(j,batchesStart,batchesStop)
+//	#pragma omp for schedule(static)
 //    for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
-//    	batchesStart = deviceNumber* ( batches->num/num_threads ) ;
-//    	batchesStop =  (deviceNumber+1)* (batches->num/num_threads) ;
+////    	batchesStart = deviceNumber* ( batches->num/num_threads ) ;
+////    	batchesStop =  (deviceNumber+1)* (batches->num/num_threads) ;
 //    	printf("BatchesStart: %i\n", batchesStart);
 //    	printf("BatchesStop: %i\n", batchesStop);
-//		for (i = batchesStart; i < batchesStop; i++) {
+//		for (i = batchesStart; i <= batchesStop; i++) {
 //			for (j = 0; j < numChidlren; j++) {
 //				compute_pc_hermite(p->child[j],
 //					batches->index[i], batches->center[i], batches->radius[i],
@@ -136,31 +162,38 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 //			}
 //    	} // end omp for loop
 
-
 	#pragma omp for schedule(static) private(j)
 	for (i = 0; i < batches->num; i++) {
-		for (j = 0; j < p->num_children; j++) {
+		for (j = 0; j < p->num_children; j++ ) {
 			compute_pc_hermite(p->child[j],
 				batches->index[i], batches->center[i], batches->radius[i],
 				sources->x, sources->y, sources->z, sources->q, sources->w,
-				targets->x, targets->y, targets->z, targets->q, EnP,
+				targets->x, targets->y, targets->z, targets->q, EnP2,
 				clusters->x, clusters->y, clusters->z, clusters->q,
 				clusters->qx,clusters->qy,clusters->qz,clusters->qxy,
 				clusters->qyz,clusters->qxz,clusters->qxyz);
 			}
 		}
 
-#pragma acc wait
 	}
-//    for (i = 0; i < targets->num; i++)
-//		EnP2[i] += EnP[i];
+
+    for (int k = 0; k < targets->num; k++){
+		EnP[k] += EnP2[k];
+		if (k<5){
+			printf("EnP2[%i]  = %e\n", k, EnP2[k]);
+			printf("EnP[%i]  = %e\n", k, EnP[k]);
+		}
+    }
+//    }
 
 } // end omp parallel region
 
-//	for (i = 0; i < targets->num; i++)
+//	for (i = 0; i < targets->num; i++){
 //		EnP[i] = EnP2[i];
+//	}
     printf("Exited the main comp_pc call.\n");
     *tpeng = sum(EnP, targets->num);
+//    *tpeng = sum(EnP2, targets->num);
 
     return;
 

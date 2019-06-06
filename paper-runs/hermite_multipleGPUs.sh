@@ -6,7 +6,7 @@ DFLAG=0
 
 #N=821000
 #N=2365328
-N=100000
+N=1000000
 #1328096
 
 
@@ -29,7 +29,7 @@ DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st$N_coulomb.bin
 
 for ORDER in 7 
 do
-	for THETA in 0.7
+	for THETA in 0.9
 	  do    
 		for BATCHSIZE in 3000
 		  do       
