@@ -95,23 +95,23 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
 //        numDevices=1;
 //		num_threads=1;
-		printf("this_thread: %i\n", this_thread);
-		int batchesStart, batchesStop;
-		int numChidlren=p->num_children;
-		batchesStart = this_thread* ( batches->num/num_threads ) ;
-		batchesStop =  (this_thread+1)* (batches->num/num_threads)-1 ;
-		printf("BatchesStart: %i\n", batchesStart);
-		printf("BatchesStop: %i\n", batchesStop);
+//		printf("this_thread: %i\n", this_thread);
+//		int batchesStart, batchesStop;
+//		int numChidlren=p->num_children;
+//		batchesStart = this_thread* ( batches->num/num_threads ) ;
+//		batchesStop =  (this_thread+1)* (batches->num/num_threads)-1 ;
+//		printf("BatchesStart: %i\n", batchesStart);
+//		printf("BatchesStop: %i\n", batchesStop);
 
 
-		int * batch_reorder = batches->reorder;
-		int * batch_ind_start = batches->index[batchesStart];  // indices of the first batch for this thread
-		int * batch_ind_end = batches->index[batchesStop];    // indices of the last batch for this thread
-		int * batch_ind_end_m1 = batches->index[batchesStop-1];    // indices of the last batch for this thread
-		int * batch_ind_start_p1 = batches->index[batchesStart+1];  // indices of the first batch for this thread
-
-		int threadStartingIndex = batch_reorder[batch_ind_start[0] - 1];  // index of the first target point in the first batch for this thread
-		int threadEndingIndex = batch_reorder[batch_ind_end[1]]; 		 // index of the last target point in the last batch for this thread
+//		int * batch_reorder = batches->reorder;
+//		int * batch_ind_start = batches->index[batchesStart];  // indices of the first batch for this thread
+//		int * batch_ind_end = batches->index[batchesStop];    // indices of the last batch for this thread
+//		int * batch_ind_end_m1 = batches->index[batchesStop-1];    // indices of the last batch for this thread
+//		int * batch_ind_start_p1 = batches->index[batchesStart+1];  // indices of the first batch for this thread
+//
+//		int threadStartingIndex = batch_reorder[batch_ind_start[0] - 1];  // index of the first target point in the first batch for this thread
+//		int threadEndingIndex = batch_reorder[batch_ind_end[1]]; 		 // index of the last target point in the last batch for this thread
 
 //		printf("batch_ind_start: %i, %i\n", batch_ind_start[0]-1, batch_ind_start[1]);
 //		printf("batch_ind_start_p1: %i, %i\n", batch_ind_start_p1[0]-1, batch_ind_start_p1[1]);
