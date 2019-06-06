@@ -112,12 +112,12 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 		int threadStartingIndex = batch_reorder[batch_ind_start[0] - 1];  // index of the first target point in the first batch for this thread
 		int threadEndingIndex = batch_reorder[batch_ind_end[1]]; 		 // index of the last target point in the last batch for this thread
 
-		printf("batch_ind_start: %i, %i\n", batch_ind_start[0]-1, batch_ind_start[1]);
-		printf("batch_ind_start_p1: %i, %i\n", batch_ind_start_p1[0]-1, batch_ind_start_p1[1]);
-		printf("batch_ind_end: %i, %i\n", batch_ind_end[0]-1, batch_ind_end[1]);
-		printf("batch_ind_end_m1: %i, %i\n", batch_ind_end_m1[0]-1, batch_ind_end_m1[1]);
-		printf("First target index: %i\n",threadStartingIndex);
-		printf("Last target index: %i\n",threadEndingIndex);
+//		printf("batch_ind_start: %i, %i\n", batch_ind_start[0]-1, batch_ind_start[1]);
+//		printf("batch_ind_start_p1: %i, %i\n", batch_ind_start_p1[0]-1, batch_ind_start_p1[1]);
+//		printf("batch_ind_end: %i, %i\n", batch_ind_end[0]-1, batch_ind_end[1]);
+//		printf("batch_ind_end_m1: %i, %i\n", batch_ind_end_m1[0]-1, batch_ind_end_m1[1]);
+//		printf("First target index: %i\n",threadStartingIndex);
+//		printf("Last target index: %i\n",threadEndingIndex);
 
 
 		double *EnP2;
@@ -125,7 +125,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 		for (i = 0; i < targets->num; i++){
 	    	EnP2[i] = 0.0;
 //	    	EnP2[i] = 1.0 + this_thread;
-			if (i<5) printf("Initial EnP2[%i] = %e\n", i, EnP2[i]);
+//			if (i<5) printf("Initial EnP2[%i] = %e\n", i, EnP2[i]);
 		    }
 
 
@@ -176,16 +176,18 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 		}
 
 	}
-
+//#pragma omp barrier
     for (int k = 0; k < targets->num; k++){
+//		#pragma omp critical
 		EnP[k] += EnP2[k];
-		if (k<5){
-			printf("EnP2[%i]  = %e\n", k, EnP2[k]);
-			printf("EnP[%i]  = %e\n", k, EnP[k]);
-		}
+//		if (k<5){
+//			printf("Thread %i\n", this_thread);
+//			printf("EnP2[%i]  = %e\n", k, EnP2[k]);
+//			printf("EnP[%i]  = %e\n\n", k, EnP[k]);
+//		}
     }
 //    }
-
+//#pragma omp barrier
 } // end omp parallel region
 
 //	for (i = 0; i < targets->num; i++){
@@ -193,6 +195,11 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 //	}
     printf("Exited the main comp_pc call.\n");
     *tpeng = sum(EnP, targets->num);
+    for (int k = 0; k < targets->num; k++){
+		if (k<5){
+			printf("Output EnP[%i]  = %e\n", k, EnP[k]);
+		}
+	}
 //    *tpeng = sum(EnP2, targets->num);
 
     return;

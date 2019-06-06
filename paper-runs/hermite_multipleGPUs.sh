@@ -26,19 +26,20 @@ NUMTARGETS=$N
 DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st$N_coulomb.bin  
  
 #../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM   /home/njvaughn/synchronizedDataFiles/KITCpaperData/benzeneData/coulombSpeedup/ds.csv $N $N 0.0 0
+NUMDEVICES=1
 
 for ORDER in 7 
 do
 	for THETA in 0.9
 	  do    
-		for BATCHSIZE in 3000
+		for BATCHSIZE in 2500
 		  do       
-		     for MAXPARNODE in 3000 
+		     for MAXPARNODE in 2500 
 		     	do
 		     	for POTENTIALTYPE in 4     
 		     	do
 		     		#echo Doing Nothing
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE
+		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
 		     	done
 		     done
 		 done
