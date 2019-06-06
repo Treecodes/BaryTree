@@ -14,7 +14,7 @@
 void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
-                int pot_type, double kappa);
+                int pot_type, double kappa, int numDevices);
 
 /* The treedriver routine in Fortran */
 int main(int argc, char **argv)
@@ -51,6 +51,7 @@ int main(int argc, char **argv)
     double dpeng, dpengglob;
 
     double kappa;
+    int numDevices;
 
     // insert variables for date-time calculation?
     double time1, time2, time_direct, time_direct_tot;
@@ -84,6 +85,8 @@ int main(int argc, char **argv)
             printf("      numparsT:  number of targets \n");                 // 1000000
             printf("         kappa:  screened Coulomb parameter \n");        // 0.00
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");   // 1
+            printf("      number of devices: \n");   // 1
+
         }
         return 0;
     }
@@ -95,6 +98,7 @@ int main(int argc, char **argv)
     numparsT = atoi(argv[6]);
     kappa = atof(argv[7]);
     pot_type = atoi(argv[8]);
+    numDevices = atoi(argv[9]);
     
     
     numparsTloc = (int)floor((double)numparsT/(double)p);
@@ -149,7 +153,7 @@ int main(int argc, char **argv)
 
     time1 = MPI_Wtime();
     direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, numparsS, numparsTloc,
-                denergy, &dpeng, pot_type, kappa);
+                denergy, &dpeng, pot_type, kappa, numDevices);
 
     time2 = MPI_Wtime();
     time_direct = time2-time1;
@@ -297,14 +301,15 @@ int main(int argc, char **argv)
 void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 				double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
-                int pot_type, double kappa)
+                int pot_type, double kappa, int numDevices)
 {
         /* local variables */
         int i, j;
         double tx, ty, tz, xi, yi, zi, qi, teng, rad;
 
 
-#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
+//#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
+#pragma omp parallel num_threads(numDevices)
         {
         acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 
@@ -313,7 +318,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
         {
 
 
-		int numDevices = acc_get_num_devices(acc_get_device_type());
+//		int numDevices = acc_get_num_devices(acc_get_device_type());
 		printf("numDevices: %i\n", numDevices);
 		int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 		printf("this_thread: %i\n", this_thread);

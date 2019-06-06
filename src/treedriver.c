@@ -18,7 +18,7 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
-                double *tEn, double *tpeng, double *timetree)
+                double *tEn, double *tpeng, double *timetree, int numDevices)
 {
 
     /* local variables */
@@ -142,8 +142,10 @@ void treedriver(struct particles *sources, struct particles *targets,
     printf("                tree minpars: %d\n", minpars);
     printf("            number of leaves: %d\n", numleaves);
     printf("             number of nodes: %d\n", numnodes);
+    printf("           number of devices: %d\n", numDevices);
     printf("           target batch size: %d\n", batch_size);
     printf("           number of batches: %d\n\n", batches->num);
+
 
     time1 = MPI_Wtime();
 
@@ -184,7 +186,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         	                            kappa, tpeng, tEn);
         }else if (pot_type == 4) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Coulomb Hermite).\n");
-        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn);
+        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn, numDevices);
         }
         
         reorder_energies(batches->reorder, targets->num, tEn);

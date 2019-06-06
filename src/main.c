@@ -27,6 +27,7 @@ int main(int argc, char **argv)
     int pot_type, tree_type;
     int pflag, sflag, dflag, gflag = 0;
     int batch_size;
+    int numDevices;
 
     double theta, temp;
     double kappa;
@@ -118,6 +119,7 @@ int main(int argc, char **argv)
     sflag = atoi(argv[14]);
     dflag = atoi(argv[15]);
     batch_size = atoi(argv[16]);
+    numDevices = atoi(argv[17]);
 
     printf("Read in arguments.c\n");
 
@@ -313,7 +315,7 @@ int main(int argc, char **argv)
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
-               tenergy, &tpeng, time_tree);
+               tenergy, &tpeng, time_tree, numDevices);
 
     
     /* Reducing values to root process */

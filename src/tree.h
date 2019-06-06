@@ -139,7 +139,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP);
+                 double *tpeng, double *EnP, int numDevices);
 
 void compute_pc_hermite(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
