@@ -424,8 +424,10 @@ void pc_treecode(struct tnode *p, struct batch *batches,
         }
     }
     } // end acc data region
-    for (int k = 0; k < targets->num; k++)
-    		EnP[k] += EnP2[k];
+    for (int k = 0; k < targets->num; k++){
+    	if (EnP2[k] != 0.0)
+			EnP[k] += EnP2[k];
+		}
 	} // end omp parallel region
 
     printf("Exited the main comp_pc call.\n");

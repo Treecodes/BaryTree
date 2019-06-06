@@ -175,15 +175,15 @@ void treedriver(struct particles *sources, struct particles *targets,
         } else if (pot_type == 1) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
             pc_treecode_yuk(troot, batches, sources, targets, clusters,
-                            kappa, tpeng, tEn);
+                            kappa, tpeng, tEn, numDevices);
         }else if (pot_type == 2) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
         	pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
-        	                            kappa, tpeng, tEn);
+        	                            kappa, tpeng, tEn, numDevices);
         }else if (pot_type == 3) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
         	pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
-        	                            kappa, tpeng, tEn);
+        	                            kappa, tpeng, tEn, numDevices);
         }else if (pot_type == 4) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Coulomb Hermite).\n");
         	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn, numDevices);

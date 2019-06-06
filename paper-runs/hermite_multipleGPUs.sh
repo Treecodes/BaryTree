@@ -12,10 +12,11 @@ N=1000000
 
 
 ## Coulomb: Hermite
-KAPPA=0.0 
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/K20_hermite_GPU_parallelized_$N.csv
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_hermite_GPU_parallelized_nonStatic_$N.csv
+#OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_hermite_GPU_parallelized_nonStatic_$N.csv
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/bughunt.csv
+
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TitanV_Lagrange_yukawa_$N.csv
 
 
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -24,14 +25,19 @@ TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
 #TARGETS=/scratch/krasny_fluxg/njvaughn/examplesBenzene/T$N.bin
 NUMSOURCES=$N
 NUMTARGETS=$N
-DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin  
- 
-../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM   /home/njvaughn/synchronizedDataFiles/KITCpaperData/benzeneData/coulombSpeedup/ds.csv $N $N 0.0 0 2
+#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulombSS_$N.bin  
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin  
+DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
 
-POTENTIALTYPE=0
-for ORDER in {4..7}
+NUMDEVICES=2
+POTENTIALTYPE=1
+KAPPA=0.5
+../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES
+
+
+for ORDER in 8
 do
-	for THETA in 0.5 0.7 0.9
+	for THETA in 0.8
 	  do    
 		for BATCHSIZE in 5000
 		  do       
@@ -39,8 +45,6 @@ do
 		     	do
 		     	for NUMDEVICES in 1 2     
 		     	do
-		     		#echo Doing Nothing
-		     		#../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM   /home/njvaughn/synchronizedDataFiles/KITCpaperData/benzeneData/coulombSpeedup/ds.csv $N $N 0.0 0 $NUMDEVICES
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
 		     	done
 		     done

@@ -328,12 +328,17 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 //		num_threads=1;
 
 		int targetStart, targetEnd;
-        if (pot_type == 0) {
-			#pragma omp for schedule(static)
-        	for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
+		#pragma omp for schedule(static)
+		for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
 
-        		targetStart = deviceNumber*numparsT/num_threads;
-        		targetEnd = (deviceNumber+1)*numparsT/num_threads;
+			targetStart = deviceNumber*numparsT/num_threads;
+			targetEnd = (deviceNumber+1)*numparsT/num_threads;
+        if (pot_type == 0) {
+//			#pragma omp for schedule(static)
+//        	for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
+//
+//        		targetStart = deviceNumber*numparsT/num_threads;
+//        		targetEnd = (deviceNumber+1)*numparsT/num_threads;
 
 				#pragma acc kernels
 				{
@@ -354,7 +359,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 									}
 							}
 							denergy[i] =  teng;
-					}
+
 				}
 
         	}
@@ -365,7 +370,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 #pragma acc kernels
         	{
 #pragma acc loop independent
-        		for (i = 0; i < numparsT; i++) {
+        		for (i = targetStart; i < targetEnd; i++) {
                         xi = xT[i];
                         yi = yT[i];
                         zi = zT[i];
@@ -389,7 +394,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 #pragma acc kernels
         	{
 #pragma acc loop independent
-        		for (i = 0; i < numparsT; i++) {
+        		for (i = targetStart; i < targetEnd; i++) {
                         xi = xT[i];
                         yi = yT[i];
                         zi = zT[i];
@@ -413,7 +418,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 #pragma acc kernels
         	{
 #pragma acc loop independent
-			for (i = 0; i < numparsT; i++) {
+			for (i = targetStart; i < targetEnd; i++) {
 					xi = xT[i];
 					yi = yT[i];
 					zi = zT[i];
@@ -435,6 +440,8 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 
         }
         }
+        } // end omp parallel
+
         // Instead of just summing the final values, use their quadrature weights (assuming targets=sources)
 //		  for (i=0;i<numparsT;i++){
 //			  denergy[i] *= wS[i];

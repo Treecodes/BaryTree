@@ -179,14 +179,14 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 	}
 //#pragma omp barrier
     for (int k = 0; k < targets->num; k++){
-//		#pragma omp critical
-		EnP[k] += EnP2[k];
+		if (EnP2[k] != 0.0)
+			EnP[k] += EnP2[k];
+		}
 //		if (k<5){
 //			printf("Thread %i\n", this_thread);
 //			printf("EnP2[%i]  = %e\n", k, EnP2[k]);
 //			printf("EnP[%i]  = %e\n\n", k, EnP[k]);
 //		}
-    }
 //    }
 //#pragma omp barrier
 } // end omp parallel region

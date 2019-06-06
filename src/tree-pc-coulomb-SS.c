@@ -474,32 +474,51 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 
 void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP)
+                     double kappa, double *tpeng, double *EnP, int numDevices)
 {
     /* local variables */
     int i, j;
     double kappaSq=kappa*kappa;
     for (i = 0; i < targets->num; i++)
-        EnP[i] = 2.0*M_PI*kappaSq*targets->q[i]; // change this to whatever it should be
+        EnP[i] = 0.0; // change this to whatever it should be
     
+#pragma omp parallel num_threads(numDevices)
+	{
+        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+
+        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+
+		double *EnP2;
+		make_vector(EnP2,targets->num);
+		for (i = 0; i < targets->num; i++)
+			EnP2[i] = 2.0*M_PI*kappaSq*targets->q[i];
+
 #pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
 		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num]) \
-		copy(EnP[0:targets->num])
+		copy(EnP2[0:targets->num])
     {
-    for (i = 0; i < batches->num; i++) {
+
+	#pragma omp for private(j)
+	for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc_coulomb_SS(p->child[j],
                 batches->index[i], batches->center[i], batches->radius[i],
                 sources->x, sources->y, sources->z, sources->q, sources->w,
-                targets->x, targets->y, targets->z, targets->q, kappaSq, EnP,
+                targets->x, targets->y, targets->z, targets->q, kappaSq, EnP2,
 				clusters->x, clusters->y, clusters->z, clusters->q, clusters->w);
         }
     }
-    }
-//    for (i=0;i<targets->num;i++){
-//		EnP[i] *= sources->w[i];
-//	}
+    } // end acc data region
+
+    for (int k = 0; k < targets->num; k++){
+    	if (EnP2[k] != 0.0)
+    		EnP[k] += EnP2[k];
+    	}
+	} // end omp parallel region
+
     *tpeng = sum(EnP, targets->num);
     
     return;
