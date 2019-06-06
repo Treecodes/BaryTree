@@ -171,7 +171,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
-            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn);
+            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices);
         } else if (pot_type == 1) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
             pc_treecode_yuk(troot, batches, sources, targets, clusters,

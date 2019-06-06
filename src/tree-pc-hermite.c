@@ -163,7 +163,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 //			}
 //    	} // end omp for loop
 
-	#pragma omp for schedule(static) private(j)
+	#pragma omp for private(j)
 	for (i = 0; i < batches->num; i++) {
 		for (j = 0; j < p->num_children; j++ ) {
 			compute_pc_hermite(p->child[j],
