@@ -480,7 +480,7 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
     int i, j;
     double kappaSq=kappa*kappa;
     for (i = 0; i < targets->num; i++)
-        EnP[i] = 0.0; // change this to whatever it should be
+        EnP[i] = 2.0*M_PI*kappaSq*targets->q[i]; // change this to whatever it should be
     
 #pragma omp parallel num_threads(numDevices)
 	{
@@ -493,7 +493,7 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
 		double *EnP2;
 		make_vector(EnP2,targets->num);
 		for (i = 0; i < targets->num; i++)
-			EnP2[i] = 2.0*M_PI*kappaSq*targets->q[i];
+			EnP2[i] = 0.0;
 
 #pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \

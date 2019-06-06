@@ -25,7 +25,7 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
     int i, j;
     
     for (i = 0; i < targets->num; i++){
-        EnP[i] = 0.0;  // 4*pi*f_t/k**2
+        EnP[i] = 4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
     }
 
 
@@ -40,13 +40,14 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
 		double *EnP2;
 		make_vector(EnP2,targets->num);
 		for (i = 0; i < targets->num; i++)
-			EnP2[i] = 4.0*M_PI*targets->q[i]/kappa/kappa;
+			EnP2[i] = 0.0;
 
 #pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
 		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num]) \
 		copy(EnP2[0:targets->num])
     {
+	#pragma omp for private(j)
     for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc_yuk_SS(p->child[j],
