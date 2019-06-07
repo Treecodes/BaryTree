@@ -275,7 +275,7 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, doubl
 
 
 
-void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order){
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices){
 
 	int pointsPerCluster = (order+1)*(order+1)*(order+1);
 	int numInterpPoints = numnodes * pointsPerCluster;
@@ -292,11 +292,19 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 		clusters->w[i]=0.0;
 	}
 
+
+//#pragma omp parallel num_threads(numDevices)
+//	{
+//        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+
+
 #pragma acc data copyin(tt[0:torderlim], \
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
 		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num])
 
 	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
+
+
 
 	return;
 }

@@ -33,7 +33,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     double batch_lim[6];
     
     /* date and time */
-    double time1, time2;
+    double time1, time2, timeFillClusters1, timeFillClusters2;
 
     
     time1 = MPI_Wtime();
@@ -51,6 +51,12 @@ void treedriver(struct particles *sources, struct particles *targets,
     numnodes = 0;
     struct particles *clusters = NULL;
 	clusters = malloc(sizeof(struct particles));
+
+#pragma omp parallel num_threads(numDevices)
+	{
+        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+        acc_init(acc_get_device_type());
+	}
     
     printf("Creating tree... \n\n");
 
@@ -107,8 +113,9 @@ void treedriver(struct particles *sources, struct particles *targets,
 //		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
 //        {
 
+        timeFillClusters1 = MPI_Wtime();
         if ( (pot_type == 0) || (pot_type==1)) {
-        	fill_in_cluster_data(clusters, sources, troot, order);
+        	fill_in_cluster_data(clusters, sources, troot, order, numDevices);
         }else if  ( (pot_type == 2) || (pot_type==3)){
         	printf("Calling fill_in_cluster_data_SS().\n");
 			fill_in_cluster_data_SS(clusters, sources, troot, order);
@@ -116,6 +123,9 @@ void treedriver(struct particles *sources, struct particles *targets,
         	printf("Calling fill_in_cluster_data_hermite().\n");
 			fill_in_cluster_data_hermite(clusters, sources, troot, order);
 		}
+        timeFillClusters2 = MPI_Wtime();
+        timeFillClusters1 = timeFillClusters2-timeFillClusters1;
+        printf("Time to compute modified weights(s):  %f\n", timeFillClusters1);
 
     }
 
