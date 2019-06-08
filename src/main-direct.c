@@ -333,7 +333,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 
 			targetStart = deviceNumber*numparsT/num_threads;
 			targetEnd = (deviceNumber+1)*numparsT/num_threads;
-        if (pot_type == 0) {
+        if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.  Lagrange or Hermite.
 //			#pragma omp for schedule(static)
 //        	for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
 //
@@ -366,7 +366,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 //        	queue = (queue%2)+1;
 
 
-        } else if (pot_type == 1) {
+        } else if (pot_type == 1 || pot_type == 5) {
 #pragma acc kernels
         	{
 #pragma acc loop independent
@@ -389,7 +389,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
                 }
         }
 
-        } else if (pot_type == 2) {
+        } else if (pot_type == 2 || pot_type == 6) {
         	double kappaSq = kappa*kappa;
 #pragma acc kernels
         	{
@@ -414,7 +414,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
                 }
         }
 
-        } else if (pot_type == 3) {
+        } else if (pot_type == 3 || pot_type == 7) {
 #pragma acc kernels
         	{
 #pragma acc loop independent

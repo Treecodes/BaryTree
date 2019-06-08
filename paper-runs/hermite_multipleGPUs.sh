@@ -6,7 +6,7 @@ DFLAG=0
 
 #N=821000
 #N=2365328
-N=10000000
+N=100000
 #1328096
 
 
@@ -30,20 +30,20 @@ DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin
 DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
 
 NUMDEVICES=2
-POTENTIALTYPE=5
+POTENTIALTYPE=4
 KAPPA=0.5
 ../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
 
 
-for ORDER in {1..13}
+for ORDER in 3
 do
-	for THETA in 0.3 0.4 0.5 0.6 0.7 0.8 0.9 
+	for THETA in 0.8 
 	  do    
 		for BATCHSIZE in 5000
 		  do       
 		     for MAXPARNODE in 5000
 		     	do
-		     	for NUMDEVICES in 1 2     
+		     	for NUMDEVICES in 2     
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
 		     	done
