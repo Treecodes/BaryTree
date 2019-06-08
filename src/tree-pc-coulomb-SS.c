@@ -50,39 +50,9 @@ void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct partic
 	int i;
 
 
-//	make_vector(p->tx, torderlim);
-//	make_vector(p->ty, torderlim);
-//	make_vector(p->tz, torderlim);
 	pc_comp_ms_modifiedF_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
 					clusters->x,clusters->y,clusters->z,clusters->q,clusters->w);
 
-//	if (torderlim*torderlim*torderlim < p->numpar){ // don't compute moments for clusters that won't get used
-////		pc_comp_ms_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, clusters->q, clusters->w);
-//
-//		if (p->node_index > 0){
-//		pc_comp_ms_modifiedF_SS(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
-//				clusters->x,clusters->y,clusters->z,clusters->q,clusters->w);
-//
-//		p->exist_ms = 1;
-//
-//		}
-
-
-//		// fill in arrays, starting at startingIndex
-//		int k1,k2,k3;
-//		int kk = -1;
-//		for (k3 = 0; k3 < torderlim; k3++) {
-//			for (k2 = 0; k2 < torderlim; k2++) {
-//				for (k1 = 0; k1 < torderlim; k1++) {
-//					kk++;
-//					clusters->x[kk+startingIndex] = p->tx[k1];
-//					clusters->y[kk+startingIndex] = p->ty[k2];
-//					clusters->z[kk+startingIndex] = p->tz[k3];
-//				}
-//			}
-//		}
-
-//	}
 
 	for (i = 0; i < p->num_children; i++) {
 		addNodeToArray_SS(p->child[i],sources,clusters,order,numInterpPoints,pointsPerCluster);

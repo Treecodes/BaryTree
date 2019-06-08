@@ -1,7 +1,7 @@
 #OFILES = main.o tools.o tree-cp.o tree-pc.o tree-batch.o \
 #	 treedriver.o partition.o xmalloc.o sort.o
 OFILES = main.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-hermite.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o \
-	 treedriver.o partition.o xmalloc.o sort.o 
+	 treedriver.o partition.o xmalloc.o sort.o tree-pc-hermite-coulombSS.o
 TARGET = tree.exe
 
 OFILESA = main-direct.o tools.o xmalloc.o
@@ -105,6 +105,8 @@ tree-cp-yuk.o: tree-cp-yuk.c array.h xmalloc.h globvars.h tnode.h batch.h partic
 tree-pc.o: tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
 tree-pc-hermite.o: tree-pc-hermite.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
+		  tools.h partition.h tree.h
+tree-pc-hermite-coulombSS.o: tree-pc-hermite-coulombSS.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h
 tree-pc-yuk.o: tree-pc-yuk.c tree-pc.c array.h xmalloc.h globvars.h tnode.h batch.h particles.h \
 		  tools.h partition.h tree.h

@@ -114,7 +114,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        {
 
         timeFillClusters1 = MPI_Wtime();
-        if ( (pot_type == 0) || (pot_type==1)) {
+        if (        (pot_type == 0) || (pot_type==1)) {
         	fill_in_cluster_data(clusters, sources, troot, order, numDevices);
         }else if  ( (pot_type == 2) || (pot_type==3)){
         	printf("Calling fill_in_cluster_data_SS().\n");
@@ -122,6 +122,9 @@ void treedriver(struct particles *sources, struct particles *targets,
         }else if  ( (pot_type == 4) || (pot_type==5)){
         	printf("Calling fill_in_cluster_data_hermite().\n");
 			fill_in_cluster_data_hermite(clusters, sources, troot, order);
+		}else if  ( (pot_type == 6) || (pot_type==7)){
+			printf("Calling fill_in_cluster_data_hermite_SS().\n");
+			fill_in_cluster_data_hermite_SS(clusters, sources, troot, order);
 		}
         timeFillClusters2 = MPI_Wtime();
         timeFillClusters1 = timeFillClusters2-timeFillClusters1;

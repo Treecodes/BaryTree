@@ -24,6 +24,7 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 
 void addNodeToArray(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
+void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void comp_tcoeff(double dx, double dy, double dz);
 
@@ -109,6 +110,11 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ , double *clusterW);
 
+void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ,
+		double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz,
+		double * clusterW, double * clusterWx ,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWzx,double * clusterWxyz);
+
 void pc_comp_weights(struct tnode *p);
 
 
@@ -141,6 +147,10 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
                  double *tpeng, double *EnP, int numDevices);
 
+void pc_treecode_hermite_SS(struct tnode *p, struct batch *batches,
+                 struct particles *sources, struct particles *targets, struct particles *clusters,
+				 double kappa, double *tpeng, double *EnP, int numDevices);
+
 void compute_pc_hermite(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
@@ -148,6 +158,13 @@ void compute_pc_hermite(struct tnode *p,
 				double *clusterX, double *clusterY, double *clusterZ, double *clusterM,
 				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
+void compute_pc_hermite_SS(struct tnode *p,
+                int *batch_ind, double *batch_mid, double batch_rad,
+                double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP,
+				double * clusterX, double * clusterY, double * clusterZ, double * clusterQ,
+				double * clusterQx,double * clusterQy,double * clusterQz,double * clusterQxy,double * clusterQyz,double * clusterQxz,double * clusterQxyz,
+				double * clusterW, double * clusterWx,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWxz,double * clusterWxyz);
 
 /* used by particle-cluster Yukawa */
 void pc_treecode_yuk(struct tnode *p, struct batch *batches,

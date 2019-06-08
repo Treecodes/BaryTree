@@ -16,7 +16,7 @@ N=10000000
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_hermite_GPU_parallelized_nonStatic_$N.csv
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/bughunt.csv
 
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TitanV_Lagrange_yukawaSS_$N.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TitanV_hermite_parallel_$N.csv 
 
 
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -30,18 +30,18 @@ DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin
 DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
 
 NUMDEVICES=2
-POTENTIALTYPE=3
+POTENTIALTYPE=5
 KAPPA=0.5
 ../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
 
 
 for ORDER in {1..13}
 do
-	for THETA in 0.4 0.6 0.8
+	for THETA in 0.3 0.4 0.5 0.6 0.7 0.8 0.9 
 	  do    
 		for BATCHSIZE in 5000
 		  do       
-		     for MAXPARNODE in 5000 
+		     for MAXPARNODE in 5000
 		     	do
 		     	for NUMDEVICES in 1 2     
 		     	do

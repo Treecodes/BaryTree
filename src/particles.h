@@ -21,6 +21,14 @@ struct particles
         double *qxz;
         double *qxyz;
 
+		double *wx;
+		double *wy;
+		double *wz;
+		double *wxy;
+		double *wyz;
+		double *wxz;
+		double *wxyz;
+
 };
 
 #endif /* H_PARTICLES_H */

@@ -46,7 +46,7 @@ do
 		  do       
 		     for MAXPARNODE in 5000 
 		     	do
-		     	for NUMDEVICES in 1 2     
+		     	for NUMDEVICES in 2     
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
 		     		TCPROF=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TC_nvprof_$NUMDEVICES.prof
