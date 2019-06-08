@@ -147,7 +147,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
                  double *tpeng, double *EnP, int numDevices);
 
-void pc_treecode_hermite_SS(struct tnode *p, struct batch *batches,
+void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
 				 double kappa, double *tpeng, double *EnP, int numDevices);
 

@@ -103,11 +103,11 @@ void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struc
 
 
 
-void pc_treecode_hermite_SS(struct tnode *p, struct batch *batches,
+void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
 				 double kappa, double *tpeng, double *EnP, int numDevices)
 {
-	printf("Entered pc_treecoode_hermite.\n");
+	printf("Entered pc_treecode_hermite_coulomb_SS.\n");
     /* local variables */
     int i, j;
     double kappaSq=kappa*kappa;
@@ -141,7 +141,6 @@ void pc_treecode_hermite_SS(struct tnode *p, struct batch *batches,
 		clusters->wx[0:clusters->num],clusters->wy[0:clusters->num],clusters->wz[0:clusters->num],clusters->wxy[0:clusters->num],clusters->wyz[0:clusters->num], \
 		clusters->wxz[0:clusters->num], clusters->wxyz[0:clusters->num]) \
 		copy(EnP2[0:targets->num])
-
     {
 
 
@@ -176,7 +175,7 @@ void pc_treecode_hermite_SS(struct tnode *p, struct batch *batches,
 
     return;
 
-} /* END of function pc_treecode */
+} /* END of function pc_treecode_hermite_coulomb_SS */
 
 
 
@@ -220,9 +219,8 @@ void compute_pc_hermite_SS(struct tnode *p,
 
 
 
-	double xi,yi,zi,qi,r,rinv,r3inv,r5inv,r7inv;
+	double xi,yi,zi,qi,qiexp,r,rinv,r3inv,r5inv,r7inv;
 	int batchStart = batch_ind[0] - 1, sourceIdx;
-//	double pointvals[4];
 # pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, \
 		clusterQ,clusterQx,clusterQy,clusterQz,clusterQxy,clusterQyz,clusterQxz,clusterQxyz, \
 		clusterW,clusterWx,clusterWy,clusterWz,clusterWxy,clusterWyz,clusterWxz,clusterWxyz)
@@ -234,7 +232,7 @@ void compute_pc_hermite_SS(struct tnode *p,
 		yi = yT[ batchStart + i];
 		zi = zT[ batchStart + i];
 		qi = qT[ batchStart + i];
-		#pragma acc loop independent
+		#pragma acc loop independent private(qiexp)
 		for (j = 0; j < numberOfInterpolationPoints; j++){
 			sourceIdx = clusterStart + j;
 			// Compute x, y, and z distances between target i and interpolation point j
@@ -250,18 +248,18 @@ void compute_pc_hermite_SS(struct tnode *p,
 			r5inv = r3inv*rinv*rinv;
 			r7inv = r5inv*rinv*rinv;
 
-			qi *= exp(-r*r/kappaSq);
+			qiexp = qi*exp(-r*r/kappaSq);
 
 
 
-			tempPotential +=     rinv  * (    clusterQ[sourceIdx]-qi*clusterW[sourceIdx])
-						  +      r3inv * (   (clusterQx[sourceIdx]-qi*clusterWx[sourceIdx])*dxt
-										  +  (clusterQy[sourceIdx]-qi*clusterWy[sourceIdx])*dyt
-										  +  (clusterQz[sourceIdx]-qi*clusterWz[sourceIdx])*dzt )
-						  + 3 *  r5inv * (   (clusterQxy[sourceIdx]-qi*clusterWxy[sourceIdx])*dxt*dyt
-										  +  (clusterQyz[sourceIdx]-qi*clusterWyz[sourceIdx])*dyt*dzt
-										  +  (clusterQxz[sourceIdx]-qi*clusterWxz[sourceIdx])*dxt*dzt )
-						  + 15 * r7inv * (    clusterQxyz[sourceIdx]-qi*clusterWxyz[sourceIdx])*dxt*dyt*dzt
+			tempPotential +=     rinv  * (    clusterQ[sourceIdx]   -qiexp*clusterW[sourceIdx])
+						  +      r3inv * (   (clusterQx[sourceIdx]  -qiexp*clusterWx[sourceIdx])*dxt
+										  +  (clusterQy[sourceIdx]  -qiexp*clusterWy[sourceIdx])*dyt
+										  +  (clusterQz[sourceIdx]  -qiexp*clusterWz[sourceIdx])*dzt )
+						  + 3 *  r5inv * (   (clusterQxy[sourceIdx] -qiexp*clusterWxy[sourceIdx])*dxt*dyt
+										  +  (clusterQyz[sourceIdx] -qiexp*clusterWyz[sourceIdx])*dyt*dzt
+										  +  (clusterQxz[sourceIdx] -qiexp*clusterWxz[sourceIdx])*dxt*dzt )
+						  + 15 * r7inv * (    clusterQxyz[sourceIdx]-qiexp*clusterWxyz[sourceIdx])*dxt*dyt*dzt
 											;
 
 
@@ -282,16 +280,18 @@ void compute_pc_hermite_SS(struct tnode *p,
 
         if ( (p->num_children == 0) | (smallEnoughLeaf==1) ) {
 //        	printf("MAC rejected, and node has no children.  Calling pc_comp_dierct()...\n");
-            pc_comp_direct(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
-                           xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP);
+        	pc_comp_direct_coulomb_SS(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
+                           xS, yS, zS, qS, wS, xT, yT, zT, qT, kappaSq, EnP);
         } else {
 //        	printf("MAC rejected, recursing over children...\n");
             for (i = 0; i < p->num_children; i++) {
-                compute_pc_hermite(p->child[i], batch_ind, batch_mid, batch_rad,
-                			xS, yS, zS, qS, wS, xT, yT, zT, qT, EnP,
+            	compute_pc_hermite_SS(p->child[i], batch_ind, batch_mid, batch_rad,
+                			xS, yS, zS, qS, wS, xT, yT, zT, qT, kappaSq, EnP,
 							clusterX, clusterY, clusterZ, clusterQ,
 							clusterQx,clusterQy,clusterQz,clusterQxy,
-							clusterQyz,clusterQxz,clusterQxyz);
+							clusterQyz,clusterQxz,clusterQxyz,clusterW,
+							clusterWx,clusterWy,clusterWz,clusterWxy,
+							clusterWyz,clusterWxz,clusterWxyz);
             }
         }
     }
@@ -599,13 +599,6 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, do
 		clusterWyz[interpolationPointIndex] += tempW5;
 		clusterWxz[interpolationPointIndex] += tempW6;
 		clusterWxyz[interpolationPointIndex] += tempW7;
-
-//		printf("\n\n %1.2e\n", clusterQ[8*(startingIndexInClusters + j) + 0]);
-//		printf("%1.2e\n", clusterQ[8*(startingIndexInClusters + j) + 1]);
-//		printf("%1.2e\n", clusterQ[8*(startingIndexInClusters + j) + 2]);
-//		printf("%1.2e\n", clusterQ[8*(startingIndexInClusters + j) + 3]);
-//		printf("%1.2e\n", clusterQ[8*(startingIndexInClusters + j) + 5]);
-//		printf("%1.2e\n\n", clusterQ[8*(startingIndexInClusters + j) + 7]);
 
 	}
 
