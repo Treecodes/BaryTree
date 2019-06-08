@@ -69,9 +69,10 @@ void fill_in_cluster_data_hermite_SS(struct particles *clusters, struct particle
 
 #pragma acc data copy(tt[0:torderlim],ww[0:torderlim], \
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num], \
+		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
 		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
-		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num],clusters->wx[0:clusters->num],clusters->wy[0:clusters->num],clusters->wz[0:clusters->num], \
+		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num],\
+		clusters->w[0:clusters->num], clusters->wx[0:clusters->num],clusters->wy[0:clusters->num],clusters->wz[0:clusters->num], \
 		clusters->wxy[0:clusters->num],clusters->wyz[0:clusters->num],clusters->wxz[0:clusters->num], clusters->wxyz[0:clusters->num])
 
 	addNodeToArray_hermite_SS(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
@@ -184,9 +185,11 @@ void compute_pc_hermite_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterQ,
-				double * clusterQx,double * clusterQy,double * clusterQz,double * clusterQxy,double * clusterQyz,double * clusterQxz,double * clusterQxyz,
-				double * clusterW, double * clusterWx,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWxz,double * clusterWxyz)
+				double * clusterX, double * clusterY, double * clusterZ,
+				double * clusterQ,double * clusterQx,double * clusterQy,double * clusterQz,
+				double * clusterQxy,double * clusterQyz,double * clusterQxz,double * clusterQxyz,
+				double * clusterW, double * clusterWx,double * clusterWy,double * clusterWz,
+				double * clusterWxy,double * clusterWyz,double * clusterWxz,double * clusterWxyz)
 {
 //	printf("Entering compute_cp_hermite.  Batch start: %d.  Batch end: %d.\n", batch_ind[0]-1, batch_ind[1]);
     /* local variables */
@@ -308,10 +311,10 @@ void compute_pc_hermite_SS(struct tnode *p,
 
 void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ,
-		double *clusterQ, double *clusterQx, double *clusterQy, double *clusterQz, double *clusterQxy,
-		double *clusterQyz, double *clusterQxz, double *clusterQxyz,
-		double *clusterW, double *clusterWx, double *clusterWy, double *clusterWz, double *clusterWxy,
-		double *clusterWyz, double *clusterWxz, double *clusterWxyz){
+		double *clusterQ, double *clusterQx, double *clusterQy, double *clusterQz,
+		double *clusterQxy, double *clusterQyz, double *clusterQxz, double *clusterQxyz,
+		double *clusterW, double *clusterWx, double *clusterWy, double *clusterWz,
+		double *clusterWxy,double *clusterWyz, double *clusterWxz, double *clusterWxyz){
 
 	int i,j,k;
 	int pointsPerCluster = torderlim*torderlim*torderlim;
@@ -581,23 +584,23 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, do
 
 		}
 
-		clusterQ[interpolationPointIndex] += temp0;
-		clusterQx[interpolationPointIndex] += temp1;
-		clusterQy[interpolationPointIndex] += temp2;
-		clusterQz[interpolationPointIndex] += temp3;
-		clusterQxy[interpolationPointIndex] += temp4;
-		clusterQyz[interpolationPointIndex] += temp5;
-		clusterQxz[interpolationPointIndex] += temp6;
+		clusterQ[interpolationPointIndex]    += temp0;
+		clusterQx[interpolationPointIndex]   += temp1;
+		clusterQy[interpolationPointIndex]   += temp2;
+		clusterQz[interpolationPointIndex]   += temp3;
+		clusterQxy[interpolationPointIndex]  += temp4;
+		clusterQyz[interpolationPointIndex]  += temp5;
+		clusterQxz[interpolationPointIndex]  += temp6;
 		clusterQxyz[interpolationPointIndex] += temp7;
 
 
-		clusterW[interpolationPointIndex] += tempW0;
-		clusterWx[interpolationPointIndex] += tempW1;
-		clusterWy[interpolationPointIndex] += tempW2;
-		clusterWz[interpolationPointIndex] += tempW3;
-		clusterWxy[interpolationPointIndex] += tempW4;
-		clusterWyz[interpolationPointIndex] += tempW5;
-		clusterWxz[interpolationPointIndex] += tempW6;
+		clusterW[interpolationPointIndex]    += tempW0;
+		clusterWx[interpolationPointIndex]   += tempW1;
+		clusterWy[interpolationPointIndex]   += tempW2;
+		clusterWz[interpolationPointIndex]   += tempW3;
+		clusterWxy[interpolationPointIndex]  += tempW4;
+		clusterWyz[interpolationPointIndex]  += tempW5;
+		clusterWxz[interpolationPointIndex]  += tempW6;
 		clusterWxyz[interpolationPointIndex] += tempW7;
 
 	}

@@ -4,9 +4,9 @@ SFLAG=1
 PFLAG=0
 DFLAG=0
 
-#N=821000
+N=821000
 #N=2365328
-N=100000
+#N=100000
 #1328096
 
 
@@ -19,17 +19,17 @@ N=100000
 OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TitanV_hermite_parallel_$N.csv 
 
 
-SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
-TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
-#SOURCES=/scratch/krasny_fluxg/njvaughn/examplesBenzene/S$N.bin
-#TARGETS=/scratch/krasny_fluxg/njvaughn/examplesBenzene/T$N.bin
+#SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
+#TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
+SOURCES=/scratch/krasny_fluxg/njvaughn/examplesBenzene/S$N.bin
+TARGETS=/scratch/krasny_fluxg/njvaughn/examplesBenzene/T$N.bin
 NUMSOURCES=$N
 NUMTARGETS=$N
 #DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulombSS_$N.bin  
 DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin  
 DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
 
-NUMDEVICES=1
+NUMDEVICES=2
 POTENTIALTYPE=6
 KAPPA=0.5
 #../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
@@ -43,7 +43,7 @@ do
 		  do       
 		     for MAXPARNODE in 5000
 		     	do
-		     	for POTENTIALTYPE in 2 6     
+		     	for POTENTIALTYPE in 6     
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
 		     	done
