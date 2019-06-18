@@ -114,8 +114,9 @@ void create_target_batch(struct batch *batches, struct particles *particles,
     t2 = y_max - y_mid;
     t3 = z_max - z_mid;
 
-    sqradius = t1*t1 + t2*t2 + t3*t3;
-    radius = sqrt(sqradius);
+//    sqradius = t1*t1 + t2*t2 + t3*t3;
+//    radius = sqrt(sqradius);
+	radius = max3(t1,t2,t3);
     
     /*set particle limits, tree level of node, and nullify child pointers*/
 
