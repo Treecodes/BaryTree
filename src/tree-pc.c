@@ -102,10 +102,8 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
     t2 = (*p)->y_max - (*p)->y_mid;
     t3 = (*p)->z_max - (*p)->z_mid;
 
-//    (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
-//    (*p)->radius = sqrt((*p)->sqradius);
-    (*p)->radius = max3(t1,t2,t3);
-    (*p)->sqradius = (*p)->radius*(*p)->radius;
+    (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
+    (*p)->radius = sqrt((*p)->sqradius);
 
     /*set particle limits, tree level of node, and nullify child pointers*/
     (*p)->ibeg = ibeg;
