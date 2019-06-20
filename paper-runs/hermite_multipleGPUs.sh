@@ -6,7 +6,7 @@ DFLAG=0
 
 #N=821000
 #N=2365328
-N=1000000
+N=10000000
 #1328096
 
 
@@ -17,7 +17,7 @@ N=1000000
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/bughunt.csv
 
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TitanV_hermite_parallel_$N.csv 
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/TitanV_Coulomb_$N.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/schedule_testing_$N.csv 
 
 
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -36,18 +36,19 @@ DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/directSum_T
 NUMDEVICES=1
 KAPPA=0.0
 POTENTIALTYPE=0
-../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
+#../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
+POTENTIALTYPE=4
 
-
-for ORDER in {1..15}
+export OMP_SCHEDULE=static
+for ORDER in 5
 do
-	for THETA in 0.4 0.5 0.6 0.7 0.8 0.9
+	for THETA in 0.7
 	  do    
 		for BATCHSIZE in 5000
 		  do       
 		     for MAXPARNODE in 5000
 		     	do
-		     	for POTENTIALTYPE in 0     
+		     	for NUMDEVICES in 2     
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
 		     	done
@@ -56,3 +57,21 @@ do
 	done
 done 
 
+
+export OMP_SCHEDULE=guided
+for ORDER in 5
+do
+	for THETA in 0.7
+	  do    
+		for BATCHSIZE in 5000
+		  do       
+		     for MAXPARNODE in 5000
+		     	do
+		     	for NUMDEVICES in 2     
+		     	do
+		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
+		     	done
+		     done 
+		 done
+	done
+done 

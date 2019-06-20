@@ -84,7 +84,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 
 //    omp_set_num_threads(1);
 //#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type())) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
-#pragma omp parallel num_threads(numDevices): //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
+#pragma omp parallel num_threads(numDevices) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
 //#pragma omp parallel
 	{
         acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
@@ -163,7 +163,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 //			}
 //    	} // end omp for loop
 
-	#pragma omp for private(j) schedule(guided)
+	#pragma omp for private(j) schedule(runtime)
 	for (i = 0; i < batches->num; i++) {
 		for (j = 0; j < p->num_children; j++ ) {
 			compute_pc_hermite(p->child[j],
@@ -178,7 +178,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 
 	}
 //#pragma omp barrier
-    for (int k = 0; k < targets->num; k++){
+    for (int k = 0; k < targets->num;  k++){
 		if (EnP2[k] != 0.0)
 			EnP[k] += EnP2[k];
 		}
