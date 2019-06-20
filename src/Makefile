@@ -31,15 +31,14 @@ CC = mpicc -fPIC
 #CFLAGS = -O3 -acc -ta=nvidia,time,keepptx,keepgpu -Minfo=accel -lm -mp  # to include openACC details (during compilation and runtime)
 
 CFLAGS = -O3 -acc -ta=nvidia -lm -mp  # to supress any openACC details
-CFLAGS35 = -O3 -acc -ta=tesla:cc35 -lm -mp  # to supress any openACC details
-CFLAGS70 = -O3 -acc -ta=tesla:cc70 -lm -mp  # to supress any openACC details
+#CFLAGS35 = -O3 -acc -ta=tesla:cc35 -lm -mp  # to supress any openACC details
+#CFLAGS70 = -O3 -acc -ta=tesla:cc70 -lm -mp  # to supress any openACC details
 #CFLAGS = -O3 -acc -ta=tesla:cc70 -lm -mp  # to compile for the titanv
 
 #CFLAGS = -O3 -ta=nvidia,time -Minfo=accel -lm  # to supress any openACC details and not use pragmas
 CXXFLAGS='-fPIC'
 
- 
-## While testing openACC, drop the mkl business
+# While testing openACC, drop the mkl business
 #CFLAGS = -fopenmp -O3 -lm -I${MKLROOT}/include -std=gnu99
 #LDFLAGS = -DMKL_ILP64 -I${MKLROOT}/include -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -lpthread -ldl -liomp5
 endif
@@ -89,7 +88,7 @@ bin:
 	
 
 library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
-	$(CC) $(CFLAGS) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
+	$(CC) $(CFLAGS) $(LDFLAGS) treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-pc-hermite.o tree-pc-hermite-coulombSS.o tree-batch.o partition.o xmalloc.o sort.o -shared -o ../lib/libtreedriverWrapper.so
 
 main.o: main.c array.h xmalloc.h treedriver.h tools.h particles.h
 tools.o: tools.c array.h xmalloc.h
