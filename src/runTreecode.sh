@@ -1,18 +1,14 @@
-!/bin/bash
-#export OMP_NUM_THREADS=1
-
-#../bin/tree.exe   ../examplesOxygenAtom/S21952.bin ../examplesOxygenAtom/T21952.bin ../examplesOxygenAtom/ex_st21952_coulomb.bin ../examplesOxygenAtom/out.tsv 21952 21952 0.7 10 1 500 0.0 0 1 0 0 50
-#../bin/tree.exe   ../examplesOxygenAtom/S79576.bin ../examplesOxygenAtom/T79576.bin ../examplesOxygenAtom/ex_st79576_coulomb.bin ../examplesOxygenAtom/out.tsv 79576 79576 0.9 8 1 2000 0.0 0 1 0 0 500
-
-#../bin/tree.exe   ../examplesOxygenAtom/S79576.bin ../examplesOxygenAtom/T79576.bin ../examplesOxygenAtom/ex_st79576_coulomb.bin ../examplesOxygenAtom/out.tsv 79576 79576 0.7 7 1 1000 0.0 0 1 0 0 1000
+#!/bin/bash
 
 
-SOURCES=../examplesOxygenAtom/S21952.bin
-TARGETS=../examplesOxygenAtom/T21952.bin
-DIRECTSUM=../examplesOxygenAtom/ex_st21952_coulomb.bin
-OUTFILE=../examplesOxygenAtom/out.tsv
-NUMSOURCES=21952
-NUMTARGETS=21952
+N=79567
+N=21952
+SOURCES=../examplesOxygenAtom/S$N.bin
+TARGETS=../examplesOxygenAtom/T$N.bin
+DIRECTSUM=../examplesOxygenAtom/ex_st79567_coulomb.bin
+DS_CSV=../examplesOxygenAtom/local_coulomb.csv  
+
+OUTFILE=../examplesOxygenAtom/out.csv
 THETA=0.9
 ORDER=8
 TREETYPE=1
@@ -24,7 +20,7 @@ SFLAG=1
 DFLAG=0
 BATCHSIZE=1000
 NUMDEVICES=0
+NUMTHREADS=4
 
-#export TMPDIR=/tmp
-export OMP_NUM_THREADS=4
-../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
+../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
+../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
