@@ -19,7 +19,7 @@
 
 void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices)
+                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads)
 {
     /* local variables */
     int i, j;
@@ -29,10 +29,11 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
     }
 
 
-#pragma omp parallel num_threads(numDevices)
+#pragma omp parallel num_threads(numThreads)
 	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-
+    	if (omp_get_thread_num()<numDevices){
+    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+    	}
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
 		if (this_thread==0){printf("num_threads: %i\n", num_threads);}

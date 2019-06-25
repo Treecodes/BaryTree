@@ -145,11 +145,11 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices);
+                 double *tpeng, double *EnP, int numDevices, int numThreads);
 
 void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-				 double kappa, double *tpeng, double *EnP, int numDevices);
+				 double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
 
 void compute_pc_hermite(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
@@ -169,7 +169,7 @@ void compute_pc_hermite_SS(struct tnode *p,
 /* used by particle-cluster Yukawa */
 void pc_treecode_yuk(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices);
+                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
 
 void compute_pc_yuk(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
@@ -186,7 +186,7 @@ void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices);
+                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
 
 void compute_pc_yuk_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
@@ -203,7 +203,7 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappaSq, double *tpeng, double *EnP, int numDevices);
+                     double kappaSq, double *tpeng, double *EnP, int numDevices, int numThreads);
 
 void compute_pc_coulomb_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,

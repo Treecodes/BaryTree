@@ -68,7 +68,7 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 
 void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices)
+                 double *tpeng, double *EnP, int numDevices, int numThreads)
 {
 	printf("Entered pc_treecoode_hermite.\n");
     /* local variables */
@@ -84,11 +84,11 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 
 //    omp_set_num_threads(1);
 //#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type())) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
-#pragma omp parallel num_threads(numDevices) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
-//#pragma omp parallel
+#pragma omp parallel num_threads(numThreads)
 	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-
+    	if (omp_get_thread_num()<numDevices){
+    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+    	}
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 //		int numDevices = acc_get_num_devices(acc_get_device_type());
 		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
