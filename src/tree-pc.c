@@ -400,9 +400,13 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
     
+
+
 #pragma omp parallel num_threads(numDevices)
 	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+    	if (omp_get_thread_num()<=numDevices){
+    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+    	}
 
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 		if (this_thread==0){printf("numDevices: %i\n", numDevices);}

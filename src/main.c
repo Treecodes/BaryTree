@@ -252,7 +252,7 @@ int main(int argc, char **argv)
         make_vector(sources->z, numparsSloc);
         make_vector(sources->q, numparsSloc);
         make_vector(sources->w, numparsSloc);
-//        printf("Made source vectors.c\n");
+        printf("Made source vectors.c\n");
 //        make_vector(originalWeights, numparsS);
 
     
@@ -263,7 +263,7 @@ int main(int argc, char **argv)
         make_vector(targets->q, numparsT);
         make_vector(targets->order, numparsT);
         make_vector(tenergy, numparsT);
-//        printf("Made target vectors.c\n");
+        printf("Made target vectors.c\n");
         
         /* Reading in coordinates and charges for the source particles*/
         MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
             sources->w[i] = buf[4];
         }
         MPI_File_close(&fpmpi);
-
+        printf("Read in sources.\n");
 
         /* Reading in coordinates for target particles*/
         MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -291,6 +291,7 @@ int main(int argc, char **argv)
             targets->order[i] = i;
         }
         MPI_File_close(&fpmpi);
+        printf("Read in targets.\n");
 
         if (rank == 0) {
             make_vector(tenergyglob, numparsT);
@@ -302,15 +303,19 @@ int main(int argc, char **argv)
             MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
             MPI_File_close(&fpmpi);
         }
+        printf("Did MPI file stuff.\n");
+
 
     }
 
+    printf("Filling originalWeights.\n");
     for (i=0;i<numparsT;i++){
 		originalWeights[i] = sources->w[i];}
-
+    printf("originalWeights filled.  Starting timer.\n");
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
-
+    printf("Setup complete, calling treedriver...\n");
+    fflush(stdout);
     /* Calling main treecode subroutine to calculate approximate energy */
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,

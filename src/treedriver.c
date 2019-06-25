@@ -52,12 +52,16 @@ void treedriver(struct particles *sources, struct particles *targets,
     struct particles *clusters = NULL;
 	clusters = malloc(sizeof(struct particles));
 
-#pragma omp parallel num_threads(numDevices)
-	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-        acc_init(acc_get_device_type());
-	}
+    printf("Setting up accelerator devices. \n");
     
+    if (numDevices>0){
+		#pragma omp parallel num_threads(numDevices)
+			{
+				acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+				acc_init(acc_get_device_type());
+			}
+    }
+
     printf("Creating tree... \n\n");
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
