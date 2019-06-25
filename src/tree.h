@@ -131,7 +131,7 @@ void pc_compute_interaction_list(struct tnode *p,
 /* used by particle-cluster Coulomb */
 void pc_treecode(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices);
+                 double *tpeng, double *EnP, int numDevices, int numThreads);
 
 void compute_pc(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,

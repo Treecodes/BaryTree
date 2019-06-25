@@ -18,7 +18,7 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
-                double *tEn, double *tpeng, double *timetree, int numDevices)
+                double *tEn, double *tpeng, double *timetree, int numDevices, int numThreads)
 {
 
     /* local variables */
@@ -54,6 +54,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     printf("Setting up accelerator devices. \n");
     
+    // Initialize all GPUs
     if (numDevices>0){
 		#pragma omp parallel num_threads(numDevices)
 			{
@@ -188,7 +189,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
-            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices);
+            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices, numThreads);
         } else if (pot_type == 1) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
             pc_treecode_yuk(troot, batches, sources, targets, clusters,

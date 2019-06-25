@@ -391,7 +391,7 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 
 void pc_treecode(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices)
+                 double *tpeng, double *EnP, int numDevices, int numThreads)
 {
 //	printf("Entered pc_treecoode.\n");
     /* local variables */
@@ -402,20 +402,23 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     
 
 
-#pragma omp parallel num_threads(numDevices)
+#pragma omp parallel num_threads(numThreads)
 	{
-    	if (omp_get_thread_num()<=numDevices){
+    	if (omp_get_thread_num()<numDevices){
     		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
     	}
 
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
 		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+		printf("this_thread: %i\n", this_thread);
 
 		double *EnP2;
 		make_vector(EnP2,targets->num);
 		for (i = 0; i < targets->num; i++)
 			EnP2[i] = 0.0;
+
+
 
 
 #pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
