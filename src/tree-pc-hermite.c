@@ -189,6 +189,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 //		}
 //    }
 //#pragma omp barrier
+    free_vector(EnP2);
 } // end omp parallel region
 
 //	for (i = 0; i < targets->num; i++){

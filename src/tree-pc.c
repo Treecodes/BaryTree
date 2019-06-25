@@ -436,6 +436,8 @@ void pc_treecode(struct tnode *p, struct batch *batches,
     	if (EnP2[k] != 0.0)
 			EnP[k] += EnP2[k];
 		}
+
+    free_vector(EnP2);
 	} // end omp parallel region
 
     printf("Exited the main comp_pc call.\n");

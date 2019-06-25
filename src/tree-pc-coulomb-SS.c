@@ -481,12 +481,14 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
 				clusters->x, clusters->y, clusters->z, clusters->q, clusters->w);
         }
     }
+
     } // end acc data region
 
     for (int k = 0; k < targets->num; k++){
     	if (EnP2[k] != 0.0)
     		EnP[k] += EnP2[k];
     	}
+    free_vector(EnP2);
 	} // end omp parallel region
 
     *tpeng = sum(EnP, targets->num);

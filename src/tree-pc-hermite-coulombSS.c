@@ -167,6 +167,7 @@ void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
 		if (EnP2[k] != 0.0)
 			EnP[k] += EnP2[k];
 		}
+    free_vector(EnP2);
 
 } // end omp parallel region
 

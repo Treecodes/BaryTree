@@ -62,6 +62,7 @@ void pc_treecode_yuk(struct tnode *p, struct batch *batches,
 			EnP[k] += EnP2[k];
 		}
 		}
+    free_vector(EnP2);
 	} // end omp parallel region
     
     *tpeng = sum(EnP, targets->num);

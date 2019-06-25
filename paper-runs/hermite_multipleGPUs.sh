@@ -17,7 +17,7 @@ N=10000000
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/bughunt.csv
 
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TitanV_hermite_parallel_$N.csv 
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/schedule_testing_$N.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/batchSize_5k_$N.csv 
 
 
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -30,44 +30,25 @@ NUMTARGETS=$N
 #DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin  
 DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin  
 #DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
-DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/directSum_TitanV_Coulomb.csv 
+DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/directSum_TitanV_Coulomb.csv  
 
 
-NUMDEVICES=1
+NUMDEVICES=2
 KAPPA=0.0
 POTENTIALTYPE=0
 #../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
-POTENTIALTYPE=4
 
-export OMP_SCHEDULE=static
-for ORDER in 5
-do
-	for THETA in 0.7
-	  do    
-		for BATCHSIZE in 5000
-		  do       
-		     for MAXPARNODE in 5000
-		     	do
-		     	for NUMDEVICES in 2     
-		     	do
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
-		     	done
-		     done 
-		 done
-	done
-done 
-
-
+export PGI_ACC_TIME=1
 export OMP_SCHEDULE=guided
-for ORDER in 5
-do
+for ORDER in 8  
+do 
 	for THETA in 0.7
 	  do    
 		for BATCHSIZE in 5000
 		  do       
 		     for MAXPARNODE in 5000
-		     	do
-		     	for NUMDEVICES in 2     
+		     	do 
+		     	for NUMDEVICES in 1 2 
 		     	do
 		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
 		     	done
@@ -75,3 +56,5 @@ do
 		 done
 	done
 done 
+
+
