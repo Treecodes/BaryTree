@@ -56,8 +56,8 @@ void setup_batch(struct batch **batches, double *batch_lim,
 void create_target_batch(struct batch *batches, struct particles *particles,
                          int ibeg, int iend, int maxparnode, double *xyzmm)
 {
-	printf("Entered create_target_batch.\n");
-	fflush(stdout);
+//	printf("Entered create_target_batch.\n");
+//	fflush(stdout);
     /*local variables*/
     double x_min, x_max, y_min, y_max, z_min, z_max;
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
@@ -119,7 +119,7 @@ void create_target_batch(struct batch *batches, struct particles *particles,
     sqradius = t1*t1 + t2*t2 + t3*t3;
     radius = sqrt(sqradius);
     
-    printf("Set bounds and other variables.\n");
+//    printf("Set bounds and other variables.\n");
 
     /*set particle limits, tree level of node, and nullify child pointers*/
 
@@ -153,13 +153,13 @@ void create_target_batch(struct batch *batches, struct particles *particles,
                 create_target_batch(batches, particles, ind[i][0], ind[i][1],
                                     maxparnode, lxyzmm);
 
-                printf("Creating child %i.\n", i);
+//                printf("Creating child %i.\n", i);
             }
         }
 
     } else {
 
-    	printf("Increasing batch number.\n");
+//    	printf("Increasing batch number.\n");
         batches->num += 1;
         
         batches->index[batches->num-1][0] = ibeg;
@@ -170,7 +170,7 @@ void create_target_batch(struct batch *batches, struct particles *particles,
         batches->center[batches->num-1][2] = z_mid;
         
         batches->radius[batches->num-1] = radius;
-    	printf("Finished filling in batch details.\n");
+//    	printf("Finished filling in batch details.\n");
     }
 
     return;

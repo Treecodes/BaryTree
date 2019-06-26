@@ -91,11 +91,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        }
 
     	setup(sources, order, theta, xyzminmax);
-    	printf("Completed setup.\n");
+//    	printf("Completed setup.\n");
         
         pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
-        printf("Completed pc_create_tree_n0.\n");
+//        printf("Completed pc_create_tree_n0.\n");
         
         tree_array = malloc(sizeof(struct tnode_array));
         tree_array->numnodes = numnodes;
@@ -107,16 +107,16 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         pc_create_tree_array(troot, tree_array);
-        printf("Completed pc_create_tree_array.\n");
+//        printf("Completed pc_create_tree_array.\n");
 
 //        printf("Entering setup_batch.\n");
         setup_batch(&batches, batch_lim, targets, batch_size);
-        printf("Completed setup_batch.\n");
+//        printf("Completed setup_batch.\n");
 
 //        printf("Exiting setup_batch.\n");
 //        printf("Entering create_target_batch.\n");
         create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
-        printf("Exiting create_target_batch.\n");
+//        printf("Exiting create_target_batch.\n");
 
 
 //#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
