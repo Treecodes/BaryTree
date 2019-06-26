@@ -84,6 +84,8 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 
 //    omp_set_num_threads(1);
 //#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type())) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
+
+    printf("numThreads set to: %i\n", numThreads);
 #pragma omp parallel num_threads(numThreads)
 	{
     	if (omp_get_thread_num()<numDevices){
