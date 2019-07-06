@@ -6,8 +6,8 @@
 DS_CSV=../examplesOxygenAtom/local_coulomb.csv  
 
 OUTFILE=/Users/nathanvaughn/Desktop/out.csv
-THETA=0.7
-ORDER=8
+THETA=0.8
+ORDER=6
 TREETYPE=1
 MAXPARNODE=2000 
 KAPPA=0.0
@@ -16,13 +16,15 @@ PFLAG=0
 SFLAG=1
 DFLAG=0
 BATCHSIZE=2000 
-NUMDEVICES=1 
+NUMDEVICES=1
 NUMTHREADS=1
 
 
-MAXPARNODE=6000
-BATCHSIZE=6000
-for N in 300500
+MAXPARNODE=10000  
+BATCHSIZE=10000 
+#for N in 195500 300500 486000
+for N in 195500 300500 486000 689000 1455500 2824000 4773500 8294500
+#for N in 4773500
 do 
 	#SOURCES=/Users/nathanvaughn/Desktop/S$N.bin
 	SOURCES=/scratch/krasny_fluxg/njvaughn/BenzeneRefinement/S$N.bin
@@ -30,6 +32,7 @@ do
 	TARGETS=/scratch/krasny_fluxg/njvaughn/BenzeneRefinement/T$N.bin
 	DIRECTSUM=/Users/nathanvaughn/Desktop/ex_coulombSS_$N.bin
 	../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
+	#../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
 done
 
 
@@ -44,8 +47,6 @@ done
 #done
 
 
-#MAXPARNODE=5000
-#BATCHSIZE=5000
 #for N in 689000 1455500 2824000 4773500 8294500
 #do 
 #	SOURCES=/Users/nathanvaughn/Desktop/S$N.bin
