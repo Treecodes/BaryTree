@@ -8,8 +8,11 @@ n=1
 N = int(sys.argv[n]); n+=1
 
 
-sourcesTXT = '/scratch/krasny_fluxg/njvaughn/random/S%ipy.txt' %N
-targetsTXT = '/scratch/krasny_fluxg/njvaughn/random/T%ipy.txt' %N
+# sourcesTXT = '/scratch/krasny_fluxg/njvaughn/random/S%ipy.txt' %N
+# targetsTXT = '/scratch/krasny_fluxg/njvaughn/random/T%ipy.txt' %N
+
+sourcesTXT = '/Users/nathanvaughn/Desktop/randomPoints/S%i.txt' %N
+targetsTXT = '/Users/nathanvaughn/Desktop/randomPoints/T%i.txt' %N
 
 
 

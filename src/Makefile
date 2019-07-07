@@ -7,6 +7,9 @@ TARGET = tree.exe
 OFILESA = main-direct.o tools.o xmalloc.o
 TARGETA = direct.exe
 
+OFILESC = main-direct-distributed.o tools.o xmalloc.o
+TARGETC = direct-distributed.exe
+
 OFILESB = txt2bin.o sort.o xmalloc.o
 TARGETB = txt2bin.exe
 
@@ -63,13 +66,16 @@ endif
 
 
 #all: $(TARGET) $(TARGETA) $(TARGETB) library bin
-all: $(TARGET) $(TARGETA) $(TARGETB) bin library
+all: $(TARGET) $(TARGETA) $(TARGETB) $(TARGETC) bin library
 
 $(TARGET): $(OFILES)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILES) -o $@
 
 $(TARGETA): $(OFILESA)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILESA) -o $@
+	
+$(TARGETC): $(OFILESC)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OFILESC) -o $@
 
 $(TARGETB): $(OFILESB)
 	$(CC) $(CFLAGS) $(OFILESB) -o $@
@@ -85,6 +91,7 @@ bin:
 	mv $(TARGET) $(OUTDIR)$(TARGET)
 	mv $(TARGETA) $(OUTDIR)$(TARGETA)
 	mv $(TARGETB) $(OUTDIR)$(TARGETB)
+	mv $(TARGETC) $(OUTDIR)$(TARGETC)
 	
 
 library: treedriverWrapper.o treedriver.o tools.o tree-cp.o tree-cp-yuk.o tree-pc.o tree-pc-yuk.o tree-pc-yuk-SS.o tree-pc-coulomb-SS.o tree-batch.o partition.o xmalloc.o sort.o
@@ -116,5 +123,6 @@ tree-pc-coulomb-SS.o: tree-pc-coulomb-SS.c tree-pc.c array.h xmalloc.h globvars.
 xmalloc.o: xmalloc.c xmalloc.h
 sort.o: sort.c
 main-direct.o: main-direct.c array.h xmalloc.h tools.h
+main-direct-distributed.o: main-direct-distributed.c array.h xmalloc.h tools.h
 txt2bin.o: txt2bin.c array.h xmalloc.h
 treedriverWrapper.o: treedriverWrapper.c
