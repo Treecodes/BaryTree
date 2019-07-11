@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     /* MPI Variables */
     MPI_File fpmpi;
     MPI_Status status;
-    printf("Setup MPI file variables.\n");
+    if (rank==0) printf("Setup MPI file variables.\n");
 //    omp_set_num_threads(4);
 
 
@@ -116,8 +116,8 @@ int main(int argc, char **argv)
     globparsTloc = maxparsTloc + numparsTloc * (rank-1);
     globparsSloc = maxparsSloc + numparsSloc * (rank-1);
 
-    printf("globalparsTloc = %i\n", globparsTloc);
-    printf("globalparsSloc = %i\n", globparsSloc);
+//    printf("globalparsTloc = %i\n", globparsTloc);
+//    printf("globalparsSloc = %i\n", globparsSloc);
 
 
     make_vector(xS,numparsSloc);
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 
     	MPI_Barrier(MPI_COMM_WORLD);
 
-    	printf("Proc %i: Send to %i, Recv from %i\n", rank, sendTo, recvFrom);
+//    	printf("Proc %i: Send to %i, Recv from %i\n", rank, sendTo, recvFrom);
 
     	// Compute interaction
     	direct_eng(xS_foreign, yS_foreign, zS_foreign, qS_foreign, wS_foreign, xT, yT, zT, qT, maxparsSloc, numparsTloc,
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 			wS_foreign[i]=0.0;
 		}
 
-    	printf("Proc %i, dpeng = %f\n",rank,dpeng);
+//    	printf("Proc %i, dpeng = %f\n",rank,dpeng);
     }
 
     time2 = MPI_Wtime();
