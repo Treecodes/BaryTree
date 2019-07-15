@@ -45,7 +45,7 @@ do
 		  do       
 		     for MAXPARNODE in 5000 
 		     	do
-		     	for NUMDEVICES in 2     
+		     	for NUMDEVICES in 1 2    
 		     	do
 					NUMTHREADS=$NUMDEVICES
 		     		TCPROF=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TC_nvprof_$NUMDEVICES.nvvp

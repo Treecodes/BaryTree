@@ -276,7 +276,7 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, doubl
 
 
 
-void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices, struct tnode_array * tree_array){
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices, int numThreads, struct tnode_array * tree_array){
 
 	int pointsPerCluster = (order+1)*(order+1)*(order+1);
 	int numInterpPoints = numnodes * pointsPerCluster;
@@ -294,18 +294,92 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 	}
 
 
-#pragma acc data copyin(tt[0:torderlim], \
-		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
-		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num])
+#pragma omp parallel num_threads(numThreads)
+//#pragma omp parallel num_threads(1)
+	{
+		if (omp_get_thread_num()<numDevices){
+			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+		}
 
+		int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+		printf("this_thread: %i\n", this_thread);
+
+		double *tempQ;
+		make_vector(tempQ,clusters->num);
+		for (int i = 0; i < clusters->num; i++)
+			tempQ[i] = 0.0;
+
+		double *xS = sources->x;
+		double *yS = sources->y;
+		double *zS = sources->z;
+		double *qS = sources->q;
+		double *wS = sources->w;
+
+		double *xC = clusters->x;
+		double *yC = clusters->y;
+		double *zC = clusters->z;
+		double *qC = clusters->q;
+
+		int clusterNum = clusters->num;
+		int sourceNum = sources->num;
+
+#pragma acc data copyin(tt[0:torderlim], \
+		xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum]) \
+		copy(xC[0:clusterNum], yC[0:clusterNum], zC[0:clusterNum], tempQ[0:clusterNum])
+			{
 //	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 
-	for (int i=0;i<numnodes;i++){
-//		printf("i = %i\n",i);
-		pc_comp_ms_modifiedF(tree_array, i, sources->x, sources->y, sources->z, sources->q, sources->w, \
-					clusters->x,clusters->y,clusters->z,clusters->q);
+			#pragma omp for schedule(guided)
+			for (int i=1;i<numnodes; i++){  // start from i=1, as we do not need to compute moments for root, and this is realtively expensive.
+				pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS, \
+							xC,yC,zC,tempQ);
+				}
+			#pragma acc wait
+			} // end ACC DATA REGION
+//			#pragma acc wait
+//		#pragma omp critical
+//			{
+		int counter=0;
+		printf("clusters->num = %i\n",clusters->num);
+		for (int j = 0; j < clusters->num; j++)
+		{
+			if (j==213596) printf("solo lookup: Thread %i tempQ[%i] = %f\n", this_thread,j,tempQ[j]);
+			if (j==426464) printf("solo lookup: Thread %i tempQ[%i] = %f\n", this_thread,j,tempQ[j]);
+//			if (j<5) printf("Thread %i tempQ[%i] = %f\n", this_thread,j,tempQ[j]);
+			if (tempQ[j]!=0.0){
+				clusters->q[j] += tempQ[j];
+				if (counter<5){
+					printf("Thread %i tempQ[%i] = %f\n", this_thread,j,tempQ[j]);
+					printf("Thread %i clusters->q[%i] = %f\n", this_thread,j,clusters->q[j]);
+					counter++;
+				}
+			}
 
-		}
+
+
+		} // end j loop
+//			} // end omp critical
+		#pragma omp barrier
+//			for (int j = 0; j < clusters->num; j++)
+//					{
+//						if (clusters->q[j]==0.0)
+//						{
+//							printf("clusters->q[%i] = 0.0\n", j);
+//						}
+//					}
+
+
+		free_vector(tempQ);
+
+		} // end OMP PARALLEL REGION
+
+	printf("outside omp parallel region: %f, %f\n\n", clusters->q[0], clusters->q[213599]);
+	double tempSum = sum(clusters->q, clusters->num);
+	printf("\n\n\nSum of cluster q: %f\n\n\n", tempSum);
+
+//#pragma acc data copyin(clusters->q[0:clusters->num])
 
 
 	return;
@@ -868,17 +942,10 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                                   struct particles *sources, struct particles *targets,
                                   double *tpeng, double *EnP, int numDevices, int numThreads)
 {
-//void pc_treecode(struct tnode *p, struct batch *batches,
-//				 struct particles *sources, struct particles *targets, struct particles *clusters,
-//				 double *tpeng, double *EnP, int numDevices, int numThreads)
-//{
-	//	printf("Entered pc_treecoode.\n");
-	    /* local variables */
 	    int i, j;
 
 	    for (i = 0; i < targets->num; i++)
 	        EnP[i] = 0.0;
-
 
 
 	#pragma omp parallel num_threads(numThreads)
@@ -916,16 +983,13 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 			double *zC = clusters->z;
 			double *qC = clusters->q;
 
+			printf("\n\nInside compute region, clusters->q[0] = %f\n\n",clusters->q[0]);
+			printf("\n\nInside compute region, clusters->q[213599] = %f\n\n",clusters->q[213599]);
+
 			int * ibegs = tree_array->ibeg;
 			int * iends = tree_array->iend;
 
-
-//	#pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-//			targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
-//			clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num]) \
-//			copy(EnP2[0:targets->num])
-//	    {
-	#pragma acc data wait copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
+	#pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
 			xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
 			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], qC[0:clusters->num], tree_inter_list[0:numnodes*batches->num], \
 			direct_inter_list[0:batches->num * numleaves], ibegs[0:numnodes], iends[0:numnodes]) \
@@ -953,36 +1017,26 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 		int numberOfClusterApproximations, numberOfDirectSums;
 
 		int streamID;
-		#pragma omp for private(j,ii,jj)
+		#pragma omp for private(j,ii,jj,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID)
 	    for (i = 0; i < batches->num; i++) {
 	    	batch_ibeg = batches->index[i][0];
 			batch_iend = batches->index[i][1];
 			numberOfClusterApproximations = batches->index[i][2];
 			numberOfDirectSums = batches->index[i][3];
 
-//			printf("Number of approx and directs: %i, %i\n", numberOfClusterApproximations, numberOfDirectSums);
+
 			numberOfTargets = batch_iend - batch_ibeg + 1;
 			batchStart =  batch_ibeg - 1;
-//			printf("Batch start, end: %i, %i\n",batchStart,batchStart+numberOfTargets);
 
-			// Particle-cluster interactions
-//			printf("Beginning cluster apprximations.\n");
-//			# pragma acc kernels //present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
-//			{
-//			#pragma acc loop independent
 			for (j = 0; j < numberOfClusterApproximations; j++) {
 				node_index = tree_inter_list[i * numnodes + j];
-//				printf("Node index %i\n", node_index);
-//				if (node_index == -1) break;
 				clusterStart = numberOfInterpolationPoints*node_index;
 
 
 
 				streamID = j%3;
-//				streamID = 0;
-
-			#pragma acc kernels async(streamID) //present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
-			{
+				#pragma acc kernels async(streamID) //present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
+				{
 				#pragma acc loop independent
 				for (ii = 0; ii < numberOfTargets; ii++){
 					tempPotential = 0.0;
@@ -996,9 +1050,6 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 						dxt = xi - xC[clusterStart + jj];
 						dyt = yi - yC[clusterStart + jj];
 						dzt = zi - zC[clusterStart + jj];
-
-
-			//			tempPotential += localMoments[j] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 						tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 
 									}
@@ -1008,28 +1059,15 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 					} // end kernel
 	        } // end for loop over cluster approximations
 
-//			printf("Completed cluster approximations, beginning direct interactions.\n");
-			// Direct interactions
-
-
-//			#pragma acc wait
-
 			for (j = 0; j < numberOfDirectSums; j++) {
 
 				node_index = direct_inter_list[i * numleaves + j];
-//				if (node_index == -1) break;
-//				printf("Node index %i\n", node_index);
-
-
-
 
 				source_start=ibegs[node_index]-1;
 				source_end=iends[node_index];
 
 
 				streamID = j%3;
-//				streamID=1;
-
 		    # pragma acc kernels async(streamID)
 		    {
 			#pragma acc loop independent
@@ -1065,6 +1103,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 			}
 
 	    free_vector(EnP2);
+	    free_vector(EnP3);
 		} // end omp parallel region
 
 	    printf("Exited the main comp_pc call.\n");

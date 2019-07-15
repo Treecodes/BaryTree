@@ -131,7 +131,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         timeFillClusters1 = MPI_Wtime();
         if (        (pot_type == 0) || (pot_type==1)) {
-        	fill_in_cluster_data(clusters, sources, troot, order, numDevices, tree_array);
+        	fill_in_cluster_data(clusters, sources, troot, order, numDevices, numThreads, tree_array);
         }else if  ( (pot_type == 2) || (pot_type==3)){
         	printf("Calling fill_in_cluster_data_SS().\n");
 			fill_in_cluster_data_SS(clusters, sources, troot, order);
