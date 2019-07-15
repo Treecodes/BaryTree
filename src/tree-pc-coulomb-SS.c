@@ -14,7 +14,6 @@
 
 #include "partition.h"
 #include "tree.h"
-#include "mkl.h"
 
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order){
 
