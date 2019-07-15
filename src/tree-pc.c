@@ -178,6 +178,14 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
     tree_array->y_mid[p->node_index] = p->y_mid;
     tree_array->z_mid[p->node_index] = p->z_mid;
 
+    tree_array->x_min[p->node_index] = p->x_min;
+	tree_array->y_min[p->node_index] = p->y_min;
+	tree_array->z_min[p->node_index] = p->z_min;
+
+	tree_array->x_max[p->node_index] = p->x_max;
+	tree_array->y_max[p->node_index] = p->y_max;
+	tree_array->z_max[p->node_index] = p->z_max;
+
     tree_array->ibeg[p->node_index] = p->ibeg;
     tree_array->iend[p->node_index] = p->iend;
 
@@ -268,7 +276,7 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, doubl
 
 
 
-void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices){
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices, struct tnode_array * tree_array){
 
 	int pointsPerCluster = (order+1)*(order+1)*(order+1);
 	int numInterpPoints = numnodes * pointsPerCluster;
@@ -290,8 +298,14 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num]) \
 		copy(clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num])
 
-	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
+//	addNodeToArray(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 
+	for (int i=0;i<numnodes;i++){
+//		printf("i = %i\n",i);
+		pc_comp_ms_modifiedF(tree_array, i, sources->x, sources->y, sources->z, sources->q, sources->w, \
+					clusters->x,clusters->y,clusters->z,clusters->q);
+
+		}
 
 
 	return;
@@ -306,8 +320,10 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 
 	if (1==1){ // don't compute moments for clusters that won't get used
 
-		pc_comp_ms_modifiedF(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
-				clusters->x,clusters->y,clusters->z,clusters->q);
+//		pc_comp_ms_modifiedF(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+//				clusters->x,clusters->y,clusters->z,clusters->q);
+
+		printf("Commented out old pc_comp_ms_modifiedF.\n");
 
 		p->exist_ms = 1;
 
@@ -317,6 +333,28 @@ void addNodeToArray(struct tnode *p, struct particles *sources, struct particles
 	for (i = 0; i < p->num_children; i++) {
 		addNodeToArray(p->child[i],sources,clusters,order,numInterpPoints,pointsPerCluster);
 	}
+
+	return;
+}
+
+void addNodeToArray_nonRecursive(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster)
+{
+	int torderlim = order+1;
+	int startingIndex = p->node_index * pointsPerCluster;
+	int i;
+
+
+
+//	pc_comp_ms_modifiedF(p, sources->x, sources->y, sources->z, sources->q, sources->w, \
+//			clusters->x,clusters->y,clusters->z,clusters->q);
+
+	p->exist_ms = 1;
+
+
+
+//	for (i = 0; i < p->num_children; i++) {
+//		addNodeToArray(p->child[i],sources,clusters,order,numInterpPoints,pointsPerCluster);
+//	}
 
 	return;
 }
@@ -530,14 +568,14 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 
 
-void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ){
 
 	int i,j,k;
 	int pointsPerCluster = torderlim*torderlim*torderlim;
-	int pointsInNode = p->numpar;
-	int startingIndexInClusters = p->node_index * pointsPerCluster;
-	int startingIndexInSources = p->ibeg-1;
+	int pointsInNode = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
+	int startingIndexInClusters = idx * pointsPerCluster;
+	int startingIndexInSources = tree_array->ibeg[idx]-1;
 
 	double x0, x1, y0, y1, z0, z1;  // bounding box
 
@@ -556,18 +594,18 @@ void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, d
 
 
 
-	x0 = p->x_min;  // 1e-15 fails for large meshes, mysteriously.
-	x1 = p->x_max;
-	y0 = p->y_min;
-	y1 = p->y_max;
-	z0 = p->z_min;
-	z1 = p->z_max;
+	x0 = tree_array->x_min[idx];  // 1e-15 fails for large meshes, mysteriously.
+	x1 = tree_array->x_max[idx];
+	y0 = tree_array->y_min[idx];
+	y1 = tree_array->y_max[idx];
+	z0 = tree_array->z_min[idx];
+	z1 = tree_array->z_max[idx];
 
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
 
 	int streamID = rand() % 2;
-
+//	async(streamID)
 #pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
 	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
 			nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
@@ -721,7 +759,7 @@ void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, d
 
 
 		}
-
+		#pragma acc atomic
 		clusterQ[startingIndexInClusters + j] += temp;
 
 	}

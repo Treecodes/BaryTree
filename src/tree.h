@@ -18,7 +18,7 @@ void cleanup(struct tnode *p);
 void setup(struct particles *particles, int order, double theta,
            double *xyzminmax);
 
-void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices);
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices, struct tnode_array * tree_array);
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
@@ -100,7 +100,9 @@ void pc_comp_ms_SS(struct tnode *p, double *x, double *y, double *z, double *q, 
 void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
-void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+//void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+//		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
+void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,

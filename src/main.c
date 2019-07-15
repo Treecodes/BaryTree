@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     double tpengglob = 0;
 
     /* insert variables for date-time calculation? */
-    double time_direct, time_tree[4], time_preproc;
+    double time_direct, time_tree[4], time_preproc, time_treedriver;
     double time_tree_glob[3][4];
     double time1, time2;
 
@@ -320,10 +320,13 @@ int main(int argc, char **argv)
     printf("numThreads: %i\n", numThreads);
     fflush(stdout);
     /* Calling main treecode subroutine to calculate approximate energy */
+    time1 = MPI_Wtime();
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
                tenergy, &tpeng, time_tree, numDevices, numThreads);
+    time2 = MPI_Wtime();
+    time_treedriver = time2 - time1;
 
     
     /* Reducing values to root process */
@@ -341,6 +344,7 @@ int main(int argc, char **argv)
         /* Printing direct and treecode time calculations: */
         printf("                   Direct time (s):  %f\n\n", time_direct);
         printf("              Pre-process time (s):  %f\n", time_preproc);
+        printf("              Treedriver time (s):  %f\n", time_treedriver);
         printf("      Min, Max tree setup time (s):  %f, %f\n", time_tree_glob[0][0],
                                                                 time_tree_glob[1][0]);
         if (tree_type == 0) {

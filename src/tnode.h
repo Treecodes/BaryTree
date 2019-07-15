@@ -31,6 +31,13 @@ struct tnode_array
         double *x_mid;
         double *y_mid;
         double *z_mid;
+
+        double *x_min;
+		double *y_min;
+		double *z_min;
+		double *x_max;
+		double *y_max;
+		double *z_max;
 };
 
 
