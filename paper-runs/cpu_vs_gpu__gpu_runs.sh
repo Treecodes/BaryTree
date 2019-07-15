@@ -16,7 +16,8 @@ OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/gpu_Coulom
 DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/directSum_TitanV_Coulomb.csv 
 
 
-NUMDEVICES=1
+NUMDEVICES=2
+NUMTHREADS=2
 KAPPA=0.0
 POTENTIALTYPE=0
 
@@ -24,12 +25,14 @@ POTENTIALTYPE=0
 ORDER=8
 THETA=0.8
 BATCHSIZE=5000
-MAXPARNODE=50000
+MAXPARNODE=5000
 
 # For GPU
 
-for N in 100000 1000000 10000000
+for N in 100000 1000000 10000000 
 do
+	for i in 1
+	do
 	echo N=$N
 	SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
 	TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
@@ -37,7 +40,8 @@ do
 	NUMTARGETS=$N
 	DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin  
 	##../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  	
-	../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES
+	../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
+	done
 done 
 
 

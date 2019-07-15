@@ -45,8 +45,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     maxlevel = 0;
     maxpars = 0;
     
-    int **tree_inter_list;
-    int **direct_inter_list;
+    int *tree_inter_list;
+    int *direct_inter_list;
     struct tnode_array *tree_array = NULL;
     numnodes = 0;
     struct particles *clusters = NULL;
@@ -188,13 +188,17 @@ void treedriver(struct particles *sources, struct particles *targets,
 //                            tpeng, tEn, &timetree[1]);
 //        }
     } else if (tree_type == 1) {
-    	make_matrix(tree_inter_list, batches->num, numnodes);
-		make_matrix(direct_inter_list, batches->num, numleaves);
+    	make_vector(tree_inter_list, batches->num * numnodes);
+    	make_vector(direct_inter_list, batches->num * numleaves);
 
-		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+    	pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+
+
+
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
-            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices, numThreads);
+//            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices, numThreads);
+        	pc_interaction_list_treecode(tree_array, clusters, batches, tree_inter_list, direct_inter_list, sources, targets, tpeng, tEn, numDevices, numThreads);
         } else if (pot_type == 1) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
             pc_treecode_yuk(troot, batches, sources, targets, clusters,

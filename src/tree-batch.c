@@ -39,7 +39,7 @@ void setup_batch(struct batch **batches, double *batch_lim,
     max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size);
 
     make_vector((*batches)->reorder, particles->num);
-    make_matrix((*batches)->index, max_batch_num, 2);
+    make_matrix((*batches)->index, max_batch_num, 4);
     make_matrix((*batches)->center, max_batch_num, 3);
     make_vector((*batches)->radius, max_batch_num);
 

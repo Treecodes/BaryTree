@@ -254,7 +254,9 @@ void compute_pc_hermite(struct tnode *p,
 	double xi,yi,zi,rinv,r3inv,r5inv,r7inv;
 	int batchStart = batch_ind[0] - 1, sourceIdx;
 //	double pointvals[4];
-# pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, \
+	int streamID = rand() % 2;
+
+# pragma acc kernels async(streamID) present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, \
 		clusterM,clusterMx,clusterMy,clusterMz,clusterMxy,clusterMyz,clusterMxz,clusterMxyz)
     {
 	#pragma acc loop independent
@@ -293,6 +295,7 @@ void compute_pc_hermite(struct tnode *p,
 //									+ 5*rinv*rinv*clusterMxyz[sourceIdx]*dxt*dyt*dzt)  )  ) ;
 
 						}
+		#pragma acc atomic
 		EnP[batchStart +i] += tempPotential;
 	}
     }
@@ -372,7 +375,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
 
-
+	int streamID = rand() % 2;
 #pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ,tt,ww, \
 		clusterQ,clusterQx,clusterQy,clusterQz,clusterQxy,clusterQyz,clusterQxz,clusterQxyz) \
 	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
