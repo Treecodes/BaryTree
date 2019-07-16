@@ -14,19 +14,19 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
                 "Debug" "Release")
 endif()
 
-set(PROJECT_ROOT ${PROJECT_SOURCE_DIR})
-set(PROJECT_BUILD ${PROJECT_BINARY_DIR})
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BUILD}/bin)
-set(EXECUTABLE_INSTALL_PATH bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
 option(BUILD_TREECODE "build treecode computation executables" ON)
 option(BUILD_DIRECT "build direct computation executables" ON)
 option(BUILD_TOOLS "build auxiliary utilities" OFF)
+option(BUILD_SHARED_LIBS "build as shared libraries" ON)
 
 option(ENABLE_GPU_BUILD "build OpenACC GPU version" ON)
 option(ENABLE_CPU_BUILD "build CPU version" ON)
 
-file(MAKE_DIRECTORY build/bin)
+#file(MAKE_DIRECTORY build/bin)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)

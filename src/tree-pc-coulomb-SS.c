@@ -482,6 +482,7 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
         }
     }
 
+	#pragma acc wait
     } // end acc data region
 
     for (int k = 0; k < targets->num; k++){
@@ -535,7 +536,9 @@ void compute_pc_coulomb_SS(struct tnode *p,
 
 	double xi,yi,zi,qi,r;
 	int batchStart = batch_ind[0] - 1;
-# pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM, clusterM2)
+
+	int streamID = rand() % 2;
+	# pragma acc kernels async(streamID) present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM, clusterM2)
 	{
 	#pragma acc loop independent
 	for (i = 0; i < numberOfTargets; i++){
@@ -557,7 +560,7 @@ void compute_pc_coulomb_SS(struct tnode *p,
 			tempPotential += (clusterM[clusterStart + j]-qi*clusterM2[clusterStart + j]* exp(-r*r/kappaSq) )  / r;
 
 						}
-
+		#pragma acc atomic
 		EnP[batchStart + i] += tempPotential;
 	}
 	}
@@ -606,7 +609,8 @@ void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_ien
     double tx, ty, tz;
     double d_peng, r;
 
-# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+    int streamID = rand() % 2;
+	# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
@@ -621,6 +625,7 @@ void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_ien
             	d_peng += wS[i]* ( qS[i] - qT[ii]* exp(-r*r/kappaSq) )  / r;
             }
         }
+		#pragma acc atomic
         EnP[ii] += d_peng;
     }
     }
