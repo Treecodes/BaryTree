@@ -177,7 +177,8 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 			}
 		}
 
-	}
+	#pragma acc wait
+	} //end acc data region
 //#pragma omp barrier
     for (int k = 0; k < targets->num;  k++){
 		if (EnP2[k] != 0.0)
