@@ -6,7 +6,7 @@ DFLAG=0
 
 #N=821000
 #N=2365328
-N=10000000
+N=1000000
 #1328096
 
 
@@ -32,7 +32,7 @@ DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb
 
 
 
-POTENTIALTYPE=0
+POTENTIALTYPE=4
 KAPPA=0.0
 #pgprof --export-profile $DSPROF ../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
 

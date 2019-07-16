@@ -57,6 +57,7 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
 				clusters->x, clusters->y, clusters->z, clusters->q, clusters->w);
         }
     }
+	#pragma acc wait
     } // end acc data region
     for (int k = 0; k < targets->num; k++){
     		if (EnP2[k] != 0.0){
@@ -111,7 +112,9 @@ void compute_pc_yuk_SS(struct tnode *p,
 
 		double xi,yi,zi,qi,r;
 		int batchStart = batch_ind[0] - 1;
-# pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM, clusterM2)
+
+		int streamID = rand() % 2;
+		# pragma acc kernels async(streamID) present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM, clusterM2)
 		{
 		#pragma acc loop independent
 		for (i = 0; i < numberOfTargets; i++){
@@ -135,7 +138,7 @@ void compute_pc_yuk_SS(struct tnode *p,
 	//			tempPotential += clusterM[clusterStart + j]* exp(-kappa*r) / r - qi*clusterM2[clusterStart + j] * exp(-kappa*r) / r;
 
 							}
-
+			#pragma acc atomic
 			EnP[batchStart + i] += tempPotential;
 		}
 		}
@@ -182,7 +185,8 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
     double tx, ty, tz;
     double d_peng, r;
 
-# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+    int streamID = rand() % 2;
+	# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
@@ -197,6 +201,7 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
             	d_peng += (qS[i] - qT[ii]) * wS[i] * exp(-kappa*r) / r;
             }
         }
+		#pragma acc atomic
         EnP[ii] += d_peng;
     }
     }

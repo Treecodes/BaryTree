@@ -27,7 +27,7 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
 
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int i, j, loclev, numposchild;
+    int i, j, loclev, numposchild, idx;
     
     int ind[8][2];
     double xyzmms[6][8];
@@ -137,18 +137,43 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        x_mid, y_mid, z_mid, ind);
 
         loclev = level + 1;
+        if (level==0){  // level 0, spawn openMP threads
 
+//#pragma omp parallel
+//        	{
+//		#pragma omp for private (j, idx, loclev,lxyzmm)
         for (i = 0; i < numposchild; i++) {
+//			#pragma omp barrier
             if (ind[i][0] <= ind[i][1]) {
-                (*p)->num_children = (*p)->num_children + 1;
 
+//				#pragma omp critical
+//            	{
+                (*p)->num_children = (*p)->num_children + 1;
+                idx = (*p)->num_children - 1;
                 for (j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
-                
-                pc_create_tree_n0(&((*p)->child[(*p)->num_children - 1]),
+//            	}
+                pc_create_tree_n0(&((*p)->child[idx]),
                                   sources, ind[i][0], ind[i][1],
                                   maxparnode, lxyzmm, loclev);
+
             }
+        }
+//        	} // end omp parallel
+        }else{ // not level 0, don't spawn openMP threads
+        	for (i = 0; i < numposchild; i++) {
+        	            if (ind[i][0] <= ind[i][1]) {
+
+        	                (*p)->num_children = (*p)->num_children + 1;
+
+        	                for (j = 0; j < 6; j++)
+        	                    lxyzmm[j] = xyzmms[j][i];
+
+        	                pc_create_tree_n0(&((*p)->child[(*p)->num_children - 1]),
+        	                                  sources, ind[i][0], ind[i][1],
+        	                                  maxparnode, lxyzmm, loclev);
+        	            }
+        	        }
         }
         
     } else {
@@ -692,8 +717,8 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
     double d_peng, r;
     int streamID = rand() % 2;
-//# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
-# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+//# pragma acc kernels present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
     for (ii = batch_start; ii < batch_end; ii++) {

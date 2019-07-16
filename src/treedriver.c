@@ -91,14 +91,23 @@ void treedriver(struct particles *sources, struct particles *targets,
 ////            setup_yuk(sources, order, theta, xyzminmax);
 //            setup(sources, order, theta, xyzminmax);  // call the non-Yukawa setup.  This has the Chebyshev parts.
 //        }
-
+    	time1 = MPI_Wtime();
     	setup(sources, order, theta, xyzminmax);
+    	time2 = MPI_Wtime();
+//    	printf("Time to setup: %f\n", time2-time1);
 //    	printf("Completed setup.\n");
         
+//	#pragma omp parallel num_threads(numThreads)
+//    	{
+    	time1 = MPI_Wtime();
         pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
+        time2 = MPI_Wtime();
+//        printf("Time to pc_create_tree_n0: %f\n", time2-time1);
+//    	}
 //        printf("Completed pc_create_tree_n0.\n");
         
+        time1 = MPI_Wtime();
         tree_array = malloc(sizeof(struct tnode_array));
         tree_array->numnodes = numnodes;
         make_vector(tree_array->ibeg, numnodes);
@@ -112,26 +121,36 @@ void treedriver(struct particles *sources, struct particles *targets,
 		make_vector(tree_array->x_max, numnodes);
 		make_vector(tree_array->y_max, numnodes);
 		make_vector(tree_array->z_max, numnodes);
+		time2 = MPI_Wtime();
+//		printf("Time to make tree_array: %f\n", time2-time1);
 
-
+		time1 = MPI_Wtime();
         pc_create_tree_array(troot, tree_array);
+        time2 = MPI_Wtime();
+//        printf("Time to pc_create_tree_array: %f\n", time2-time1);
 //        printf("Completed pc_create_tree_array.\n");
 
 //        printf("Entering setup_batch.\n");
+        time1 = MPI_Wtime();
         setup_batch(&batches, batch_lim, targets, batch_size);
+        time2 = MPI_Wtime();
+//        printf("Time to setup_batch: %f\n", time2-time1);
 //        printf("Completed setup_batch.\n");
 
 //        printf("Exiting setup_batch.\n");
 //        printf("Entering create_target_batch.\n");
+        time1 = MPI_Wtime();
         create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
+        time2 = MPI_Wtime();
+//        printf("Time to create_target_batch: %f\n", time2-time1);
 //        printf("Exiting create_target_batch.\n");
 
 
 //#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 //		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
 //        {
-        time3 = MPI_Wtime();
-        printf("Time to setup batches: %f\n", time3-time2);
+//        time3 = MPI_Wtime();
+//        printf("Time to setup batches: %f\n", time3-time2);
         timeFillClusters1 = MPI_Wtime();
         if (        (pot_type == 0) || (pot_type==1)) {
         	fill_in_cluster_data(clusters, sources, troot, order, numDevices, numThreads, tree_array);
@@ -147,14 +166,14 @@ void treedriver(struct particles *sources, struct particles *targets,
 		}
         timeFillClusters2 = MPI_Wtime();
         timeFillClusters1 = timeFillClusters2-timeFillClusters1;
-        printf("Time to compute modified weights(s):  %f\n", timeFillClusters1);
+//        printf("Time to compute modified weights(s):  %f\n", timeFillClusters1);
 
     }
 
     time2 = MPI_Wtime();
     timetree[0] = time2-time1;
 
-    printf("Tree creation (s):  %f\n\n", time2-time1);
+//    printf("Tree creation (s):  %f\n\n", time2-time1);
 //    printf("Tree information: \n\n");
 //
 //    printf("                      numpar: %d\n", troot->numpar);
@@ -203,7 +222,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     	pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
     	time2 = MPI_Wtime();
-    	printf("Time to make interaction lists: %f\n", time2-time1);
+//    	printf("Time to make interaction lists: %f\n", time2-time1);
 
     	time1 = MPI_Wtime(); // start timer for tree evaluation
 
@@ -246,14 +265,42 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     printf("Time to compute: %f\n", time2-time1);
 
-//    printf("Deallocating tree structure... \n\n");
-//    printf("Time1: %12.5f\n",time1);
-//    printf("Time2: %12.5f\n",time2);
-//    printf("Timetree[0]: %12.5f\n",timetree[0]);
-//    printf("Time: %12.5f\n\n",timetree[3]);
 
     cleanup(troot);
-//    printf("Finished cleanup of troot.\n");
+
+    // free interaction lists
+    free_vector(tree_inter_list);
+    free_vector(direct_inter_list);
+
+    // free clusters
+    free_vector(clusters->x);
+    free_vector(clusters->y);
+    free_vector(clusters->z);
+    free_vector(clusters->q);
+    free_vector(clusters->w);
+    free(clusters);
+
+    // free tree_array
+    free_vector(tree_array->ibeg);
+    free_vector(tree_array->iend);
+    free_vector(tree_array->x_mid);
+    free_vector(tree_array->y_mid);
+    free_vector(tree_array->z_mid);
+    free_vector(tree_array->x_min);
+    free_vector(tree_array->y_min);
+    free_vector(tree_array->z_min);
+    free_vector(tree_array->x_max);
+    free_vector(tree_array->y_max);
+    free_vector(tree_array->z_max);
+    free(tree_array);
+
+    // free target batches
+    free_vector(batches->reorder);
+    free_matrix(batches->index);
+    free_matrix(batches->center);
+    free_vector(batches->radius);
+    free(batches);
+
     return;
 
 } /* END function treecode */
