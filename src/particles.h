@@ -29,6 +29,9 @@ struct particles
 		double *wxz;
 		double *wxyz;
 
+		int *ibeg;
+		int *iend;
+
 };
 
 #endif /* H_PARTICLES_H */

@@ -18,7 +18,7 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
-                double *tEn, double *tpeng, double *timetree, int numDevices)
+                double *tEn, double *tpeng, double *timetree, int numDevices, int numThreads)
 {
 
     /* local variables */
@@ -33,7 +33,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     double batch_lim[6];
     
     /* date and time */
-    double time1, time2, timeFillClusters1, timeFillClusters2;
+    double time1, time2, time3, timeFillClusters1, timeFillClusters2;
 
     
     time1 = MPI_Wtime();
@@ -45,20 +45,27 @@ void treedriver(struct particles *sources, struct particles *targets,
     maxlevel = 0;
     maxpars = 0;
     
-    int **tree_inter_list;
-    int **direct_inter_list;
+    int *tree_inter_list;
+    int *direct_inter_list;
     struct tnode_array *tree_array = NULL;
     numnodes = 0;
     struct particles *clusters = NULL;
 	clusters = malloc(sizeof(struct particles));
 
-#pragma omp parallel num_threads(numDevices)
-	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-        acc_init(acc_get_device_type());
-	}
     
-    printf("Creating tree... \n\n");
+//    // Initialize all GPUs
+//    if (numDevices>0){
+//		#pragma omp parallel num_threads(numDevices)
+//			{
+//			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+//			acc_init(acc_get_device_type());
+//			}
+//    }
+
+    time2 = MPI_Wtime();
+//    printf("Time to initialize GPUs: %f\n", time2-time1);
+
+//    printf("Creating tree... \n\n");
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
@@ -86,9 +93,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        }
 
     	setup(sources, order, theta, xyzminmax);
+//    	printf("Completed setup.\n");
         
         pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
+//        printf("Completed pc_create_tree_n0.\n");
         
         tree_array = malloc(sizeof(struct tnode_array));
         tree_array->numnodes = numnodes;
@@ -97,12 +106,21 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(tree_array->x_mid, numnodes);
         make_vector(tree_array->y_mid, numnodes);
         make_vector(tree_array->z_mid, numnodes);
+        make_vector(tree_array->x_min, numnodes);
+		make_vector(tree_array->y_min, numnodes);
+		make_vector(tree_array->z_min, numnodes);
+		make_vector(tree_array->x_max, numnodes);
+		make_vector(tree_array->y_max, numnodes);
+		make_vector(tree_array->z_max, numnodes);
 
 
         pc_create_tree_array(troot, tree_array);
+//        printf("Completed pc_create_tree_array.\n");
 
 //        printf("Entering setup_batch.\n");
         setup_batch(&batches, batch_lim, targets, batch_size);
+//        printf("Completed setup_batch.\n");
+
 //        printf("Exiting setup_batch.\n");
 //        printf("Entering create_target_batch.\n");
         create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
@@ -112,18 +130,19 @@ void treedriver(struct particles *sources, struct particles *targets,
 //#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 //		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
 //        {
-
+        time3 = MPI_Wtime();
+        printf("Time to setup batches: %f\n", time3-time2);
         timeFillClusters1 = MPI_Wtime();
         if (        (pot_type == 0) || (pot_type==1)) {
-        	fill_in_cluster_data(clusters, sources, troot, order, numDevices);
+        	fill_in_cluster_data(clusters, sources, troot, order, numDevices, numThreads, tree_array);
         }else if  ( (pot_type == 2) || (pot_type==3)){
-        	printf("Calling fill_in_cluster_data_SS().\n");
+//        	printf("Calling fill_in_cluster_data_SS().\n");
 			fill_in_cluster_data_SS(clusters, sources, troot, order);
         }else if  ( (pot_type == 4) || (pot_type==5)){
-        	printf("Calling fill_in_cluster_data_hermite().\n");
+//        	printf("Calling fill_in_cluster_data_hermite().\n");
 			fill_in_cluster_data_hermite(clusters, sources, troot, order);
 		}else if  ( (pot_type == 6) || (pot_type==7)){
-			printf("Calling fill_in_cluster_data_hermite_SS().\n");
+//			printf("Calling fill_in_cluster_data_hermite_SS().\n");
 			fill_in_cluster_data_hermite_SS(clusters, sources, troot, order);
 		}
         timeFillClusters2 = MPI_Wtime();
@@ -135,7 +154,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     time2 = MPI_Wtime();
     timetree[0] = time2-time1;
 
-//    printf("Tree created.\n\n");
+    printf("Tree creation (s):  %f\n\n", time2-time1);
 //    printf("Tree information: \n\n");
 //
 //    printf("                      numpar: %d\n", troot->numpar);
@@ -160,7 +179,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //    printf("           number of batches: %d\n\n", batches->num);
 
 
-    time1 = MPI_Wtime();
+//    time1 = MPI_Wtime();
 
     /* Copy source and target arrays to GPU */
 //#pragma acc data copyin(xS[numparsS], yS[numparsS], zS[numparsS], qS[numparsS], wS[numparsS], \
@@ -178,35 +197,42 @@ void treedriver(struct particles *sources, struct particles *targets,
 //                            tpeng, tEn, &timetree[1]);
 //        }
     } else if (tree_type == 1) {
-    	make_matrix(tree_inter_list, batches->num, numnodes);
-		make_matrix(direct_inter_list, batches->num, numleaves);
+    	time1 = MPI_Wtime();
+    	make_vector(tree_inter_list, batches->num * numnodes);
+    	make_vector(direct_inter_list, batches->num * numleaves);
 
-		pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+    	pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+    	time2 = MPI_Wtime();
+    	printf("Time to make interaction lists: %f\n", time2-time1);
+
+    	time1 = MPI_Wtime(); // start timer for tree evaluation
+
         if (pot_type == 0) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
-            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices);
+//            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices, numThreads);
+        	pc_interaction_list_treecode(tree_array, clusters, batches, tree_inter_list, direct_inter_list, sources, targets, tpeng, tEn, numDevices, numThreads);
         } else if (pot_type == 1) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
             pc_treecode_yuk(troot, batches, sources, targets, clusters,
-                            kappa, tpeng, tEn, numDevices);
+                            kappa, tpeng, tEn, numDevices, numThreads);
         }else if (pot_type == 2) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
         	pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
-        	                            kappa, tpeng, tEn, numDevices);
+        	                            kappa, tpeng, tEn, numDevices, numThreads);
         }else if (pot_type == 3) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
         	pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
-        	                            kappa, tpeng, tEn, numDevices);
+        	                            kappa, tpeng, tEn, numDevices, numThreads);
         }else if (pot_type == 4) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Coulomb Hermite).\n");
-        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn, numDevices);
+        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn, numDevices, numThreads);
         }else if (pot_type == 5) {
         	printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Yukawa Hermite).\n");
 //        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn, numDevices);
         }else if (pot_type == 6) {
         	printf("Entering tree_type=1  (particle-cluster), pot_type=6 (Coulomb Hermite w/ singularity subtraction.).\n");
         	pc_treecode_hermite_coulomb_SS(troot, batches, sources, targets,clusters,
-        								kappa, tpeng, tEn, numDevices);
+        								kappa, tpeng, tEn, numDevices, numThreads);
         }
         
 
@@ -214,8 +240,11 @@ void treedriver(struct particles *sources, struct particles *targets,
     }
 
 
-    time2 = MPI_Wtime();
-    timetree[3] = time2-time1 + timetree[0];
+    time2 = MPI_Wtime();  // end time for tree evaluation
+//    timetree[3] = time2-time1 + timetree[0];
+    timetree[3] = time2-time1; //+ timetree[0];
+
+    printf("Time to compute: %f\n", time2-time1);
 
 //    printf("Deallocating tree structure... \n\n");
 //    printf("Time1: %12.5f\n",time1);

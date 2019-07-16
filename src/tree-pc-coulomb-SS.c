@@ -14,7 +14,6 @@
 
 #include "partition.h"
 #include "tree.h"
-#include "mkl.h"
 
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order){
 
@@ -444,7 +443,7 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 
 void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices)
+                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads)
 {
     /* local variables */
     int i, j;
@@ -452,10 +451,11 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 2.0*M_PI*kappaSq*targets->q[i]; // change this to whatever it should be
     
-#pragma omp parallel num_threads(numDevices)
+#pragma omp parallel num_threads(numThreads)
 	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-
+    	if (omp_get_thread_num()<numDevices){
+    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+    	}
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
 		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
@@ -481,12 +481,14 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
 				clusters->x, clusters->y, clusters->z, clusters->q, clusters->w);
         }
     }
+
     } // end acc data region
 
     for (int k = 0; k < targets->num; k++){
     	if (EnP2[k] != 0.0)
     		EnP[k] += EnP2[k];
     	}
+    free_vector(EnP2);
 	} // end omp parallel region
 
     *tpeng = sum(EnP, targets->num);

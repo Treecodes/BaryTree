@@ -16,7 +16,6 @@
 #include "partition.h"
 #include "tree.h"
 
-#include "mkl.h"
 #include <omp.h>
 
 
@@ -68,7 +67,7 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 
 void pc_treecode_hermite(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices)
+                 double *tpeng, double *EnP, int numDevices, int numThreads)
 {
 	printf("Entered pc_treecoode_hermite.\n");
     /* local variables */
@@ -84,11 +83,13 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 
 //    omp_set_num_threads(1);
 //#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type())) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
-#pragma omp parallel num_threads(numDevices) //private(EnP) //private(batchesStart, batchesStop, threadStartingIndex, threadEndingIndex )
-//#pragma omp parallel
-	{
-        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 
+    printf("numThreads set to: %i\n", numThreads);
+#pragma omp parallel num_threads(numThreads)
+	{
+    	if (omp_get_thread_num()<numDevices){
+    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+    	}
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
 //		int numDevices = acc_get_num_devices(acc_get_device_type());
 		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
@@ -189,6 +190,7 @@ void pc_treecode_hermite(struct tnode *p, struct batch *batches,
 //		}
 //    }
 //#pragma omp barrier
+    free_vector(EnP2);
 } // end omp parallel region
 
 //	for (i = 0; i < targets->num; i++){
@@ -251,7 +253,9 @@ void compute_pc_hermite(struct tnode *p,
 	double xi,yi,zi,rinv,r3inv,r5inv,r7inv;
 	int batchStart = batch_ind[0] - 1, sourceIdx;
 //	double pointvals[4];
-# pragma acc kernels present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, \
+	int streamID = rand() % 2;
+
+# pragma acc kernels async(streamID) present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, \
 		clusterM,clusterMx,clusterMy,clusterMz,clusterMxy,clusterMyz,clusterMxz,clusterMxyz)
     {
 	#pragma acc loop independent
@@ -290,6 +294,7 @@ void compute_pc_hermite(struct tnode *p,
 //									+ 5*rinv*rinv*clusterMxyz[sourceIdx]*dxt*dyt*dzt)  )  ) ;
 
 						}
+		#pragma acc atomic
 		EnP[batchStart +i] += tempPotential;
 	}
     }
@@ -369,7 +374,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
 
-
+	int streamID = rand() % 2;
 #pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ,tt,ww, \
 		clusterQ,clusterQx,clusterQy,clusterQz,clusterQxy,clusterQyz,clusterQxz,clusterQxyz) \
 	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
