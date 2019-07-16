@@ -3,14 +3,12 @@
 #include <limits.h>
 
 #include "array.h"
-#include "globvars.h"
-#include "tnode.h"
-#include "batch.h"
 #include "particles.h"
 #include "tools.h"
 #include "tree.h"
 
 #include "treedriver.h"
+#include "treedriverWrapper.h"
 
 
 /* definition of primary treecode driver */
