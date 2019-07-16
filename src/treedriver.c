@@ -33,7 +33,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     double batch_lim[6];
     
     /* date and time */
-    double time1, time2, timeFillClusters1, timeFillClusters2;
+    double time1, time2, time3, timeFillClusters1, timeFillClusters2;
 
     
     time1 = MPI_Wtime();
@@ -52,18 +52,20 @@ void treedriver(struct particles *sources, struct particles *targets,
     struct particles *clusters = NULL;
 	clusters = malloc(sizeof(struct particles));
 
-    printf("Setting up accelerator devices. \n");
     
-    // Initialize all GPUs
-    if (numDevices>0){
-		#pragma omp parallel num_threads(numDevices)
-			{
-				acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-				acc_init(acc_get_device_type());
-			}
-    }
+//    // Initialize all GPUs
+//    if (numDevices>0){
+//		#pragma omp parallel num_threads(numDevices)
+//			{
+//			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+//			acc_init(acc_get_device_type());
+//			}
+//    }
 
-    printf("Creating tree... \n\n");
+    time2 = MPI_Wtime();
+//    printf("Time to initialize GPUs: %f\n", time2-time1);
+
+//    printf("Creating tree... \n\n");
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
@@ -113,7 +115,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         pc_create_tree_array(troot, tree_array);
-        printf("Completed pc_create_tree_array.\n");
+//        printf("Completed pc_create_tree_array.\n");
 
 //        printf("Entering setup_batch.\n");
         setup_batch(&batches, batch_lim, targets, batch_size);
@@ -128,18 +130,19 @@ void treedriver(struct particles *sources, struct particles *targets,
 //#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 //		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num])
 //        {
-
+        time3 = MPI_Wtime();
+        printf("Time to setup batches: %f\n", time3-time2);
         timeFillClusters1 = MPI_Wtime();
         if (        (pot_type == 0) || (pot_type==1)) {
-        	fill_in_cluster_data(clusters, sources, troot, order, numDevices, tree_array);
+        	fill_in_cluster_data(clusters, sources, troot, order, numDevices, numThreads, tree_array);
         }else if  ( (pot_type == 2) || (pot_type==3)){
-        	printf("Calling fill_in_cluster_data_SS().\n");
+//        	printf("Calling fill_in_cluster_data_SS().\n");
 			fill_in_cluster_data_SS(clusters, sources, troot, order);
         }else if  ( (pot_type == 4) || (pot_type==5)){
-        	printf("Calling fill_in_cluster_data_hermite().\n");
+//        	printf("Calling fill_in_cluster_data_hermite().\n");
 			fill_in_cluster_data_hermite(clusters, sources, troot, order);
 		}else if  ( (pot_type == 6) || (pot_type==7)){
-			printf("Calling fill_in_cluster_data_hermite_SS().\n");
+//			printf("Calling fill_in_cluster_data_hermite_SS().\n");
 			fill_in_cluster_data_hermite_SS(clusters, sources, troot, order);
 		}
         timeFillClusters2 = MPI_Wtime();
@@ -152,28 +155,28 @@ void treedriver(struct particles *sources, struct particles *targets,
     timetree[0] = time2-time1;
 
     printf("Tree creation (s):  %f\n\n", time2-time1);
-    printf("Tree information: \n\n");
-
-    printf("                      numpar: %d\n", troot->numpar);
-    printf("                       x_mid: %e\n", troot->x_mid);
-    printf("                       y_mid: %e\n", troot->y_mid);
-    printf("                       z_mid: %e\n\n", troot->z_mid);
-    printf("                      radius: %f\n\n", troot->radius);
-    printf("                       x_len: %e\n", troot->x_max - troot->x_min);
-    printf("                       y_len: %e\n", troot->y_max - troot->y_min);
-    printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
-    printf("                      torder: %d\n", torder);
-    printf("                       theta: %f\n", theta);
-    printf("                  maxparnode: %d\n", maxparnode);
-    printf("               tree maxlevel: %d\n", maxlevel);
-    printf("               tree minlevel: %d\n", minlevel);
-    printf("                tree maxpars: %d\n", maxpars);
-    printf("                tree minpars: %d\n", minpars);
-    printf("            number of leaves: %d\n", numleaves);
-    printf("             number of nodes: %d\n", numnodes);
-    printf("           number of devices: %d\n", numDevices);
-    printf("           target batch size: %d\n", batch_size);
-    printf("           number of batches: %d\n\n", batches->num);
+//    printf("Tree information: \n\n");
+//
+//    printf("                      numpar: %d\n", troot->numpar);
+//    printf("                       x_mid: %e\n", troot->x_mid);
+//    printf("                       y_mid: %e\n", troot->y_mid);
+//    printf("                       z_mid: %e\n\n", troot->z_mid);
+//    printf("                      radius: %f\n\n", troot->radius);
+//    printf("                       x_len: %e\n", troot->x_max - troot->x_min);
+//    printf("                       y_len: %e\n", troot->y_max - troot->y_min);
+//    printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
+//    printf("                      torder: %d\n", torder);
+//    printf("                       theta: %f\n", theta);
+//    printf("                  maxparnode: %d\n", maxparnode);
+//    printf("               tree maxlevel: %d\n", maxlevel);
+//    printf("               tree minlevel: %d\n", minlevel);
+//    printf("                tree maxpars: %d\n", maxpars);
+//    printf("                tree minpars: %d\n", minpars);
+//    printf("            number of leaves: %d\n", numleaves);
+//    printf("             number of nodes: %d\n", numnodes);
+//    printf("           number of devices: %d\n", numDevices);
+//    printf("           target batch size: %d\n", batch_size);
+//    printf("           number of batches: %d\n\n", batches->num);
 
 
 //    time1 = MPI_Wtime();

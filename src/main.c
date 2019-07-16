@@ -309,6 +309,14 @@ int main(int argc, char **argv)
 
 
     }
+    // Initialize all GPUs
+	if (numDevices>0){
+		#pragma omp parallel num_threads(numDevices)
+			{
+			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+			acc_init(acc_get_device_type());
+			}
+	}
 
     printf("Filling originalWeights.\n");
     for (i=0;i<numparsT;i++){
