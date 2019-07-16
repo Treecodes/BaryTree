@@ -68,11 +68,15 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
 
 
     set(TRGT treelib-cpu)
-    add_library(${TRGT} SHARED)
+    add_library(${TRGT})
     target_sources(${TRGT} PRIVATE treedriverWrapper.c
                            PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
+    set_target_properties(${TRGT} PROPERTIES
+                                  PUBLIC_HEADER treedriverWrapper.h) 
     target_link_libraries(${TRGT} PRIVATE treedriverCPU_ObjLib)
-    install(TARGETS ${TRGT} DESTINATION bin)
+    install(TARGETS ${TRGT}
+            LIBRARY DESTINATION lib
+            PUBLIC_HEADER DESTINATION include)
 endif()
 
 
@@ -106,11 +110,15 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
 
 
     set(TRGT treelib-gpu)
-    add_library(${TRGT} SHARED)
+    add_library(${TRGT})
     target_sources(${TRGT} PRIVATE treedriverWrapper.c
                            PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
+    set_target_properties(${TRGT} PROPERTIES
+                                  PUBLIC_HEADER treedriverWrapper.h) 
     target_link_libraries(${TRGT} PRIVATE treedriverGPU_ObjLib)
-    install(TARGETS ${TRGT} DESTINATION bin)
+    install(TARGETS ${TRGT}
+            LIBRARY DESTINATION lib
+            PUBLIC_HEADER DESTINATION include)
 endif()
 
 
