@@ -348,7 +348,6 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 			} // end ACC DATA REGION
 
 		int counter=0;
-		printf("clusters->num = %i\n",clusters->num);
 		for (int j = 0; j < clusters->num; j++)
 		{
 
@@ -753,13 +752,15 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, 
 
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
+	double sx,sy,sz,cx,cy,cz,denominator,w;
 
-	int streamID = rand() % 2;
+	int streamID = rand() % 4;
 //	async(streamID)
 #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
 	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
 			nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
 	{
+
 
 	#pragma acc loop independent
 	for (j=0;j<pointsInNode;j++){
@@ -779,12 +780,15 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, 
 	}
 
 	// Compute weights
-	dj[0] = 0.5;
-	dj[torder] = 0.5;
+//	dj[0] = 0.5;
+//	dj[torder] = 0.5;
 	#pragma acc loop independent
-	for (j = 1; j < torder; j++){
+	for (j = 0; j < torder+1; j++){
 		dj[j] = 1.0;
+		if (j==0) dj[j] = 0.5;
+		if (j==torder) dj[j]=0.5;
 	}
+
 	#pragma acc loop independent
 	for (j = 0; j < torderlim; j++) {
 		weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
@@ -792,7 +796,6 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, 
 
 
 	// Compute modified f values
-	double sx,sy,sz,cx,cy,cz,denominator,w;
 
 
 
