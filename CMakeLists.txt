@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.1...3.14)
+cmake_minimum_required(VERSION 3.9...3.14)
 project(GPU-TREECODE VERSION 0.7 LANGUAGES C)
+
+set(CMAKE_C_STANDARD 99)
 
 set(default_build_type "Release")
 
@@ -30,9 +32,5 @@ option(ENABLE_CPU_BUILD "build CPU version" ON)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
-
-if(ENABLE_GPU_BUILD)
-    find_package(OpenACC REQUIRED)
-endif()
 
 add_subdirectory(src)

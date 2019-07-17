@@ -1,4 +1,5 @@
-# C code for standalone
+file(WRITE null.c "")
+
 SET(SRCS_TREEDRIVER_PRIVATE  
     tools.c
     treedriver.c
@@ -48,7 +49,7 @@ SET(SRCS_TXT2BIN
 
 if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT treedriverCPU_ObjLib)
-    add_library(${TRGT} OBJECT)
+    add_library(${TRGT} STATIC null.c)
     target_sources(${TRGT}
         PRIVATE ${SRCS_TREEDRIVER_PRIVATE}
         PUBLIC  ${SRCS_TREEDRIVER_PUBLIC})
@@ -57,68 +58,75 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     target_link_libraries(${TRGT} PUBLIC OpenMP::OpenMP_C
                                          MPI::MPI_C
                                          $<$<C_COMPILER_ID:GNU>:m>)
-    target_compile_features(${TRGT} PUBLIC c_std_99)
+    #target_compile_features(${TRGT} PUBLIC c_std_99)
 
 
     set(TRGT tree-cpu)
-    add_executable(${TRGT})
+    add_executable(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE main.c)
+    set_target_properties(${TRGT} PROPERTIES
+                                  POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PRIVATE treedriverCPU_ObjLib)
     install(TARGETS ${TRGT} DESTINATION bin)
 
 
     set(TRGT treelib-cpu)
-    add_library(${TRGT})
+    add_library(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE treedriverWrapper.c
                            PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
     set_target_properties(${TRGT} PROPERTIES
-                                  PUBLIC_HEADER treedriverWrapper.h) 
+                                  POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PRIVATE treedriverCPU_ObjLib)
     install(TARGETS ${TRGT}
-            LIBRARY DESTINATION lib
-            PUBLIC_HEADER DESTINATION include)
+            LIBRARY DESTINATION lib)
+    install(FILES treedriverWrapper.h 
+            DESTINATION include)
 endif()
 
 
 if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
 #Compute capability all
     set(TRGT treedriverGPU_ObjLib)
-    add_library(${TRGT} OBJECT)
+    add_library(${TRGT} STATIC null.c)
     target_sources(${TRGT}
         PRIVATE ${SRCS_TREEDRIVER_PRIVATE}
         PUBLIC  ${SRCS_TREEDRIVER_PUBLIC})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall")
     target_link_libraries(${TRGT} PUBLIC OpenMP::OpenMP_C
                                          MPI::MPI_C
                                          $<$<C_COMPILER_ID:GNU>:m>)
-    target_compile_features(${TRGT} PUBLIC c_std_99)
+    #target_compile_features(${TRGT} PUBLIC c_std_99)
     target_compile_options(${TRGT} PUBLIC
                                    -acc
                                    -ta=tesla:ccall$<$<CONFIG:Debug>:,time>
                                    $<$<CONFIG:Debug>:-Minfo>)
-    target_link_options(${TRGT} PUBLIC
-                                -acc
-                                -ta=tesla:ccall)
+    #target_link_options(${TRGT} PUBLIC -acc -ta=tesla:ccall)
 
 
     set(TRGT tree-gpu)
-    add_executable(${TRGT})
+    add_executable(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE main.c)
+    set_target_properties(${TRGT} PROPERTIES
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall")
     target_link_libraries(${TRGT} PRIVATE treedriverGPU_ObjLib)
     install(TARGETS ${TRGT} DESTINATION bin)
 
 
     set(TRGT treelib-gpu)
-    add_library(${TRGT})
+    add_library(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE treedriverWrapper.c
                            PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
     set_target_properties(${TRGT} PROPERTIES
-                                  PUBLIC_HEADER treedriverWrapper.h) 
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall")
     target_link_libraries(${TRGT} PRIVATE treedriverGPU_ObjLib)
     install(TARGETS ${TRGT}
-            LIBRARY DESTINATION lib
-            PUBLIC_HEADER DESTINATION include)
+            LIBRARY DESTINATION lib)
+    install(FILES treedriverWrapper.h 
+            DESTINATION include)
 endif()
 
 
@@ -130,7 +138,7 @@ if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
-    target_compile_features(${TRGT} PRIVATE c_std_99)
+    #target_compile_features(${TRGT} PRIVATE c_std_99)
     install(TARGETS ${TRGT} DESTINATION bin)
 
 
@@ -141,7 +149,7 @@ if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
-    target_compile_features(${TRGT} PRIVATE c_std_99)
+    #target_compile_features(${TRGT} PRIVATE c_std_99)
     install(TARGETS ${TRGT} DESTINATION bin)
 endif()
 
@@ -151,36 +159,34 @@ if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
     set(TRGT direct-gpu)
     add_executable(${TRGT} ${SRCS_DIRECT})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall")
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
-    target_compile_features(${TRGT} PRIVATE c_std_99)
+    #target_compile_features(${TRGT} PRIVATE c_std_99)
     target_compile_options(${TRGT} PRIVATE
                                    -acc
                                    -ta=tesla:ccall$<$<CONFIG:Debug>:,time>
                                    $<$<CONFIG:Debug>:-Minfo>)
-    target_link_options(${TRGT} PRIVATE
-                                -acc
-                                -ta=tesla:ccall)
+    #target_link_options(${TRGT} PRIVATE -acc -ta=tesla:ccall)
     install(TARGETS ${TRGT} DESTINATION bin)
 
 
     set(TRGT direct-distributed-gpu)
     add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall")
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
-    target_compile_features(${TRGT} PRIVATE c_std_99)
+    #target_compile_features(${TRGT} PRIVATE c_std_99)
     target_compile_options(${TRGT} PRIVATE
-                                  -acc
-                                  -ta=tesla:ccall$<$<CONFIG:Debug>:,time>
-                                  $<$<CONFIG:Debug>:-Minfo>)
-    target_link_options(${TRGT} PRIVATE
-                                -acc
-                                -ta=tesla:ccall)
+                                   -acc
+                                   -ta=tesla:ccall$<$<CONFIG:Debug>:,time>
+                                   $<$<CONFIG:Debug>:-Minfo>)
+    #target_link_options(${TRGT} PRIVATE -acc -ta=tesla:ccall)
     install(TARGETS ${TRGT} DESTINATION bin)
 endif()
 
