@@ -1,10 +1,13 @@
+module purge; module load intel mkl gnutools cuda pgi openmpi_ib
+#export OMP_NUM_THREADS=4
+
 TREETYPE=1
 
 SFLAG=1
 PFLAG=0
 DFLAG=0
 
-N=10000000
+N=1000000
 
 
 
@@ -14,19 +17,14 @@ N=10000000
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/bughunt.csv
 
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TitanV_hermite_parallel_$N.csv 
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/batchSize_5k_$N.csv 
-
+#OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/batchSize_5k_$N.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/comet/batchSize_5k_$N.csv
 
 SOURCES=/oasis/scratch/comet/njvaughn/temp_project/random/S$N.bin    
 TARGETS=/oasis/scratch/comet/njvaughn/temp_project/random/T$N.bin
-#SOURCES=/scratch/krasny_fluxg/njvaughn/examplesBenzene/S$N.bin
-#TARGETS=/scratch/krasny_fluxg/njvaughn/examplesBenzene/T$N.bin
 NUMSOURCES=$N
 NUMTARGETS=$N
-#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulombSS_$N.bin  
-#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin  
 DIRECTSUM=/oasis/scratch/comet/njvaughn/temp_project/random/ex_st_coulomb_$N.bin  
-#DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
 DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/comet/directSum_Coulomb.csv 
 
 
@@ -41,7 +39,7 @@ do
 		  do       
 		     for MAXPARNODE in 5000
 		     	do
-		     	for NUMDEVICES in 4 3 2 1     
+		     	for NUMDEVICES in 4     
 		     		do
 				NUMTHREADS=$NUMDEVICES
 				#../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS

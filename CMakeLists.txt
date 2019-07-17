@@ -31,8 +31,8 @@ option(ENABLE_CPU_BUILD "build CPU version" ON)
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 
-if(ENABLE_GPU_BUILD)
-    find_package(OpenACC REQUIRED)
-endif()
+#if(ENABLE_GPU_BUILD)
+#    find_package(OpenACC REQUIRED)
+#endif()
 
 add_subdirectory(src)
