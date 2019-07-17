@@ -54,6 +54,14 @@ void treedriverWrapper(int numTargets, int numSources,
 	int tree_type=1;   // particle cluster
 	double tpeng = 0;
 
+	// Initialize all GPUs
+	if (numDevices>0){
+		#pragma omp parallel num_threads(numDevices)
+			{
+			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+			acc_init(acc_get_device_type());
+			}
+	}
 
 	// Call the treedriver
 	treedriver(sources, targets,
