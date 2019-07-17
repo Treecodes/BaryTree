@@ -58,6 +58,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	if (numDevices>0){
 		#pragma omp parallel num_threads(numDevices)
 			{
+			printf("Initializing device: %i\n", omp_get_thread_num());
 			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 			acc_init(acc_get_device_type());
 			}
