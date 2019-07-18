@@ -9,9 +9,10 @@ SET(SRCS_TREEDRIVER_PRIVATE
     tree-pc.c
     tree-pc-coulomb-SS.c
     tree-pc-hermite.c
-    tree-pc-hermite-coulombSS.c
+    tree-pc-hermite-coulomb-SS.c
     tree-pc-yuk.c
     tree-pc-yuk-SS.c
+    tree-pc-hermite-yuk.c
     tree-batch.c
     xmalloc.c
     sort.c 
@@ -54,7 +55,8 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
         PRIVATE ${SRCS_TREEDRIVER_PRIVATE}
         PUBLIC  ${SRCS_TREEDRIVER_PUBLIC})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
     target_link_libraries(${TRGT} PUBLIC OpenMP::OpenMP_C
                                          MPI::MPI_C
                                          $<$<C_COMPILER_ID:GNU>:m>)
@@ -65,7 +67,8 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     add_executable(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE main.c)
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
     target_link_libraries(${TRGT} PRIVATE treedriverCPU_ObjLib)
     install(TARGETS ${TRGT} DESTINATION bin)
 
@@ -75,7 +78,8 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     target_sources(${TRGT} PRIVATE treedriverWrapper.c
                            PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
     target_link_libraries(${TRGT} PRIVATE treedriverCPU_ObjLib)
     install(TARGETS ${TRGT}
             LIBRARY DESTINATION lib)
@@ -133,7 +137,8 @@ if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
     set(TRGT direct-cpu)
     add_executable(${TRGT} ${SRCS_DIRECT})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
@@ -144,7 +149,8 @@ if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
     set(TRGT direct-distributed-cpu)
     add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON)
+                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
