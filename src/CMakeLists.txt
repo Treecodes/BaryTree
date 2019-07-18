@@ -54,9 +54,8 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     target_sources(${TRGT}
         PRIVATE ${SRCS_TREEDRIVER_PRIVATE}
         PUBLIC  ${SRCS_TREEDRIVER_PUBLIC})
-    set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
+#    set_target_properties(${TRGT} PROPERTIES
+#                                  POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC OpenMP::OpenMP_C
                                          MPI::MPI_C
                                          $<$<C_COMPILER_ID:GNU>:m>)
@@ -66,25 +65,24 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT tree-cpu)
     add_executable(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE main.c)
-    set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
+#    set_target_properties(${TRGT} PROPERTIES
+#                                  POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PRIVATE treedriverCPU_ObjLib)
     install(TARGETS ${TRGT} DESTINATION bin)
 
-
+    if(BUILD_TREE_LIBRARIES)
     set(TRGT treelib-cpu)
     add_library(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE treedriverWrapper.c
                            PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
+                                  POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PRIVATE treedriverCPU_ObjLib)
     install(TARGETS ${TRGT}
             LIBRARY DESTINATION lib)
     install(FILES treedriverWrapper.h 
             DESTINATION include)
+    endif()
 endif()
 
 
@@ -96,8 +94,8 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
         PRIVATE ${SRCS_TREEDRIVER_PRIVATE}
         PUBLIC  ${SRCS_TREEDRIVER_PUBLIC})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60 ${OpenMP_C_LINK_FLAGS}")
+#                                 POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60")
     target_link_libraries(${TRGT} PUBLIC OpenMP::OpenMP_C
                                          MPI::MPI_C
                                          $<$<C_COMPILER_ID:GNU>:m>)
@@ -112,33 +110,34 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
     add_executable(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE main.c)
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60 ${OpenMP_C_LINK_FLAGS}")
+#                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60")
     target_link_libraries(${TRGT} PRIVATE treedriverGPU_ObjLib)
     install(TARGETS ${TRGT} DESTINATION bin)
 
 
+    if(BUILD_TREE_LIBRARIES)
     set(TRGT treelib-gpu)
     add_library(${TRGT} null.c)
     target_sources(${TRGT} PRIVATE treedriverWrapper.c
                            PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
     set_target_properties(${TRGT} PROPERTIES
                                   POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60 ${OpenMP_C_LINK_FLAGS}")
+                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60")
     target_link_libraries(${TRGT} PRIVATE treedriverGPU_ObjLib)
     install(TARGETS ${TRGT}
             LIBRARY DESTINATION lib)
     install(FILES treedriverWrapper.h 
             DESTINATION include)
+    endif()
 endif()
 
 
 if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
     set(TRGT direct-cpu)
     add_executable(${TRGT} ${SRCS_DIRECT})
-    set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
+#    set_target_properties(${TRGT} PROPERTIES
+#                                  POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
@@ -148,9 +147,8 @@ if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
 
     set(TRGT direct-distributed-cpu)
     add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
-    set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "${OpenMP_C_LINK_FLAGS}")
+#    set_target_properties(${TRGT} PROPERTIES
+#                                  POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
@@ -164,8 +162,8 @@ if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
     set(TRGT direct-gpu)
     add_executable(${TRGT} ${SRCS_DIRECT})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60 ${OpenMP_C_LINK_FLAGS}")
+#                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60")
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
@@ -180,8 +178,8 @@ if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
     set(TRGT direct-distributed-gpu)
     add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
     set_target_properties(${TRGT} PROPERTIES
-                                  POSITION_INDEPENDENT_CODE ON
-                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60 ${OpenMP_C_LINK_FLAGS}")
+#                                  POSITION_INDEPENDENT_CODE ON
+                                  LINK_FLAGS "-acc -ta=tesla:ccall,cc60")
     target_link_libraries(${TRGT} PRIVATE OpenMP::OpenMP_C
                                           MPI::MPI_C
                                           $<$<C_COMPILER_ID:GNU>:m>)
