@@ -1,8 +1,8 @@
 src/*.o
 src/*.exe
 data/*
-bin/*
-lib/*
+bin*
+lib*
 .DS_store
 *.ptp*
 *.cproject
@@ -15,6 +15,4 @@ bin_cpu/*
 *.xml
 *.prefs
 *.exe
-bin_openACC/*
-bin_noAcc/*
 build*
