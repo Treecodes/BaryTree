@@ -18,14 +18,15 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
-option(BUILD_TREECODE "build treecode computation executables"            ON)
-option(BUILD_DIRECT "build direct computation executables"                ON)
-option(BUILD_TOOLS "build auxiliary utilities"                            ON)
-option(BUILD_LIBRARIES "build tree libraries for use with external codes" ON)
-option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"    ON)
+option(BUILD_TREECODE "build treecode computation executables"                 ON)
+option(BUILD_DIRECT "build direct computation executables"                     ON)
+option(BUILD_TOOLS "build auxiliary utilities"                                 ON)
 
-option(ENABLE_GPU_BUILD "build OpenACC GPU version"                       ON)
-option(ENABLE_CPU_BUILD "build CPU version"                               ON)
+option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
+option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
+
+option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
+option(ENABLE_CPU_BUILD "build CPU version"                                    ON)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
