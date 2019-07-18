@@ -22,6 +22,7 @@ option(BUILD_TREECODE "build treecode computation executables" ON)
 option(BUILD_DIRECT "build direct computation executables" ON)
 option(BUILD_TOOLS "build auxiliary utilities" OFF)
 option(BUILD_LIBRARIES "build tree libraries for use with external codes" OFF)
+option(BUILD_SHARED_LIBS "if building tree libraries, build as shared" ON)
 
 option(ENABLE_GPU_BUILD "build OpenACC GPU version" ON)
 option(ENABLE_CPU_BUILD "build CPU version" ON)
