@@ -92,9 +92,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 //            setup(sources, order, theta, xyzminmax);  // call the non-Yukawa setup.  This has the Chebyshev parts.
 //        }
     	time1 = MPI_Wtime();
+    	printf("Entering setup.\n");
     	setup(sources, order, theta, xyzminmax);
     	time2 = MPI_Wtime();
-//    	printf("Time to setup: %f\n", time2-time1);
+    	printf("Time to setup: %f\n", time2-time1);
+    	fflush(stdout);
 //    	printf("Completed setup.\n");
         
 //	#pragma omp parallel num_threads(numThreads)
@@ -143,7 +145,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
         time2 = MPI_Wtime();
 //        printf("Time to create_target_batch: %f\n", time2-time1);
-//        printf("Exiting create_target_batch.\n");
+        printf("Exiting create_target_batch.\n");
 
 
 //#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \

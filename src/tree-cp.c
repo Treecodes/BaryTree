@@ -52,6 +52,7 @@ void setup(struct particles *particles, int order, double theta,
     /* local variables */
     int i;
     double t1, xx;
+    printf("Entering setup.\n");
 
     /* changing values of our extern variables */
     torder = order;
@@ -81,6 +82,7 @@ void setup(struct particles *particles, int order, double theta,
         xx = i * M_PI / torder;
         ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
     }
+//    printf("Made it here.\n");
 
     /* initializing array for Clenshaw-Curtis weights */
 //    double CCtheta, b;
@@ -121,20 +123,26 @@ void setup(struct particles *particles, int order, double theta,
         cf1[i] = 1.0 - (0.5 * t1);
         cf2[i] = 1.0 - t1;
     }
+    printf("Made it here1.\n");
 
     /* find bounds of Cartesian box enclosing the particles */
     xyzminmax[0] = minval(particles->x, particles->num);
+    printf("Made it here2.\n");
+    fflush(stdout);
     xyzminmax[1] = maxval(particles->x, particles->num);
     xyzminmax[2] = minval(particles->y, particles->num);
     xyzminmax[3] = maxval(particles->y, particles->num);
     xyzminmax[4] = minval(particles->z, particles->num);
     xyzminmax[5] = maxval(particles->z, particles->num);
 
+    printf("Made it here2.\n");
+    fflush(stdout);
     make_vector(orderarr, particles->num);
-
+    printf("Made it here3.\n");
     for (i = 0; i < particles->num; i++)
         orderarr[i] = i+1;
 
+    printf("About to return.\n");
     return;
     
 } /* END of function setup */
