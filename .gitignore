@@ -17,3 +17,4 @@ bin_cpu/*
 *.exe
 bin_openACC/*
 bin_noAcc/*
+build*

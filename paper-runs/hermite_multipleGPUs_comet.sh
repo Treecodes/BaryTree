@@ -4,7 +4,7 @@ SFLAG=1
 PFLAG=0
 DFLAG=0
 
-N=10000000
+N=1000000
 
 
 
@@ -41,7 +41,7 @@ do
 		  do       
 		     for MAXPARNODE in 5000
 		     	do
-		     	for NUMDEVICES in 4 3 2 1     
+		     	for NUMDEVICES in 2 1     
 		     		do
 				NUMTHREADS=$NUMDEVICES
 				#../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS

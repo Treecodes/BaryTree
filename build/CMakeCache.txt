@@ -21,7 +21,7 @@ BUILD_DIRECT:BOOL=ON
 BUILD_SHARED_LIBS:BOOL=ON
 
 //build auxiliary utilities
-BUILD_TOOLS:BOOL=OFF
+BUILD_TOOLS:BOOL=ON
 
 //build treecode computation executables
 BUILD_TREECODE:BOOL=ON
@@ -155,7 +155,7 @@ CMAKE_STRIP:FILEPATH=/opt/gnu/bin/strip
 // .SILENT directive, and all commands will be echoed to the console
 // during the make.  This is useful for debugging only. With Visual
 // Studio IDE projects all commands are done without /nologo.
-CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
+CMAKE_VERBOSE_MAKEFILE:BOOL=ON
 
 //build CPU version
 ENABLE_CPU_BUILD:BOOL=ON
@@ -219,6 +219,18 @@ ProcessorCount_cmd_getconf:FILEPATH=/usr/bin/getconf
 //Path to a program.
 ProcessorCount_cmd_sysctl:FILEPATH=/sbin/sysctl
 
+//Dependencies for target
+treedriverCPU_ObjLib_LIB_DEPENDS:STATIC=
+
+//Dependencies for target
+treedriverGPU_ObjLib_LIB_DEPENDS:STATIC=
+
+//Dependencies for the target
+treelib-cpu_LIB_DEPENDS:STATIC=general;treedriverCPU_ObjLib;
+
+//Dependencies for the target
+treelib-gpu_LIB_DEPENDS:STATIC=general;treedriverGPU_ObjLib;
+
 
 ########################
 # INTERNAL cache entries
@@ -227,7 +239,7 @@ ProcessorCount_cmd_sysctl:FILEPATH=/sbin/sysctl
 //ADVANCED property for variable: CMAKE_AR
 CMAKE_AR-ADVANCED:INTERNAL=1
 //STRINGS property for variable: CMAKE_BUILD_TYPE
-CMAKE_BUILD_TYPE-STRINGS:INTERNAL=Debug;Release
+CMAKE_BUILD_TYPE-STRINGS:INTERNAL=Debug;Release;None
 //This is the directory where this CMakeCache.txt was created
 CMAKE_CACHEFILE_DIR:INTERNAL=/home/njvaughn/openACC-treecode/build
 //Major version of cmake used to create the current loaded cache
