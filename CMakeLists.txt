@@ -18,23 +18,35 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
-option(BUILD_TREECODE "build treecode computation executables" ON)
-option(BUILD_DIRECT "build direct computation executables" ON)
-option(BUILD_TOOLS "build auxiliary utilities" OFF)
-option(BUILD_LIBRARIES "build tree libraries for use with external codes" OFF)
-option(BUILD_SHARED_LIBS "if building tree libraries, build as shared" ON)
+option(BUILD_TREECODE "build treecode computation executables"            ON)
+option(BUILD_DIRECT "build direct computation executables"                ON)
+option(BUILD_TOOLS "build auxiliary utilities"                            ON)
+option(BUILD_LIBRARIES "build tree libraries for use with external codes" ON)
+option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"    ON)
 
-option(ENABLE_GPU_BUILD "build OpenACC GPU version" ON)
-option(ENABLE_CPU_BUILD "build CPU version" ON)
+option(ENABLE_GPU_BUILD "build OpenACC GPU version"                       ON)
+option(ENABLE_CPU_BUILD "build CPU version"                               ON)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
-set_property(TARGET OpenMP::OpenMP_C APPEND PROPERTY INTERFACE_LINK_LIBRARIES
-                                            $<$<C_COMPILER_ID:PGI>:-mp>) 
 
 #Some PGI versions seem to require a link flag for OpenMP
-#if(CMAKE_C_COMPILER_ID MATCHES PGI)
-#    set(OpenMP_C_LINK_FLAGS -mp)
-#endif()
+set_property(TARGET OpenMP::OpenMP_C APPEND
+                                     PROPERTY
+                                         INTERFACE_LINK_LIBRARIES
+                                         $<$<C_COMPILER_ID:PGI>:-mp>) 
+
+#Creating an interface for OpenACC
+add_library(OpenACC_C INTERFACE)
+set_property(TARGET OpenACC_C        PROPERTY
+                                         INTERFACE_COMPILE_OPTIONS
+                                         -acc
+                                         -ta=tesla:ccall,cc60$<$<CONFIG:Debug>:,time>
+                                         $<$<AND:$<CONFIG:Debug>,$<C_COMPILER_ID:PGI>>:
+                                             -Minfo>)
+set_property(TARGET OpenACC_C        PROPERTY
+                                         INTERFACE_LINK_LIBRARIES
+                                         -acc
+                                         -ta=tesla:ccall,cc60)
 
 add_subdirectory(src)
