@@ -1197,13 +1197,17 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 
 
 		#pragma acc wait
+		#pragma omp barrier
 	    } // end acc data region
 
 
 	    for (int k = 0; k < targets->num; k++){
 	    	if (EnP2[k] != 0.0)
+				#pragma omp critical
+	    	{
 				EnP[k] += EnP2[k];
 				EnP[k] += EnP3[k];
+	    	} // end omp critical
 			}
 
 	    free_vector(EnP2);

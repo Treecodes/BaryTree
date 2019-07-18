@@ -230,8 +230,11 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
 
 	    for (int k = 0; k < targets->num; k++){
 	    	if (EnP2[k] != 0.0)
+			#pragma omp critical
+	    	{
 				EnP[k] += EnP2[k];
 				EnP[k] += EnP3[k];
+	    	}
 			}
 
 	    free_vector(EnP2);
