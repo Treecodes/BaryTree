@@ -8,11 +8,11 @@ DFLAG=0
 
  
 #DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
-DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/directSum_gpu_Coulomb.csv 
+DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/directSum_cpu_Coulomb.csv 
 
 
-NUMDEVICES=1
-NUMTHREADS=1
+NUMDEVICES=0
+NUMTHREADS=6
 
 
 BATCHSIZE=4000
@@ -22,7 +22,7 @@ MAXPARNODE=4000
 ## COULOMB 
 KAPPA=0.0
 POTENTIALTYPE=0
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/gpu_coulomb_lagrange.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/cpu_coulomb_lagrange.csv 
 for N in 1000000
 do
 	echo N=$N 
@@ -36,7 +36,7 @@ do
 	do
 		for ORDER in {1..14}
 		do
-			tree-gpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+			tree-cpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
 									$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
 									$NUMDEVICES $NUMTHREADS
 		done
@@ -47,7 +47,7 @@ done
 ## Yukawa 
 KAPPA=0.5
 POTENTIALTYPE=1
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/gpu_yukawa_lagrange.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/cpu_yukawa_lagrange.csv 
 for N in 1000000
 do
 	echo N=$N 
@@ -61,7 +61,7 @@ do
 	do
 		for ORDER in {1..14}
 		do
-			tree-gpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+			tree-cpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
 									$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
 									$NUMDEVICES $NUMTHREADS
 		done
@@ -72,7 +72,7 @@ done
 ## COULOMB 
 KAPPA=0.0
 POTENTIALTYPE=4
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/gpu_coulomb_hermite.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/cpu_coulomb_hermite.csv 
 for N in 1000000
 do
 	echo N=$N 
@@ -86,7 +86,7 @@ do
 	do
 		for ORDER in {1..14}
 		do
-			tree-gpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+			tree-cpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
 									$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
 									$NUMDEVICES $NUMTHREADS
 		done
@@ -97,7 +97,7 @@ done
 ## Yukawa 
 KAPPA=0.5
 POTENTIALTYPE=5
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/gpu_yukawa_hermite.csv 
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/1M_comparison/cpu_yukawa_hermite.csv 
 for N in 1000000
 do
 	echo N=$N 
@@ -111,7 +111,7 @@ do
 	do
 		for ORDER in {1..14}
 		do
-			tree-gpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+			tree-cpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
 									$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
 									$NUMDEVICES $NUMTHREADS
 		done

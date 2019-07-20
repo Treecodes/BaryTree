@@ -21,6 +21,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 double *tEn, double *tpeng, double *timetree, int numDevices, int numThreads)
 {
 
+	int verbosity=0;
     /* local variables */
     struct tnode *troot = NULL;
     int level;
@@ -84,7 +85,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                             batch_size, batch_lim);
         
     } else if (tree_type == 1) {
-    	printf("Treetype %i\n", tree_type);
+    	if (verbosity>0) printf("Treetype %i\n", tree_type);
 //        if (pot_type == 0) {
 //            setup(sources, order, theta, xyzminmax);
 //        } else if (pot_type == 1) {
@@ -92,10 +93,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 //            setup(sources, order, theta, xyzminmax);  // call the non-Yukawa setup.  This has the Chebyshev parts.
 //        }
     	time1 = MPI_Wtime();
-    	printf("Entering setup.\n");
+    	if (verbosity>0) printf("Entering setup.\n");
     	setup(sources, order, theta, xyzminmax);
     	time2 = MPI_Wtime();
-    	printf("Time to setup: %f\n", time2-time1);
+    	if (verbosity>0) printf("Time to setup: %f\n", time2-time1);
     	fflush(stdout);
 //    	printf("Completed setup.\n");
         
@@ -145,7 +146,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
         time2 = MPI_Wtime();
 //        printf("Time to create_target_batch: %f\n", time2-time1);
-        printf("Exiting create_target_batch.\n");
+        if (verbosity>0) printf("Exiting create_target_batch.\n");
 
 
 //#pragma acc data region copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
@@ -175,29 +176,31 @@ void treedriver(struct particles *sources, struct particles *targets,
     time2 = MPI_Wtime();
     timetree[0] = time2-time1;
 
-//    printf("Tree creation (s):  %f\n\n", time2-time1);
-//    printf("Tree information: \n\n");
-//
-//    printf("                      numpar: %d\n", troot->numpar);
-//    printf("                       x_mid: %e\n", troot->x_mid);
-//    printf("                       y_mid: %e\n", troot->y_mid);
-//    printf("                       z_mid: %e\n\n", troot->z_mid);
-//    printf("                      radius: %f\n\n", troot->radius);
-//    printf("                       x_len: %e\n", troot->x_max - troot->x_min);
-//    printf("                       y_len: %e\n", troot->y_max - troot->y_min);
-//    printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
-//    printf("                      torder: %d\n", torder);
-//    printf("                       theta: %f\n", theta);
-//    printf("                  maxparnode: %d\n", maxparnode);
-//    printf("               tree maxlevel: %d\n", maxlevel);
-//    printf("               tree minlevel: %d\n", minlevel);
-//    printf("                tree maxpars: %d\n", maxpars);
-//    printf("                tree minpars: %d\n", minpars);
-//    printf("            number of leaves: %d\n", numleaves);
-//    printf("             number of nodes: %d\n", numnodes);
-//    printf("           number of devices: %d\n", numDevices);
-//    printf("           target batch size: %d\n", batch_size);
-//    printf("           number of batches: %d\n\n", batches->num);
+    if (verbosity>0){
+		printf("Tree creation (s):  %f\n\n", time2-time1);
+		printf("Tree information: \n\n");
+
+		printf("                      numpar: %d\n", troot->numpar);
+		printf("                       x_mid: %e\n", troot->x_mid);
+		printf("                       y_mid: %e\n", troot->y_mid);
+		printf("                       z_mid: %e\n\n", troot->z_mid);
+		printf("                      radius: %f\n\n", troot->radius);
+		printf("                       x_len: %e\n", troot->x_max - troot->x_min);
+		printf("                       y_len: %e\n", troot->y_max - troot->y_min);
+		printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
+		printf("                      torder: %d\n", torder);
+		printf("                       theta: %f\n", theta);
+		printf("                  maxparnode: %d\n", maxparnode);
+		printf("               tree maxlevel: %d\n", maxlevel);
+		printf("               tree minlevel: %d\n", minlevel);
+		printf("                tree maxpars: %d\n", maxpars);
+		printf("                tree minpars: %d\n", minpars);
+		printf("            number of leaves: %d\n", numleaves);
+		printf("             number of nodes: %d\n", numnodes);
+		printf("           number of devices: %d\n", numDevices);
+		printf("           target batch size: %d\n", batch_size);
+		printf("           number of batches: %d\n\n", batches->num);
+    }
 
 
 //    time1 = MPI_Wtime();
@@ -229,33 +232,33 @@ void treedriver(struct particles *sources, struct particles *targets,
     	time1 = MPI_Wtime(); // start timer for tree evaluation
 
         if (pot_type == 0) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
+        	if (verbosity>0) printf("Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).\n");
 //            pc_treecode(troot, batches, sources, targets, clusters, tpeng, tEn, numDevices, numThreads);
         	pc_interaction_list_treecode(tree_array, clusters, batches, tree_inter_list, direct_inter_list, sources, targets, tpeng, tEn, numDevices, numThreads);
         } else if (pot_type == 1) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
+        	if (verbosity>0) printf("Entering tree_type=1 (particle-cluster), pot_type=1 (Yukawa).\n");
 //            pc_treecode_yuk(troot, batches, sources, targets, clusters,
 //                            kappa, tpeng, tEn, numDevices, numThreads);
         	pc_interaction_list_treecode_yuk(tree_array, clusters, batches, tree_inter_list, direct_inter_list, sources, targets, tpeng, kappa, tEn, numDevices, numThreads);
         }else if (pot_type == 2) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
+        	if (verbosity>0) printf("Entering tree_type=1 (particle-cluster), pot_type=2 (Coulomb w/ singularity subtraction).\n");
         	pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
         	                            kappa, tpeng, tEn, numDevices, numThreads);
 //        	pc_interaction_list_treecode_Coulomb_SS(tree_array, clusters, batches, tree_inter_list, direct_inter_list, sources, targets, tpeng, kappa, tEn, numDevices, numThreads);
         }else if (pot_type == 3) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
+        	if (verbosity>0) printf("Entering tree_type=1 (particle-cluster), pot_type=3 (Yukawa w/ singularity subtraction).\n");
         	pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
         	                            kappa, tpeng, tEn, numDevices, numThreads);
         }else if (pot_type == 4) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Coulomb Hermite).\n");
+        	if (verbosity>0) printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Coulomb Hermite).\n");
 //        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn, numDevices, numThreads);
         	pc_interaction_list_treecode_hermite_coulomb(tree_array, clusters, batches, tree_inter_list, direct_inter_list, sources, targets, tpeng, tEn, numDevices, numThreads);
         }else if (pot_type == 5) {
-        	printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Yukawa Hermite).\n");
+        	if (verbosity>0) printf("Entering tree_type=1 (particle-cluster), pot_type=4 (Yukawa Hermite).\n");
 //        	pc_treecode_hermite(troot, batches, sources, targets,clusters, tpeng, tEn, numDevices);
         	pc_interaction_list_treecode_hermite_yukawa(tree_array, clusters, batches, tree_inter_list, direct_inter_list, sources, targets, tpeng, kappa, tEn, numDevices, numThreads);
         }else if (pot_type == 6) {
-        	printf("Entering tree_type=1  (particle-cluster), pot_type=6 (Coulomb Hermite w/ singularity subtraction.).\n");
+        	if (verbosity>0) printf("Entering tree_type=1  (particle-cluster), pot_type=6 (Coulomb Hermite w/ singularity subtraction.).\n");
         	pc_treecode_hermite_coulomb_SS(troot, batches, sources, targets,clusters,
         								kappa, tpeng, tEn, numDevices, numThreads);
         }
@@ -269,7 +272,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //    timetree[3] = time2-time1 + timetree[0];
     timetree[3] = time2-time1; //+ timetree[0];
 
-    printf("Time to compute: %f\n", time2-time1);
+    if (verbosity>0) printf("Time to compute: %f\n", time2-time1);
 
 
     cleanup(troot);

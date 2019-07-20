@@ -4,34 +4,83 @@ SFLAG=1
 PFLAG=0
 DFLAG=0
 
+N=10000000
+BATCHSIZE=5000
+MAXPARNODE=5000
+SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
+TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
+NUMSOURCES=$N
+NUMTARGETS=$N
 
- 
+NUMDEVICES=1
+NUMTHREADS=1
 
+## COULOMB 
+KAPPA=0.0
+POTENTIALTYPE=0
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/treecodeVersusDirectSum/coulomb.csv 
+for ORDER in {1..14}
+  do   
+     for THETA in 0.3 0.5 0.7   
+     	do
+ 		tree-gpu   	$SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+ 					$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
+ 					$NUMDEVICES $NUMTHREADS
+     done
+ done
+
+
+
+
+## Yukawa 
 KAPPA=0.5
-POTENTIALTYPE=1 
+POTENTIALTYPE=1
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/treecodeVersusDirectSum/yukawa.csv 
+for ORDER in {1..14}
+  do   
+     for THETA in 0.3 0.5 0.7   
+     	do
+ 		tree-gpu   	$SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+ 					$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
+ 					$NUMDEVICES $NUMTHREADS
+     done
+ done
+ 
+ 
+ 
+ ## COULOMB-Hermite 
+KAPPA=0.0
+POTENTIALTYPE=4
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/treecodeVersusDirectSum/coulomb_hermite.csv 
+for ORDER in {1..14}
+  do   
+     for THETA in 0.3 0.5 0.7    
+     	do
+     	echo $THETA
+ 		#tree-gpu   	$SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+ 		#			$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
+ 		#			$NUMDEVICES $NUMTHREADS
+     done
+ done
 
-DSFILE=
 
-OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/treecodeVersusDirectSum/yukawa.csv
 
-SOURCES=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S1328096.bin
-TARGETS=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T1328096.bin
-NUMSOURCES=1328096
-NUMTARGETS=1328096 
-DIRECTSUM=/scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/ex_st1328096_yukawa_titan.bin
 
-../bin/direct.exe   /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/S1328096.bin /scratch/krasny_fluxg/njvaughn/examplesOxygenAtom/T1328096.bin $DIRECTSUM /home/njvaughn/synchronizedDataFiles/KITCpaperData/treecode-single-convolution/ds.tsv 1328096 1328096 0.5 1
-
-for BATCHSIZE in 16000 
-do
-	for MAXPARNODE in 16000
-	  do 
-		for ORDER in 6 8 10 12
-		  do 
-		     for THETA in 0.5 0.6 0.7 0.8 0.9
-		     	do
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $SFLAG $PFLAG $DFLAG $BATCHSIZE
-		     done
-		 done
-	done
-done
+## Yukawa-Hermite 
+KAPPA=0.5
+POTENTIALTYPE=5 
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin
+OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/treecodeVersusDirectSum/yukawa_hermite.csv 
+for ORDER in {1..14}
+  do   
+     for THETA in 0.3 0.5 0.7    
+     	do
+     	
+ 		tree-gpu   	$SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
+ 					$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
+ 					$NUMDEVICES $NUMTHREADS
+     done
+ done

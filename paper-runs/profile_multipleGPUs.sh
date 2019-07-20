@@ -4,9 +4,7 @@ SFLAG=1
 PFLAG=0
 DFLAG=0
 
-#N=821000
-#N=2365328
-N=1000000
+N=100000
 #1328096
 
 
@@ -26,18 +24,18 @@ TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
 #TARGETS=/scratch/krasny_fluxg/njvaughn/examplesBenzene/T$N.bin
 NUMSOURCES=$N
 NUMTARGETS=$N
-#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulombSS_$N.bin  
-DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin  
+DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulombSS_$N.bin  
+#DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_yukawa_$N.bin  
 DS_CSV=/home/njvaughn/synchronizedDataFiles/KITCpaperData/hermiteTesting/coulomb/TitanV_directSum_GPU_parallelized.csv
 
 
 
-POTENTIALTYPE=4
-KAPPA=0.0
+POTENTIALTYPE=1
+KAPPA=0.5
 #pgprof --export-profile $DSPROF ../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES  
+ORDER=8
 
-
-for ORDER in 8
+for POTENTIALTYPE in 0
 do
 	for THETA in 0.8
 	  do    
@@ -45,17 +43,17 @@ do
 		  do       
 		     for MAXPARNODE in 5000 
 		     	do
-		     	for NUMDEVICES in 2   
+		     	for NUMDEVICES in 0
 		     	do
-					NUMTHREADS=$NUMDEVICES
-					#NUMTHREADS=1
-		     		TCPROF=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TC_nvprof_$NUMDEVICES.nvvp
+					NUMTHREADS=$NUMDEVICES 
+					NUMTHREADS=4
+		     		TCPROF=/home/njvaughn/synchronizedDataFiles/KITCpaperData/parallelGPU/TC_nvprof_MULTISTREAM_$NUMDEVICES.nvvp
 		     		#../build/bin/tree-cpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
-		     		#../bin/direct.exe   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-		     		../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
-		     		#pgprof --export-profile $TCPROF -f ../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
+		     		#direct-gpu   $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
+		     		tree-cpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
+		     		#pgprof --export-profile $TCPROF -f tree-gpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
 
-		     		#nvprof --output-profile $TCPROF -f ../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
+		     		#nvprof --output-profile $TCPROF -f tree-gpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
 		     	done
 		     done
 		 done
