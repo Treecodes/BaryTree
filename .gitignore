@@ -3,12 +3,11 @@ src/*.exe
 data/*
 bin*
 lib*
-.DS_store
+.DS_Store
 *.ptp*
 *.cproject
 *org.eclipse*
 *.settings*
-bin_cpu/*
 *.tsv
 *.csv
 *.o
@@ -16,3 +15,6 @@ bin_cpu/*
 *.prefs
 *.exe
 build*
+.project
+.cproject
+.pydevproject
