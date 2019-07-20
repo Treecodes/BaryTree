@@ -29,6 +29,8 @@ int minlevel, maxlevel;
 int maxpars, minpars;
 int numleaves;
 
+int numnodes;
+
 double tarpos[3];
 double thetasq, tarposq;
 
@@ -36,13 +38,21 @@ double thetasq, tarposq;
 double *cf3 = NULL;
 double ***a1 = NULL;
 
+/* variable used by kernel independent moment computation */
+double *tt, *ww;
+
+double *unscaledQuadratureWeights;
+
+
+
 
 void setup(struct particles *particles, int order, double theta,
            double *xyzminmax)
 {
     /* local variables */
     int i;
-    double t1;
+    double t1, xx;
+//    printf("Entering setup.\n");
 
     /* changing values of our extern variables */
     torder = order;
@@ -56,6 +66,52 @@ void setup(struct particles *particles, int order, double theta,
     make_vector(cf2, torderlim);
 
     make_3array(b1, torderlim, torderlim, torderlim);
+    
+    make_vector(tt, torderlim);
+    make_vector(ww, torderlim);
+    
+
+    /* initializing array for Chev points */
+    for (i = 0; i < torderlim; i++)
+        tt[i] = cos(i * M_PI / torder);
+
+    ww[0] = 0.25 * (torder*torder/3.0 + 1.0/6.0);
+    ww[torder] = -ww[0];
+
+    for (i = 1; i < torder; i++) {
+        xx = i * M_PI / torder;
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
+    }
+//    printf("Made it here.\n");
+
+    /* initializing array for Clenshaw-Curtis weights */
+//    double CCtheta, b;
+//    make_vector(unscaledQuadratureWeights, torderlim);
+//
+//    for ( i = 0; i < torderlim; i++ ){
+//          CCtheta = ( double ) ( i ) * M_PI / ( double ) ( torderlim - 1 );
+//
+//          unscaledQuadratureWeights[i] = 1.0;
+//
+//          for ( j = 1; j <= ( torderlim - 1 ) / 2; j++ )
+//          {
+//            if ( 2 * j == ( torderlim - 1 ) ){
+//              b = 1.0;
+//            }
+//
+//            else{
+//              b = 2.0;
+//            }
+//
+//            unscaledQuadratureWeights[i] = unscaledQuadratureWeights[i] - b * cos ( 2.0 * ( double ) ( j ) * CCtheta )/ ( double ) ( 4 * j * j - 1 );
+//          }
+//        }
+//
+//    unscaledQuadratureWeights[0] = unscaledQuadratureWeights[0] / ( double ) ( torderlim - 1 );
+//	for ( i = 1; i < torderlim - 1; i++ ){
+//		unscaledQuadratureWeights[i] = 2.0 * unscaledQuadratureWeights[i] / ( double ) ( torderlim - 1 );
+//	}
+//	unscaledQuadratureWeights[torderlim-1] = unscaledQuadratureWeights[torderlim-1] / ( double ) ( torderlim - 1 );
 
 
     /* initializing arrays for Taylor sums and coefficients */
@@ -67,20 +123,26 @@ void setup(struct particles *particles, int order, double theta,
         cf1[i] = 1.0 - (0.5 * t1);
         cf2[i] = 1.0 - t1;
     }
+//    printf("Made it here1.\n");
 
     /* find bounds of Cartesian box enclosing the particles */
     xyzminmax[0] = minval(particles->x, particles->num);
+//    printf("Made it here2.\n");
+    fflush(stdout);
     xyzminmax[1] = maxval(particles->x, particles->num);
     xyzminmax[2] = minval(particles->y, particles->num);
     xyzminmax[3] = maxval(particles->y, particles->num);
     xyzminmax[4] = minval(particles->z, particles->num);
     xyzminmax[5] = maxval(particles->z, particles->num);
 
+//    printf("Made it here2.\n");
+    fflush(stdout);
     make_vector(orderarr, particles->num);
-
+//    printf("Made it here3.\n");
     for (i = 0; i < particles->num; i++)
         orderarr[i] = i+1;
 
+//    printf("About to return.\n");
     return;
     
 } /* END of function setup */
@@ -92,6 +154,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
                        int ibeg, int iend, int maxparnode,
                        double *xyzmm, int level)
 {
+	printf("Entering cp_create_tree_n0.\n");
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
     int i, j, loclev, numposchild;
@@ -128,6 +191,13 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
     (*p)->y_max = maxval(targets->y + ibeg - 1, (*p)->numpar);
     (*p)->z_min = minval(targets->z + ibeg - 1, (*p)->numpar);
     (*p)->z_max = maxval(targets->z + ibeg - 1, (*p)->numpar);
+    
+//    (*p)->x_min = xyzmm[0];
+//    (*p)->x_max = xyzmm[1];
+//    (*p)->y_min = xyzmm[2];
+//    (*p)->y_max = xyzmm[3];
+//    (*p)->z_min = xyzmm[4];
+//    (*p)->z_max = xyzmm[5];
 
     /*compute aspect ratio*/
     xl = (*p)->x_max - (*p)->x_min;
@@ -191,7 +261,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
-        cp_partition_8(targets->x, targets->y, targets->z,
+        cp_partition_8(targets->x, targets->y, targets->z, targets->q,
                        xyzmms, xl, yl, zl, lmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
@@ -218,14 +288,14 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
         
         numleaves++;
     }
-
+    printf("Exiting cp_create_tree_n0.\n");
     return;
 
 } /* end of function create_tree_n0 */
 
 
 
-void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
+void cp_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2])
 {
@@ -238,7 +308,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
     critlen = lmax / sqrt(2.0);
 
     if (xl >= critlen) {
-        cp_partition(x, y, z, orderarr, ind[0][0], ind[0][1],
+        cp_partition(x, y, z, q, orderarr, ind[0][0], ind[0][1],
                      x_mid, &temp_ind);
 
         ind[1][0] = temp_ind + 1;
@@ -255,7 +325,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (yl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(y, x, z, orderarr, ind[i][0], ind[i][1],
+            cp_partition(y, x, z, q, orderarr, ind[i][0], ind[i][1],
                          y_mid, &temp_ind);
                         
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -274,7 +344,7 @@ void cp_partition_8(double *x, double *y, double *z, double xyzmms[6][8],
 
     if (zl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(z, x, y, orderarr, ind[i][0], ind[i][1],
+            cp_partition(z, x, y, q, orderarr, ind[i][0], ind[i][1],
                          z_mid, &temp_ind);
                         
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -689,8 +759,9 @@ void remove_node(struct tnode *p)
     /* local variables */
     int i;
 
-    if (p->exist_ms == 1)
-        free(p->ms);
+//    if (p->exist_ms == 1)
+//        free(p->ms);
+//    	free(p->ms2);
 
     if (p->num_children > 0) {
         for (i = 0; i < p->num_children; i++) {

@@ -1,0 +1,66 @@
+--------------------------------------------------------------------------
+PMI2 initialized but returned bad values for size and rank.
+This is symptomatic of either a failure to use the
+"--mpi=pmi2" flag in SLURM, or a borked PMI2 installation.
+If running under SLURM, try adding "-mpi=pmi2" to your
+srun command line. If that doesn't work, or if you are
+not running under SLURM, try removing or renaming the
+pmi2.h header file so PMI2 support will not automatically
+be built, reconfigure and build OMPI, and then try again
+with only PMI1 support enabled.
+--------------------------------------------------------------------------
+Entering main.c
+Reading in arguments.c
+Read in arguments.c
+Allocated sources and targets particles.
+PFLAG = 0
+PFLAG = 0
+Made target vectors.c
+Filling originalWeights.
+originalWeights filled.  Starting timer.
+Setup complete, calling treedriver...
+numThreads: 4
+Treetype 1
+this_thread: 3
+numDevices: 4
+this_thread: 2
+this_thread: 1
+num_threads: 4
+this_thread: 0
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+numDevices: 4
+this_thread: 2
+this_thread: 3
+this_thread: 1
+num_threads: 4
+this_thread: 0
+Exited the main comp_pc call.
+Time to compute: 20.969038
+                   Direct time (s):  0.000000
+
+              Pre-process time (s):  21.058695
+              Treedriver time (s):  23.621456
+      Min, Max tree setup time (s):  1.553522, 1.553522
+      Min, Max total tree time (s):  20.969038, 20.969038
+
+ Preproc + Max total tree time (s):  42.027733 
+
+           Direct potential energy:  0.000000
+             Tree potential energy:  27399684087.657364
+
+Absolute error for total potential:  2.739968e+10
+Relative error for total potential:  inf
+
+Absolute inf norm error in potential:  2.938151e+04 
+Relative inf norm error in potential:  inf 
+
+  Absolute 2 norm error in potential:  9.387862e+06 
+  Relative 2 norm error in potential:  inf 
+
+inf error occurring at 0.562594, 0.837731, 0.609413 
+
+Wrote to output file.
+Freed sources.
+Freed targets.
+Freed other vectors.
+Final.

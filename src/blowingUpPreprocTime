@@ -1,0 +1,1060 @@
+Running on
+      1 nyx7509
+Running from /home/njvaughn/hybrid-gpu-treecode/src
+Wed Feb  6 13:56:06 2019       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 390.48                 Driver Version: 390.48                    |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  Tesla K40m          On   | 00000000:83:00.0 Off |                    0 |
+| N/A   23C    P8    20W / 235W |      0MiB / 11441MiB |      0%   E. Process |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                       GPU Memory |
+|  GPU       PID   Type   Process name                             Usage      |
+|=============================================================================|
+|  No running processes found                                                 |
++-----------------------------------------------------------------------------+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 5
+                       theta: 0.500000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.360458
+      Min, Max tree setup time (s):  4.246692, 4.246692
+      Min, Max total tree time (s):  55.880468, 55.880468
+
+ Preproc + Max total tree time (s):  57.240926 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.530493
+
+Absolute error for total potential:  5.870433e-02
+Relative error for total potential:  8.243561e-09
+
+Absolute inf norm error in potential:  3.171631e-07 
+Relative inf norm error in potential:  1.432351e-08 
+
+  Absolute 2 norm error in potential:  1.160502e-04 
+  Relative 2 norm error in potential:  1.039121e-08 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 5
+                       theta: 0.600000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.195322
+      Min, Max tree setup time (s):  4.184876, 4.184876
+      Min, Max total tree time (s):  38.971348, 38.971348
+
+ Preproc + Max total tree time (s):  40.166670 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121233.822278
+
+Absolute error for total potential:  6.495103e-01
+Relative error for total potential:  9.120754e-08
+
+Absolute inf norm error in potential:  4.361585e-06 
+Relative inf norm error in potential:  1.969750e-07 
+
+  Absolute 2 norm error in potential:  1.417078e-03 
+  Relative 2 norm error in potential:  1.268861e-07 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 5
+                       theta: 0.700000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.097088
+      Min, Max tree setup time (s):  4.171730, 4.171730
+      Min, Max total tree time (s):  34.804715, 34.804715
+
+ Preproc + Max total tree time (s):  35.901803 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121233.634740
+
+Absolute error for total potential:  8.370480e-01
+Relative error for total potential:  1.175425e-07
+
+Absolute inf norm error in potential:  5.051202e-06 
+Relative inf norm error in potential:  2.281191e-07 
+
+  Absolute 2 norm error in potential:  1.618479e-03 
+  Relative 2 norm error in potential:  1.449196e-07 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 5
+                       theta: 0.800000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.125347
+      Min, Max tree setup time (s):  4.169314, 4.169314
+      Min, Max total tree time (s):  30.029559, 30.029559
+
+ Preproc + Max total tree time (s):  31.154906 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121232.640724
+
+Absolute error for total potential:  1.831064e+00
+Relative error for total potential:  2.571273e-07
+
+Absolute inf norm error in potential:  1.699375e-04 
+Relative inf norm error in potential:  7.674604e-06 
+
+  Absolute 2 norm error in potential:  1.011631e-02 
+  Relative 2 norm error in potential:  9.058212e-07 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 5
+                       theta: 0.900000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.103301
+      Min, Max tree setup time (s):  4.183598, 4.183598
+      Min, Max total tree time (s):  26.787736, 26.787736
+
+ Preproc + Max total tree time (s):  27.891037 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121192.310013
+
+Absolute error for total potential:  4.216177e+01
+Relative error for total potential:  5.920571e-06
+
+Absolute inf norm error in potential:  6.618001e-03 
+Relative inf norm error in potential:  2.988778e-04 
+
+  Absolute 2 norm error in potential:  3.570696e-01 
+  Relative 2 norm error in potential:  3.197223e-05 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 6
+                       theta: 0.500000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.090311
+      Min, Max tree setup time (s):  7.019680, 7.019680
+      Min, Max total tree time (s):  60.954207, 60.954207
+
+ Preproc + Max total tree time (s):  62.044518 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.471887
+
+Absolute error for total potential:  9.925943e-05
+Relative error for total potential:  1.393851e-11
+
+Absolute inf norm error in potential:  1.459773e-08 
+Relative inf norm error in potential:  6.592532e-10 
+
+  Absolute 2 norm error in potential:  7.084068e-07 
+  Relative 2 norm error in potential:  6.343119e-11 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 6
+                       theta: 0.600000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.712337
+      Min, Max tree setup time (s):  7.016652, 7.016652
+      Min, Max total tree time (s):  45.513313, 45.513313
+
+ Preproc + Max total tree time (s):  47.225650 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.529883
+
+Absolute error for total potential:  5.809439e-02
+Relative error for total potential:  8.157909e-09
+
+Absolute inf norm error in potential:  4.096875e-07 
+Relative inf norm error in potential:  1.850204e-08 
+
+  Absolute 2 norm error in potential:  1.341931e-04 
+  Relative 2 norm error in potential:  1.201574e-08 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 6
+                       theta: 0.700000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.084291
+      Min, Max tree setup time (s):  6.980673, 6.980673
+      Min, Max total tree time (s):  41.268531, 41.268531
+
+ Preproc + Max total tree time (s):  42.352822 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.544111
+
+Absolute error for total potential:  7.232268e-02
+Relative error for total potential:  1.015592e-08
+
+Absolute inf norm error in potential:  1.366879e-06 
+Relative inf norm error in potential:  6.173008e-08 
+
+  Absolute 2 norm error in potential:  1.557907e-04 
+  Relative 2 norm error in potential:  1.394960e-08 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 6
+                       theta: 0.800000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.085396
+      Min, Max tree setup time (s):  6.971061, 6.971061
+      Min, Max total tree time (s):  36.657302, 36.657302
+
+ Preproc + Max total tree time (s):  37.742698 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.362863
+
+Absolute error for total potential:  1.089253e-01
+Relative error for total potential:  1.529585e-08
+
+Absolute inf norm error in potential:  3.375063e-05 
+Relative inf norm error in potential:  1.524224e-06 
+
+  Absolute 2 norm error in potential:  1.700631e-03 
+  Relative 2 norm error in potential:  1.522756e-07 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 6
+                       theta: 0.900000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.088354
+      Min, Max tree setup time (s):  6.997866, 6.997866
+      Min, Max total tree time (s):  33.237695, 33.237695
+
+ Preproc + Max total tree time (s):  34.326049 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121222.254611
+
+Absolute error for total potential:  1.221718e+01
+Relative error for total potential:  1.715598e-06
+
+Absolute inf norm error in potential:  3.518780e-03 
+Relative inf norm error in potential:  1.589128e-04 
+
+  Absolute 2 norm error in potential:  1.347906e-01 
+  Relative 2 norm error in potential:  1.206923e-05 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 7
+                       theta: 0.500000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.087633
+      Min, Max tree setup time (s):  11.438542, 11.438542
+      Min, Max total tree time (s):  65.515382, 65.515382
+
+ Preproc + Max total tree time (s):  66.603015 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.471812
+
+Absolute error for total potential:  2.333894e-05
+Relative error for total potential:  3.277373e-12
+
+Absolute inf norm error in potential:  5.083681e-09 
+Relative inf norm error in potential:  2.295858e-10 
+
+  Absolute 2 norm error in potential:  1.893356e-07 
+  Relative 2 norm error in potential:  1.695323e-11 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 7
+                       theta: 0.600000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.172829
+      Min, Max tree setup time (s):  11.439705, 11.439705
+      Min, Max total tree time (s):  50.534963, 50.534963
+
+ Preproc + Max total tree time (s):  51.707792 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.496970
+
+Absolute error for total potential:  2.518134e-02
+Relative error for total potential:  3.536092e-09
+
+Absolute inf norm error in potential:  1.481174e-07 
+Relative inf norm error in potential:  6.689179e-09 
+
+  Absolute 2 norm error in potential:  5.517685e-05 
+  Relative 2 norm error in potential:  4.940570e-09 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 7
+                       theta: 0.700000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.094725
+      Min, Max tree setup time (s):  11.460341, 11.460341
+      Min, Max total tree time (s):  46.481382, 46.481382
+
+ Preproc + Max total tree time (s):  47.576107 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.503519
+
+Absolute error for total potential:  3.173038e-02
+Relative error for total potential:  4.455742e-09
+
+Absolute inf norm error in potential:  4.301730e-07 
+Relative inf norm error in potential:  1.942719e-08 
+
+  Absolute 2 norm error in potential:  6.466692e-05 
+  Relative 2 norm error in potential:  5.790317e-09 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 7
+                       theta: 0.800000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.091912
+      Min, Max tree setup time (s):  11.522962, 11.522962
+      Min, Max total tree time (s):  41.953491, 41.953491
+
+ Preproc + Max total tree time (s):  43.045403 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.486607
+
+Absolute error for total potential:  1.481867e-02
+Relative error for total potential:  2.080914e-09
+
+Absolute inf norm error in potential:  3.740120e-06 
+Relative inf norm error in potential:  1.689088e-07 
+
+  Absolute 2 norm error in potential:  2.373606e-04 
+  Relative 2 norm error in potential:  2.125342e-08 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 7
+                       theta: 0.900000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.228671
+      Min, Max tree setup time (s):  11.473687, 11.473687
+      Min, Max total tree time (s):  38.508113, 38.508113
+
+ Preproc + Max total tree time (s):  39.736784 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121230.568585
+
+Absolute error for total potential:  3.903203e+00
+Relative error for total potential:  5.481077e-07
+
+Absolute inf norm error in potential:  1.479814e-03 
+Relative inf norm error in potential:  6.683036e-05 
+
+  Absolute 2 norm error in potential:  4.850944e-02 
+  Relative 2 norm error in potential:  4.343566e-06 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 8
+                       theta: 0.500000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.477604
+      Min, Max tree setup time (s):  17.042272, 17.042272
+      Min, Max total tree time (s):  71.906860, 71.906860
+
+ Preproc + Max total tree time (s):  73.384464 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.471789
+
+Absolute error for total potential:  8.186325e-07
+Relative error for total potential:  1.149565e-13
+
+Absolute inf norm error in potential:  2.026752e-10 
+Relative inf norm error in potential:  9.153084e-12 
+
+  Absolute 2 norm error in potential:  7.832902e-09 
+  Relative 2 norm error in potential:  7.013630e-13 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 8
+                       theta: 0.600000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  1.096056
+      Min, Max tree setup time (s):  16.797332, 16.797332
+      Min, Max total tree time (s):  57.509142, 57.509142
+
+ Preproc + Max total tree time (s):  58.605198 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.472229
+
+Absolute error for total potential:  4.410967e-04
+Relative error for total potential:  6.194105e-11
+
+Absolute inf norm error in potential:  2.101860e-08 
+Relative inf norm error in potential:  9.492283e-10 
+
+  Absolute 2 norm error in potential:  1.456667e-06 
+  Relative 2 norm error in potential:  1.304308e-10 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 8
+                       theta: 0.700000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  50.813213
+      Min, Max tree setup time (s):  16.867883, 16.867883
+      Min, Max total tree time (s):  53.701848, 53.701848
+
+ Preproc + Max total tree time (s):  104.515061 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.472286
+
+Absolute error for total potential:  4.973374e-04
+Relative error for total potential:  6.983865e-11
+
+Absolute inf norm error in potential:  7.493779e-08 
+Relative inf norm error in potential:  3.384291e-09 
+
+  Absolute 2 norm error in potential:  2.067190e-06 
+  Relative 2 norm error in potential:  1.850975e-10 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 8
+                       theta: 0.800000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  45.268994
+      Min, Max tree setup time (s):  16.864985, 16.864985
+      Min, Max total tree time (s):  49.116949, 49.116949
+
+ Preproc + Max total tree time (s):  94.385943 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121234.473579
+
+Absolute error for total potential:  1.791042e-03
+Relative error for total potential:  2.515073e-10
+
+Absolute inf norm error in potential:  1.983184e-06 
+Relative inf norm error in potential:  8.956325e-08 
+
+  Absolute 2 norm error in potential:  6.179004e-05 
+  Relative 2 norm error in potential:  5.532719e-09 
+
+Creating tree... 
+
+Tree created.
+
+Tree information: 
+
+                      numpar: 636608
+                       x_mid: 0.000000e+00
+                       y_mid: 0.000000e+00
+                       z_mid: 0.000000e+00
+
+                      radius: 34.532451
+
+                       x_len: 3.987464e+01
+                       y_len: 3.987464e+01
+                       z_len: 3.987464e+01
+
+                      torder: 8
+                       theta: 0.900000
+                  maxparnode: 32000
+               tree maxlevel: 8
+               tree minlevel: 2
+                tree maxpars: 30968
+                tree minpars: 343
+            number of leaves: 400
+             number of nodes: 457
+           target batch size: 8000
+           number of batches: 624
+
+Entering tree_type=1 (particle-cluster), pot_type=0 (Coulomb).
+Deallocating tree structure... 
+
+                   Direct time (s):  49.171158
+
+              Pre-process time (s):  271.450635
+      Min, Max tree setup time (s):  17.642287, 17.642287
+      Min, Max total tree time (s):  46.430334, 46.430334
+
+ Preproc + Max total tree time (s):  317.880969 
+
+           Direct potential energy:  7121234.471788
+             Tree potential energy:  7121233.356780
+
+Absolute error for total potential:  1.115008e+00
+Relative error for total potential:  1.565751e-07
+
+Absolute inf norm error in potential:  7.891731e-04 
+Relative inf norm error in potential:  3.564012e-05 
+
+  Absolute 2 norm error in potential:  1.640442e-02 
+  Relative 2 norm error in potential:  1.468862e-06 
+
