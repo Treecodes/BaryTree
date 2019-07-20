@@ -3,7 +3,7 @@ src/*.exe
 data/*
 bin*
 lib*
-.DS_store
+.DS_Store
 *.ptp*
 *.cproject
 *org.eclipse*
