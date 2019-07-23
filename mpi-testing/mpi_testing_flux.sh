@@ -22,7 +22,7 @@ NUMDEVICES=0
 
 
 OUTFILE=/home/njvaughn/mpi-testing/test.csv 
-for N in 10000
+for N in 1000000
 do
 	echo N=$N
 	SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -30,7 +30,7 @@ do
 	NUMSOURCES=$N
 	NUMTARGETS=$N 
 	DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin
-	for np in 24 48
+	for np in 30 60 120
 	do
 		for NUMTHREADS in 1
 		do

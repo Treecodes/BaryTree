@@ -238,11 +238,8 @@ int main(int argc, char **argv)
     total_time_start = MPI_Wtime();
 
 
-//    direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-//        					denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-
-	MPI_Request request1s; //, request2s, request3s, request4s, request5s;
-	MPI_Request request1r; //, request2r, request3r, request4r, request5r;
+	MPI_Request request1s;
+	MPI_Request request1r;
 
 	for (i=0;i<5*maxparsSloc;i++){
 		S_foreign1[i]=0.0;
@@ -252,7 +249,6 @@ int main(int argc, char **argv)
 
     for (int procID=1;procID<numProcs;procID++){
     	timeCommunicate = MPI_Wtime();
-//    	MPI_Barrier(MPI_COMM_WORLD);
 
     	// Send and receive source particles
     	sendTo = (rank+procID)%numProcs;
@@ -290,10 +286,6 @@ int main(int argc, char **argv)
 
 
 
-
-
-//    	MPI_Barrier(MPI_COMM_WORLD);
-
     }
 
     if ((numProcs-1)%2==1){ // in final loop, S_foreign1 was received but not yet computed with
@@ -308,7 +300,6 @@ int main(int argc, char **argv)
     time_direct = time2-time1;
 
     
-//    printf("Process %i, dpeng = %f\n", rank, dpeng);
     /* Reducing values to root process */
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
