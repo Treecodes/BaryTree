@@ -118,8 +118,11 @@ int main(int argc, char **argv)
     	numparsTloc = maxparsTloc;
     	numparsSloc = maxparsSloc;
     }
+
     globparsTloc = maxparsTloc + numparsTloc * (rank-1);
     globparsSloc = maxparsSloc + numparsSloc * (rank-1);
+
+//    numparsSloc = maxparsSloc; // every proc will have maxparsSloc
 
 //    printf("Proc %i has %i particles starting at %i.\n", rank, numparsTloc,globparsTloc);
     if (rank==0) printf("Max local T and local S: %i, %i.\n", maxparsTloc, maxparsSloc);
@@ -129,12 +132,18 @@ int main(int argc, char **argv)
 
 
     double *S_local;
-    make_vector(S_local, 5*numparsSloc);
-    xS = &S_local[0*numparsSloc];
-    yS = &S_local[1*numparsSloc];
-    zS = &S_local[2*numparsSloc];
-    qS = &S_local[3*numparsSloc];
-    wS = &S_local[4*numparsSloc];
+//    memset(S_local,0,5*maxparsSloc);
+    make_vector(S_local, 5*maxparsSloc);
+    xS = &S_local[0*maxparsSloc];
+    yS = &S_local[1*maxparsSloc];
+    zS = &S_local[2*maxparsSloc];
+    qS = &S_local[3*maxparsSloc];
+    wS = &S_local[4*maxparsSloc];
+
+
+    for (int i=0;i<5*maxparsSloc;i++){
+    	S_local[i]=0.0;
+    }
 
 
     double *T_local;
@@ -146,6 +155,8 @@ int main(int argc, char **argv)
 
 
     make_vector(denergy,numparsTloc);
+
+//    printf("Made vectors.\n");
 
     // Allocate and zero out receive buffers.
 	int sendTo, recvFrom;
@@ -163,6 +174,7 @@ int main(int argc, char **argv)
 	double * S_foreign2;
 
 	make_vector(S_foreign1, 5*maxparsSloc);
+//	memset(S_foreign1,0,5*maxparsSloc);
 	xS_foreign1 = &S_foreign1[0*maxparsSloc];
 	yS_foreign1 = &S_foreign1[1*maxparsSloc];
 	zS_foreign1 = &S_foreign1[2*maxparsSloc];
@@ -247,7 +259,7 @@ int main(int argc, char **argv)
     	recvFrom = (numProcs+rank-procID)%numProcs;
 
     	if (procID%2==1){ // communicate w/ foreign1, compute on foreign2
-    		MPI_Isend(S_local, 5*numparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
+    		MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
     		MPI_Irecv(S_foreign1, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
 
@@ -262,7 +274,7 @@ int main(int argc, char **argv)
 					}
 			}
     	}else{ // procId%2=0, communicate foreign2 and compute with foreign1
-    		MPI_Isend(S_local, 5*numparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
+    		MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
 			MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
 			direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
