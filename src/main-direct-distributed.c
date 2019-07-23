@@ -22,8 +22,9 @@ int main(int argc, char **argv)
 
     int rank, numProcs, provided;
     
-//    MPI_Init(&argc, &argv);
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+    MPI_Init(&argc, &argv);
+    int ierr;
+//    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 //    printf("rank = %i\n",rank);
