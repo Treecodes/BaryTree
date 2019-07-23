@@ -20,12 +20,14 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 int main(int argc, char **argv)
 {
 
-    int rank, numProcs;
+    int rank, numProcs, provided;
     
-    MPI_Init(&argc, &argv);
+//    MPI_Init(&argc, &argv);
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-    printf("rank = %i\n",rank);
+//    printf("rank = %i\n",rank);
+//    fflush(stdout);
     /* runtime parameters */
     int numparsS, numparsT, numDevices, numThreads;
     int pot_type;
@@ -53,8 +55,9 @@ int main(int argc, char **argv)
     double kappa;
 
     // insert variables for date-time calculation?
-    double time1, time2, time_direct, time_direct_tot, timeCommunicate, timeInteract;
+    double time1, time2, time3, time4, time_direct, time_direct_tot, timeCommunicate, timeInteract;
     double time_direct_max, time_direct_min;
+    double total_time_start, total_time_stop;
     
     /* input and output files */
     char *sampin1, *sampin2, *sampout, *sampdatout;
@@ -108,6 +111,7 @@ int main(int argc, char **argv)
 
 	numparsSloc = (int)floor((double)numparsS/(double)numProcs);
 	maxparsSloc = numparsSloc + (numparsS - (int)floor((double)numparsS/(double)numProcs) * numProcs);
+    if (rank==0) printf("Num local T and local S: %i, %i.\n", numparsSloc, numparsTloc);
     
     if (rank == 0){
     	numparsTloc = maxparsTloc;
@@ -116,38 +120,62 @@ int main(int argc, char **argv)
     globparsTloc = maxparsTloc + numparsTloc * (rank-1);
     globparsSloc = maxparsSloc + numparsSloc * (rank-1);
 
-    printf("Proc %i has %i particles.\n", rank, numparsTloc);
+//    printf("Proc %i has %i particles starting at %i.\n", rank, numparsTloc,globparsTloc);
     if (rank==0) printf("Max local T and local S: %i, %i.\n", maxparsTloc, maxparsSloc);
 
 //    printf("globalparsTloc = %i\n", globparsTloc);
 //    printf("globalparsSloc = %i\n", globparsSloc);
 
 
-    make_vector(xS,numparsSloc);
-    make_vector(yS,numparsSloc);
-    make_vector(zS,numparsSloc);
-    make_vector(qS,numparsSloc);
-    make_vector(wS,numparsSloc);
+    double *S_local;
+    make_vector(S_local, 5*numparsSloc);
+    xS = &S_local[0*numparsSloc];
+    yS = &S_local[1*numparsSloc];
+    zS = &S_local[2*numparsSloc];
+    qS = &S_local[3*numparsSloc];
+    wS = &S_local[4*numparsSloc];
 
-    make_vector(xT,numparsTloc);
-    make_vector(yT,numparsTloc);
-    make_vector(zT,numparsTloc);
-    make_vector(qT,numparsTloc);
+
+    double *T_local;
+    make_vector(T_local,4*numparsTloc);
+    xT = &T_local[0*numparsTloc];
+    yT = &T_local[1*numparsTloc];
+    zT = &T_local[2*numparsTloc];
+    qT = &T_local[3*numparsTloc];
+
 
     make_vector(denergy,numparsTloc);
 
     // Allocate and zero out receive buffers.
 	int sendTo, recvFrom;
-	double * xS_foreign;
-	double * yS_foreign;
-	double * zS_foreign;
-	double * qS_foreign;
-	double * wS_foreign;
-	make_vector(xS_foreign,maxparsSloc);
-	make_vector(yS_foreign,maxparsSloc);
-	make_vector(zS_foreign,maxparsSloc);
-	make_vector(qS_foreign,maxparsSloc);
-	make_vector(wS_foreign,maxparsSloc);
+	double * xS_foreign1;
+	double * yS_foreign1;
+	double * zS_foreign1;
+	double * qS_foreign1;
+	double * wS_foreign1;
+	double * S_foreign1;
+	double * xS_foreign2;
+	double * yS_foreign2;
+	double * zS_foreign2;
+	double * qS_foreign2;
+	double * wS_foreign2;
+	double * S_foreign2;
+
+	make_vector(S_foreign1, 5*maxparsSloc);
+	xS_foreign1 = &S_foreign1[0*maxparsSloc];
+	yS_foreign1 = &S_foreign1[1*maxparsSloc];
+	zS_foreign1 = &S_foreign1[2*maxparsSloc];
+	qS_foreign1 = &S_foreign1[3*maxparsSloc];
+	wS_foreign1 = &S_foreign1[4*maxparsSloc];
+
+	make_vector(S_foreign2, 5*maxparsSloc);
+	xS_foreign2 = &S_foreign2[0*maxparsSloc];
+	yS_foreign2 = &S_foreign2[1*maxparsSloc];
+	zS_foreign2 = &S_foreign2[2*maxparsSloc];
+	qS_foreign2 = &S_foreign2[3*maxparsSloc];
+	wS_foreign2 = &S_foreign2[4*maxparsSloc];
+
+
 
 
     /* Reading in coordinates and charges for the source particles*/
@@ -163,6 +191,7 @@ int main(int argc, char **argv)
     }
     MPI_File_close(&fpmpi);
     
+//    MPI_Barrier(MPI_COMM_WORLD);
 
     /* Reading in coordinates for the targets */
     MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -181,29 +210,23 @@ int main(int argc, char **argv)
 		denergy[i]=0.0;
 	}
 
-
     /* Interact with self */
     time1 = MPI_Wtime();
-//    direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, numparsSloc, numparsTloc,
-//                denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-
-//    if (rank==0) printf("Time to compute self interaction: %f\n", MPI_Wtime()-time1);
-//    printf("Proc %i: Time to compute self interaction: %f\n", rank, MPI_Wtime()-time1);
-
-    /* Get data from other processors, interact with them. */
+    total_time_start = MPI_Wtime();
 
 
+//    direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+//        					denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
 
-	MPI_Request request1s, request2s, request3s, request4s, request5s;
-	MPI_Request request1r, request2r, request3r, request4r, request5r;
+	MPI_Request request1s; //, request2s, request3s, request4s, request5s;
+	MPI_Request request1r; //, request2r, request3r, request4r, request5r;
 
-	for (i=0;i<maxparsSloc;i++){
-		xS_foreign[i]=0.0;
-		yS_foreign[i]=0.0;
-		zS_foreign[i]=0.0;
-		qS_foreign[i]=0.0;
-		wS_foreign[i]=0.0;
+	for (i=0;i<5*maxparsSloc;i++){
+		S_foreign1[i]=0.0;
+		S_foreign2[i]=0.0;
 	}
+
+
     for (int procID=1;procID<numProcs;procID++){
     	timeCommunicate = MPI_Wtime();
 //    	MPI_Barrier(MPI_COMM_WORLD);
@@ -212,95 +235,68 @@ int main(int argc, char **argv)
     	sendTo = (rank+procID)%numProcs;
     	recvFrom = (numProcs+rank-procID)%numProcs;
 
-    	MPI_Isend(xS, numparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
-    	MPI_Isend(yS, numparsSloc, MPI_DOUBLE, sendTo, 2, MPI_COMM_WORLD, &request2s);
-    	MPI_Isend(zS, numparsSloc, MPI_DOUBLE, sendTo, 3, MPI_COMM_WORLD, &request3s);
-    	MPI_Isend(qS, numparsSloc, MPI_DOUBLE, sendTo, 4, MPI_COMM_WORLD, &request4s);
-    	MPI_Isend(wS, numparsSloc, MPI_DOUBLE, sendTo, 5, MPI_COMM_WORLD, &request5s);
-
-    	MPI_Irecv(xS_foreign, maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
-    	MPI_Irecv(yS_foreign, maxparsSloc, MPI_DOUBLE, recvFrom, 2, MPI_COMM_WORLD, &request2r);
-    	MPI_Irecv(zS_foreign, maxparsSloc, MPI_DOUBLE, recvFrom, 3, MPI_COMM_WORLD, &request3r);
-    	MPI_Irecv(qS_foreign, maxparsSloc, MPI_DOUBLE, recvFrom, 4, MPI_COMM_WORLD, &request4r);
-    	MPI_Irecv(wS_foreign, maxparsSloc, MPI_DOUBLE, recvFrom, 5, MPI_COMM_WORLD, &request5r);
-
-//    	if (procID==1){
-//    		// Overlap communication and computation.
-//    		direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, numparsSloc, numparsTloc,
-//    		                denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-//    	}
+    	if (procID%2==1){ // communicate w/ foreign1, compute on foreign2
+    		MPI_Isend(S_local, 5*numparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
+    		MPI_Irecv(S_foreign1, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
 
-    	direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-    					denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-
-    	MPI_Wait(&request1r, &status);
-    	MPI_Wait(&request2r, &status);
-    	MPI_Wait(&request3r, &status);
-    	MPI_Wait(&request4r, &status);
-    	MPI_Wait(&request5r, &status);
-
-//    	direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-//				denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-
-    	MPI_Wait(&request1s, &status);
-		MPI_Wait(&request2s, &status);
-		MPI_Wait(&request3s, &status);
-		MPI_Wait(&request4s, &status);
-		MPI_Wait(&request5s, &status);
-
-
-//		direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-//				denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-
-//    	if (rank==0) printf("Time to communicate: %f\n", MPI_Wtime()-timeCommunicate);
-//    	printf("Proc %i: Time to communicate: %f\n", rank, MPI_Wtime()-timeCommunicate);
-
-
-//    	MPI_Barrier(MPI_COMM_WORLD);
-
-//    	printf("Proc %i: Send to %i, Recv from %i\n", rank, sendTo, recvFrom);
-
-    	// Compute interaction
-//    	timeInteract = MPI_Wtime();
-//    	direct_eng(xS_foreign, yS_foreign, zS_foreign, qS_foreign, wS_foreign, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-//				denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-//    	printf("Proc %i: Time to compute interaction: %f\n", rank, MPI_Wtime()-timeInteract);
-
-
-//    	MPI_Barrier(MPI_COMM_WORLD);
-
-    	for (i=0;i<maxparsSloc;i++){ // re-zero out the buffers.  Maybe necessary since one proc has more data than rest?
-			xS[i] = xS_foreign[i];
-			yS[i] = yS_foreign[i];
-			zS[i] = zS_foreign[i];
-			qS[i] = qS_foreign[i];
-			wS[i] = wS_foreign[i];
-			if (procID<numProcs-1){
-				xS_foreign[i]=0.0;
-				yS_foreign[i]=0.0;
-				zS_foreign[i]=0.0;
-				qS_foreign[i]=0.0;
-				wS_foreign[i]=0.0;
+			if (procID==1) {
+				direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+										denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+			}else{
+				direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+														denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+				for (i=0;i<5*maxparsSloc;i++){
+						S_foreign2[i]=0.0;
+					}
 			}
-		}
+    	}else{ // procId%2=0, communicate foreign2 and compute with foreign1
+    		MPI_Isend(S_local, 5*numparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
+			MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
-//    	printf("Proc %i, dpeng = %f\n",rank,dpeng);
+			direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+														denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+			for (i=0;i<5*maxparsSloc;i++){
+					S_foreign1[i]=0.0;
+				}
+    	}
+
+    	time4 = MPI_Wtime();
+    	MPI_Wait(&request1r, &status);
+    	MPI_Wait(&request1s, &status);
+
+
+
+
+
+//    	MPI_Barrier(MPI_COMM_WORLD);
+
     }
 
-    direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-    				denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+    if ((numProcs-1)%2==1){ // in final loop, S_foreign1 was received but not yet computed with
+		direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+										denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+	}else{ // S_foreign2 is the one that needs to be computed with
+		direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+													denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+	}
 
     time2 = MPI_Wtime();
     time_direct = time2-time1;
 
     
+//    printf("Process %i, dpeng = %f\n", rank, dpeng);
     /* Reducing values to root process */
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_min, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
+//        } // end OMP PARALLEL REGION
+    total_time_stop = MPI_Wtime();
+
+
 
     MPI_File_open(MPI_COMM_WORLD, sampout, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fpmpi);
     if (rank == 0)
@@ -321,6 +317,8 @@ int main(int argc, char **argv)
         printf("   Total direct time (s) on %d procs:  %f\n\n", numProcs, time_direct_tot);
     
         /* Calculating value dpeng by summing all values in denergy */
+        printf("		  Wallclock time (s): %f\n", total_time_stop-total_time_start);
+        printf("		  Cumulative time (s) %f\n", (total_time_stop-total_time_start)*numProcs*numThreads);
         printf("             Direct potential energy:  %.15f\n\n\n", dpengglob);
     }
 
@@ -335,21 +333,18 @@ int main(int argc, char **argv)
         fclose(fp);
     }
 
-    free_vector(xS);
-    free_vector(yS);
-    free_vector(zS);
-    free_vector(qS);
-    free_vector(wS);
-    free_vector(xT);
-    free_vector(yT);
-    free_vector(zT);
-    free_vector(denergy);
-    free_vector(xS_foreign);
-	free_vector(yS_foreign);
-	free_vector(zS_foreign);
-	free_vector(qS_foreign);
-	free_vector(wS_foreign);
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank==0) printf("Finished writing files.\n");
+    free_vector(T_local);
+    free_vector(S_local);
 
+
+    free_vector(denergy);
+
+	free_vector(S_foreign1);
+	free_vector(S_foreign2);
+    MPI_Barrier(MPI_COMM_WORLD);
+	if (rank==0) printf("Finished freeing memory.\n");
     MPI_Finalize();
     return 0;
 }
@@ -365,9 +360,13 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
         double tx, ty, tz, xi, yi, zi, qi, teng, rad;
 //        printf("numparsT,  numparsS: %i, %i\n", numparsT, numparsS);
 
+
+//        int rank;
+//        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//        printf("Process ID, Thread ID: %i,%i\n", rank,  omp_get_thread_num());
 		if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.  Lagrange or Hermite.
 
-
+			#pragma omp for private(j,teng,xi,yi,zi,tx,ty,tz,rad) schedule(guided)
 			for (i = 0; i < numparsT; i++) {
 				xi = xT[i];
 				yi = yT[i];
@@ -454,6 +453,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 		} // end pot=3 or 7
 
 
+//        } // end pragma omp parallel
 
 
         *dpeng = sum(denergy, numparsT);
