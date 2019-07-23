@@ -179,7 +179,12 @@ int main(int argc, char **argv)
 
 
     /* Reading in coordinates and charges for the source particles*/
-    MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+    ierr = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+    if (ierr != MPI_SUCCESS) {
+        fprintf(stderr,"FILE COULD NOT OPEN\n");
+        exit(1);
+    }
+
     MPI_File_seek(fpmpi, (MPI_Offset)globparsSloc*5*sizeof(double), MPI_SEEK_SET);
     for (i = 0; i < numparsSloc; i++) {
         MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
@@ -194,7 +199,12 @@ int main(int argc, char **argv)
 //    MPI_Barrier(MPI_COMM_WORLD);
 
     /* Reading in coordinates for the targets */
-    MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+    ierr = MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+    if (ierr != MPI_SUCCESS) {
+        fprintf(stderr,"FILE COULD NOT OPEN\n");
+        exit(1);
+    }
+
     MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*4*sizeof(double), MPI_SEEK_SET);
     for (i = 0; i < numparsTloc; i++) {
         MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
