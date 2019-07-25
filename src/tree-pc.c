@@ -193,37 +193,6 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
 
 
 
-void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
-{
-//	printf("Entering pc_create_tree_array.\n");
-    int i;
-
-    /*midpoint coordinates, RADIUS and SQRADIUS*/
-    tree_array->x_mid[p->node_index] = p->x_mid;
-    tree_array->y_mid[p->node_index] = p->y_mid;
-    tree_array->z_mid[p->node_index] = p->z_mid;
-
-    tree_array->x_min[p->node_index] = p->x_min;
-	tree_array->y_min[p->node_index] = p->y_min;
-	tree_array->z_min[p->node_index] = p->z_min;
-
-	tree_array->x_max[p->node_index] = p->x_max;
-	tree_array->y_max[p->node_index] = p->y_max;
-	tree_array->z_max[p->node_index] = p->z_max;
-
-    tree_array->ibeg[p->node_index] = p->ibeg;
-    tree_array->iend[p->node_index] = p->iend;
-
-    for (i = 0; i < p->num_children; i++) {
-        pc_create_tree_array(p->child[i], tree_array);
-    }
-
-    return;
-
-} /* END of function create_tree_n0 */
-
-
-
 void pc_partition_8(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2])
@@ -298,6 +267,39 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, doubl
     return;
 
 } /* END of function partition_8 */
+
+
+
+void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
+{
+    //    printf("Entering pc_create_tree_array.\n");
+    int i;
+    
+    /*midpoint coordinates, RADIUS and SQRADIUS*/
+    tree_array->x_mid[p->node_index] = p->x_mid;
+    tree_array->y_mid[p->node_index] = p->y_mid;
+    tree_array->z_mid[p->node_index] = p->z_mid;
+    
+    tree_array->x_min[p->node_index] = p->x_min;
+    tree_array->y_min[p->node_index] = p->y_min;
+    tree_array->z_min[p->node_index] = p->z_min;
+    
+    tree_array->x_max[p->node_index] = p->x_max;
+    tree_array->y_max[p->node_index] = p->y_max;
+    tree_array->z_max[p->node_index] = p->z_max;
+    
+    tree_array->ibeg[p->node_index] = p->ibeg;
+    tree_array->iend[p->node_index] = p->iend;
+    tree_array->level[p->node_index] = p->level;
+    tree_array->radius[p->node_index] = p->radius;
+
+    for (i = 0; i < p->num_children; i++) {
+        pc_create_tree_array(p->child[i], tree_array);
+    }
+    
+    return;
+    
+} /* END of function create_tree_n0 */
 
 
 
@@ -957,8 +959,8 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, 
 
 
 
-void pc_make_interaction_list(struct tnode *p, struct batch *batches,
-                              int *tree_inter_list, int *direct_inter_list)
+void pc_make_interaction_list(struct tnode *p, struct tnode_array *tree_array,
+                              struct batch *batches, int *tree_inter_list, int *direct_inter_list)
 {
     /* local variables */
     int i;
@@ -981,9 +983,25 @@ void pc_make_interaction_list(struct tnode *p, struct batch *batches,
                 batches->index[i], batches->center[i], batches->radius[i],
                 &(tree_inter_list[i*numnodes]), &(direct_inter_list[i*numleaves]),
                 &tree_index_counter, &direct_index_counter);
+        
+        printf("For batch %d: \n", i)
+        printf("    ");
+        for (j = 0; j < numnodes; j++)
+            printf(" %d ", tree_inter_list[i*numnodes + j]);
+        
+        printf("\n");
+        for (j = 0; j < numleaves; j++)
+            printf(" %d ", direct_inter_list[i*numleaves + j]);
+        
+        printf("\n\n");
+        
+//        pc_compute_interaction_list2(tree_array,
+//                batches->index[i], batches->center[i], batches->radius[i],
+//                &(tree_inter_list[i*numnodes]), &(direct_inter_list[i*numleaves]),
+//                &tree_index_counter, &direct_index_counter);
 
-        batches->index[i][2] =tree_index_counter;
-        batches->index[i][3] =direct_index_counter;
+        batches->index[i][2] = tree_index_counter;
+        batches->index[i][3] = direct_index_counter;
 
     }
 
@@ -992,6 +1010,59 @@ void pc_make_interaction_list(struct tnode *p, struct batch *batches,
 } /* END of function pc_treecode */
 
 
+
+void pc_compute_interaction_list2(struct tnode_array *tree_array,
+                int *batch_ind, double *batch_mid, double batch_rad,
+                int *batch_tree_list, int *batch_direct_list,
+                int *tree_index_counter, int *direct_index_counter)
+{
+    /* local variables */
+    double tx, ty, tz, dist;
+    int i, j, current_level;
+    
+    current_level = 0;
+    
+    for (j = 0; j < tree_array->numnodes; j++) {
+        /* determine DIST for MAC test */
+        tx = batch_mid[0] - tree_array->x_mid[j];
+        ty = batch_mid[1] - tree_array->y_mid[j];
+        tz = batch_mid[2] - tree_array->z_mid[j];
+        dist = sqrt(tx*tx + ty*ty + tz*tz);
+    
+        if (tree_array->level[j] <= current_level) {
+            if (((tree_array->radius[j] + batch_rad) < dist * sqrt(thetasq))
+              && (tree_array->radius[j] > 0.00)
+              && (torder*torder*torder < (tree_array->iend[j] - tree_array->ibeg[j] + 1))) {
+            /*
+             * If MAC is accepted and there is more than 1 particle
+             * in the box, use the expansion for the approximation.
+             */
+        
+                batch_tree_list[*tree_index_counter] = j;
+                (*tree_index_counter)++;
+        
+            } else {
+            /*
+             * If MAC fails check to see if there are children. If not, perform direct
+             * calculation. If there are children, call routine recursively for each.
+             */
+                if (tree_array->level[j+1] <= current_level) {
+                    
+                    batch_direct_list[*direct_index_counter] = j;
+                    (*direct_index_counter)++;
+            
+                } else {
+                    
+                    current_level = tree_array->level[j+1];
+                    
+                }
+            }
+        }
+    }
+
+    
+    return;
+}
 
 
 void pc_compute_interaction_list(struct tnode *p,

@@ -124,6 +124,9 @@ void treedriver(struct particles *sources, struct particles *targets,
 		make_vector(tree_array->x_max, numnodes);
 		make_vector(tree_array->y_max, numnodes);
 		make_vector(tree_array->z_max, numnodes);
+        make_vector(tree_array->level, numnodes);
+        make_vector(tree_array->cluster_ind, numnodes);
+        make_vector(tree_array->radius, numnodes);
 		time2 = MPI_Wtime();
 //		printf("Time to make tree_array: %f\n", time2-time1);
 
@@ -225,7 +228,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     	make_vector(tree_inter_list, batches->num * numnodes);
     	make_vector(direct_inter_list, batches->num * numleaves);
 
-    	pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
+    	pc_make_interaction_list(troot, tree_array, batches, tree_inter_list, direct_inter_list);
     	time2 = MPI_Wtime();
 //    	printf("Time to make interaction lists: %f\n", time2-time1);
 

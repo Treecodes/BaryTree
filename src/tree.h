@@ -121,13 +121,20 @@ void pc_comp_weights(struct tnode *p);
 
 
 
-void pc_make_interaction_list(struct tnode *p, struct batch *batches,
+void pc_make_interaction_list(struct tnode *p, struct tnode_array *tarray, struct batch *batches,
                               int *tree_inter_list, int *direct_inter_list);
+
 
 void pc_compute_interaction_list(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 int *batch_tree_list, int *batch_direct_list,
                 int *tree_index_counter, int *direct_index_counter);
+
+void pc_compute_interaction_list2(struct tnode_array *tree_array,
+                                 int *batch_ind, double *batch_mid, double batch_rad,
+                                 int *batch_tree_list, int *batch_direct_list,
+                                 int *tree_index_counter, int *direct_index_counter);
+
 
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
