@@ -29,6 +29,7 @@ struct tnode_array
     
     int *ibeg;
     int *iend;
+    int *numpar;
     
     int *cluster_ind;
     int *level;
