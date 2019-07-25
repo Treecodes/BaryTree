@@ -16,4 +16,4 @@ print(points[0:5,:])
 
 np.savetxt(sourcesTXT, points)
 np.savetxt(targetsTXT, points[:,0:4])
-   
+     
