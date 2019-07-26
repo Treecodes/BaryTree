@@ -960,7 +960,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, 
 
 
 
-void pc_make_interaction_list(const struct tnode *p, const struct tnode_array *tree_array, struct batch *batches,
+void pc_make_interaction_list(const struct tnode_array *tree_array, struct batch *batches,
                               int *tree_inter_list, int *direct_inter_list)
 {
     /* local variables */
@@ -974,12 +974,6 @@ void pc_make_interaction_list(const struct tnode *p, const struct tnode_array *t
     const int *tree_numpar, *tree_level;
     const double *tree_x_mid, *tree_y_mid, *tree_z_mid, *tree_radius;
 
-    int tree_index_counter, direct_index_counter;
-    int *tree_inter_list_old, *direct_inter_list_old;
-   	make_vector(tree_inter_list_old, batches->num * numnodes);
-   	make_vector(direct_inter_list_old, batches->num * numleaves);
-    tree_index_counter = 0; direct_index_counter = 0;
-
     batches_ind = batches->index;
     batches_center = batches->center;
     batches_radius = batches->radius;
@@ -989,62 +983,20 @@ void pc_make_interaction_list(const struct tnode *p, const struct tnode_array *t
     tree_level = tree_array->level;
     tree_radius = tree_array->radius;
     tree_x_mid = tree_array->x_mid;
-    tree_y_mid = tree_array->x_mid;
-    tree_z_mid = tree_array->x_mid;
+    tree_y_mid = tree_array->y_mid;
+    tree_z_mid = tree_array->z_mid;
 
-    for (i = 0; i < batches->num * numnodes; i++) {
+    for (i = 0; i < batches->num * numnodes; i++)
         tree_inter_list[i] = -1;
-        tree_inter_list_old[i] = -1;
-    }
 
-    for (i = 0; i < batches->num * numleaves; i++) {
+    for (i = 0; i < batches->num * numleaves; i++)
         direct_inter_list[i] = -1;
-        direct_inter_list_old[i] = -1;
-    }
     
-    for (i = 0; i < batches->num; i++) {
-        
+    for (i = 0; i < batches->num; i++)
         pc_compute_interaction_list(tree_numnodes, tree_level, tree_numpar,
                 tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
                 batches_ind[i], batches_center[i], batches_radius[i],
                 &(tree_inter_list[i*numnodes]), &(direct_inter_list[i*numleaves]));
-
-        pc_compute_interaction_list_old(p,
-                batches->index[i], batches->center[i], batches->radius[i],
-                &(tree_inter_list_old[i*numnodes]), &(direct_inter_list_old[i*numleaves]),
-                &tree_index_counter, &direct_index_counter);
-
-        if(memcmp(&(tree_inter_list[i*numnodes]), &(tree_inter_list_old[i*numnodes]),
-                  numnodes * batches->num * sizeof(int)) != 0) {
-            fprintf(stderr, "WARNING! BATCH %d: TREE INTER LIST NOT THE SAME\n", i);
-            fprintf(stderr, "    NEW: ");
-            for (j = 0; j < numnodes; j++)
-                fprintf(stderr, " %d ", tree_inter_list[i*numnodes + j]);
-            fprintf(stderr, "\n    OLD: ");
-            for (j = 0; j < numnodes; j++)
-                fprintf(stderr, " %d ", tree_inter_list_old[i*numnodes + j]);
-            fprintf(stderr, "\n\n");
-        } else {
-            fprintf(stderr, "batch %d: tree inter list is the same\n", i);
-        }
-
-        if(memcmp(&(direct_inter_list[i*numleaves]), &(tree_inter_list_old[i*numleaves]),
-                  numleaves * batches->num * sizeof(int)) != 0) {
-            fprintf(stderr, "WARNING! BATCH %d: DIRECT INTER LIST NOT THE SAME\n", i);
-            fprintf(stderr, "    NEW: ");
-            for (j = 0; j < numleaves; j++)
-                fprintf(stderr, " %d ", tree_inter_list[i*numleaves + j]);
-            fprintf(stderr, "\n    OLD: ");
-            for (j = 0; j < numleaves; j++)
-                fprintf(stderr, " %d ", tree_inter_list_old[i*numleaves + j]);
-            fprintf(stderr, "\n\n");
-        } else {
-            fprintf(stderr, "batch %d: direct inter list is the same\n", i);
-        }
-
-    }
-    
-    exit(1);
 
     return;
 
@@ -1068,8 +1020,6 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
     current_level = 0;
     
     for (j = 0; j < tree_numnodes; j++) {
-    //    fprintf(stderr, "ON NODE %d, with level %d: \n", j, tree_array->level[j]);
-
         if (tree_level[j] <= current_level) {
 
             /* determine DIST for MAC test */
@@ -1078,14 +1028,10 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
             tz = batch_mid[2] - tree_z_mid[j];
             dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    //        fprintf(stderr, "     EVALUATING b/c its level is %d, and current level is %d\n",
-    //                tree_array->level[j], current_level);
-
             if (((tree_radius[j] + batch_rad) < dist * sqrt(thetasq))
               && (tree_radius[j] > 0.00)
               && (torder*torder*torder < tree_numpar[j])) {
 
-    //          fprintf(stderr, "          PASSED MAC. Moving onto next node.\n");
               current_level = tree_level[j];
             /*
              * If MAC is accepted and there is more than 1 particle
@@ -1100,32 +1046,19 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
              * If MAC fails check to see if there are children. If not, perform direct
              * calculation. If there are children, call routine recursively for each.
              */
-              //  fprintf(stderr, "          FAILED MAC. Are there children?.\n");
 
                 if (tree_level[j+1] <= tree_level[j]) {
                     
-                //    fprintf(stderr, "               NO CHILDREN. DIRECT. Level is %d, and next level is %d\n",
-                //    tree_array->level[j], tree_array->level[j+1]);
-
                     batch_direct_list[direct_index_counter] = j;
                     direct_index_counter++;
             
                 } else {
                     
-                  //  fprintf(stderr, "               YES CHILDREN. GO DEEPER. Level is %d, and next level is %d\n",
-                  //  tree_array->level[j], tree_array->level[j+1]);
-
                     current_level = tree_level[j+1];
                     
                 }
             }
-        } else {
-    //        fprintf(stderr, "     SKIPPING b/c its level is %d, and current level is %d\n",
-   //                 tree_array->level[j], current_level);
         }
-        
-  //      fprintf(stderr, "\n");
-
     }
 
     // Setting tree and direct index counter for batch
@@ -1134,58 +1067,6 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
     
     return;
 }
-
-
-
-
-void pc_compute_interaction_list_old(const struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                int *batch_tree_list, int *batch_direct_list,
-                int *tree_index_counter, int *direct_index_counter)
-{
-    /* local variables */
-    double tx, ty, tz, dist;
-    int i;
-
-    /* determine DIST for MAC test */
-    tx = batch_mid[0] - p->x_mid;
-    ty = batch_mid[1] - p->y_mid;
-    tz = batch_mid[2] - p->z_mid;
-    dist = sqrt(tx*tx + ty*ty + tz*tz);
-
-    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00)
-       && (torder*torder*torder < p->numpar)) {
-    /*
-     * If MAC is accepted and there is more than 1 particle
-     * in the box, use the expansion for the approximation.
-     */
-
-        batch_tree_list[*tree_index_counter] = p->node_index;
-        (*tree_index_counter)++;
-
-    } else {
-    /*
-     * If MAC fails check to see if there are children. If not, perform direct
-     * calculation. If there are children, call routine recursively for each.
-     */
-        if (p->num_children == 0) {
-            batch_direct_list[*direct_index_counter] = p->node_index;
-            (*direct_index_counter)++;
-
-        } else {
-            for (i = 0; i < p->num_children; i++) {
-                pc_compute_interaction_list_old(p->child[i], batch_ind, batch_mid, batch_rad,
-                           batch_tree_list, batch_direct_list,
-                           tree_index_counter, direct_index_counter);
-            }
-        }
-    }
-
-    return;
-
-} /* END of function compute_pc */
-
-
 
 
 

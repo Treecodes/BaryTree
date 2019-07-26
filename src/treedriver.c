@@ -229,7 +229,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     	make_vector(tree_inter_list, batches->num * numnodes);
     	make_vector(direct_inter_list, batches->num * numleaves);
 
-    	pc_make_interaction_list(troot, tree_array, batches, tree_inter_list,  direct_inter_list);
+    	pc_make_interaction_list(tree_array, batches, tree_inter_list,  direct_inter_list);
     	time2 = MPI_Wtime();
 //    	printf("Time to make interaction lists: %f\n", time2-time1);
 
