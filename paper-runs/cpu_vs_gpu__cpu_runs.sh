@@ -18,7 +18,7 @@ NUMTHREADS=1
 
 ORDER=8
 THETA=0.8
-BATCHSIZE=4000
+BATCHSIZE=4000  
 MAXPARNODE=4000
 
 
@@ -26,7 +26,7 @@ MAXPARNODE=4000
 KAPPA=0.0
 POTENTIALTYPE=0
 OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/gpu_vs_cpu/cpu_Coulomb.csv 
-for N in 100000 1000000 10000000
+for N in 100000 1000000 10000000 
 do
 	echo N=$N 
 	SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
@@ -37,7 +37,7 @@ do
 	tree-cpu   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER \
 							$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
 							$NUMDEVICES $NUMTHREADS
-done 
+done  
 
 
 ## Yukawa 
