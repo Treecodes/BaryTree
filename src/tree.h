@@ -120,14 +120,15 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, do
 void pc_comp_weights(struct tnode *p);
 
 
-
-void pc_make_interaction_list(struct tnode *p, struct batch *batches,
+void pc_make_interaction_list(const struct tnode_array *tarray, struct batch *batches,
                               int *tree_inter_list, int *direct_inter_list);
 
-void pc_compute_interaction_list(struct tnode *p,
+void pc_compute_interaction_list(int tree_numnodes, const int *tree_level, 
+                const int *tree_numpar, const double *tree_radius,
+                const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
                 int *batch_ind, double *batch_mid, double batch_rad,
-                int *batch_tree_list, int *batch_direct_list,
-                int *tree_index_counter, int *direct_index_counter);
+                int *batch_tree_list, int *batch_direct_list);
+
 
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
