@@ -137,7 +137,17 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng,double kappa, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double kappa, double *EnP, int numDevices, int numThreads);
+
+void pc_interaction_list_treecode_dcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double eta, double *EnP, int numDevices, int numThreads);
+
+void pc_interaction_list_treecode_tcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double kappa, double eta, double *EnP, int numDevices, int numThreads);
 
 void pc_interaction_list_treecode_hermite_coulomb(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
@@ -148,6 +158,11 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
                                   double *tpeng, double kappa, double *EnP, int numDevices, int numThreads);
+
+void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double eta, double *EnP, int numDevices, int numThreads);
 
 
 /* used by particle-cluster Coulomb */
