@@ -22,7 +22,6 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
-void addNodeToArray(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
@@ -86,6 +85,8 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
                        int level);
 
+int pc_set_tree_index(struct tnode *p, int index);
+
 void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
 
 void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
@@ -94,14 +95,6 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
                     double x_mid, double y_mid, double z_mid,
                     int ind[8][2]);
 
-void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, double *w, double *clusterQ);
-void pc_comp_ms_SS(struct tnode *p, double *x, double *y, double *z, double *q, double *w, double *clusterQ, double *clusterQ2);
-
-void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
-
-//void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-//		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
@@ -116,8 +109,6 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, do
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ,
 		double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz,
 		double * clusterW, double * clusterWx ,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWzx,double * clusterWxyz);
-
-void pc_comp_weights(struct tnode *p);
 
 
 
@@ -137,7 +128,17 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng,double kappa, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double kappa, double *EnP, int numDevices, int numThreads);
+
+void pc_interaction_list_treecode_dcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double eta, double *EnP, int numDevices, int numThreads);
+
+void pc_interaction_list_treecode_tcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double kappa, double eta, double *EnP, int numDevices, int numThreads);
 
 void pc_interaction_list_treecode_hermite_coulomb(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
@@ -149,36 +150,20 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
                                   struct particles *sources, struct particles *targets,
                                   double *tpeng, double kappa, double *EnP, int numDevices, int numThreads);
 
+void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double eta, double *EnP, int numDevices, int numThreads);
+
 
 /* used by particle-cluster Coulomb */
-void pc_treecode(struct tnode *p, struct batch *batches,
-                 struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices, int numThreads);
-
-void compute_pc(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double *EnP,
-				double *clusterX, double *clusterY, double *clusterZ, double *clusterM);
-
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
                     double *xT, double *yT, double *zT, double *qT, double *EnP);
 
-void pc_treecode_hermite(struct tnode *p, struct batch *batches,
-                 struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices, int numThreads);
-
 void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
 				 double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
-
-void compute_pc_hermite(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double *EnP,
-				double *clusterX, double *clusterY, double *clusterZ, double *clusterM,
-				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
 void compute_pc_hermite_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
@@ -187,22 +172,6 @@ void compute_pc_hermite_SS(struct tnode *p,
 				double * clusterX, double * clusterY, double * clusterZ, double * clusterQ,
 				double * clusterQx,double * clusterQy,double * clusterQz,double * clusterQxy,double * clusterQyz,double * clusterQxz,double * clusterQxyz,
 				double * clusterW, double * clusterWx,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWxz,double * clusterWxyz);
-
-/* used by particle-cluster Yukawa */
-void pc_treecode_yuk(struct tnode *p, struct batch *batches,
-                     struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
-
-void compute_pc_yuk(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterM );
-
-void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                        double *xS, double *yS, double *zS, double *qS, double *wS,
-                        double *xT, double *yT, double *zT, double *qT,
-                        double kappa, double *EnP);
 
 /* used by particle-cluster Yukawa w/ singularity subtraction */
 
