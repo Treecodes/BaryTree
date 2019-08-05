@@ -86,6 +86,8 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
                        int level);
 
+int pc_set_tree_index(struct tnode *p, int index);
+
 void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
 
 void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
@@ -166,34 +168,13 @@ void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array, st
 
 
 /* used by particle-cluster Coulomb */
-void pc_treecode(struct tnode *p, struct batch *batches,
-                 struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices, int numThreads);
-
-void compute_pc(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double *EnP,
-				double *clusterX, double *clusterY, double *clusterZ, double *clusterM);
-
 void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,
                     double *xT, double *yT, double *zT, double *qT, double *EnP);
 
-void pc_treecode_hermite(struct tnode *p, struct batch *batches,
-                 struct particles *sources, struct particles *targets, struct particles *clusters,
-                 double *tpeng, double *EnP, int numDevices, int numThreads);
-
 void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
 				 double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
-
-void compute_pc_hermite(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double *EnP,
-				double *clusterX, double *clusterY, double *clusterZ, double *clusterM,
-				double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
 void compute_pc_hermite_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
@@ -202,22 +183,6 @@ void compute_pc_hermite_SS(struct tnode *p,
 				double * clusterX, double * clusterY, double * clusterZ, double * clusterQ,
 				double * clusterQx,double * clusterQy,double * clusterQz,double * clusterQxy,double * clusterQyz,double * clusterQxz,double * clusterQxyz,
 				double * clusterW, double * clusterWx,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWxz,double * clusterWxyz);
-
-/* used by particle-cluster Yukawa */
-void pc_treecode_yuk(struct tnode *p, struct batch *batches,
-                     struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
-
-void compute_pc_yuk(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterM );
-
-void pc_comp_direct_yuk(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                        double *xS, double *yS, double *zS, double *qS, double *wS,
-                        double *xT, double *yT, double *zT, double *qT,
-                        double kappa, double *EnP);
 
 /* used by particle-cluster Yukawa w/ singularity subtraction */
 
