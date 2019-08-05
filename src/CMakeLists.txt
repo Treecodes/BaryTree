@@ -51,7 +51,7 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT tree-cpu)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_sources(${TRGT}          PRIVATE 
-                                        main.c)
+                                        main-distributed.c)
     target_compile_features(${TRGT} PRIVATE
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE

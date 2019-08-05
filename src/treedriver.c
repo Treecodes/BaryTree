@@ -46,8 +46,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     maxlevel = 0;
     maxpars = 0;
     
-    int *tree_inter_list;
-    int *direct_inter_list;
+    int *tree_inter_list, *tree_inter_list2;
+    int *direct_inter_list, *direct_inter_list2;
     struct tnode_array *tree_array = NULL;
     numnodes = 0;
     struct particles *clusters = NULL;
@@ -107,17 +107,22 @@ void treedriver(struct particles *sources, struct particles *targets,
         tree_array->numnodes = numnodes;
         make_vector(tree_array->ibeg, numnodes);
         make_vector(tree_array->iend, numnodes);
+        make_vector(tree_array->numpar, numnodes);
         make_vector(tree_array->x_mid, numnodes);
         make_vector(tree_array->y_mid, numnodes);
         make_vector(tree_array->z_mid, numnodes);
         make_vector(tree_array->x_min, numnodes);
+
         make_vector(tree_array->y_min, numnodes);
         make_vector(tree_array->z_min, numnodes);
         make_vector(tree_array->x_max, numnodes);
         make_vector(tree_array->y_max, numnodes);
         make_vector(tree_array->z_max, numnodes);
+        make_vector(tree_array->level, numnodes);
+        make_vector(tree_array->cluster_ind, numnodes);
+        make_vector(tree_array->radius, numnodes);
         time2 = MPI_Wtime();
-//        printf("Time to make tree_array: %f\n", time2-time1);
+//		printf("Time to make tree_array: %f\n", time2-time1);
 
         time1 = MPI_Wtime();
         pc_create_tree_array(troot, tree_array);
@@ -201,9 +206,9 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(tree_inter_list, batches->num * numnodes);
         make_vector(direct_inter_list, batches->num * numleaves);
 
-        pc_make_interaction_list(troot, batches, tree_inter_list, direct_inter_list);
-        time2 = MPI_Wtime();
-//      printf("Time to make interaction lists: %f\n", time2-time1);
+    	  pc_make_interaction_list(tree_array, batches, tree_inter_list,  direct_inter_list);
+    	  time2 = MPI_Wtime();
+//    	printf("Time to make interaction lists: %f\n", time2-time1);
 
         time1 = MPI_Wtime(); // start timer for tree evaluation
 
