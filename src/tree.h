@@ -22,7 +22,6 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
-void addNodeToArray(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
@@ -96,14 +95,6 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
                     double x_mid, double y_mid, double z_mid,
                     int ind[8][2]);
 
-void pc_comp_ms(struct tnode *p, double *x, double *y, double *z, double *q, double *w, double *clusterQ);
-void pc_comp_ms_SS(struct tnode *p, double *x, double *y, double *z, double *q, double *w, double *clusterQ, double *clusterQ2);
-
-void pc_comp_ms_gpu(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
-
-//void pc_comp_ms_modifiedF(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-//		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
@@ -118,8 +109,6 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, do
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ,
 		double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz,
 		double * clusterW, double * clusterWx ,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWzx,double * clusterWxyz);
-
-void pc_comp_weights(struct tnode *p);
 
 
 
