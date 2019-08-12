@@ -19,11 +19,11 @@ BATCHSIZE=1000
 MAXPARNODE=1000
 
 NUMDEVICES=0
-NUMTHREADS=1
+NUMTHREADS=2
 
 
 OUTFILE=/Users/nathanvaughn/Desktop/randomPoints/cpu_Coulomb.csv 
-for N in 10000
+for N in 64000
 do
 	echo N=$N
 	SOURCES=/Users/nathanvaughn/Desktop/randomPoints/S$N.bin    
@@ -31,9 +31,12 @@ do
 	NUMSOURCES=$N
 	NUMTARGETS=$N
 	DIRECTSUM=/Users/nathanvaughn/Desktop/randomPoints/ex_st_coulomb_$N.bin
-	mpirun -np 4 ../bin/direct-distributed.exe $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-	#mpirun -np 2 ../bin/direct-distributed.exe $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-	#mpirun -np 1 ../bin/direct-distributed.exe $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-	../bin/tree.exe   $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $THETA $ORDER $TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE $NUMDEVICES $NUMTHREADS
-done 
-
+	for np in 1 2 6
+	do
+		for NUMTHREADS in 1
+		do
+			export OMP_NUM_THREADS=$NUMTHREADS
+			mpirun -np $np direct-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
+		done
+	done 
+done

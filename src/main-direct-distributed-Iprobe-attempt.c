@@ -16,6 +16,8 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
                 int pot_type, double kappa, int numDevices, int numThreads);
 
+void process_request(MPI_Status status, double * particleData, int length, int requestTag, int dataTransferTag, MPI_Request request);
+
 /* The treedriver routine in Fortran */
 int main(int argc, char **argv)
 {
@@ -238,31 +240,44 @@ int main(int argc, char **argv)
     total_time_start = MPI_Wtime();
 
 
-	MPI_Request request1s;
-	MPI_Request request1r;
+	MPI_Request request_askingForData;
+	MPI_Request request_sendingData;
+	MPI_Request request_receivingData1;
+	MPI_Request request_receivingData2;
 
 	for (i=0;i<5*maxparsSloc;i++){
 		S_foreign1[i]=0.0;
 		S_foreign2[i]=0.0;
 	}
 
+	int requestTag=1;
+	int dataTransferTag2=2;
+	int dataTransferTag1=3;
+	int someoneIsWaitingForMe=0;
 
     for (int procID=1;procID<numProcs;procID++){
     	timeCommunicate = MPI_Wtime();
 
     	// Send and receive source particles
-    	sendTo = (rank+procID)%numProcs;
+//    	sendTo = (rank+procID)%numProcs;
     	recvFrom = (numProcs+rank-procID)%numProcs;
 
+
+
     	if (procID%2==1){ // communicate w/ foreign1, compute on foreign2
-    		MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
-    		MPI_Irecv(S_foreign1, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
+//    		MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
+
+    		MPI_Isend(&rank, 1, MPI_INT, recvFrom, requestTag, MPI_COMM_WORLD, &request_askingForData);  // request data from recvFrom
+    		MPI_Irecv(S_foreign1, 5*maxparsSloc, MPI_DOUBLE, recvFrom, dataTransferTag1, MPI_COMM_WORLD, &request_receivingData1); // receive data from recvFrom
+
+    		printf("rank %i has requested data from rank %i.\n", rank, recvFrom);
 
 
 			if (procID==1) {
 				direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 										denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
 			}else{
+				MPI_Wait(&request_receivingData2, &status);
 				direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 														denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
 				for (i=0;i<5*maxparsSloc;i++){
@@ -270,9 +285,12 @@ int main(int argc, char **argv)
 					}
 			}
     	}else{ // procId%2=0, communicate foreign2 and compute with foreign1
-    		MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
-			MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
+			MPI_Isend(&rank, 1, MPI_INT, recvFrom, requestTag, MPI_COMM_WORLD, &request_askingForData);  // request data from recvFrom
+			MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, dataTransferTag2, MPI_COMM_WORLD, &request_receivingData2); // receive data from recvFrom
 
+    		printf("rank %i has requested data from rank %i.\n", rank, recvFrom);
+
+    		MPI_Wait(&request_receivingData1, &status);
 			direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 														denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
 			for (i=0;i<5*maxparsSloc;i++){
@@ -280,18 +298,53 @@ int main(int argc, char **argv)
 				}
     	}
 
+//    	MPI_Iprobe(MPI_ANY_SOURCE, requestTag, MPI_COMM_WORLD, &someoneIsWaitingForMe, &status);
+
+//    	MPI_Waitany(&request_askingForData, &status);
+//    	MPI_Wait(&request_receivingData, &status);
+//    	while (!someoneIsWaitingForMe) MPI_Iprobe(MPI_ANY_SOURCE, requestTag, MPI_COMM_WORLD, &someoneIsWaitingForMe, &status);
+    	MPI_Iprobe(MPI_ANY_SOURCE, requestTag, MPI_COMM_WORLD, &someoneIsWaitingForMe, &status);
+		if (someoneIsWaitingForMe!=0){
+			printf("someoneIsWaitingForMe = %i\n",someoneIsWaitingForMe);
+			printf("status.MPI_SOURCE = %i\n", status.MPI_SOURCE);
+			printf("Rank %i is waiting for rank %i to send data.\n", status.MPI_SOURCE, rank);
+			process_request(status, S_local, 5*maxparsSloc, requestTag, status.MPI_TAG, request_sendingData);
+		}
+
     	time4 = MPI_Wtime();
-    	MPI_Wait(&request1r, &status);
-    	MPI_Wait(&request1s, &status);
+
+//    	printf("Now waiting to receive...\n");
+//    	MPI_Wait(&request_askingForData, &status);
+//    	printf("request_askingForData success.\n");
+//    	MPI_Wait(&request_receivingData, &status);
+//    	printf("request_receivingData success.\n");
+//    	MPI_Wait(&request_sendingData, &status);
+//    	printf("request_sendingData success.\n");
 
 
 
     }
 
     if ((numProcs-1)%2==1){ // in final loop, S_foreign1 was received but not yet computed with
+    	MPI_Iprobe(MPI_ANY_SOURCE, requestTag, MPI_COMM_WORLD, &someoneIsWaitingForMe, &status);
+		if (someoneIsWaitingForMe!=0){
+			printf("someoneIsWaitingForMe = %i\n",someoneIsWaitingForMe);
+			printf("status.MPI_SOURCE = %i\n", status.MPI_SOURCE);
+			printf("Rank %i is waiting for rank %i to send data.\n", status.MPI_SOURCE, rank);
+			process_request(status, S_local, 5*maxparsSloc, requestTag, status.MPI_TAG, request_sendingData);
+		}
+    	MPI_Wait(&request_receivingData1, &status);
 		direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 										denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
 	}else{ // S_foreign2 is the one that needs to be computed with
+		MPI_Iprobe(MPI_ANY_SOURCE, requestTag, MPI_COMM_WORLD, &someoneIsWaitingForMe, &status);
+		if (someoneIsWaitingForMe!=0){
+			printf("someoneIsWaitingForMe = %i\n",someoneIsWaitingForMe);
+			printf("status.MPI_SOURCE = %i\n", status.MPI_SOURCE);
+			printf("Rank %i is waiting for rank %i to send data.\n", status.MPI_SOURCE, rank);
+			process_request(status, S_local, 5*maxparsSloc, requestTag, status.MPI_TAG, request_sendingData);
+		}
+		MPI_Wait(&request_receivingData2, &status);
 		direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 													denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
 	}
@@ -478,4 +531,15 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 
         return;
 
+}
+
+
+void process_request(MPI_Status status, double * particleData, int length, int requestTag, int dataTransferTag, MPI_Request request){
+	printf("Entering process_request()\n");
+	fflush(stdout);
+	int address;
+	double value;
+	int destination = status.MPI_SOURCE;
+	MPI_Recv(&address,1, MPI_INT, destination, requestTag, MPI_COMM_WORLD, &status);
+	MPI_Send(particleData, length, MPI_DOUBLE, destination, dataTransferTag, MPI_COMM_WORLD);//, &request);
 }
