@@ -312,7 +312,7 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
 		copy(EnP2[0:targets->num])
     {
 
-	#pragma omp for private(j)
+	#pragma omp for private(j) schedule(guided)
 	for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc_coulomb_SS(p->child[j],
@@ -378,7 +378,7 @@ void compute_pc_coulomb_SS(struct tnode *p,
 	double xi,yi,zi,qi,r;
 	int batchStart = batch_ind[0] - 1;
 
-	int streamID = rand() % 2;
+	int streamID = rand() % 4;
 	# pragma acc kernels async(streamID) present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM, clusterM2)
 	{
 	#pragma acc loop independent
@@ -450,7 +450,7 @@ void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_ien
     double tx, ty, tz;
     double d_peng, r;
 
-    int streamID = rand() % 2;
+    int streamID = rand() % 4;
 	# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
 	#pragma acc loop independent
@@ -487,7 +487,8 @@ void pc_interaction_list_treecode_Coulomb_SS(struct tnode_array *tree_array, str
 	    int i, j;
 
 	    for (i = 0; i < targets->num; i++)
-	        EnP[i] = 0.0;
+//	        EnP[i] = 0.0;
+	    	EnP[i] = 2.0*M_PI*kappaSq*targets->q[i];
 
 	    printf("Using interaction lists!\n");
 
@@ -561,7 +562,7 @@ void pc_interaction_list_treecode_Coulomb_SS(struct tnode_array *tree_array, str
 		int numberOfClusterApproximations, numberOfDirectSums;
 
 		int streamID;
-		#pragma omp for private(j,ii,jj,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID)
+		#pragma omp for private(j,ii,jj,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID) schedule(guided)
 	    for (i = 0; i < batches->num; i++) {
 	    	batch_ibeg = batches->index[i][0];
 			batch_iend = batches->index[i][1];

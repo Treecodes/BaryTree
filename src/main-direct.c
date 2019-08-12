@@ -72,6 +72,8 @@ int main(int argc, char **argv)
 //    omp_set_num_threads(4);
 
 
+
+
     sampin1 = argv[1];
     if (strcmp(sampin1,"--help") == 0)
     {
@@ -149,6 +151,24 @@ int main(int argc, char **argv)
     }
     MPI_File_close(&fpmpi);
 
+    printf("Allocated sources and targets particles.\n");
+	double *originalWeights, *rho;
+    make_vector(originalWeights, numparsS);
+	make_vector(rho, numparsS);
+    for (i=0;i<numparsT;i++){
+		originalWeights[i] = wS[i];
+		rho[i] = qS[i];
+    }
+	printf("originalWeights filled.  Starting timer.\n");
+
+	// Initialize all GPUs
+	if (numDevices>0){
+		#pragma omp parallel num_threads(numDevices)
+			{
+			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+			acc_init(acc_get_device_type());
+			}
+	}
 
     /* Calling main treecode subroutine to calculate approximate energy */
     time1 = MPI_Wtime();
@@ -158,6 +178,12 @@ int main(int argc, char **argv)
     time2 = MPI_Wtime();
     time_direct = time2-time1;
 
+    double hartreeEnergy=0.0;
+    for (int i=0;i<numparsTloc;i++){
+    	hartreeEnergy += denergy[i]*rho[i]*originalWeights[i]/2.0;  // sum ( V_H * RHO * W )
+    }
+    printf("Hartree energy = %1.12f\n", hartreeEnergy);
+
     
     /* Reducing values to root process */
     MPI_Reduce(&time_direct, &time_direct_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -165,6 +191,11 @@ int main(int argc, char **argv)
     MPI_Reduce(&time_direct, &time_direct_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
+
+
+//    if (rank == 0) dpengglob = sum(denergyglob*originalWeights, numparsT);
+
+
 
     MPI_File_open(MPI_COMM_WORLD, sampout, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fpmpi);
     if (rank == 0)
@@ -186,6 +217,8 @@ int main(int argc, char **argv)
     
         /* Calculating value dpeng by summing all values in denergy */
         printf("             Direct potential energy:  %.15f\n\n\n", dpengglob);
+        printf("			 Hartree energy = %1.12f\n", hartreeEnergy);
+
     }
 
     
@@ -247,7 +280,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 	//		num_threads=1;
 
 			int targetStart, targetEnd;
-			#pragma omp for schedule(static)
+			#pragma omp for schedule(guided)
 			for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
 
 				targetStart = deviceNumber*numparsT/num_threads;
@@ -426,25 +459,28 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 
         } else if (pot_type == 2 || pot_type == 6) {
         	double kappaSq = kappa*kappa;
-			#pragma omp for private(j,xi,yi,zi,tx,ty,tz,rad,teng)
+			#pragma omp for private(j,xi,yi,zi,qi,tx,ty,tz,rad,teng) schedule(guided)
 			for (i = 0; i < numparsT; i++) {
-                        xi = xT[i];
-                        yi = yT[i];
-                        zi = zT[i];
-                        qi = qT[i];
-						teng = 2*M_PI*kappaSq*qi;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
+				xi = xT[i];
+				yi = yT[i];
+				zi = zT[i];
+				qi = qT[i];
+				teng = 2.0*M_PI*kappaSq*qi;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
+//						teng = 0.0;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
+//						teng = 2.0*M_PI*kappaSq*qT[i];
 
-                        for (j = 0; j < numparsS; j++) {
-                                tx = xi - xS[j];
-                                ty = yi - yS[j];
-                                tz = zi - zS[j];
-                                rad = sqrt(tx*tx + ty*ty + tz*tz);
-                                if (rad>1e-14){
-                                	teng = teng + ( qS[j] - qi* exp(-rad*rad/kappaSq)) *wS[j]/ rad;
-                                }
-                        }
-                        denergy[i] = teng;
-                }
+				for (j = 0; j < numparsS; j++) {
+						tx = xi - xS[j];
+						ty = yi - yS[j];
+						tz = zi - zS[j];
+						rad = sqrt(tx*tx + ty*ty + tz*tz);
+						if (rad>DBL_MIN){
+							teng = teng + ( qS[j] - qi * exp(-rad*rad/kappaSq) ) *wS[j]/ rad;
+//                                	teng = teng + ( qS[j] ) *wS[j]/ rad;
+						}
+				}
+				denergy[i] = teng;
+			}
 
         } else if (pot_type == 3 || pot_type == 7) {
 
