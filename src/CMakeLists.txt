@@ -51,7 +51,22 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT tree-cpu)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_sources(${TRGT}          PRIVATE 
-                                        main-distributed.c)
+                                        main.c)
+    target_compile_features(${TRGT} PRIVATE
+                                        c_std_99)
+    target_link_libraries(${TRGT}   PRIVATE
+                                        OpenMP::OpenMP_C
+                                        MPI::MPI_C
+                                        $<$<C_COMPILER_ID:GNU>:m>)
+    install(TARGETS ${TRGT} DESTINATION bin)
+
+
+    set(TRGT tree-distributed-cpu)
+    add_executable(${TRGT} ${SRCS_TREEDRIVER})
+    target_sources(${TRGT}          PRIVATE 
+                                        main-distributed.c
+                                        interaction-masks.c
+                                        interaction-masks.h)
     target_compile_features(${TRGT} PRIVATE
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE
@@ -67,6 +82,20 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_sources(${TRGT}        PRIVATE
                                       main.c)
+    target_link_libraries(${TRGT} PRIVATE
+                                      OpenMP::OpenMP_C
+                                      MPI::MPI_C
+                                      OpenACC_C
+                                      $<$<C_COMPILER_ID:GNU>:m>)
+    install(TARGETS ${TRGT} DESTINATION bin)
+
+
+    set(TRGT tree-distributed-gpu)
+    add_executable(${TRGT} ${SRCS_TREEDRIVER})
+    target_sources(${TRGT}        PRIVATE
+                                      main-distributed.c
+                                      interaction-masks.c
+                                      interaction-masks.h)
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
                                       MPI::MPI_C
