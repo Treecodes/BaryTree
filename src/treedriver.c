@@ -195,6 +195,17 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        }
     } else if (tree_type == 1) {
 
+    	MPI_Init(&argc, &argv);
+		int ierr;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+    	// Get number of nodes for each processor's LET
+		int numNodesOnProc[numProcs];
+    	MPI_Allgather(numnodes, 1, MPI_INT,
+    			numNodesOnProc, 1, MPI_INT,
+                MPI_Comm comm)
+
     	int pointsPerCluster = (order+1)*(order+1)*(order+1)
 		int let_sources_length, let_clusters_length, let_tree_array_length;
     	// Allocate structures before MPI round robin
@@ -238,14 +249,23 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
     	// Perform MPI round robin, filling LET with remote data
+		for (int procID=1;procID<numProcs;procID++){
 
-			// Get remote tree_array
-			int remote_tree_array_length = ____;
+
+			getFrom = (numProcs+rank-procID)%numProcs;
+
+			// Allocate remote_tree_array
+			struct tnode_array *remote_tree_array = NULL;
+			remote_tree_array = malloc(sizeof(struct tnode_array));
+			allocate_tree_array(remote_tree_array,numNodesOnProc[procID]); // start by allocating let_tree_array with size numnodes
+
+			// Get remote_tree_array
+
 
 			// Construct masks
 			int * approx_mask, * direct_mask;
-			make_vector(approx_mask,remote_tree_array_length);
-			make_vector(direct_mask,remote_tree_array_length);
+			make_vector(approx_mask,numNodesOnProc[procID]);
+			make_vector(direct_mask,numNodesOnProc[procID]);
 			interaction_masks( remote_tree_array, batches, approx_mask, direct_mask);
 
 		    // Reallocate structs to hold new data
@@ -257,11 +277,15 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 			// Use masks to get remote data
 
+
+
 			// Fill in LET
 
 
 			free_vector(approx_mask);
 			free_vecotr(direct_mask);
+
+		} // end loop over numProcs
 
 
     	// Compute interaction lists based on LET
