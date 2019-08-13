@@ -12,7 +12,7 @@
 
 
 void interaction_masks(const struct tnode_array *tree_array, struct batch *batches,
-                              int *approx_mask, int *direct_mask)
+                              int *approx_list, int *direct_list)
 {
     /* local variables */
     int i, j;
@@ -38,8 +38,8 @@ void interaction_masks(const struct tnode_array *tree_array, struct batch *batch
     tree_z_mid = tree_array->z_mid;
 
     for (i = 0; i < numnodes; i++){
-    	approx_mask[i] = 0;
-    	direct_mask[i] = 0;
+    	approx_mask[i] = -1;
+    	direct_mask[i] = -1;
     }
 
 
@@ -49,7 +49,7 @@ void interaction_masks(const struct tnode_array *tree_array, struct batch *batch
 	make_vector(direct_inter_list, batches->num * numleaves);
 
 	for (i = 0; i < batches->num * numnodes; i++)
-	        tree_inter_list[i] = -1;
+		tree_inter_list[i] = -1;
 
 	for (i = 0; i < batches->num * numleaves; i++)
 		direct_inter_list[i] = -1;
@@ -65,13 +65,16 @@ void interaction_masks(const struct tnode_array *tree_array, struct batch *batch
     }
 
     // Update masks using interaction lists (overkill, but okay for now)
+    int approx_counter=0, direct_counter=0;
     for (i=0; i<numnodes; i++){
     	for (j=0;j<batches->num;j++){
     		if (tree_inter_list[j*numnodes]!=-1){ // then at least one target batch accepted the MAC for the ith node
-    			approx_mask[i]=1
+    			approx_list[approx_counter]=i;
+				approx_counter++
     		}
     		if (direct_inter_list[j*numnodes]!=-1){ // then at least one target batch interacts directly with the ith node
-    			direct_mask[i]=1
+    			direct_list[direct_counter]=i;
+    			direct_counter++
 			}
     	}
 
@@ -80,91 +83,13 @@ void interaction_masks(const struct tnode_array *tree_array, struct batch *batch
     free_vector(tree_inter_list);
     free_vector(direct_inter_list);
 
+
+    // Example:
+    // At end of this function, approx_list and direct_list look like [c0, c3, c5, -1, -1, -1 ... ]
+    // indicating the 0th, 3rd, and 5th clusters in remote tree array are needed.
+
     return;
 
 } /* END of function pc_treecode */
-
-
-void allocate_sources(struct particles *sources, newlength){
-
-	sources->num = newlength;
-	realloc_vector(sources->x, newlength);
-	realloc_vector(sources->y, newlength);
-	realloc_vector(sources->z, newlength);
-	realloc_vector(sources->q, newlength);
-	realloc_vector(sources->w, newlength);
-
-    return;
-} /* END of function allocate_sources */
-
-void reallocate_sources(struct particles *sources, length){
-
-	sources->num = length;
-	make_vector(sources->x, length);
-	make_vector(sources->y, length);
-	make_vector(sources->z, length);
-	make_vector(sources->q, length);
-	make_vector(sources->w, length);
-
-    return;
-} /* END of function reallocate_sources */
-
-
-void allocate_cluster(struct particles *clusters, length){
-
-    make_vector(clusters->x, length);
-    make_vector(clusters->y, length);
-    make_vector(clusters->z, length);
-    make_vector(clusters->q, length);
-    make_vector(clusters->w, length);  // will be used in singularity subtraction
-    clusters->num=length;
-
-    return;
-} /* END of function allocate_cluster */
-
-void allocate_tree_array(tnode_array *let_tree_array, length){
-
-	let_tree_array->numnodes = length;
-	make_vector(let_tree_array->ibeg, length);
-	make_vector(let_tree_array->iend, length);
-	make_vector(let_tree_array->numpar, length);
-	make_vector(let_tree_array->x_mid, length);
-	make_vector(let_tree_array->y_mid, length);
-	make_vector(let_tree_array->z_mid, length);
-	make_vector(let_tree_array->x_min, length);
-	make_vector(let_tree_array->y_min, length);
-	make_vector(let_tree_array->z_min, length);
-	make_vector(let_tree_array->x_max, length);
-	make_vector(let_tree_array->y_max, length);
-	make_vector(let_tree_array->z_max, length);
-	make_vector(let_tree_array->level, length);
-	make_vector(let_tree_array->cluster_ind, length);
-	make_vector(let_tree_array->radius, length);
-
-    return;
-} /* END of function allocate_tree_array */
-
-
-void reallocate_tree_array(tnode_array *let_tree_array, newlength){
-
-	let_tree_array->numnodes = newlength;
-	realloc_vector(let_tree_array->ibeg, newlength);
-	realloc_vector(let_tree_array->iend, newlength);
-	realloc_vector(let_tree_array->numpar, newlength);
-	realloc_vector(let_tree_array->x_mid, newlength);
-	realloc_vector(let_tree_array->y_mid, newlength);
-	realloc_vector(let_tree_array->z_mid, newlength);
-	realloc_vector(let_tree_array->x_min, newlength);
-	realloc_vector(let_tree_array->y_min, newlength);
-	realloc_vector(let_tree_array->z_min, newlength);
-	realloc_vector(let_tree_array->x_max, newlength);
-	realloc_vector(let_tree_array->y_max, newlength);
-	realloc_vector(let_tree_array->z_max, newlength);
-	realloc_vector(let_tree_array->level, newlength);
-	realloc_vector(let_tree_array->cluster_ind, newlength);
-	realloc_vector(let_tree_array->radius, newlength);
-
-    return;
-} /* END of function allocate_tree_array */
 
 
