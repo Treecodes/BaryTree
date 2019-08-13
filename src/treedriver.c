@@ -104,7 +104,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(tree_array->y_mid, numnodes);
         make_vector(tree_array->z_mid, numnodes);
         make_vector(tree_array->x_min, numnodes);
-
         make_vector(tree_array->y_min, numnodes);
         make_vector(tree_array->z_min, numnodes);
         make_vector(tree_array->x_max, numnodes);
@@ -245,33 +244,58 @@ void treedriver(struct particles *sources, struct particles *targets,
 			let_sources->q[i] = sources->q[i];
 			let_sources->w[i] = sources->w[i];
 		}
-
-
+        
+        MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar;
+        MPI_Win_create(tree_array->x_mid, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
+        MPI_Win_create(tree_array->y_mid, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_y_mid);
+        MPI_Win_create(tree_array->z_mid, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_z_mid);
+        MPI_Win_create(tree_array->radius, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_radius);
+        MPI_Win_create(tree_array->numpar, numnodes*sizeof(int), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_numpar);
 
     	// Perform MPI round robin, filling LET with remote data
-		for (int procID=1;procID<numProcs;procID++){
+		for (int procID = 1; procID < numProcs; ++procID) {
 
-
-			getFrom = (numProcs+rank-procID)%numProcs;
+			getFrom = (numProcs+rank-procID) % numProcs;
 
 			// Allocate remote_tree_array
 			struct tnode_array *remote_tree_array = NULL;
 			remote_tree_array = malloc(sizeof(struct tnode_array));
-			allocate_tree_array(remote_tree_array,numNodesOnProc[procID]); // start by allocating let_tree_array with size numnodes
+			allocate_tree_array(remote_tree_array, numNodesOnProc[procID]); // start by allocating let_tree_array with size numnodes
 
 			// Get remote_tree_array
-
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_y_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_z_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_radius);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_numpar);
+            
+            MPI_Get(remote_tree_array->x_mid, numNodesOnProc[procID], MPI_DOUBLE,
+                    getFrom, 0, numNodesOnProc[procID], MPI_DOUBLE, win_x_mid);
+            MPI_Get(remote_tree_array->y_mid, numNodesOnProc[procID], MPI_DOUBLE,
+                    getFrom, 0, numNodesOnProc[procID], MPI_DOUBLE, win_y_mid);
+            MPI_Get(remote_tree_array->z_mid, numNodesOnProc[procID], MPI_DOUBLE,
+                    getFrom, 0, numNodesOnProc[procID], MPI_DOUBLE, win_z_mid);
+            MPI_Get(remote_tree_array->radius, numNodesOnProc[procID], MPI_DOUBLE,
+                    getFrom, 0, numNodesOnProc[procID], MPI_DOUBLE, win_radius);
+            MPI_Get(remote_tree_array->numpar, numNodesOnProc[procID], MPI_INT,
+                    getFrom, 0, numNodesOnProc[procID], MPI_INT, win_numpar);
+            
+            MPI_Win_unlock(getFrom, win_x_mid);
+            MPI_Win_unlock(getFrom, win_y_mid);
+            MPI_Win_unlock(getFrom, win_z_mid);
+            MPI_Win_unlock(getFrom, win_radius);
+            MPI_Win_unlock(getFrom, win_numpar);
 
 			// Construct masks
-			int * approx_mask, * direct_mask;
-			make_vector(approx_mask,numNodesOnProc[procID]);
-			make_vector(direct_mask,numNodesOnProc[procID]);
-			interaction_masks( remote_tree_array, batches, approx_mask, direct_mask);
+			int *approx_mask, *direct_mask;
+			make_vector(approx_mask, numNodesOnProc[procID]);
+			make_vector(direct_mask, numNodesOnProc[procID]);
+			interaction_masks(remote_tree_array, batches, approx_mask, direct_mask);
 
 		    // Reallocate structs to hold new data
 
-			for (int i=0;i<remote_tree_array_length,i++){
-				if (approx_mask[i]==1) let_clusters_length+=pointsPerCluster
+            for (int i = 0; i < remote_tree_array_length; ++i) {
+                if (approx_mask[i] == 1) let_clusters_length += pointsPerCluster;
 			}
 
 
