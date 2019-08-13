@@ -53,15 +53,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     struct particles *clusters = NULL;
     clusters = malloc(sizeof(struct particles));
 
-    
-//    // Initialize all GPUs
-//    if (numDevices>0){
-//      #pragma omp parallel num_threads(numDevices)
-//          {
-//          acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-//          acc_init(acc_get_device_type());
-//          }
-//    }
+
     time2 = MPI_Wtime();
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
@@ -202,16 +194,85 @@ void treedriver(struct particles *sources, struct particles *targets,
 //                            tpeng, tEn, &timetree[1]);
 //        }
     } else if (tree_type == 1) {
-        time1 = MPI_Wtime();
-        make_vector(tree_inter_list, batches->num * numnodes);
-        make_vector(direct_inter_list, batches->num * numleaves);
 
-    	  pc_make_interaction_list(tree_array, batches, tree_inter_list,  direct_inter_list);
-    	  time2 = MPI_Wtime();
-//    	printf("Time to make interaction lists: %f\n", time2-time1);
+    	int pointsPerCluster = (order+1)*(order+1)*(order+1)
+		int let_sources_length, let_clusters_length, let_tree_array_length;
+    	// Allocate structures before MPI round robin
 
-        time1 = MPI_Wtime(); // start timer for tree evaluation
+    	struct tnode_array *let_tree_array = NULL;
+    	let_tree_array_length=numnodes;
+    	let_tree_array = malloc(sizeof(struct tnode_array));
+    	allocate_tree_array(let_tree_array,let_tree_array_length); // start by allocating let_tree_array with size numnodes
 
+		struct particles *let_clusters = NULL;
+		let_clusters_length=numnodes*pointsPerCluster;
+		let_clusters = malloc(sizeof(struct particles)); // let_clusters will hold all cluster data for LET
+		allocate_cluster(let_clusters,let_clusters_length);
+
+		struct particles *let_sources = NULL;
+		let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
+		let_sources_length = troot->numpar
+		allocate_sources(let_sources,let_sources_length);
+
+
+
+		// Fill LET with own data
+
+		for (int i=0; i<numnodes*pointsPerCluster; i++){
+			// Fill in clusters
+			let_clusters->x[i] = cluster->x[i];
+			let_clusters->y[i] = cluster->y[i];
+			let_clusters->z[i] = cluster->z[i];
+			let_clusters->q[i] = cluster->q[i];
+			let_clusters->w[i] = cluster->w[i];
+		}
+		for (int i=0; i<troot->numpar; i++){
+			// Fill in own sources
+			let_sources->x[i] = sources->x[i];
+			let_sources->y[i] = sources->y[i];
+			let_sources->z[i] = sources->z[i];
+			let_sources->q[i] = sources->q[i];
+			let_sources->w[i] = sources->w[i];
+		}
+
+
+
+    	// Perform MPI round robin, filling LET with remote data
+
+			// Get remote tree_array
+			int remote_tree_array_length = ____;
+
+			// Construct masks
+			int * approx_mask, * direct_mask;
+			make_vector(approx_mask,remote_tree_array_length);
+			make_vector(direct_mask,remote_tree_array_length);
+			interaction_masks( remote_tree_array, batches, approx_mask, direct_mask);
+
+		    // Reallocate structs to hold new data
+
+			for (int i=0;i<remote_tree_array_length,i++){
+				if (approx_mask[i]==1) let_clusters_length+=pointsPerCluster
+			}
+
+
+			// Use masks to get remote data
+
+			// Fill in LET
+
+
+			free_vector(approx_mask);
+			free_vecotr(direct_mask);
+
+
+    	// Compute interaction lists based on LET
+        make_vector(tree_inter_list, batches->num * let_tree_array->numnodes);
+        make_vector(direct_inter_list, batches->num * let_tree_array->numnodes);
+    	pc_make_interaction_list(let_tree_array, batches, tree_inter_list,  direct_inter_list);
+
+
+
+        // After filling LET, call interaction_list_treecode
+    	time1 = MPI_Wtime(); // start timer for tree evaluation
         if (pot_type == 0) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
             pc_interaction_list_treecode(tree_array, clusters, batches,

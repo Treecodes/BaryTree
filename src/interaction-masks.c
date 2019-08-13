@@ -85,3 +85,86 @@ void interaction_masks(const struct tnode_array *tree_array, struct batch *batch
 } /* END of function pc_treecode */
 
 
+void allocate_sources(struct particles *sources, newlength){
+
+	sources->num = newlength;
+	realloc_vector(sources->x, newlength);
+	realloc_vector(sources->y, newlength);
+	realloc_vector(sources->z, newlength);
+	realloc_vector(sources->q, newlength);
+	realloc_vector(sources->w, newlength);
+
+    return;
+} /* END of function allocate_sources */
+
+void reallocate_sources(struct particles *sources, length){
+
+	sources->num = length;
+	make_vector(sources->x, length);
+	make_vector(sources->y, length);
+	make_vector(sources->z, length);
+	make_vector(sources->q, length);
+	make_vector(sources->w, length);
+
+    return;
+} /* END of function reallocate_sources */
+
+
+void allocate_cluster(struct particles *clusters, length){
+
+    make_vector(clusters->x, length);
+    make_vector(clusters->y, length);
+    make_vector(clusters->z, length);
+    make_vector(clusters->q, length);
+    make_vector(clusters->w, length);  // will be used in singularity subtraction
+    clusters->num=length;
+
+    return;
+} /* END of function allocate_cluster */
+
+void allocate_tree_array(tnode_array *let_tree_array, length){
+
+	let_tree_array->numnodes = length;
+	make_vector(let_tree_array->ibeg, length);
+	make_vector(let_tree_array->iend, length);
+	make_vector(let_tree_array->numpar, length);
+	make_vector(let_tree_array->x_mid, length);
+	make_vector(let_tree_array->y_mid, length);
+	make_vector(let_tree_array->z_mid, length);
+	make_vector(let_tree_array->x_min, length);
+	make_vector(let_tree_array->y_min, length);
+	make_vector(let_tree_array->z_min, length);
+	make_vector(let_tree_array->x_max, length);
+	make_vector(let_tree_array->y_max, length);
+	make_vector(let_tree_array->z_max, length);
+	make_vector(let_tree_array->level, length);
+	make_vector(let_tree_array->cluster_ind, length);
+	make_vector(let_tree_array->radius, length);
+
+    return;
+} /* END of function allocate_tree_array */
+
+
+void reallocate_tree_array(tnode_array *let_tree_array, newlength){
+
+	let_tree_array->numnodes = newlength;
+	realloc_vector(let_tree_array->ibeg, newlength);
+	realloc_vector(let_tree_array->iend, newlength);
+	realloc_vector(let_tree_array->numpar, newlength);
+	realloc_vector(let_tree_array->x_mid, newlength);
+	realloc_vector(let_tree_array->y_mid, newlength);
+	realloc_vector(let_tree_array->z_mid, newlength);
+	realloc_vector(let_tree_array->x_min, newlength);
+	realloc_vector(let_tree_array->y_min, newlength);
+	realloc_vector(let_tree_array->z_min, newlength);
+	realloc_vector(let_tree_array->x_max, newlength);
+	realloc_vector(let_tree_array->y_max, newlength);
+	realloc_vector(let_tree_array->z_max, newlength);
+	realloc_vector(let_tree_array->level, newlength);
+	realloc_vector(let_tree_array->cluster_ind, newlength);
+	realloc_vector(let_tree_array->radius, newlength);
+
+    return;
+} /* END of function allocate_tree_array */
+
+
