@@ -430,12 +430,12 @@ void treedriver(struct particles *sources, struct particles *targets,
                     if (direct_list[i] != -1) {
                         
                         // Set the beginning and ending particle indices for the associated nodes in the local sources list
-                        let_tree_array->ibeg[previousTreeArrayLength + appendCounter] = let_sources_length;
-                        let_tree_array->iend[previousTreeArrayLength + appendCounter] = let_sources_length + remote_tree_array->numpar[i] - 1; // this minus 1 s
+                        let_tree_array->ibeg[previousTreeArrayLength + appendCounter] = let_sources_length + 1;  // These are one-index based!!!
+                        let_tree_array->iend[previousTreeArrayLength + appendCounter] = let_sources_length + remote_tree_array->numpar[i];
                         let_sources_length += remote_tree_array->numpar[i];
                         
                         // Determine displacements and lengths for getting prticles from remote sources list
-                        direct_ibeg_list[numberOfRemoteDirect] = remote_tree_array->ibeg[i];
+                        direct_ibeg_list[numberOfRemoteDirect] = remote_tree_array->ibeg[i] - 1; // These are zero-index based!!!
                         direct_length_list[numberOfRemoteDirect] = remote_tree_array->numpar[i];
                         numberOfRemoteDirect++;
                     }
