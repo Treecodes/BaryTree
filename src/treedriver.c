@@ -11,6 +11,7 @@
 #include "tools.h"
 #include "tree.h"
 #include "structAllocations.h"
+#include "interaction-masks.h"
 
 #include "treedriver.h"
 
@@ -23,7 +24,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 double *tEn, double *tpeng, double *timetree, int numDevices, int numThreads)
 {
 
-    int verbosity=0;
+    int verbosity=1;
     /* local variables */
     struct tnode *troot = NULL;
     int level;
@@ -57,7 +58,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
     time2 = MPI_Wtime();
-
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
 
@@ -149,7 +149,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         }
         timeFillClusters2 = MPI_Wtime();
         timeFillClusters1 = timeFillClusters2-timeFillClusters1;
-//        printf("Time to compute modified weights(s):  %f\n", timeFillClusters1);
+        printf("Time to compute modified weights(s):  %f\n", timeFillClusters1);
 
     }
 
@@ -250,7 +250,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 		}
         
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
-        MPI_Win win_cluster_x, win_cluster_y, win_cluster_z, win_cluster_q, win_cluster_w;
+        MPI_Win win_clusters_x, win_clusters_y, win_clusters_z, win_clusters_q, win_clusters_w;
         MPI_Win win_sources_x, win_sources_y, win_sources_z, win_sources_q, win_sources_w;
         
         MPI_Win_create(tree_array->x_mid, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
@@ -262,11 +262,11 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_create(tree_array->iend, numnodes*sizeof(int), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
         MPI_Win_create(tree_array->level, numnodes*sizeof(int), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_level);
         
-        MPI_Win_create(cluster->x, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_cluster_x);
-        MPI_Win_create(cluster->y, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_cluster_y);
-        MPI_Win_create(cluster->z, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_cluster_z);
-        MPI_Win_create(cluster->q, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_cluster_q);
-        MPI_Win_create(cluster->w, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_cluster_w);
+        MPI_Win_create(clusters->x, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_x);
+        MPI_Win_create(clusters->y, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_y);
+        MPI_Win_create(clusters->z, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_z);
+        MPI_Win_create(clusters->q, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_q);
+        MPI_Win_create(clusters->w, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_w);
         
         MPI_Win_create(sources->x, troot->numpar*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
         MPI_Win_create(sources->y, troot->numpar*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
@@ -322,7 +322,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_level);
             
 			// Construct masks
-			int *approx_list, int *direct_list, int *direct_ibeg_list, int *direct_length_list;
+			int *approx_list; int *direct_list; int *direct_ibeg_list; int *direct_length_list;
 			make_vector(approx_list, numNodesOnProc[getFrom]);
 			make_vector(direct_list, numNodesOnProc[getFrom]);
             make_vector(direct_ibeg_list, numNodesOnProc[getFrom]);
@@ -355,9 +355,9 @@ void treedriver(struct particles *sources, struct particles *targets,
             
             for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
 				if ((approx_list[i] != -1) || (direct_list[i] != -1)) {
-					let_tree_array->xmid[previousTreeArrayLength + appendCounter] = remote_tree_array->x_mid[i];
-					let_tree_array->ymid[previousTreeArrayLength + appendCounter] = remote_tree_array->y_mid[i];
-					let_tree_array->zmid[previousTreeArrayLength + appendCounter] = remote_tree_array->z_mid[i];
+					let_tree_array->x_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->x_mid[i];
+					let_tree_array->y_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->y_mid[i];
+					let_tree_array->z_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->z_mid[i];
 					let_tree_array->radius[previousTreeArrayLength + appendCounter] = remote_tree_array->radius[i];
 					let_tree_array->numpar[previousTreeArrayLength + appendCounter] = remote_tree_array->numpar[i];
                     let_tree_array->level[previousTreeArrayLength + appendCounter] = remote_tree_array->level[i];

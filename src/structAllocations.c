@@ -4,9 +4,16 @@
 #include <mpi.h>
 #include <string.h>
 
+#include "array.h"
+#include "tools.h"
+#include "particles.h"
+#include "sort.h"
+#include "tnode.h"
+#include "batch.h"
 
 
-void reallocate_sources(sources, int newlength){
+
+void reallocate_sources(struct particles *sources, int newlength){
 
 	sources->num = newlength;
 	realloc_vector(sources->x, newlength);
@@ -57,7 +64,7 @@ void reallocate_cluster(struct particles *clusters, int newlength)  {
     return;
 }   /* END of function reallocate_cluster */
 
-void allocate_tree_array(tnode_array *let_tree_array, int length)  {
+void allocate_tree_array(struct tnode_array *let_tree_array, int length)  {
 
 	let_tree_array->numnodes = length;
 	make_vector(let_tree_array->ibeg, length);
@@ -79,30 +86,30 @@ void allocate_tree_array(tnode_array *let_tree_array, int length)  {
     return;
 }   /* END of function allocate_tree_array */
 
-void free_tree_array(tnode_array *let_tree_array, int length)  {
+void free_tree_array(struct tnode_array *let_tree_array)  {
 
 	free_vector(let_tree_array->ibeg);
-	free_vector(let_tree_array->iend, length);
-	free_vector(let_tree_array->numpar, length);
-	free_vector(let_tree_array->x_mid, length);
-	free_vector(let_tree_array->y_mid, length);
-	free_vector(let_tree_array->z_mid, length);
-	free_vector(let_tree_array->x_min, length);
-	free_vector(let_tree_array->y_min, length);
-	free_vector(let_tree_array->z_min, length);
-	free_vector(let_tree_array->x_max, length);
-	free_vector(let_tree_array->y_max, length);
-	free_vector(let_tree_array->z_max, length);
-	free_vector(let_tree_array->level, length);
-	free_vector(let_tree_array->cluster_ind, length);
-	free_vector(let_tree_array->radius, length);
-	let_tree_array=NULL
+	free_vector(let_tree_array->iend);
+	free_vector(let_tree_array->numpar);
+	free_vector(let_tree_array->x_mid);
+	free_vector(let_tree_array->y_mid);
+	free_vector(let_tree_array->z_mid);
+	free_vector(let_tree_array->x_min);
+	free_vector(let_tree_array->y_min);
+	free_vector(let_tree_array->z_min);
+	free_vector(let_tree_array->x_max);
+	free_vector(let_tree_array->y_max);
+	free_vector(let_tree_array->z_max);
+	free_vector(let_tree_array->level);
+	free_vector(let_tree_array->cluster_ind);
+	free_vector(let_tree_array->radius);
+	let_tree_array=NULL;
 
     return;
 }   /* END of function allocate_tree_array */
 
 
-void reallocate_tree_array(tnode_array *let_tree_array, int newlength)  {
+void reallocate_tree_array(struct tnode_array *let_tree_array, int newlength)  {
 
 	let_tree_array->numnodes = newlength;
 	realloc_vector(let_tree_array->ibeg, newlength);

@@ -247,53 +247,59 @@ int main(int argc, char **argv)
 	}
 
 
-    for (int procID=1;procID<numProcs;procID++){
-    	timeCommunicate = MPI_Wtime();
+	if (numProcs==1){ // one 1 proc, won't enter into the round robin below.  So just interact with self here.
+		direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+						denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+	}else{
 
-    	// Send and receive source particles
-    	sendTo = (rank+procID)%numProcs;
-    	recvFrom = (numProcs+rank-procID)%numProcs;
+		for (int procID=1;procID<numProcs;procID++){
+			timeCommunicate = MPI_Wtime();
 
-    	if (procID%2==1){ // communicate w/ foreign1, compute on foreign2
-    		MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
-    		MPI_Irecv(S_foreign1, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
+			// Send and receive source particles
+			sendTo = (rank+procID)%numProcs;
+			recvFrom = (numProcs+rank-procID)%numProcs;
+
+			if (procID%2==1){ // communicate w/ foreign1, compute on foreign2
+				MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
+				MPI_Irecv(S_foreign1, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
 
-			if (procID==1) {
-				direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-										denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-			}else{
-				direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-														denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+				if (procID==1) { // in first iteration of loop, interact with self.
+					direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+											denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+				}else{ // in subsequent iterations, interact with foreign
+					direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+															denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+					for (i=0;i<5*maxparsSloc;i++){
+							S_foreign2[i]=0.0;
+						}
+				}
+			}else{ // procId%2=0, communicate foreign2 and compute with foreign1
+				MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
+				MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
+
+				direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+															denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
 				for (i=0;i<5*maxparsSloc;i++){
-						S_foreign2[i]=0.0;
+						S_foreign1[i]=0.0;
 					}
 			}
-    	}else{ // procId%2=0, communicate foreign2 and compute with foreign1
-    		MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
-			MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
+			time4 = MPI_Wtime();
+			MPI_Wait(&request1r, &status);
+			MPI_Wait(&request1s, &status);
+
+
+
+		} // end round robin
+
+		if ((numProcs-1)%2==1){ // in final loop, S_foreign1 was received but not yet computed with
 			direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-														denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-			for (i=0;i<5*maxparsSloc;i++){
-					S_foreign1[i]=0.0;
-				}
-    	}
-
-    	time4 = MPI_Wtime();
-    	MPI_Wait(&request1r, &status);
-    	MPI_Wait(&request1s, &status);
-
-
-
-    }
-
-    if ((numProcs-1)%2==1){ // in final loop, S_foreign1 was received but not yet computed with
-		direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-										denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
-	}else{ // S_foreign2 is the one that needs to be computed with
-		direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-													denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+											denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+		}else{ // S_foreign2 is the one that needs to be computed with
+			direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+											denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+		}
 	}
 
     time2 = MPI_Wtime();

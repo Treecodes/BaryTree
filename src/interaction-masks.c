@@ -9,10 +9,12 @@
 #include "tools.h"
 #include "particles.h"
 #include "sort.h"
+#include "tnode.h"
+#include "batch.h"
 
 
-void interaction_masks(const struct tnode_array *tree_array, struct batch *batches,
-                              int *approx_list, int *direct_list)
+void remote_interaction_lists(const struct tnode_array *tree_array, struct batch *batches,
+                              int *approx_list, int *direct_list, int numnodes, int numleaves)
 {
     /* local variables */
     int i, j;
@@ -38,8 +40,8 @@ void interaction_masks(const struct tnode_array *tree_array, struct batch *batch
     tree_z_mid = tree_array->z_mid;
 
     for (i = 0; i < numnodes; i++){
-    	approx_mask[i] = -1;
-    	direct_mask[i] = -1;
+    	approx_list[i] = -1;
+    	direct_list[i] = -1;
     }
 
 
@@ -70,11 +72,11 @@ void interaction_masks(const struct tnode_array *tree_array, struct batch *batch
     	for (j=0;j<batches->num;j++){
     		if (tree_inter_list[j*numnodes]!=-1){ // then at least one target batch accepted the MAC for the ith node
     			approx_list[approx_counter]=i;
-				approx_counter++
+				approx_counter++;
     		}
     		if (direct_inter_list[j*numnodes]!=-1){ // then at least one target batch interacts directly with the ith node
     			direct_list[direct_counter]=i;
-    			direct_counter++
+    			direct_counter++;
 			}
     	}
 

@@ -151,9 +151,9 @@ def initializePoints(pointsPerOcatant):
     rmax, ravg, rmax_not_boundary = measureMaxDistance(orderedPoints)
 #     print(orderedPoints)
     print()
-    print('original rmax = ', rmax)
-    print('original rmax_not_boundary = ', rmax_not_boundary)
-    print('orininal ravg = ', ravg)
+    print('final rmax = ', rmax)
+    print('final rmax_not_boundary = ', rmax_not_boundary)
+    print('final ravg = ', ravg)
     print()
     return globalPoints, orderedPoints
         

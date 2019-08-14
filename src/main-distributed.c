@@ -245,7 +245,7 @@ int main(int argc, char **argv)
     time_preproc = time2 - time1;
     printf("Setup complete, calling treedriver...\n");
     printf("numThreads: %i\n", numThreads);
-    fflush(stdout);
+//    fflush(stdout);
     /* Calling main treecode subroutine to calculate approximate energy */
 
 

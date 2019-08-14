@@ -23,7 +23,8 @@ SET(SRCS_TREEDRIVER
     globvars.h
     treedriver.h
     array.h
-    structAllocations.h
+    structAllocations.c
+    interaction-masks.c
     xmalloc.h
     tools.h
     particles.h
@@ -67,7 +68,9 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     target_sources(${TRGT}          PRIVATE 
                                         main-distributed.c
                                         interaction-masks.c
-                                        interaction-masks.h)
+                                        interaction-masks.h
+                                        structAllocations.c
+                                        structAllocations.h)
     target_compile_features(${TRGT} PRIVATE
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE
@@ -96,7 +99,9 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
     target_sources(${TRGT}        PRIVATE
                                       main-distributed.c
                                       interaction-masks.c
-                                      interaction-masks.h)
+                                      interaction-masks.h
+                                      structAllocations.c
+                                      structAllocations.h)
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
                                       MPI::MPI_C
