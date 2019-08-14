@@ -274,26 +274,32 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win win_clusters_x, win_clusters_y, win_clusters_z, win_clusters_q, win_clusters_w;
         MPI_Win win_sources_x, win_sources_y, win_sources_z, win_sources_q, win_sources_w;
         
-        MPI_Win_create(tree_array->x_mid, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
-        MPI_Win_create(tree_array->y_mid, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_y_mid);
-        MPI_Win_create(tree_array->z_mid, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_z_mid);
-        MPI_Win_create(tree_array->radius, numnodes*sizeof(double), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_radius);
-        MPI_Win_create(tree_array->numpar, numnodes*sizeof(int), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_numpar);
-        MPI_Win_create(tree_array->ibeg, numnodes*sizeof(int), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
-        MPI_Win_create(tree_array->iend, numnodes*sizeof(int), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
-        MPI_Win_create(tree_array->level, numnodes*sizeof(int), 0,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_level);
-        
-        MPI_Win_create(clusters->x, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_x);
-        MPI_Win_create(clusters->y, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_y);
-        MPI_Win_create(clusters->z, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_z);
-        MPI_Win_create(clusters->q, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_q);
-        MPI_Win_create(clusters->w, numnodes*pointsPerCluster*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_w);
-        
-        MPI_Win_create(sources->x, troot->numpar*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
-        MPI_Win_create(sources->y, troot->numpar*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
-        MPI_Win_create(sources->z, troot->numpar*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
-        MPI_Win_create(sources->q, troot->numpar*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
-        MPI_Win_create(sources->w, troot->numpar*sizeof(double), 0, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
+        MPI_Win_create(tree_array->x_mid, numnodes*sizeof(double), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
+//        printf("rank %i created first tree_array windows.\n", rank);
+        MPI_Win_create(tree_array->y_mid, numnodes*sizeof(double), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_y_mid);
+        MPI_Win_create(tree_array->z_mid, numnodes*sizeof(double), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_z_mid);
+        MPI_Win_create(tree_array->radius, numnodes*sizeof(double), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_radius);
+//        printf("rank %i created first tree_array windows.\n", rank);
+        MPI_Win_create(tree_array->numpar, numnodes*sizeof(int), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_numpar);
+//        printf("rank %i created first tree_array windows.\n", rank);
+        MPI_Win_create(tree_array->ibeg, numnodes*sizeof(int), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
+        MPI_Win_create(tree_array->iend, numnodes*sizeof(int), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
+        MPI_Win_create(tree_array->level, numnodes*sizeof(int), 1,  MPI_INFO_NULL, MPI_COMM_WORLD, &win_level);
+        printf("rank %i created tree_array windows.\n", rank);
+
+        MPI_Win_create(clusters->x, numnodes*pointsPerCluster*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_x);
+        MPI_Win_create(clusters->y, numnodes*pointsPerCluster*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_y);
+        MPI_Win_create(clusters->z, numnodes*pointsPerCluster*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_z);
+        MPI_Win_create(clusters->q, numnodes*pointsPerCluster*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_q);
+        MPI_Win_create(clusters->w, numnodes*pointsPerCluster*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_w);
+        printf("rank %i created clusters windows.\n", rank);
+
+        MPI_Win_create(sources->x, troot->numpar*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
+        MPI_Win_create(sources->y, troot->numpar*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
+        MPI_Win_create(sources->z, troot->numpar*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
+        MPI_Win_create(sources->q, troot->numpar*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
+        MPI_Win_create(sources->w, troot->numpar*sizeof(double), 1, MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
+        printf("rank %i created source windows.\n", rank);
 
 
     	// Perform MPI round robin, filling LET with remote data
