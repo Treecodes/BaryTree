@@ -45,6 +45,7 @@ int main(int argc, char **argv)
     double *tenergy = NULL;
 
     /* for potential energy calculation */
+    double dpeng = 0;
     double tpeng = 0;
     double dpengglob = 0;
     double tpengglob = 0;
@@ -214,10 +215,11 @@ int main(int argc, char **argv)
 	make_vector(tenergy, numparsTloc);
 	make_vector(denergy, numparsTloc);
 
+	// reading in file containing direct sum results.
 	MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
 	MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsTloc)*1*sizeof(double)), MPI_SEEK_SET);
 	MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
-	MPI_File_read(fpmpi, denergyglob, numparsTloc, MPI_DOUBLE, &status);
+	MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
 	MPI_File_close(&fpmpi);
 	printf("Did MPI file stuff.\n");
 
@@ -294,13 +296,18 @@ int main(int argc, char **argv)
     time_treedriver = time2 - time1;
 
     
+    printf("About to do reductions.\n");
     /* Reducing values to root process */
     MPI_Reduce(time_tree, &time_tree_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    
-    if (rank == 0) dpengglob = sum(denergyglob, numparsT);
+    printf("Completed time reductions.\n");
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    printf("Completed reductions.\n");
+
+    dpeng = sum(denergy, numparsTloc);
+    MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
 
     
     if (rank == 0)
@@ -338,62 +345,75 @@ int main(int argc, char **argv)
     }
     
     
+
     /* Computing pointwise potential errors */
-    if (pflag == 0) { 
+//    if (pflag == 0) {
+//
+//        if (rank == 0) {
+//            scounts[0] = maxparsTloc;
+//            displs[0] = 0;
+//            for (i=1; i < numProcs; i++) {
+//                scounts[i] = numparsTloc;
+//                displs[i] = maxparsTloc + (i-1) * numparsTloc;
+//            }
+//        }
+//
+//        MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE, tenergyglob,
+//                    scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+//
+//    } else if (pflag == 1) {
+//        MPI_Reduce(tenergy, tenergyglob, numparsT,
+//                   MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+//    }
 
-        if (rank == 0) {
-            scounts[0] = maxparsTloc;
-            displs[0] = 0;
-            for (i=1; i < numProcs; i++) {
-                scounts[i] = numparsTloc;
-                displs[i] = maxparsTloc + (i-1) * numparsTloc;
-            }
-        }
-
-        MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE, tenergyglob,
-                    scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    } else if (pflag == 1) {
-        MPI_Reduce(tenergy, tenergyglob, numparsT, 
-                   MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    }
 
 
+    // have each proc compute its L2 error.  Then reduce and print with rank 0
+    printf("Rank %i computing its errors.\n", rank);
+    double glob_reln2_err;
+    double glob_relinf_err;
+
+    inferr = 0.0;
+	relinferr = 0.0;
+	n2err = 0.0;
+	reln2err = 0.0;
+	double x,y,z;
+
+	for (j = 0; j < numparsTloc; j++) {
+		temp = fabs(denergy[targets->order[j]] - tenergy[j]);
+
+		if (temp >= inferr){
+			inferr = temp;
+			x = targets->x[targets->order[j]];
+			y = targets->y[targets->order[j]];
+			z = targets->z[targets->order[j]];
+		}
+
+
+		if (fabs(denergy[j]) >= relinferr)
+			relinferr = fabs(denergy[j]);
+
+		n2err = n2err + pow(denergy[targets->order[j]]
+						  - tenergy[j], 2.0)*sources->w[j];
+		reln2err = reln2err + pow(denergy[j], 2.0)*sources->w[j];
+	}
+
+	relinferr = inferr / relinferr;
+	reln2err = sqrt(n2err / reln2err);
+	n2err = sqrt(n2err);
+
+
+	printf("Computed errors on each rank.  Now reducing.\n");
+	MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     if (rank == 0)
     {
-        inferr = 0.0;
-        relinferr = 0.0;
-        n2err = 0.0;
-        reln2err = 0.0;
-        double x,y,z;
-
-        for (j = 0; j < numparsT; j++) {
-            temp = fabs(denergyglob[targets->order[j]] - tenergyglob[j]);
-        
-            if (temp >= inferr){
-                inferr = temp;
-                x = targets->x[targets->order[j]];
-                y = targets->y[targets->order[j]];
-                z = targets->z[targets->order[j]];
-            }
 
 
-            if (fabs(denergyglob[j]) >= relinferr)
-                relinferr = fabs(denergyglob[j]);
-
-            n2err = n2err + pow(denergyglob[targets->order[j]]
-                              - tenergyglob[j], 2.0)*sources->w[j];
-            reln2err = reln2err + pow(denergyglob[j], 2.0)*sources->w[j];
-        }
-
-        relinferr = inferr / relinferr;
-        reln2err = sqrt(n2err / reln2err);
-        n2err = sqrt(n2err);
-
-        printf("Absolute inf norm error in potential:  %e \n", inferr);
-        printf("Relative inf norm error in potential:  %e \n\n", relinferr);
-        printf("  Absolute 2 norm error in potential:  %e \n", n2err);
-        printf("  Relative 2 norm error in potential:  %e \n\n", reln2err);
+//        printf("Absolute inf norm error in potential:  %e \n", inferr);
+        printf("Relative inf norm error in potential:  %e \n\n", glob_relinf_err);
+//        printf("  Absolute 2 norm error in potential:  %e \n", n2err);
+        printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
 
         printf("inf error occurring at %f, %f, %f \n\n", x, y,z);
     }

@@ -14,7 +14,7 @@
 
 
 void remote_interaction_lists(const struct tnode_array *tree_array, struct batch *batches,
-                              int *approx_list, int *direct_list, int numnodes, int numleaves)
+                              int *approx_list, int *direct_list, int numnodes)
 {
     /* local variables */
     int i, j;
@@ -46,35 +46,38 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 
 
     // Make interaction lists and set to -1
-    double *tree_inter_list, *direct_inter_list;
-    make_vector(tree_inter_list, batches->num * numnodes);
-	make_vector(direct_inter_list, batches->num * numleaves);
+    double *temp_tree_inter_list, *temp_direct_inter_list;
+    make_vector(temp_tree_inter_list, batches->num * numnodes);
+	make_vector(temp_direct_inter_list, batches->num * numnodes);
+
+	printf("Allocated temp_tree_inter_list and temp_direct_inter_list.\n");
 
 	for (i = 0; i < batches->num * numnodes; i++)
-		tree_inter_list[i] = -1;
+		temp_tree_inter_list[i] = -1;
 
-	for (i = 0; i < batches->num * numleaves; i++)
-		direct_inter_list[i] = -1;
+	for (i = 0; i < batches->num * numnodes; i++)
+		temp_direct_inter_list[i] = -1;
 
 
 	// Fill interaction lists
     for (i = 0; i < batches->num; i++){
     	// fill interaction lists
+//    	printf("Filling lists for batch %i\n", i);
         pc_compute_interaction_list(tree_numnodes, tree_level, tree_numpar,
                 tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
                 batches_ind[i], batches_center[i], batches_radius[i],
-                &(tree_inter_list[i*numnodes]), &(direct_inter_list[i*numleaves]));
+                &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]));
     }
 
     // Update masks using interaction lists (overkill, but okay for now)
     int approx_counter=0, direct_counter=0;
     for (i=0; i<numnodes; i++){
     	for (j=0;j<batches->num;j++){
-    		if (tree_inter_list[j*numnodes]!=-1){ // then at least one target batch accepted the MAC for the ith node
+    		if (temp_tree_inter_list[j*numnodes]!=-1){ // then at least one target batch accepted the MAC for the ith node
     			approx_list[approx_counter]=i;
 				approx_counter++;
     		}
-    		if (direct_inter_list[j*numnodes]!=-1){ // then at least one target batch interacts directly with the ith node
+    		if (temp_direct_inter_list[j*numnodes]!=-1){ // then at least one target batch interacts directly with the ith node
     			direct_list[direct_counter]=i;
     			direct_counter++;
 			}
@@ -82,14 +85,15 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 
     }
 
-    free_vector(tree_inter_list);
-    free_vector(direct_inter_list);
+    free_vector(temp_tree_inter_list);
+    free_vector(temp_direct_inter_list);
 
 
     // Example:
     // At end of this function, approx_list and direct_list look like [c0, c3, c5, -1, -1, -1 ... ]
     // indicating the 0th, 3rd, and 5th clusters in remote tree array are needed.
 
+    printf("Exiting remote_interaction_lists\n");
     return;
 
 } /* END of function pc_treecode */
