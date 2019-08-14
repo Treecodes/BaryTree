@@ -106,7 +106,7 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 
     }
     
-    exit(0);
+//    exit(0);
 
 //    if (rank==0){
 //    for (int i=0;i<numnodes; i++){

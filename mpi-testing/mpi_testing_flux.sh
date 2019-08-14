@@ -6,41 +6,38 @@ DFLAG=0
 
 
 
-DS_CSV=/home/njvaughn/synchronizedDataFiles/profiling/ds.csv
+DS_CSV=/scratch/krasny_fluxg/njvaughn/random/directSum_cpu_Coulomb.csv 
 
 
 KAPPA=0.0
 POTENTIALTYPE=0
 
 
-ORDER=3
+ORDER=4
 THETA=0.8
-BATCHSIZE=10 
-MAXPARNODE=100  
- 
-NUMDEVICES=0 
+BATCHSIZE=500
+MAXPARNODE=500
 
+NUMDEVICES=0
+NUMTHREADS=1
+export OMP_NUM_THREADS=$NUMTHREADS
 
-OUTFILE=/home/njvaughn/mpi-testing/test.csv 
-for N in 10000
+OUTFILE=/scratch/krasny_fluxg/njvaughn/random/cpu_Coulomb.csv 
+for N in 64000
 do
 	echo N=$N
 	SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
 	TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
 	NUMSOURCES=$N
-	NUMTARGETS=$N 
+	NUMTARGETS=$N
 	DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin
 	for np in 1 2 4
 	do
-		for NUMTHREADS in 1
-		do
-			export OMP_NUM_THREADS=$NUMTHREADS
-			#export OMP_DISPLAY_ENV=true
-			#export OMP_PROC_BIND=spread
-			#export OMP_PLACES=cores
-			#export OMP_NESTED=true	
-			mpirun -np $np --bind-to none direct-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-		done
+			mpirun -np $np direct-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
+			#mpirun -np $np tree-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER \
+			#				 					$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
+			#				 					$NUMDEVICES $NUMTHREADS
 	done 
 done
+
 

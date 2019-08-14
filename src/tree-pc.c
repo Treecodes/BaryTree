@@ -842,6 +842,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
             int * ibegs = tree_array->ibeg;
             int * iends = tree_array->iend;
 
+            int * clusterInd = tree_array->cluster_ind;
+
     #pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], \
                             qS[0:sources->num], wS[0:sources->num], \
                             xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
@@ -883,7 +885,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 
             for (j = 0; j < numberOfClusterApproximations; j++) {
                 node_index = tree_inter_list[i * numnodes + j];
-                clusterStart = numberOfInterpolationPoints*node_index;
+//                clusterStart = numberOfInterpolationPoints*node_index;
+                clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
 
                 streamID = j%3;
                 #pragma acc kernels async(streamID) //present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)

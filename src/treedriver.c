@@ -178,7 +178,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     time2 = MPI_Wtime();
     timetree[0] = time2-time1;
 
-    if (verbosity>1) {
+    if (verbosity>0) {
         printf("Tree creation (s):  %f\n\n", time2-time1);
         printf("Tree information: \n\n");
 
@@ -478,7 +478,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             
 
             MPI_Barrier(MPI_COMM_WORLD);
-			printf("f Rank %i got here.\n", rank);
+			printf("g Rank %i got here.\n", rank);
 			fflush(stdout);
 			MPI_Barrier(MPI_COMM_WORLD);
 
@@ -505,12 +505,24 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Get(&(let_sources->w[previous_let_sources_length]), new_sources_length, MPI_DOUBLE,
                     getFrom, 0, 1, direct_type, win_sources_w);
             
+            MPI_Barrier(MPI_COMM_WORLD);
+			printf("f Rank %i got here.\n", rank);
+			fflush(stdout);
+			MPI_Barrier(MPI_COMM_WORLD);
+
+
             MPI_Win_unlock(getFrom, win_clusters_x);
             MPI_Win_unlock(getFrom, win_clusters_y);
             MPI_Win_unlock(getFrom, win_clusters_z);
             MPI_Win_unlock(getFrom, win_clusters_q);
             MPI_Win_unlock(getFrom, win_clusters_w);
             
+            MPI_Barrier(MPI_COMM_WORLD);
+			printf("h Rank %i got here.\n", rank);
+			fflush(stdout);
+			MPI_Barrier(MPI_COMM_WORLD);
+
+
             MPI_Win_unlock(getFrom, win_sources_x);
             MPI_Win_unlock(getFrom, win_sources_y);
             MPI_Win_unlock(getFrom, win_sources_z);
@@ -531,6 +543,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 			free_tree_array(remote_tree_array);
 		} // end loop over numProcs
+
 
 
     	// Compute interaction lists based on LET
