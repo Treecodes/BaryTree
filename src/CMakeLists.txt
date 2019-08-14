@@ -12,9 +12,9 @@ SET(SRCS_TREEDRIVER
     tree-pc-yuk.c
     tree-pc-hermite-yuk.c
     tree-pc-yuk-SS.c
-    #tree-pc-dcf.c
-    #tree-pc-hermite-dcf.c
-    #tree-pc-tcf.c
+    tree-pc-dcf.c
+    tree-pc-hermite-dcf.c
+    tree-pc-tcf.c
     tree-batch.c
     xmalloc.c
     sort.c 
