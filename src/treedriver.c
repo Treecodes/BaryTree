@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <mpi.h>
 #include <limits.h>
+#include <omp.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -9,6 +10,7 @@
 #include "particles.h"
 #include "tools.h"
 #include "tree.h"
+#include "structAllocations.h"
 
 #include "treedriver.h"
 
@@ -143,7 +145,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             fill_in_cluster_data_hermite(clusters, sources, troot, order);
 
         } else if  ((pot_type == 6) || (pot_type==7)) {
-            fill_in_cluster_data_hermite_SS(clusters, sources, troot, order);
+            fill_in_cluster_data_hermite(clusters, sources, troot, order);
         }
         timeFillClusters2 = MPI_Wtime();
         timeFillClusters1 = timeFillClusters2-timeFillClusters1;
@@ -194,21 +196,21 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        }
     } else if (tree_type == 1) {
 
-    	MPI_Init(&argc, &argv);
+    	int rank; int numProcs;
+
 		int ierr;
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     	// Get number of nodes for each processor's LET
 		int numNodesOnProc[numProcs];
-    	MPI_Allgather(numnodes, 1, MPI_INT,
+    	MPI_Allgather(&numnodes, 1, MPI_INT,
     			numNodesOnProc, 1, MPI_INT,
-                MPI_Comm comm)
+				MPI_COMM_WORLD);
 
     	int pointsPerCluster = (order+1)*(order+1)*(order+1);
 		int let_sources_length;
     	int let_clusters_length;
-    	int let_tree_array_length;
     	// Allocate structures before MPI round robin
 
     	struct tnode_array *let_tree_array = NULL;
@@ -223,7 +225,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 		struct particles *let_sources = NULL;
 		let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
-		let_sources_length = troot->numpar
+		let_sources_length = troot->numpar;
 		allocate_sources(let_sources,let_sources_length);
 
 
@@ -232,11 +234,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 		for (int i=0; i<numnodes*pointsPerCluster; i++){
 			// Fill in clusters
-			let_clusters->x[i] = cluster->x[i];
-			let_clusters->y[i] = cluster->y[i];
-			let_clusters->z[i] = cluster->z[i];
-			let_clusters->q[i] = cluster->q[i];
-			let_clusters->w[i] = cluster->w[i];
+			let_clusters->x[i] = clusters->x[i];
+			let_clusters->y[i] = clusters->y[i];
+			let_clusters->z[i] = clusters->z[i];
+			let_clusters->q[i] = clusters->q[i];
+			let_clusters->w[i] = clusters->w[i];
 		}
 		for (int i=0; i<troot->numpar; i++){
 			// Fill in own sources
@@ -320,7 +322,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_level);
             
 			// Construct masks
-			int *approx_list, *direct_list *direct_ibeg_list, *direct_length_list;
+			int *approx_list, int *direct_list, int *direct_ibeg_list, int *direct_length_list;
 			make_vector(approx_list, numNodesOnProc[getFrom]);
 			make_vector(direct_list, numNodesOnProc[getFrom]);
             make_vector(direct_ibeg_list, numNodesOnProc[getFrom]);
@@ -349,7 +351,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             int previous_let_sources_length = let_sources_length;
 
             // Fill in LET tree array from Remote tree array.
-            int appendCounter = 0
+            int appendCounter = 0;
             
             for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
 				if ((approx_list[i] != -1) || (direct_list[i] != -1)) {
@@ -458,7 +460,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             free_vector(direct_ibeg_list);
             free_vector(direct_length_list);
 
-			free_tree_array(remote_tree_array)
+			free_tree_array(remote_tree_array);
 		} // end loop over numProcs
 
 
