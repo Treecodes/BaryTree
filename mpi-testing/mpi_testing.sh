@@ -15,11 +15,12 @@ POTENTIALTYPE=0
 
 ORDER=8
 THETA=0.8
-BATCHSIZE=1000
-MAXPARNODE=1000
+BATCHSIZE=2000
+MAXPARNODE=2000
 
 NUMDEVICES=0
-
+NUMTHREADS=1
+export OMP_NUM_THREADS=$NUMTHREADS
 
 OUTFILE=/Users/nathanvaughn/Desktop/randomPoints/cpu_Coulomb.csv 
 for N in 64000
@@ -30,15 +31,11 @@ do
 	NUMSOURCES=$N
 	NUMTARGETS=$N
 	DIRECTSUM=/Users/nathanvaughn/Desktop/randomPoints/ex_st_coulomb_$N.bin
-	for np in 4
+	for np in 2
 	do
-		for NUMTHREADS in 1
-		do
-			export OMP_NUM_THREADS=$NUMTHREADS
 			mpirun -np $np tree-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER \
 							 					$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
 							 					$NUMDEVICES $NUMTHREADS
 			#mpirun -np $np direct-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-		done
 	done 
 done

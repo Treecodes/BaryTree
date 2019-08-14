@@ -24,6 +24,11 @@ void treedriver(struct particles *sources, struct particles *targets,
                 double *tEn, double *tpeng, double *timetree, int numDevices, int numThreads)
 {
 
+	int rank; int numProcs;	int ierr;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+
     int verbosity=1;
     /* local variables */
     struct tnode *troot = NULL;
@@ -95,7 +100,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time2 = MPI_Wtime();
         printf("Time to pc_create_tree_n0: %f\n", time2-time1);
-        
+        printf("Rank %i got past pc_create_tree_n0.\n", rank);
+		MPI_Barrier(MPI_COMM_WORLD);
         time1 = MPI_Wtime();
         tree_array = malloc(sizeof(struct tnode_array));
         tree_array->numnodes = numnodes;
@@ -120,18 +126,30 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
         pc_create_tree_array(troot, tree_array);
         time2 = MPI_Wtime();
+        if (verbosity>0) printf("Rank %i exiting pc_create_tree_array.\n", rank);
+		MPI_Barrier(MPI_COMM_WORLD);
 //        printf("Time to pc_create_tree_array: %f\n", time2-time1);
 
         time1 = MPI_Wtime();
         setup_batch(&batches, batch_lim, targets, batch_size);
         time2 = MPI_Wtime();
+        if (verbosity>0) printf("Rank %i exiting setup_batch.\n", rank);
+		MPI_Barrier(MPI_COMM_WORLD);
 //        printf("Time to setup_batch: %f\n", time2-time1);
 
         time1 = MPI_Wtime();
-        create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
+        printf("Rank %i:  targets->num %i, batch_size %i, batch_lim %i .\n", rank, targets->num, batch_size, batch_lim);
+
+//        if (rank==1){
+//        	for (int i=0;i<targets->num;i++){
+//        		printf("%f\n",targets->x);
+//        	}
+//        }
+        create_target_batch(batches, targets, 1, targets->num, batch_size, batch_lim);
         time2 = MPI_Wtime();
 //        printf("Time to create_target_batch: %f\n", time2-time1);
-        if (verbosity>0) printf("Exiting create_target_batch.\n");
+        if (verbosity>0) printf("Rank %i exiting create_target_batch.\n", rank);
+        MPI_Barrier(MPI_COMM_WORLD);
 
         timeFillClusters1 = MPI_Wtime();
         if         ((pot_type == 0) || (pot_type==1))  {
@@ -153,10 +171,14 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     }
 
+//	MPI_Barrier(MPI_COMM_WORLD);
+    printf("Rank %i got past fill_in_cluster_data.\n", rank);
+	MPI_Barrier(MPI_COMM_WORLD);
+
     time2 = MPI_Wtime();
     timetree[0] = time2-time1;
 
-    if (verbosity>0) {
+    if (verbosity>1) {
         printf("Tree creation (s):  %f\n\n", time2-time1);
         printf("Tree information: \n\n");
 
@@ -196,12 +218,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        }
     } else if (tree_type == 1) {
 
-    	int rank; int numProcs;
 
-		int ierr;
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
+
+		printf("Got  MPI_Comm_rank.\n");
+		MPI_Barrier(MPI_COMM_WORLD);
     	// Get number of nodes for each processor's LET
 		int numNodesOnProc[numProcs];
     	MPI_Allgather(&numnodes, 1, MPI_INT,

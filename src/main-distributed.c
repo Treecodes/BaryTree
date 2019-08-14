@@ -156,28 +156,6 @@ int main(int argc, char **argv)
 	globparsTloc = maxparsTloc + numparsTloc * (rank-1);
 	globparsSloc = maxparsSloc + numparsSloc * (rank-1);
 
-//    double *S_local;
-////    memset(S_local,0,5*maxparsSloc);
-//    make_vector(S_local, 5*maxparsSloc);
-//    xS = &S_local[0*maxparsSloc];
-//    yS = &S_local[1*maxparsSloc];
-//    zS = &S_local[2*maxparsSloc];
-//    qS = &S_local[3*maxparsSloc];
-//    wS = &S_local[4*maxparsSloc];
-//
-//
-//    for (int i=0;i<5*maxparsSloc;i++){
-//    	S_local[i]=0.0;
-//    }
-//
-//
-//    double *T_local;
-//    make_vector(T_local,4*numparsTloc);
-//    xT = &T_local[0*numparsTloc];
-//    yT = &T_local[1*numparsTloc];
-//    zT = &T_local[2*numparsTloc];
-//    qT = &T_local[3*numparsTloc];
-
 
     make_vector(denergy,numparsTloc);
     
@@ -204,8 +182,10 @@ int main(int argc, char **argv)
 	printf("Made target vectors.c\n");
 
 	/* Reading in coordinates and charges for the source particles*/
+	int offset = rank*(numparsSloc);
+	printf("Proc %i reading in from %i to %i.\n", rank, offset, offset+numparsSloc);
 	MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-	MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsSloc)*5*sizeof(double)), MPI_SEEK_SET);
+	MPI_File_seek(fpmpi, (MPI_Offset) offset*5*sizeof(double), MPI_SEEK_SET);
 	for (i = 0; i < numparsSloc; i++) {
 		MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
 		sources->x[i] = buf[0];
@@ -219,7 +199,7 @@ int main(int argc, char **argv)
 
 	/* Reading in coordinates for target particles*/
 	MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-	MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsTloc)*5*sizeof(double)), MPI_SEEK_SET);
+	MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsTloc)*4*sizeof(double)), MPI_SEEK_SET);
 	for (i = 0; i < numparsTloc; i++) {
 		MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
 		targets->x[i] = buf[0];
@@ -302,14 +282,14 @@ int main(int argc, char **argv)
 //    fflush(stdout);
     /* Calling main treecode subroutine to calculate approximate energy */
 
-
+    MPI_Barrier(MPI_COMM_WORLD);
     time1 = MPI_Wtime();
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
                tenergy, &tpeng, time_tree, numDevices, numThreads);
 
-
+    MPI_Barrier(MPI_COMM_WORLD);
     time2 = MPI_Wtime();
     time_treedriver = time2 - time1;
 

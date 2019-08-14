@@ -36,7 +36,7 @@ void setup_batch(struct batch **batches, double *batch_lim,
     (*batches) = malloc(sizeof(struct batch));
     (*batches)->num = 0;
     
-    max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size);
+    max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
 
     make_vector((*batches)->reorder, particles->num);
     make_matrix((*batches)->index, max_batch_num, 4);
@@ -56,6 +56,9 @@ void setup_batch(struct batch **batches, double *batch_lim,
 void create_target_batch(struct batch *batches, struct particles *particles,
                          int ibeg, int iend, int maxparnode, double *xyzmm)
 {
+	int rank; int numProcs;	int ierr;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 //	printf("Entered create_target_batch.\n");
 //	fflush(stdout);
     /*local variables*/
@@ -86,7 +89,9 @@ void create_target_batch(struct batch *batches, struct particles *particles,
     
     /* set node fields: number of particles, exist_ms, and xyz bounds */
     numpar = iend - ibeg + 1;
-
+//    if (rank==0){
+//    	printf("numpar = %i\n", numpar);
+//    }
     x_min = minval(particles->x + ibeg - 1, numpar);
     x_max = maxval(particles->x + ibeg - 1, numpar);
     y_min = minval(particles->y + ibeg - 1, numpar);
@@ -94,6 +99,11 @@ void create_target_batch(struct batch *batches, struct particles *particles,
     z_min = minval(particles->z + ibeg - 1, numpar);
     z_max = maxval(particles->z + ibeg - 1, numpar);
     
+//    if (rank==1){
+//		printf("x_min, x_max = %f, %f\n", x_min, x_max);
+//	}
+
+//    printf("Got here.\n");
     /*compute aspect ratio*/
     xl = x_max - x_min;
     yl = y_max - y_min;
@@ -140,6 +150,8 @@ void create_target_batch(struct batch *batches, struct particles *particles,
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
+
+
         cp_partition_batch(particles->x, particles->y, particles->z, particles->q,
                            xyzmms, xl, yl, zl, lmax, &numposchild,
                            x_mid, y_mid, z_mid, ind, batches->reorder);
@@ -159,9 +171,18 @@ void create_target_batch(struct batch *batches, struct particles *particles,
 
     } else {
 
-//    	printf("Increasing batch number.\n");
         batches->num += 1;
+//    	printf("Rank %i Increasing batch number to %i.\n",rank, batches->num);
         
+//    	if (batches->num==1){
+//    		printf("ibeg %i\n", ibeg);
+//    		printf("iend %i\n", iend);
+//    		printf("x_mid %f\n", x_mid);
+//    		printf("y_mid %f\n", y_mid);
+//    		printf("z_mid %f\n", z_mid);
+//    		printf("radius %f\n", radius);
+//
+//    	}
         batches->index[batches->num-1][0] = ibeg;
         batches->index[batches->num-1][1] = iend;
         
