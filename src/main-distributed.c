@@ -40,8 +40,8 @@ int main(int argc, char **argv)
     struct particles *targets = NULL;
 
     /* exact energy, treecode energy */
-    double *denergyglob = NULL;
-    double *tenergyglob = NULL;
+//    double *denergyglob = NULL;
+//    double *tenergyglob = NULL;
     double *tenergy = NULL;
 
     /* for potential energy calculation */
@@ -369,7 +369,7 @@ int main(int argc, char **argv)
 
 
     // have each proc compute its L2 error.  Then reduce and print with rank 0
-    printf("Rank %i computing its errors.\n", rank);
+//    printf("Rank %i computing its errors.\n", rank);
     double glob_reln2_err;
     double glob_relinf_err;
 
@@ -403,7 +403,7 @@ int main(int argc, char **argv)
 	n2err = sqrt(n2err);
 
 
-	printf("Computed errors on each rank.  Now reducing.\n");
+//	printf("Computed errors on each rank.  Now reducing.\n");
 	MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     if (rank == 0)
@@ -415,7 +415,7 @@ int main(int argc, char **argv)
 //        printf("  Absolute 2 norm error in potential:  %e \n", n2err);
         printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
 
-        printf("inf error occurring at %f, %f, %f \n\n", x, y,z);
+//        printf("inf error occurring at %f, %f, %f \n\n", x, y,z);
     }
     
     
@@ -488,14 +488,16 @@ int main(int argc, char **argv)
     free(targets);
     free_vector(tenergy);
 
-    if (rank == 0) {
-        free_vector(denergyglob);
-        free_vector(tenergyglob);
-        if (pflag == 0) {
-            free_vector(displs);
-            free_vector(scounts);
-        }
-    }
+//    if (rank == 0) {
+//        free_vector(denergyglob);
+//        free_vector(tenergyglob);
+//        if (pflag == 0) {
+//            free_vector(displs);
+//            free_vector(scounts);
+//        }
+//    }
+
+
     printf("Freed other vectors.\n");
 
     MPI_Finalize();

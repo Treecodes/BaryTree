@@ -890,7 +890,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         #pragma acc wait
         #pragma omp barrier
         } // end acc data region
-
+        double totalDueToApprox=0.0; double totalDueToDirect=0.0;
+        totalDueToApprox = sum(EnP3,targets->num);
+        totalDueToDirect = sum(EnP2,targets->num);
+        printf("Potential due to approximations: %f\n",totalDueToApprox);
+        printf("Potential due to direct: %f\n",totalDueToDirect);
         for (int k = 0; k < targets->num; k++) {
             if (EnP2[k] != 0.0)
                 #pragma omp critical

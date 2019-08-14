@@ -13,7 +13,7 @@ KAPPA=0.0
 POTENTIALTYPE=0
 
 
-ORDER=7
+ORDER=5
 THETA=0.8
 BATCHSIZE=1000
 MAXPARNODE=1000
@@ -31,7 +31,7 @@ do
 	NUMSOURCES=$N
 	NUMTARGETS=$N
 	DIRECTSUM=/Users/nathanvaughn/Desktop/randomPoints/ex_st_coulomb_$N.bin
-	for np in 1
+	for np in 2
 	do
 			#mpirun -np $np direct-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
 			mpirun -np $np tree-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER \
