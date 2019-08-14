@@ -17,6 +17,12 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
                               int *approx_list, int *direct_list, int numnodes)
 {
     /* local variables */
+	int rank, numProcs;
+
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+
     int i, j;
 
     int **batches_ind;
@@ -46,18 +52,26 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 
 
     // Make interaction lists and set to -1
-    double *temp_tree_inter_list, *temp_direct_inter_list;
+    int *temp_tree_inter_list, *temp_direct_inter_list;
     make_vector(temp_tree_inter_list, batches->num * numnodes);
 	make_vector(temp_direct_inter_list, batches->num * numnodes);
 
 	printf("Allocated temp_tree_inter_list and temp_direct_inter_list.\n");
-
+	printf("numnodes = %i\n", numnodes);
 	for (i = 0; i < batches->num * numnodes; i++)
 		temp_tree_inter_list[i] = -1;
 
 	for (i = 0; i < batches->num * numnodes; i++)
 		temp_direct_inter_list[i] = -1;
 
+//	printf("temp_tree_inter_list\n\n");
+//		for (int i=0;i<numnodes;i++){
+//			printf("%d\n", temp_tree_inter_list[i]);
+//	}
+//	printf("temp_direct_inter_list\n\n");
+//		for (int i=0;i<numnodes;i++){
+//			printf("%d\n", temp_direct_inter_list[i]);
+//	}
 
 	// Fill interaction lists
     for (i = 0; i < batches->num; i++){
@@ -69,20 +83,43 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
                 &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]));
     }
 
+//    printf("temp_tree_inter_list\n\n");
+//        for (int i=0;i<numnodes;i++){
+//        	printf("%i\n", temp_tree_inter_list[i]);
+//	}
+//    if (rank==0){
+//	printf("temp_direct_inter_list\n\n");
+//		for (int i=0;i<numnodes;i++){
+//			printf("%i\n", temp_direct_inter_list[i]);
+//		}
+//    }
     // Update masks using interaction lists (overkill, but okay for now)
     int approx_counter=0, direct_counter=0;
     for (i=0; i<numnodes; i++){
     	for (j=0;j<batches->num;j++){
-    		if (temp_tree_inter_list[j*numnodes]!=-1){ // then at least one target batch accepted the MAC for the ith node
+    		if (temp_tree_inter_list[j*numnodes+i]!=-1){ // then at least one target batch accepted the MAC for the ith node
     			approx_list[approx_counter]=i;
-				approx_counter++;
+				approx_counter+=1;
+				break;
     		}
-    		if (temp_direct_inter_list[j*numnodes]!=-1){ // then at least one target batch interacts directly with the ith node
+    	}
+		for (j=0;j<batches->num;j++){
+    		if (temp_direct_inter_list[j*numnodes+i]!=-1){ // then at least one target batch interacts directly with the ith node
     			direct_list[direct_counter]=i;
-    			direct_counter++;
+    			direct_counter+=1;
+    			break;
 			}
     	}
 
+    }
+
+    if (rank==0){
+    for (int i=0;i<numnodes; i++){
+		if (approx_list[i]!=-1) printf("approx_list[%i] = %i\n", i, approx_list[i]);
+	}
+    for (int i=0;i<numnodes; i++){
+    	if (direct_list[i]!=-1) printf("direct_list[%i] = %i\n", i, direct_list[i]);
+	}
     }
 
     free_vector(temp_tree_inter_list);
