@@ -364,6 +364,9 @@ void treedriver(struct particles *sources, struct particles *targets,
             printf("rank %i gotfrom %i.\n", rank,getFrom);
             MPI_Barrier(MPI_COMM_WORLD);
             printf("Rank %i remote_tree_array->x_mid[0] = %1.2e\n", rank, remote_tree_array->x_mid[0]);
+            printf("Rank %i remote_tree_array->numpar[0] = %i\n", rank, remote_tree_array->numpar[0]);
+            printf("Rank %i remote_tree_array->numpar[1] = %i\n", rank, remote_tree_array->numpar[1]);
+            printf("Rank %i remote_tree_array->numpar[2] = %i\n", rank, remote_tree_array->numpar[2]);
 
 			// Construct masks
 			int *approx_list; int *direct_list; int *direct_ibeg_list; int *direct_length_list;
