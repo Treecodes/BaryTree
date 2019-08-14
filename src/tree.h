@@ -8,6 +8,14 @@
 
 /* declaration of treecode support functions */
 
+
+void pc_compute_interaction_list_remote(int tree_numnodes, const int *tree_level,
+                                        const int *tree_numpar, const double *tree_radius,
+                                        const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
+                                        int *batch_ind, double *batch_mid, double batch_rad,
+                                        int *batch_tree_list, int *batch_direct_list);
+
+
 /* used by cluster-particle and particle-cluster */
 void remove_node(struct tnode *p);
 

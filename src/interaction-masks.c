@@ -65,26 +65,14 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 	for (i = 0; i < batches->num * numnodes; i++)
 		temp_direct_inter_list[i] = -1;
 
-//	printf("temp_tree_inter_list\n\n");
-//		for (int i=0;i<numnodes;i++){
-//			printf("%d\n", temp_tree_inter_list[i]);
-//	}
-//	printf("temp_direct_inter_list\n\n");
-//		for (int i=0;i<numnodes;i++){
-//			printf("%d\n", temp_direct_inter_list[i]);
-//	}
-
+    
 	// Fill interaction lists
-    for (i = 0; i < batches->num; i++){
-    	// fill interaction lists
-//    	printf("Filling lists for batch %i\n", i);
-        pc_compute_interaction_list(tree_numnodes, tree_level, tree_numpar,
+    for (i = 0; i < batches->num; i++) {
+        pc_compute_interaction_list_remote(tree_numnodes, tree_level, tree_numpar,
                 tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
                 batches_ind[i], batches_center[i], batches_radius[i],
                 &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]));
     }
-    
-    exit(0);
 
 //    printf("temp_tree_inter_list\n\n");
 //        for (int i=0;i<numnodes;i++){
@@ -117,6 +105,8 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     	}
 
     }
+    
+    exit(0);
 
 //    if (rank==0){
 //    for (int i=0;i<numnodes; i++){
