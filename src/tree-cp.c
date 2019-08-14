@@ -91,7 +91,6 @@ void setup(struct particles *particles, int order, double theta,
         cf1[i] = 1.0 - (0.5 * t1);
         cf2[i] = 1.0 - t1;
     }
-
     /* find bounds of Cartesian box enclosing the particles */
     xyzminmax[0] = minval(particles->x, particles->num);
     xyzminmax[1] = maxval(particles->x, particles->num);

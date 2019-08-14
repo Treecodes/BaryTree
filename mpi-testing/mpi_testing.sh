@@ -30,7 +30,7 @@ do
 	NUMSOURCES=$N
 	NUMTARGETS=$N
 	DIRECTSUM=/Users/nathanvaughn/Desktop/randomPoints/ex_st_coulomb_$N.bin
-	for np in 1
+	for np in 4
 	do
 		for NUMTHREADS in 1
 		do

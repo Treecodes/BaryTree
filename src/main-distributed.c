@@ -156,27 +156,27 @@ int main(int argc, char **argv)
 	globparsTloc = maxparsTloc + numparsTloc * (rank-1);
 	globparsSloc = maxparsSloc + numparsSloc * (rank-1);
 
-    double *S_local;
-//    memset(S_local,0,5*maxparsSloc);
-    make_vector(S_local, 5*maxparsSloc);
-    xS = &S_local[0*maxparsSloc];
-    yS = &S_local[1*maxparsSloc];
-    zS = &S_local[2*maxparsSloc];
-    qS = &S_local[3*maxparsSloc];
-    wS = &S_local[4*maxparsSloc];
-
-
-    for (int i=0;i<5*maxparsSloc;i++){
-    	S_local[i]=0.0;
-    }
-
-
-    double *T_local;
-    make_vector(T_local,4*numparsTloc);
-    xT = &T_local[0*numparsTloc];
-    yT = &T_local[1*numparsTloc];
-    zT = &T_local[2*numparsTloc];
-    qT = &T_local[3*numparsTloc];
+//    double *S_local;
+////    memset(S_local,0,5*maxparsSloc);
+//    make_vector(S_local, 5*maxparsSloc);
+//    xS = &S_local[0*maxparsSloc];
+//    yS = &S_local[1*maxparsSloc];
+//    zS = &S_local[2*maxparsSloc];
+//    qS = &S_local[3*maxparsSloc];
+//    wS = &S_local[4*maxparsSloc];
+//
+//
+//    for (int i=0;i<5*maxparsSloc;i++){
+//    	S_local[i]=0.0;
+//    }
+//
+//
+//    double *T_local;
+//    make_vector(T_local,4*numparsTloc);
+//    xT = &T_local[0*numparsTloc];
+//    yT = &T_local[1*numparsTloc];
+//    zT = &T_local[2*numparsTloc];
+//    qT = &T_local[3*numparsTloc];
 
 
     make_vector(denergy,numparsTloc);
@@ -185,47 +185,104 @@ int main(int argc, char **argv)
     
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
-    printf("Allocated sources and targets particles.\n");
-    double *originalWeights;
-    printf("PFLAG = %i\n",pflag);
-    
-    int ierr;
-    /* Reading in coordinates and charges for the source particles*/
-	ierr = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-	if (ierr != MPI_SUCCESS) {
-		fprintf(stderr,"FILE COULD NOT OPEN\n");
-		exit(1);
-	}
 
-	MPI_File_seek(fpmpi, (MPI_Offset)globparsSloc*5*sizeof(double), MPI_SEEK_SET);
+    sources->num = numparsSloc;
+	make_vector(sources->x, numparsSloc);
+	make_vector(sources->y, numparsSloc);
+	make_vector(sources->z, numparsSloc);
+	make_vector(sources->q, numparsSloc);
+	make_vector(sources->w, numparsSloc);
+	printf("Made source vectors.c\n");
+
+	targets->num = numparsTloc;
+	make_vector(targets->x, numparsTloc);
+	make_vector(targets->y, numparsTloc);
+	make_vector(targets->z, numparsTloc);
+	make_vector(targets->q, numparsTloc);
+	make_vector(targets->order, numparsTloc);
+	make_vector(tenergy, numparsTloc);
+	printf("Made target vectors.c\n");
+
+	/* Reading in coordinates and charges for the source particles*/
+	MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+	MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsSloc)*5*sizeof(double)), MPI_SEEK_SET);
 	for (i = 0; i < numparsSloc; i++) {
 		MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
-		xS[i] = buf[0];
-		yS[i] = buf[1];
-		zS[i] = buf[2];
-		qS[i] = buf[3];
-		wS[i] = buf[4];
+		sources->x[i] = buf[0];
+		sources->y[i] = buf[1];
+		sources->z[i] = buf[2];
+		sources->q[i] = buf[3];
+		sources->w[i] = buf[4];
 	}
 	MPI_File_close(&fpmpi);
+	printf("Read in sources.\n");
+
+	/* Reading in coordinates for target particles*/
+	MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+	MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsTloc)*5*sizeof(double)), MPI_SEEK_SET);
+	for (i = 0; i < numparsTloc; i++) {
+		MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+		targets->x[i] = buf[0];
+		targets->y[i] = buf[1];
+		targets->z[i] = buf[2];
+		targets->q[i] = buf[3];
+		targets->order[i] = i;
+	}
+	MPI_File_close(&fpmpi);
+	printf("Read in targets.\n");
+
+	make_vector(tenergy, numparsTloc);
+	make_vector(denergy, numparsTloc);
+
+	MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+	MPI_File_seek(fpmpi, (MPI_Offset)(rank*(numparsTloc)*1*sizeof(double)), MPI_SEEK_SET);
+	MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+	MPI_File_read(fpmpi, denergyglob, numparsTloc, MPI_DOUBLE, &status);
+	MPI_File_close(&fpmpi);
+	printf("Did MPI file stuff.\n");
+
+
+
+//    printf("Allocated sources and targets particles.\n");
+//    printf("PFLAG = %i\n",pflag);
+//
+//    int ierr;
+//    /* Reading in coordinates and charges for the source particles*/
+//	ierr = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+//	if (ierr != MPI_SUCCESS) {
+//		fprintf(stderr,"FILE COULD NOT OPEN\n");
+//		exit(1);
+//	}
+//
+//	MPI_File_seek(fpmpi, (MPI_Offset)globparsSloc*5*sizeof(double), MPI_SEEK_SET);
+//	for (i = 0; i < numparsSloc; i++) {
+//		MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
+//		xS[i] = buf[0];
+//		yS[i] = buf[1];
+//		zS[i] = buf[2];
+//		qS[i] = buf[3];
+//		wS[i] = buf[4];
+//	}
+//	MPI_File_close(&fpmpi);
 
 //    MPI_Barrier(MPI_COMM_WORLD);
 
 	/* Reading in coordinates for the targets */
-	ierr = MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-	if (ierr != MPI_SUCCESS) {
-		fprintf(stderr,"FILE COULD NOT OPEN\n");
-		exit(1);
-	}
-
-	MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*4*sizeof(double), MPI_SEEK_SET);
-	for (i = 0; i < numparsTloc; i++) {
-		MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
-		xT[i] = buf[0];
-		yT[i] = buf[1];
-		zT[i] = buf[2];
-		qT[i] = buf[3];
-	}
-	MPI_File_close(&fpmpi);
+//	ierr = MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+//	if (ierr != MPI_SUCCESS) {
+//		fprintf(stderr,"FILE COULD NOT OPEN\n");
+//		exit(1);
+//	}
+//
+//	MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*4*sizeof(double), MPI_SEEK_SET);
+//	for (i = 0; i < numparsTloc; i++) {
+//		MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+//		xT[i] = buf[0];
+//		yT[i] = buf[1];
+//		zT[i] = buf[2];
+//		qT[i] = buf[3];
+//	}
+//	MPI_File_close(&fpmpi);
         
         
     // Initialize all GPUs
@@ -237,10 +294,7 @@ int main(int argc, char **argv)
 //			}
 //	}
 
-    printf("Filling originalWeights.\n");
-    for (i=0;i<numparsTloc;i++){
-		originalWeights[i] = sources->w[i];}
-    printf("originalWeights filled.  Starting timer.\n");
+
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
     printf("Setup complete, calling treedriver...\n");
@@ -265,7 +319,6 @@ int main(int argc, char **argv)
     MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
-//    if (rank == 0) dpengglob = sum(denergyglob*originalWeights, numparsT);
     if (rank == 0) dpengglob = sum(denergyglob, numparsT);
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -325,9 +378,6 @@ int main(int argc, char **argv)
                    MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     }
 
-//    for (j=0;j<numparsT;j++){
-//    	tenergyglob[j] = tenergyglob[j]*originalWeights[targets->order[j]];
-//    }
 
     if (rank == 0)
     {
@@ -437,7 +487,6 @@ int main(int argc, char **argv)
     free(sources);
     free(targets);
     free_vector(tenergy);
-    free_vector(originalWeights);
 
     if (rank == 0) {
         free_vector(denergyglob);
