@@ -82,6 +82,8 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
                 batches_ind[i], batches_center[i], batches_radius[i],
                 &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]));
     }
+    
+    exit(0);
 
 //    printf("temp_tree_inter_list\n\n");
 //        for (int i=0;i<numnodes;i++){

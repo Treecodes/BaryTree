@@ -686,8 +686,10 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
     current_level = 0;
     
     for (j = 0; j < tree_numnodes; j++) {
+        printf("    On node: %d\n", j);
         if (tree_level[j] <= current_level) {
-
+            printf("        level %d is less than current level %d. TEST!\n", tree_level[j], current_level);
+            
             /* determine DIST for MAC test */
             tx = batch_mid[0] - tree_x_mid[j];
             ty = batch_mid[1] - tree_y_mid[j];
@@ -697,8 +699,8 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
             if (((tree_radius[j] + batch_rad) < dist * sqrt(thetasq))
               && (tree_radius[j] > 0.00)
               && (torder*torder*torder < tree_numpar[j])) {
-
               current_level = tree_level[j];
+                printf("            It passes. torder3 = %d, numpar = %d, rad+batch_rad = %f, dist*theta = %f\n", torder*torder*troder, tree_numpar[j], tree_radius[j]+batch_rad, dist*sqrt(thetasq));
             /*
              * If MAC is accepted and there is more than 1 particle
              * in the box, use the expansion for the approximation.
@@ -712,15 +714,20 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
              * If MAC fails check to see if there are children. If not, perform direct
              * calculation. If there are children, call routine recursively for each.
              */
+                printf("            It fails. torder3 = %d, numpar = %d, rad+batch_rad = %f, dist*theta = %f\n", torder*torder*troder, tree_numpar[j], tree_radius[j]+batch_rad, dist*sqrt(thetasq));
 
                 if (tree_level[j+1] <= tree_level[j]) {
                     
                     batch_direct_list[direct_index_counter] = j;
                     direct_index_counter++;
+                    
+                    printf("                It's a leaf. Interact directly.\n");
             
                 } else {
                     
                     current_level = tree_level[j+1];
+                    
+                    printf("                It's not a leaf. Check the children.\n");
                     
                 }
             }
