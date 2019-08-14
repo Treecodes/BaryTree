@@ -201,8 +201,11 @@ if __name__=="__main__":
 #     
     
 #     print(xy2d(3,1,2))
-    sourcesTXT = '/Users/nathanvaughn/Desktop/randomPoints/S%i.txt' %(64*N)
-    targetsTXT = '/Users/nathanvaughn/Desktop/randomPoints/T%i.txt' %(64*N)
+#     sourcesTXT = '/Users/nathanvaughn/Desktop/randomPoints/S%i.txt' %(64*N)
+#     targetsTXT = '/Users/nathanvaughn/Desktop/randomPoints/T%i.txt' %(64*N)
+
+    sourcesTXT = '/scratch/krasny_fluxg/njvaughn/random/S%i.txt' %(64*N)
+    targetsTXT = '/scratch/krasny_fluxg/njvaughn/random/T%i.txt' %(64*N)
     points, orderedPoints = initializePoints(N)
   
     np.savetxt(sourcesTXT, orderedPoints)
