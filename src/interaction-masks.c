@@ -58,7 +58,7 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     make_vector(temp_tree_inter_list, batches->num * numnodes);
 	make_vector(temp_direct_inter_list, batches->num * numnodes);
 
-	printf("Allocated temp_tree_inter_list and temp_direct_inter_list.\n");
+//	printf("Allocated temp_tree_inter_list and temp_direct_inter_list.\n");
 //	printf("numnodes = %i\n", numnodes);
 	for (i = 0; i < batches->num * numnodes; i++)
 		temp_tree_inter_list[i] = -1;
@@ -99,7 +99,7 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     	}
 		for (j=0;j<batches->num;j++){
     		if (temp_direct_inter_list[j*numnodes+i]!=-1){ // then at least one target batch interacts directly with the ith node
-    			if (i==0) printf("Batch %i is putting the root in the direct list.\n", j);
+//    			if (i==0) printf("Batch %i is putting the root in the direct list.\n", j);
     			direct_list[i]=i;
     			direct_counter+=1;
     			break;
@@ -127,7 +127,7 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     // At end of this function, approx_list and direct_list look like [c0, c3, c5, -1, -1, -1 ... ]
     // indicating the 0th, 3rd, and 5th clusters in remote tree array are needed.
 
-    printf("Exiting remote_interaction_lists\n");
+//    printf("Exiting remote_interaction_lists\n");
     return;
 
 } /* END of function pc_treecode */

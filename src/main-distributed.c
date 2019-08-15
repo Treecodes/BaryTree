@@ -14,7 +14,7 @@
 /* The treedriver routine in Fortran */
 int main(int argc, char **argv)
 {
-	printf("Entering main.c\n");
+//	printf("Entering main.c\n");
     int rank, numProcs;
     
     MPI_Init(&argc, &argv);
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 
 
     /* Executable statements begin here */
-    printf("Reading in arguments.c\n");
+//    printf("Reading in arguments.c\n");
     sampin1 = argv[1];
     if (strcmp(sampin1,"--help") == 0)
     {
@@ -139,7 +139,7 @@ int main(int argc, char **argv)
     numDevices = atoi(argv[17]);
     numThreads = atoi(argv[18]);
 
-    printf("Read in arguments.c\n");
+//    printf("Read in arguments.c\n");
 
 
     numparsTloc = (int)floor((double)numparsT/(double)numProcs);
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 	make_vector(sources->z, numparsSloc);
 	make_vector(sources->q, numparsSloc);
 	make_vector(sources->w, numparsSloc);
-	printf("Made source vectors.c\n");
+//	printf("Made source vectors.c\n");
 
 	targets->num = numparsTloc;
 	make_vector(targets->x, numparsTloc);
@@ -180,11 +180,11 @@ int main(int argc, char **argv)
 	make_vector(targets->q, numparsTloc);
 	make_vector(targets->order, numparsTloc);
 	make_vector(tenergy, numparsTloc);
-	printf("Made target vectors.c\n");
+//	printf("Made target vectors.c\n");
 
 	/* Reading in coordinates and charges for the source particles*/
 	int offset = rank*(numparsSloc);
-	printf("Proc %i reading in from %i to %i.\n", rank, offset, offset+numparsSloc);
+//	printf("Proc %i reading in from %i to %i.\n", rank, offset, offset+numparsSloc);
 	MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
 	MPI_File_seek(fpmpi, (MPI_Offset) offset*5*sizeof(double), MPI_SEEK_SET);
 	for (i = 0; i < numparsSloc; i++) {
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 		sources->w[i] = buf[4];
 	}
 	MPI_File_close(&fpmpi);
-	printf("Read in sources.\n");
+//	printf("Read in sources.\n");
 
 	/* Reading in coordinates for target particles*/
 	MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 		targets->order[i] = i;
 	}
 	MPI_File_close(&fpmpi);
-	printf("Read in targets.\n");
+//	printf("Read in targets.\n");
 
 	make_vector(tenergy, numparsTloc);
 	make_vector(denergy, numparsTloc);
@@ -221,7 +221,7 @@ int main(int argc, char **argv)
 	MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
 	MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
 	MPI_File_close(&fpmpi);
-	printf("Did MPI file stuff.\n");
+//	printf("Did MPI file stuff.\n");
 
 
 
@@ -279,8 +279,8 @@ int main(int argc, char **argv)
 
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
-    printf("Setup complete, calling treedriver...\n");
-    printf("numThreads: %i\n", numThreads);
+//    printf("Setup complete, calling treedriver...\n");
+//    printf("numThreads: %i\n", numThreads);
 //    fflush(stdout);
     /* Calling main treecode subroutine to calculate approximate energy */
 
@@ -296,14 +296,14 @@ int main(int argc, char **argv)
     time_treedriver = time2 - time1;
 
     
-    printf("About to do reductions.\n");
+//    printf("About to do reductions.\n");
     /* Reducing values to root process */
     MPI_Reduce(time_tree, &time_tree_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    printf("Completed time reductions.\n");
+//    printf("Completed time reductions.\n");
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    printf("Completed reductions.\n");
+//    printf("Completed reductions.\n");
 
     dpeng = sum(denergy, numparsTloc);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -465,7 +465,7 @@ int main(int argc, char **argv)
                     inferr, relinferr, n2err, reln2err,numDevices); //5 ends
             fclose(fp);
         }
-    printf("Wrote to output file.\n");
+//    printf("Wrote to output file.\n");
     
     
     free_vector(sources->x);
@@ -473,16 +473,16 @@ int main(int argc, char **argv)
     free_vector(sources->z);
     free_vector(sources->q);
     free_vector(sources->w);
-    free_vector(sources->order);
+//    free_vector(sources->order);
 
-    printf("Freed sources.\n");
+//    printf("Freed sources.\n");
     free_vector(targets->x);
     free_vector(targets->y);
     free_vector(targets->z);
     free_vector(targets->q);
 //    free_vector(targets->w);
     free_vector(targets->order);
-    printf("Freed targets.\n");
+//    printf("Freed targets.\n");
     
     free(sources);
     free(targets);
@@ -498,10 +498,10 @@ int main(int argc, char **argv)
 //    }
 
 
-    printf("Freed other vectors.\n");
+//    printf("Freed other vectors.\n");
 
     MPI_Finalize();
-    printf("Final.\n");
+//    printf("Final.\n");
     return 0;
     
 }

@@ -336,9 +336,9 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         }
 
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-        if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-        if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-        printf("this_thread: %i\n", this_thread);
+//        if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+//        if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+//        printf("this_thread: %i\n", this_thread);
 
         double *tempQ, *tempX, *tempY, *tempZ;
         make_vector(tempX,clusters->num);
@@ -817,9 +817,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
             }
 
             int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-            if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-            if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-            printf("this_thread: %i\n", this_thread);
+//            if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+//            if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+//            printf("this_thread: %i\n", this_thread);
 
             double *EnP2, *EnP3;
             make_vector(EnP2,targets->num);
@@ -963,8 +963,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         double totalDueToApprox=0.0; double totalDueToDirect=0.0;
         totalDueToApprox = sum(EnP3,targets->num);
         totalDueToDirect = sum(EnP2,targets->num);
-        printf("Potential due to approximations: %f\n",totalDueToApprox);
-        printf("Potential due to direct: %f\n",totalDueToDirect);
+//        printf("Potential due to approximations: %f\n",totalDueToApprox);
+//        printf("Potential due to direct: %f\n",totalDueToDirect);
         for (int k = 0; k < targets->num; k++) {
             if (EnP2[k] != 0.0)
                 #pragma omp critical

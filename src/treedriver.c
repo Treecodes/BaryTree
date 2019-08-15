@@ -29,7 +29,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
 
-    int verbosity=1;
+    int verbosity=0;
     /* local variables */
     struct tnode *troot = NULL;
     int level;
@@ -99,8 +99,8 @@ void treedriver(struct particles *sources, struct particles *targets,
         int final_index = pc_set_tree_index(troot, 0);
 
         time2 = MPI_Wtime();
-        printf("Time to pc_create_tree_n0: %f\n", time2-time1);
-        printf("Rank %i got past pc_create_tree_n0.\n", rank);
+//        printf("Time to pc_create_tree_n0: %f\n", time2-time1);
+//        printf("Rank %i got past pc_create_tree_n0.\n", rank);
 		MPI_Barrier(MPI_COMM_WORLD);
         time1 = MPI_Wtime();
         tree_array = malloc(sizeof(struct tnode_array));
@@ -138,7 +138,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        printf("Time to setup_batch: %f\n", time2-time1);
 
         time1 = MPI_Wtime();
-        printf("Rank %i:  targets->num %i, batch_size %i, batch_lim %i .\n", rank, targets->num, batch_size, batch_lim);
+//        printf("Rank %i:  targets->num %i, batch_size %i, batch_lim %i .\n", rank, targets->num, batch_size, batch_lim);
 
 //        if (rank==1){
 //        	for (int i=0;i<targets->num;i++){
@@ -167,12 +167,12 @@ void treedriver(struct particles *sources, struct particles *targets,
         }
         timeFillClusters2 = MPI_Wtime();
         timeFillClusters1 = timeFillClusters2-timeFillClusters1;
-        printf("Time to compute modified weights(s):  %f\n", timeFillClusters1);
+//        printf("Time to compute modified weights(s):  %f\n", timeFillClusters1);
 
     }
 
 //	MPI_Barrier(MPI_COMM_WORLD);
-    printf("Rank %i got past fill_in_cluster_data.\n", rank);
+//    printf("Rank %i got past fill_in_cluster_data.\n", rank);
 	MPI_Barrier(MPI_COMM_WORLD);
 
     time2 = MPI_Wtime();
@@ -221,7 +221,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
 
-		printf("Got  MPI_Comm_rank.\n");
+//		printf("Got  MPI_Comm_rank.\n");
 		MPI_Barrier(MPI_COMM_WORLD);
     	// Get number of nodes for each processor's LET
 		int numNodesOnProc[numProcs];
@@ -300,21 +300,21 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_create(tree_array->ibeg,   numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
         MPI_Win_create(tree_array->iend,   numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
         MPI_Win_create(tree_array->level,  numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_level);
-        printf("rank %i created tree_array windows.\n", rank);
+//        printf("rank %i created tree_array windows.\n", rank);
 
         MPI_Win_create(clusters->x, numnodes*pointsPerCluster*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_x);
         MPI_Win_create(clusters->y, numnodes*pointsPerCluster*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_y);
         MPI_Win_create(clusters->z, numnodes*pointsPerCluster*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_z);
         MPI_Win_create(clusters->q, numnodes*pointsPerCluster*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_q);
         MPI_Win_create(clusters->w, numnodes*pointsPerCluster*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_w);
-        printf("rank %i created clusters windows.\n", rank);
+//        printf("rank %i created clusters windows.\n", rank);
 
         MPI_Win_create(sources->x, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
         MPI_Win_create(sources->y, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
         MPI_Win_create(sources->z, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
         MPI_Win_create(sources->q, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
         MPI_Win_create(sources->w, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
-        printf("rank %i created source windows.\n", rank);
+//        printf("rank %i created source windows.\n", rank);
 
 
     	// Perform MPI round robin, filling LET with remote data
@@ -362,12 +362,12 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_ibeg);
             MPI_Win_unlock(getFrom, win_iend);
             MPI_Win_unlock(getFrom, win_level);
-            printf("rank %i gotfrom %i.\n", rank,getFrom);
+//            printf("rank %i gotfrom %i.\n", rank,getFrom);
             MPI_Barrier(MPI_COMM_WORLD);
-            printf("Rank %i remote_tree_array->x_mid[0] = %1.2e\n", rank, remote_tree_array->x_mid[0]);
-            printf("Rank %i remote_tree_array->numpar[0] = %i\n", rank, remote_tree_array->numpar[0]);
-            printf("Rank %i remote_tree_array->numpar[1] = %i\n", rank, remote_tree_array->numpar[1]);
-            printf("Rank %i remote_tree_array->numpar[2] = %i\n", rank, remote_tree_array->numpar[2]);
+//            printf("Rank %i remote_tree_array->x_mid[0] = %1.2e\n", rank, remote_tree_array->x_mid[0]);
+//            printf("Rank %i remote_tree_array->numpar[0] = %i\n", rank, remote_tree_array->numpar[0]);
+//            printf("Rank %i remote_tree_array->numpar[1] = %i\n", rank, remote_tree_array->numpar[1]);
+//            printf("Rank %i remote_tree_array->numpar[2] = %i\n", rank, remote_tree_array->numpar[2]);
 
 			// Construct masks
 			int *approx_list_packed; int *approx_list_unpacked; int *direct_list; int *direct_ibeg_list; int *direct_length_list;
@@ -380,10 +380,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 			remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed, direct_list, numNodesOnProc[getFrom]);
 
 			MPI_Barrier(MPI_COMM_WORLD);
-			printf("Rank %i, approx_list[0]=%i\n", rank, approx_list_unpacked[0]);
-			printf("Rank %i, approx_list[1]=%i\n", rank, approx_list_unpacked[1]);
-			printf("Rank %i, direct_list[0]=%i\n", rank, direct_list[0]);
-			printf("Rank %i, direct_list[1]=%i\n", rank, direct_list[1]);
+//			printf("Rank %i, approx_list[0]=%i\n", rank, approx_list_unpacked[0]);
+//			printf("Rank %i, approx_list[1]=%i\n", rank, approx_list_unpacked[1]);
+//			printf("Rank %i, direct_list[0]=%i\n", rank, direct_list[0]);
+//			printf("Rank %i, direct_list[1]=%i\n", rank, direct_list[1]);
 			MPI_Barrier(MPI_COMM_WORLD);
 		    // Reallocate structs to hold new data
 
@@ -397,10 +397,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 //				}
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
-			printf("Rank %i got here.  New let_tree_array_length = %i\n", rank, let_tree_array_length);
+//			printf("Rank %i got here.  New let_tree_array_length = %i\n", rank, let_tree_array_length);
             reallocate_tree_array(let_tree_array, let_tree_array_length);
             MPI_Barrier(MPI_COMM_WORLD);
-			printf("a Rank %i got here.\n", rank);
+//			printf("a Rank %i got here.\n", rank);
             int numberOfRemoteApprox = 0;
             int previous_let_clusters_length = let_clusters_length;
             
@@ -429,7 +429,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                     if (approx_list_unpacked[i] != -1) {
                         let_tree_array->cluster_ind[previousTreeArrayLength + appendCounter] = let_clusters_num;
                         let_clusters_length += pointsPerCluster;
-                        printf("previousTreeArrayLength = %i, let_clusters_num=%i\n", previousTreeArrayLength,let_clusters_num);
+//                        printf("previousTreeArrayLength = %i, let_clusters_num=%i\n", previousTreeArrayLength,let_clusters_num);
                         let_clusters_num += 1;
                         numberOfRemoteApprox++;
                     }
@@ -451,7 +451,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //				}
 			}
             MPI_Barrier(MPI_COMM_WORLD);
-            printf("b Rank %i got here.\n", rank);
+//            printf("b Rank %i got here.\n", rank);
             reallocate_cluster(let_clusters, let_clusters_length);
             reallocate_sources(let_sources, let_sources_length);
             
@@ -488,7 +488,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             
 
             MPI_Barrier(MPI_COMM_WORLD);
-			printf("g Rank %i got here.\n", rank);
+//			printf("g Rank %i got here.\n", rank);
 			fflush(stdout);
 			MPI_Barrier(MPI_COMM_WORLD);
 
@@ -516,7 +516,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                     getFrom, 0, 1, direct_type, win_sources_w);
             
             MPI_Barrier(MPI_COMM_WORLD);
-			printf("f Rank %i got here.\n", rank);
+//			printf("f Rank %i got here.\n", rank);
 			fflush(stdout);
 			MPI_Barrier(MPI_COMM_WORLD);
 
@@ -528,7 +528,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_clusters_w);
             
             MPI_Barrier(MPI_COMM_WORLD);
-			printf("h Rank %i got here.\n", rank);
+//			printf("h Rank %i got here.\n", rank);
 			fflush(stdout);
 			MPI_Barrier(MPI_COMM_WORLD);
 
@@ -539,19 +539,19 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_q);
             MPI_Win_unlock(getFrom, win_sources_w);
 
-            MPI_Barrier(MPI_COMM_WORLD);
-            printf("Rank %i, let_clusters->x[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->x[previous_let_clusters_length+2]);
-			printf("Rank %i, let_clusters->y[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->y[previous_let_clusters_length+2]);
-			printf("Rank %i, let_clusters->z[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->z[previous_let_clusters_length+2]);
-
-			printf("Rank %i, let_clusters->x[previous_let_clusters_length-2] = %1.4e\n", rank, let_clusters->x[previous_let_clusters_length-2]);
-			printf("Rank %i, let_clusters->y[previous_let_clusters_length-2] = %1.4e\n", rank, let_clusters->y[previous_let_clusters_length-2]);
-			printf("Rank %i, let_clusters->z[previous_let_clusters_length-2] = %1.4e\n", rank, let_clusters->z[previous_let_clusters_length-2]);
-//            printf("Rank %i, let_clusters->y[previous_let_clusters_length+2] = %1.2e\n", rank, clusters->y[previous_let_clusters_length+2]);
-            printf("Rank %i, let_sources->x[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->x[previous_let_sources_length+2]);
-            printf("Rank %i, let_sources->y[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->y[previous_let_sources_length+2]);
-            printf("Rank %i, let_sources->z[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->z[previous_let_sources_length+2]);
-            MPI_Barrier(MPI_COMM_WORLD);
+//            MPI_Barrier(MPI_COMM_WORLD);
+//            printf("Rank %i, let_clusters->x[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->x[previous_let_clusters_length+2]);
+//			printf("Rank %i, let_clusters->y[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->y[previous_let_clusters_length+2]);
+//			printf("Rank %i, let_clusters->z[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->z[previous_let_clusters_length+2]);
+//
+//			printf("Rank %i, let_clusters->x[previous_let_clusters_length-2] = %1.4e\n", rank, let_clusters->x[previous_let_clusters_length-2]);
+//			printf("Rank %i, let_clusters->y[previous_let_clusters_length-2] = %1.4e\n", rank, let_clusters->y[previous_let_clusters_length-2]);
+//			printf("Rank %i, let_clusters->z[previous_let_clusters_length-2] = %1.4e\n", rank, let_clusters->z[previous_let_clusters_length-2]);
+////            printf("Rank %i, let_clusters->y[previous_let_clusters_length+2] = %1.2e\n", rank, clusters->y[previous_let_clusters_length+2]);
+//            printf("Rank %i, let_sources->x[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->x[previous_let_sources_length+2]);
+//            printf("Rank %i, let_sources->y[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->y[previous_let_sources_length+2]);
+//            printf("Rank %i, let_sources->z[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->z[previous_let_sources_length+2]);
+//            MPI_Barrier(MPI_COMM_WORLD);
 
             
 			free_vector(approx_list_packed);
@@ -682,7 +682,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     free(batches);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    printf("Exiting treedriver.\n");
+//    printf("Exiting treedriver.\n");
     fflush(stdout);
     MPI_Barrier(MPI_COMM_WORLD);
 
