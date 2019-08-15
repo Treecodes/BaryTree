@@ -367,7 +367,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         copy(tempX[0:clusterNum], tempY[0:clusterNum], tempZ[0:clusterNum], tempQ[0:clusterNum])
         {
             #pragma omp for schedule(guided)
-            for (int i = 1; i < numnodes; i++) {  // start from i=1, don't need to compute root moments
+            for (int i = 0; i < numnodes; i++) {  // start from i=1, don't need to compute root moments
                 pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
                                      tempX, tempY, tempZ, tempQ);
             }
