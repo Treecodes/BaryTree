@@ -369,17 +369,18 @@ void treedriver(struct particles *sources, struct particles *targets,
             printf("Rank %i remote_tree_array->numpar[2] = %i\n", rank, remote_tree_array->numpar[2]);
 
 			// Construct masks
-			int *approx_list; int *direct_list; int *direct_ibeg_list; int *direct_length_list;
-			make_vector(approx_list, numNodesOnProc[getFrom]);
+			int *approx_list_packed; int *approx_list_unpacked; int *direct_list; int *direct_ibeg_list; int *direct_length_list;
+			make_vector(approx_list_packed, numNodesOnProc[getFrom]);
+			make_vector(approx_list_unpacked, numNodesOnProc[getFrom]);
 			make_vector(direct_list, numNodesOnProc[getFrom]);
             make_vector(direct_ibeg_list, numNodesOnProc[getFrom]);
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
             
-			remote_interaction_lists(remote_tree_array, batches, approx_list, direct_list, numNodesOnProc[getFrom]);
+			remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed, direct_list, numNodesOnProc[getFrom]);
 
 			MPI_Barrier(MPI_COMM_WORLD);
-			printf("Rank %i, approx_list[0]=%i\n", rank, approx_list[0]);
-			printf("Rank %i, approx_list[1]=%i\n", rank, approx_list[1]);
+			printf("Rank %i, approx_list[0]=%i\n", rank, approx_list_unpacked[0]);
+			printf("Rank %i, approx_list[1]=%i\n", rank, approx_list_unpacked[1]);
 			printf("Rank %i, direct_list[0]=%i\n", rank, direct_list[0]);
 			printf("Rank %i, direct_list[1]=%i\n", rank, direct_list[1]);
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -389,7 +390,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 			int numberOfUniqueClusters =  0;
 			int previousTreeArrayLength = let_tree_array_length;
 			for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
-				if ((approx_list[i] != -1) || (direct_list[i] != -1)) {
+				if ((approx_list_unpacked[i] != -1) || (direct_list[i] != -1)) {
 					numberOfUniqueClusters+=1;
 					let_tree_array_length+=1;
 				}
@@ -414,7 +415,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //				previous_let_sources_length = let_sources_length;
 
 
-				if ((approx_list[i] != -1) || (direct_list[i] != -1)) {
+				if ((approx_list_unpacked[i] != -1) || (direct_list[i] != -1)) {
 					let_tree_array->x_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->x_mid[i];
 					let_tree_array->y_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->y_mid[i];
 					let_tree_array->z_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->z_mid[i];
@@ -422,7 +423,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 					let_tree_array->numpar[previousTreeArrayLength + appendCounter] = remote_tree_array->numpar[i];
                     let_tree_array->level[previousTreeArrayLength + appendCounter] = remote_tree_array->level[i];
                     
-                    if (approx_list[i] != -1) {
+                    if (approx_list_unpacked[i] != -1) {
                         let_tree_array->cluster_ind[previousTreeArrayLength + appendCounter] = previousTreeArrayLength + numberOfRemoteApprox;
                         let_clusters_length += pointsPerCluster;
                         numberOfRemoteApprox++;
@@ -459,7 +460,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             
             MPI_Datatype approx_type, direct_type;
             
-            MPI_Type_create_indexed_block(numberOfRemoteApprox, pointsPerCluster, approx_list, MPI_DOUBLE, &approx_type);
+            MPI_Type_create_indexed_block(numberOfRemoteApprox, pointsPerCluster, approx_list_packed, MPI_DOUBLE, &approx_type);
             MPI_Type_commit(&approx_type);
             int new_sources_length = let_sources_length - previous_let_sources_length;
             MPI_Type_indexed(numberOfRemoteDirect, direct_length_list, direct_ibeg_list, MPI_DOUBLE, &direct_type);
@@ -541,7 +542,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Barrier(MPI_COMM_WORLD);
 
             
-			free_vector(approx_list);
+			free_vector(approx_list_packed);
+			free_vector(approx_list_unpacked);
 			free_vector(direct_list);
             free_vector(direct_ibeg_list);
             free_vector(direct_length_list);

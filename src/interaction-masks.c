@@ -15,7 +15,7 @@
 
 
 void remote_interaction_lists(const struct tnode_array *tree_array, struct batch *batches,
-                              int *approx_list, int *direct_list, int numnodes)
+					int *approx_list_unpacked,int *approx_list_packed, int *direct_list, int numnodes)
 {
     /* local variables */
 	int rank, numProcs;
@@ -47,7 +47,8 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     tree_z_mid = tree_array->z_mid;
 
     for (i = 0; i < numnodes; i++){
-    	approx_list[i] = -1;
+    	approx_list_unpacked[i] = -1;
+    	approx_list_packed[i] = -1;
     	direct_list[i] = -1;
     }
 
@@ -90,7 +91,8 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     	for (j=0;j<batches->num;j++){
     		if (temp_tree_inter_list[j*numnodes+i]!=-1){ // then at least one target batch accepted the MAC for the ith node
 
-    			approx_list[approx_counter]=i;
+    			approx_list_unpacked[i]=i;
+    			approx_list_packed[approx_counter]=i;
 				approx_counter+=1;
 				break;
     		}
@@ -98,7 +100,7 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 		for (j=0;j<batches->num;j++){
     		if (temp_direct_inter_list[j*numnodes+i]!=-1){ // then at least one target batch interacts directly with the ith node
     			if (i==0) printf("Batch %i is putting the root in the direct list.\n", j);
-    			direct_list[direct_counter]=i;
+    			direct_list[i]=i;
     			direct_counter+=1;
     			break;
 			}
