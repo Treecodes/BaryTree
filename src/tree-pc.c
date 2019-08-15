@@ -322,6 +322,9 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
     clusters->num=numInterpPoints;
 
     for (int i = 0; i < numInterpPoints; i++) {
+        clusters->x[i]=0.0;
+        clusters->y[i]=0.0;
+        clusters->z[i]=0.0;
         clusters->q[i]=0.0;
         clusters->w[i]=0.0;
     }
@@ -697,8 +700,8 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
             dist = sqrt(tx*tx + ty*ty + tz*tz);
 
             if (((tree_radius[j] + batch_rad) < dist * sqrt(thetasq))
-                && (tree_radius[j] > 0.00)
-                && (torder*torder*torder < tree_numpar[j])) {
+                && (tree_radius[j] > 0.00)) {
+//                && (torder*torder*torder < tree_numpar[j])) {
                 current_level = tree_level[j];
             /*
              * If MAC is accepted and there is more than 1 particle
@@ -714,7 +717,7 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
              * calculation. If there are children, call routine recursively for each.
              */
 
-                if (tree_level[j+1] <= tree_level[j]) {
+                if ( (j==tree_numnodes-1) || (tree_level[j+1] <= tree_level[j]) ) {
                     
                     batch_direct_list[direct_index_counter] = j;
                     direct_index_counter++;
@@ -758,8 +761,8 @@ void pc_compute_interaction_list_remote(int tree_numnodes, const int *tree_level
             dist = sqrt(tx*tx + ty*ty + tz*tz);
             
             if (((tree_radius[j] + batch_rad) < dist * sqrt(thetasq))
-                && (tree_radius[j] > 0.00)
-                && (torder*torder*torder < tree_numpar[j])) {
+                && (tree_radius[j] > 0.00)) {
+//                && (torder*torder*torder < tree_numpar[j])) {
                 current_level = tree_level[j];
                 /*
                  * If MAC is accepted and there is more than 1 particle
@@ -774,7 +777,7 @@ void pc_compute_interaction_list_remote(int tree_numnodes, const int *tree_level
                  * calculation. If there are children, call routine recursively for each.
                  */
                 
-                if (tree_level[j+1] <= tree_level[j]) {
+                if ( (j==tree_numnodes-1) || (tree_level[j+1] <= tree_level[j]) ) {
                     
                     batch_direct_list[j] = j;
                     
