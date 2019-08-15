@@ -465,6 +465,9 @@ void treedriver(struct particles *sources, struct particles *targets,
             
             MPI_Datatype approx_type, direct_type;
             
+            for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
+                approx_list_packed[ii] *= pointsPerCluster;
+            
             MPI_Type_create_indexed_block(numberOfRemoteApprox, pointsPerCluster, approx_list_packed, MPI_DOUBLE, &approx_type);
             MPI_Type_commit(&approx_type);
             int new_sources_length = let_sources_length - previous_let_sources_length;
