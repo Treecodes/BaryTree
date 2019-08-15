@@ -241,6 +241,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 		struct particles *let_clusters = NULL;
 		let_clusters_length=numnodes*pointsPerCluster;
+		int let_clusters_num=numnodes;
 		let_clusters = malloc(sizeof(struct particles)); // let_clusters will hold all cluster data for LET
 		allocate_cluster(let_clusters,let_clusters_length);
 
@@ -403,6 +404,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             int numberOfRemoteApprox = 0;
             int previous_let_clusters_length = let_clusters_length;
             
+//            int let_clusters_num = let_clusters->num;
+
             int numberOfRemoteDirect = 0;
             int previous_let_sources_length = let_sources_length;
 
@@ -424,8 +427,10 @@ void treedriver(struct particles *sources, struct particles *targets,
                     let_tree_array->level[previousTreeArrayLength + appendCounter] = remote_tree_array->level[i];
                     
                     if (approx_list_unpacked[i] != -1) {
-                        let_tree_array->cluster_ind[previousTreeArrayLength + appendCounter] = previousTreeArrayLength + numberOfRemoteApprox;
+                        let_tree_array->cluster_ind[previousTreeArrayLength + appendCounter] = let_clusters_num;
                         let_clusters_length += pointsPerCluster;
+                        printf("\n\npreviousTreeArrayLength = %i, let_clusters_num=%i\n", previousTreeArrayLength,let_clusters_num);
+                        let_clusters_num += 1;
                         numberOfRemoteApprox++;
                     }
                     

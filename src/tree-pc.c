@@ -890,8 +890,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
             numberOfClusterApproximations = batches->index[i][2];
             numberOfDirectSums = batches->index[i][3];
 
-            printf("Rank %i, batch %i, number of cluster approximations: %i\n", rank, i, numberOfClusterApproximations);
-            printf("Rank %i, batch %i, number of direct interactions: %i\n", rank, i, numberOfDirectSums);
+//            printf("Rank %i, batch %i, number of cluster approximations: %i\n", rank, i, numberOfClusterApproximations);
+//            printf("Rank %i, batch %i, number of direct interactions: %i\n", rank, i, numberOfDirectSums);
 
             numberOfTargets = batch_iend - batch_ibeg + 1;
             batchStart =  batch_ibeg - 1;
