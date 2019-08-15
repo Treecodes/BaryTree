@@ -473,7 +473,7 @@ int main(int argc, char **argv)
     free_vector(sources->z);
     free_vector(sources->q);
     free_vector(sources->w);
-//    free_vector(sources->order);
+    free_vector(sources->order);
 
     printf("Freed sources.\n");
     free_vector(targets->x);

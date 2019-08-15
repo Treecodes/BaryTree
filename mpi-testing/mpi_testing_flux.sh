@@ -31,10 +31,11 @@ do
 	NUMSOURCES=$N
 	NUMTARGETS=$N
 	DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin
-	for np in 2
+	for np in 1
 	do
 			#mpirun -np $np direct-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-			mpirun -np $np tree-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER \
+			#mpirun -np $np tree-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER \
+			ddt mpirun -np $np tree-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER \
 							 					$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
 							 					$NUMDEVICES $NUMTHREADS
 	done 

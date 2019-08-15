@@ -429,7 +429,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                     if (approx_list_unpacked[i] != -1) {
                         let_tree_array->cluster_ind[previousTreeArrayLength + appendCounter] = let_clusters_num;
                         let_clusters_length += pointsPerCluster;
-                        printf("\n\npreviousTreeArrayLength = %i, let_clusters_num=%i\n", previousTreeArrayLength,let_clusters_num);
+                        printf("previousTreeArrayLength = %i, let_clusters_num=%i\n", previousTreeArrayLength,let_clusters_num);
                         let_clusters_num += 1;
                         numberOfRemoteApprox++;
                     }
@@ -567,9 +567,25 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(direct_inter_list, batches->num * let_tree_array->numnodes);
     	pc_make_interaction_list(let_tree_array, batches, tree_inter_list,  direct_inter_list);
 
-    	printf("Rank %i just made interaction list based off of its LET.\n", rank);
+//    	printf("Rank %i just made interaction list based off of its LET.\n", rank);
+//    	MPI_Barrier(MPI_COMM_WORLD);
+//    	printf("Rank %i freeing tree_array, sources, and clusters.\n", rank);
+//    	free_vector(clusters->x);
+//		free_vector(clusters->y);
+//		free_vector(clusters->z);
+//		free_vector(clusters->q);
+//		free_vector(clusters->w);
+//		free(clusters);
+//		free_vector(sources->x);
+//		free_vector(sources->y);
+//		free_vector(sources->z);
+//		free_vector(sources->q);
+//		free_vector(sources->w);
+//
+//    	free_tree_array(tree_array);
 
 
+    	MPI_Barrier(MPI_COMM_WORLD);
 
         // After filling LET, call interaction_list_treecode
     	time1 = MPI_Wtime(); // start timer for tree evaluation
@@ -633,13 +649,13 @@ void treedriver(struct particles *sources, struct particles *targets,
     free_vector(tree_inter_list);
     free_vector(direct_inter_list);
 
-    // free clusters
-    free_vector(clusters->x);
-    free_vector(clusters->y);
-    free_vector(clusters->z);
-    free_vector(clusters->q);
-    free_vector(clusters->w);
-    free(clusters);
+//    // free clusters
+//    free_vector(clusters->x);
+//    free_vector(clusters->y);
+//    free_vector(clusters->z);
+//    free_vector(clusters->q);
+//    free_vector(clusters->w);
+//    free(clusters);
 
     // free tree_array
     free_vector(tree_array->ibeg);
