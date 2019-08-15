@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
+#include <mpi.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -797,6 +798,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                                   double *tpeng, double *EnP, int numDevices, int numThreads)
 {
         int i, j;
+        int rank; int numProcs;	int ierr;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
         int tree_numnodes = tree_array->numnodes;
 
@@ -882,6 +886,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
             batch_iend = batches->index[i][1];
             numberOfClusterApproximations = batches->index[i][2];
             numberOfDirectSums = batches->index[i][3];
+
+            printf("Rank %i, batch %i, number of cluster approximations: %i\n", rank, i, numberOfClusterApproximations);
+            printf("Rank %i, batch %i, number of direct interactions: %i\n", rank, i, numberOfDirectSums);
 
             numberOfTargets = batch_iend - batch_ibeg + 1;
             batchStart =  batch_ibeg - 1;

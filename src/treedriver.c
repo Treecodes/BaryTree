@@ -532,13 +532,13 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_w);
 
             MPI_Barrier(MPI_COMM_WORLD);
-            printf("Rank %i, let_clusters->x[previous_let_clusters_length+1] = %1.2e\n", rank, let_clusters->x[previous_let_clusters_length+2]);
-            printf("Rank %i, let_clusters->y[previous_let_clusters_length+1] = %1.2e\n", rank, let_clusters->y[previous_let_clusters_length+2]);
-            printf("Rank %i, let_clusters->z[previous_let_clusters_length+1] = %1.2e\n", rank, let_clusters->z[previous_let_clusters_length+2]);
+            printf("Rank %i, let_clusters->x[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->x[previous_let_clusters_length+2]);
+            printf("Rank %i, let_clusters->y[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->y[previous_let_clusters_length+2]);
+            printf("Rank %i, let_clusters->z[previous_let_clusters_length+1] = %1.4e\n", rank, let_clusters->z[previous_let_clusters_length+2]);
 //            printf("Rank %i, let_clusters->y[previous_let_clusters_length+2] = %1.2e\n", rank, clusters->y[previous_let_clusters_length+2]);
-            printf("Rank %i, let_sources->x[previous_let_sources_length+1] = %1.2e\n", rank, let_sources->x[previous_let_sources_length+2]);
-            printf("Rank %i, let_sources->y[previous_let_sources_length+1] = %1.2e\n", rank, let_sources->y[previous_let_sources_length+2]);
-            printf("Rank %i, let_sources->z[previous_let_sources_length+1] = %1.2e\n", rank, let_sources->z[previous_let_sources_length+2]);
+            printf("Rank %i, let_sources->x[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->x[previous_let_sources_length+2]);
+            printf("Rank %i, let_sources->y[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->y[previous_let_sources_length+2]);
+            printf("Rank %i, let_sources->z[previous_let_sources_length+1] = %1.4e\n", rank, let_sources->z[previous_let_sources_length+2]);
             MPI_Barrier(MPI_COMM_WORLD);
 
             
@@ -573,8 +573,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         } else if (pot_type == 1) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=1 (Yukawa).  Need to modify to call on let_tree_array, let_clusters, etc. ????\n");
-            pc_interaction_list_treecode_yuk(let_tree_array, clusters, batches,
-                                             tree_inter_list, direct_inter_list, sources, targets,
+            pc_interaction_list_treecode_yuk(let_tree_array, let_clusters, batches,
+                                             tree_inter_list, direct_inter_list, let_sources, targets,
                                              tpeng, kappa, tEn, numDevices, numThreads);
 
         } else if (pot_type == 2) {
