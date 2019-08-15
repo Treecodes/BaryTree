@@ -310,8 +310,9 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
 
 void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices, int numThreads, struct tnode_array * tree_array){
 
+	int tree_numnodes = tree_array->numnodes;
     int pointsPerCluster = (order+1)*(order+1)*(order+1);
-    int numInterpPoints = numnodes * pointsPerCluster;
+    int numInterpPoints = tree_numnodes * pointsPerCluster;
     make_vector(clusters->x, numInterpPoints);
     make_vector(clusters->y, numInterpPoints);
     make_vector(clusters->z, numInterpPoints);
@@ -367,7 +368,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         copy(tempX[0:clusterNum], tempY[0:clusterNum], tempZ[0:clusterNum], tempQ[0:clusterNum])
         {
             #pragma omp for schedule(guided)
-            for (int i = 0; i < numnodes; i++) {  // start from i=1, don't need to compute root moments
+            for (int i = 0; i < tree_numnodes; i++) {  // start from i=1, don't need to compute root moments
                 pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
                                      tempX, tempY, tempZ, tempQ);
             }
@@ -797,6 +798,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 {
         int i, j;
 
+        int tree_numnodes = tree_array->numnodes;
+
         for (i = 0; i < targets->num; i++)
             EnP[i] = 0.0;
 
@@ -848,8 +851,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                             qS[0:sources->num], wS[0:sources->num], \
                             xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
                             xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], qC[0:clusters->num], \
-                            tree_inter_list[0:numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
-                            ibegs[0:numnodes], iends[0:numnodes]) copy(EnP3[0:targets->num], EnP2[0:targets->num])
+                            tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
+                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(EnP3[0:targets->num], EnP2[0:targets->num])
         {
 
         int batch_ibeg, batch_iend, node_index;
@@ -884,7 +887,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
             batchStart =  batch_ibeg - 1;
 
             for (j = 0; j < numberOfClusterApproximations; j++) {
-                node_index = tree_inter_list[i * numnodes + j];
+                node_index = tree_inter_list[i * tree_numnodes + j];
 //                clusterStart = numberOfInterpolationPoints*node_index;
                 clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
 
@@ -914,7 +917,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 
             for (j = 0; j < numberOfDirectSums; j++) {
 
-                node_index = direct_inter_list[i * numleaves + j];
+                node_index = direct_inter_list[i * tree_numnodes + j];
 
                 source_start=ibegs[node_index]-1;
                 source_end=iends[node_index];

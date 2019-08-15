@@ -390,10 +390,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 			int numberOfUniqueClusters =  0;
 			int previousTreeArrayLength = let_tree_array_length;
 			for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
-				if ((approx_list_unpacked[i] != -1) || (direct_list[i] != -1)) {
+//				if ((approx_list_unpacked[i] != -1) || (direct_list[i] != -1)) {
 					numberOfUniqueClusters+=1;
 					let_tree_array_length+=1;
-				}
+//				}
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
 			printf("Rank %i got here.  New let_tree_array_length = %i\n", rank, let_tree_array_length);
@@ -415,7 +415,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //				previous_let_sources_length = let_sources_length;
 
 
-				if ((approx_list_unpacked[i] != -1) || (direct_list[i] != -1)) {
+//				if ((approx_list_unpacked[i] != -1) || (direct_list[i] != -1)) {
 					let_tree_array->x_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->x_mid[i];
 					let_tree_array->y_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->y_mid[i];
 					let_tree_array->z_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->z_mid[i];
@@ -443,7 +443,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                     }
                     
 					appendCounter+=1;
-				}
+//				}
 			}
             MPI_Barrier(MPI_COMM_WORLD);
             printf("b Rank %i got here.\n", rank);
