@@ -35,12 +35,6 @@ SET(SRCS_DIRECT
     xmalloc.c xmalloc.h)
 
 
-SET(SRCS_DIRECT_DISTRIBUTED
-    main-direct-distributed.c array.h
-    tools.c tools.h 
-    xmalloc.c xmalloc.h)
-
-
 SET(SRCS_TXT2BIN
     txt2bin.c array.h
     xmalloc.c xmalloc.h
@@ -86,33 +80,12 @@ if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
                                         MPI::MPI_C
                                         $<$<C_COMPILER_ID:GNU>:m>)
     install(TARGETS ${TRGT} DESTINATION bin)
-
-
-    set(TRGT direct-distributed-cpu)
-    add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
-    target_compile_features(${TRGT} PRIVATE
-                                        c_std_99)
-    target_link_libraries(${TRGT}   PRIVATE
-                                        OpenMP::OpenMP_C
-                                        MPI::MPI_C
-                                        $<$<C_COMPILER_ID:GNU>:m>)
-    install(TARGETS ${TRGT} DESTINATION bin)
 endif()
 
 
 if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
     set(TRGT direct-gpu)
     add_executable(${TRGT} ${SRCS_DIRECT})
-    target_link_libraries(${TRGT} PRIVATE
-                                      OpenMP::OpenMP_C
-                                      MPI::MPI_C
-                                      OpenACC_C
-                                      $<$<C_COMPILER_ID:GNU>:m>)
-    install(TARGETS ${TRGT} DESTINATION bin)
-
-
-    set(TRGT direct-distributed-gpu)
-    add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
                                       MPI::MPI_C
