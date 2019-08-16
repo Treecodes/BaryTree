@@ -308,20 +308,20 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
 {
     //    printf("Entering pc_create_tree_array.\n");
     int i;
-    
+
     /*midpoint coordinates, RADIUS and SQRADIUS*/
     tree_array->x_mid[p->node_index] = p->x_mid;
     tree_array->y_mid[p->node_index] = p->y_mid;
     tree_array->z_mid[p->node_index] = p->z_mid;
-    
+
     tree_array->x_min[p->node_index] = p->x_min;
     tree_array->y_min[p->node_index] = p->y_min;
     tree_array->z_min[p->node_index] = p->z_min;
-    
+
     tree_array->x_max[p->node_index] = p->x_max;
     tree_array->y_max[p->node_index] = p->y_max;
     tree_array->z_max[p->node_index] = p->z_max;
-    
+
     tree_array->ibeg[p->node_index] = p->ibeg;
     tree_array->iend[p->node_index] = p->iend;
     tree_array->numpar[p->node_index] = p->numpar;
@@ -331,9 +331,9 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
     for (i = 0; i < p->num_children; i++) {
         pc_create_tree_array(p->child[i], tree_array);
     }
-    
+
     return;
-    
+
 } /* END of function create_tree_n0 */
 
 
