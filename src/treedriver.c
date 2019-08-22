@@ -21,7 +21,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 double *tEn, double *tpeng, double *timetree, int numDevices, int numThreads)
 {
 
-    int verbosity=1;
+    int verbosity=0;
     /* local variables */
     struct tnode *troot = NULL;
     int level;

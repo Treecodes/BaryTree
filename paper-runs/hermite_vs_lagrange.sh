@@ -5,24 +5,24 @@ PFLAG=0
 DFLAG=0
 
 N=1000000
-BATCHSIZE=2000
-MAXPARNODE=2000
+BATCHSIZE=1000
+MAXPARNODE=1000
 SOURCES=/scratch/krasny_fluxg/njvaughn/random/S$N.bin    
 TARGETS=/scratch/krasny_fluxg/njvaughn/random/T$N.bin
 NUMSOURCES=$N
 NUMTARGETS=$N
 
-NUMDEVICES=4
-NUMTHREADS=4
+NUMDEVICES=0
+NUMTHREADS=1
 
 ## COULOMB 
-KAPPA=0.0
-POTENTIALTYPE=0
+KAPPA=0.0   
+POTENTIALTYPE=0 
 DIRECTSUM=/scratch/krasny_fluxg/njvaughn/random/ex_st_coulomb_$N.bin
 #OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/treecodeVersusDirectSum/coulomb_hermite.csv 
 OUTFILE=/home/njvaughn/testing/coulomb_hermite.csv 
 
-direct-gpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
+#direct-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $NUMSOURCES $NUMTARGETS $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
 for ORDER in 7
   do   
      for THETA in 0.8    

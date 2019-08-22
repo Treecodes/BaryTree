@@ -196,33 +196,33 @@ int pc_set_tree_index(struct tnode *p, int index)
 
 
 
-void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
-{
-    int i;
-
-    /*midpoint coordinates, RADIUS and SQRADIUS*/
-    tree_array->x_mid[p->node_index] = p->x_mid;
-    tree_array->y_mid[p->node_index] = p->y_mid;
-    tree_array->z_mid[p->node_index] = p->z_mid;
-
-    tree_array->x_min[p->node_index] = p->x_min;
-    tree_array->y_min[p->node_index] = p->y_min;
-    tree_array->z_min[p->node_index] = p->z_min;
-
-    tree_array->x_max[p->node_index] = p->x_max;
-    tree_array->y_max[p->node_index] = p->y_max;
-    tree_array->z_max[p->node_index] = p->z_max;
-
-    tree_array->ibeg[p->node_index] = p->ibeg;
-    tree_array->iend[p->node_index] = p->iend;
-
-    for (i = 0; i < p->num_children; i++) {
-        pc_create_tree_array(p->child[i], tree_array);
-    }
-
-    return;
-
-} /* END of function create_tree_n0 */
+//void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
+//{
+//    int i;
+//
+//    /*midpoint coordinates, RADIUS and SQRADIUS*/
+//    tree_array->x_mid[p->node_index] = p->x_mid;
+//    tree_array->y_mid[p->node_index] = p->y_mid;
+//    tree_array->z_mid[p->node_index] = p->z_mid;
+//
+//    tree_array->x_min[p->node_index] = p->x_min;
+//    tree_array->y_min[p->node_index] = p->y_min;
+//    tree_array->z_min[p->node_index] = p->z_min;
+//
+//    tree_array->x_max[p->node_index] = p->x_max;
+//    tree_array->y_max[p->node_index] = p->y_max;
+//    tree_array->z_max[p->node_index] = p->z_max;
+//
+//    tree_array->ibeg[p->node_index] = p->ibeg;
+//    tree_array->iend[p->node_index] = p->iend;
+//
+//    for (i = 0; i < p->num_children; i++) {
+//        pc_create_tree_array(p->child[i], tree_array);
+//    }
+//
+//    return;
+//
+//} /* END of function create_tree_n0 */
 
 
 
@@ -304,37 +304,37 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, doubl
 
 
 
-//void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
-//{
-//    //    printf("Entering pc_create_tree_array.\n");
-//    int i;
-//
-//    /*midpoint coordinates, RADIUS and SQRADIUS*/
-//    tree_array->x_mid[p->node_index] = p->x_mid;
-//    tree_array->y_mid[p->node_index] = p->y_mid;
-//    tree_array->z_mid[p->node_index] = p->z_mid;
-//
-//    tree_array->x_min[p->node_index] = p->x_min;
-//    tree_array->y_min[p->node_index] = p->y_min;
-//    tree_array->z_min[p->node_index] = p->z_min;
-//
-//    tree_array->x_max[p->node_index] = p->x_max;
-//    tree_array->y_max[p->node_index] = p->y_max;
-//    tree_array->z_max[p->node_index] = p->z_max;
-//
-//    tree_array->ibeg[p->node_index] = p->ibeg;
-//    tree_array->iend[p->node_index] = p->iend;
-//    tree_array->numpar[p->node_index] = p->numpar;
-//    tree_array->level[p->node_index] = p->level;
-//    tree_array->radius[p->node_index] = p->radius;
-//
-//    for (i = 0; i < p->num_children; i++) {
-//        pc_create_tree_array(p->child[i], tree_array);
-//    }
-//
-//    return;
-//
-//} /* END of function create_tree_n0 */
+void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
+{
+    //    printf("Entering pc_create_tree_array.\n");
+    int i;
+
+    /*midpoint coordinates, RADIUS and SQRADIUS*/
+    tree_array->x_mid[p->node_index] = p->x_mid;
+    tree_array->y_mid[p->node_index] = p->y_mid;
+    tree_array->z_mid[p->node_index] = p->z_mid;
+
+    tree_array->x_min[p->node_index] = p->x_min;
+    tree_array->y_min[p->node_index] = p->y_min;
+    tree_array->z_min[p->node_index] = p->z_min;
+
+    tree_array->x_max[p->node_index] = p->x_max;
+    tree_array->y_max[p->node_index] = p->y_max;
+    tree_array->z_max[p->node_index] = p->z_max;
+
+    tree_array->ibeg[p->node_index] = p->ibeg;
+    tree_array->iend[p->node_index] = p->iend;
+    tree_array->numpar[p->node_index] = p->numpar;
+    tree_array->level[p->node_index] = p->level;
+    tree_array->radius[p->node_index] = p->radius;
+
+    for (i = 0; i < p->num_children; i++) {
+        pc_create_tree_array(p->child[i], tree_array);
+    }
+
+    return;
+
+} /* END of function create_tree_n0 */
 
 
 
@@ -743,7 +743,7 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
              * calculation. If there are children, call routine recursively for each.
              */
 
-                if (tree_level[j+1] <= tree_level[j]) {
+                if ( (j==tree_numnodes-1) || (tree_level[j+1] <= tree_level[j]) ) {
                     
                     batch_direct_list[direct_index_counter] = j;
                     direct_index_counter++;
