@@ -4,6 +4,7 @@ data/*
 bin*
 lib*
 .DS_Store
+*/.DS_Store
 *.ptp*
 *.cproject
 *org.eclipse*
