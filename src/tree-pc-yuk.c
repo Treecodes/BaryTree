@@ -72,8 +72,7 @@ void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct par
 
 	#pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
 			xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
-			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], qC[0:clusters->num], tree_inter_list[0:numnodes*batches->num], \
-			direct_inter_list[0:batches->num * numleaves], ibegs[0:numnodes], iends[0:numnodes]) \
+			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], qC[0:clusters->num]) \
 			copy(EnP3[0:targets->num], EnP2[0:targets->num])
 	    {
 

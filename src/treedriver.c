@@ -152,7 +152,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             fill_in_cluster_data_hermite(clusters, sources, troot, order);
 
         } else if  ((pot_type == 6) || (pot_type==7)) {
-            fill_in_cluster_data_hermite_SS(clusters, sources, troot, order);
+        	printf("Not set up to do singularity subtraction for Hermite yet.\n");
+            fill_in_cluster_data_hermite(clusters, sources, troot, order);
         }
         timeFillClusters2 = MPI_Wtime();
         timeFillClusters1 = timeFillClusters2-timeFillClusters1;
@@ -226,11 +227,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         } else if (pot_type == 2) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=2 (Coulomb w/ singularity subtraction).\n");
-//            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
-//                                   kappa, tpeng, tEn, numDevices, numThreads);
-          pc_interaction_list_treecode_Coulomb_SS(tree_array, clusters, batches,
-                                                  tree_inter_list, direct_inter_list, sources, targets,
-                                                  tpeng, kappa, tEn, numDevices, numThreads);
+            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
+                                   kappa, tpeng, tEn, numDevices, numThreads);
+//          pc_interaction_list_treecode_Coulomb_SS(tree_array, clusters, batches,
+//                                                  tree_inter_list, direct_inter_list, sources, targets,
+//                                                  tpeng, kappa, tEn, numDevices, numThreads);
 
         } else if (pot_type == 3) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=3 (Yukawa w/ singularity subtraction).\n");

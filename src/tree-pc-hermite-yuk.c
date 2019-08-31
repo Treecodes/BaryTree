@@ -83,10 +83,9 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
 
 	#pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
 			xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
-			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num],tree_inter_list[0:numnodes*batches->num], \
+			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], \
 			qxC[0:clusters->num],qyC[0:clusters->num],qzC[0:clusters->num],qxyC[0:clusters->num], \
-			qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num], \
-			direct_inter_list[0:batches->num * numleaves], ibegs[0:numnodes], iends[0:numnodes]) \
+			qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num]) \
 			copy(EnP3[0:targets->num], EnP2[0:targets->num])
 
 //#pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
