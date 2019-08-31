@@ -22,43 +22,60 @@
 void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order){
 
 	int pointsPerCluster = (order+1)*(order+1)*(order+1);
-	int numInterpPoints = numnodes * pointsPerCluster;
-	make_vector(clusters->x, numInterpPoints);
-	make_vector(clusters->y, numInterpPoints);
-	make_vector(clusters->z, numInterpPoints);
-	make_vector(clusters->q, numInterpPoints);
-	make_vector(clusters->qx, numInterpPoints);
-	make_vector(clusters->qy, numInterpPoints);
-	make_vector(clusters->qz, numInterpPoints);
-	make_vector(clusters->qxy, numInterpPoints);
-	make_vector(clusters->qyz, numInterpPoints);
-	make_vector(clusters->qxz, numInterpPoints);
-	make_vector(clusters->qxyz, numInterpPoints);
-	make_vector(clusters->w, numInterpPoints);  // will be used in singularity subtraction
-//	memset(clusters->q,0,numInterpPoints*sizeof(double));
-	clusters->num=numInterpPoints;
+		int numInterpPoints = numnodes * pointsPerCluster;
+		make_vector(clusters->x, numInterpPoints);
+		make_vector(clusters->y, numInterpPoints);
+		make_vector(clusters->z, numInterpPoints);
+		make_vector(clusters->q, numInterpPoints);
+		make_vector(clusters->qx, numInterpPoints);
+		make_vector(clusters->qy, numInterpPoints);
+		make_vector(clusters->qz, numInterpPoints);
+		make_vector(clusters->qxy, numInterpPoints);
+		make_vector(clusters->qyz, numInterpPoints);
+		make_vector(clusters->qxz, numInterpPoints);
+		make_vector(clusters->qxyz, numInterpPoints);
+		make_vector(clusters->w, numInterpPoints);  // will be used in singularity subtraction
+		make_vector(clusters->wx, numInterpPoints);
+		make_vector(clusters->wy, numInterpPoints);
+		make_vector(clusters->wz, numInterpPoints);
+		make_vector(clusters->wxy, numInterpPoints);
+		make_vector(clusters->wyz, numInterpPoints);
+		make_vector(clusters->wxz, numInterpPoints);
+		make_vector(clusters->wxyz, numInterpPoints);
+	//	memset(clusters->q,0,numInterpPoints*sizeof(double));
+		clusters->num=numInterpPoints;
 
-	for (int i=0; i< numInterpPoints; i++){
-		clusters->w[i]=0.0;
-	}
-	for (int i=0; i< numInterpPoints; i++){
-		clusters->q[i]=0.0;
-		clusters->qx[i]=0.0;
-		clusters->qy[i]=0.0;
-		clusters->qz[i]=0.0;
-		clusters->qxy[i]=0.0;
-		clusters->qyz[i]=0.0;
-		clusters->qxz[i]=0.0;
-		clusters->qxyz[i]=0.0;
-	}
+		for (int i=0; i< numInterpPoints; i++){
+			clusters->w[i]=0.0;
+			clusters->wx[i]=0.0;
+			clusters->wy[i]=0.0;
+			clusters->wz[i]=0.0;
+			clusters->wxy[i]=0.0;
+			clusters->wyz[i]=0.0;
+			clusters->wxz[i]=0.0;
+			clusters->wxyz[i]=0.0;
+		}
+		for (int i=0; i< numInterpPoints; i++){
+			clusters->q[i]=0.0;
+			clusters->qx[i]=0.0;
+			clusters->qy[i]=0.0;
+			clusters->qz[i]=0.0;
+			clusters->qxy[i]=0.0;
+			clusters->qyz[i]=0.0;
+			clusters->qxz[i]=0.0;
+			clusters->qxyz[i]=0.0;
+		}
 
-#pragma acc data copy(tt[0:torderlim],ww[0:torderlim], \
-		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num], \
-		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
-		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num])
+	#pragma acc data copy(tt[0:torderlim],ww[0:torderlim], \
+			sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+			clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
+			clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
+			clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num],\
+			clusters->w[0:clusters->num], clusters->wx[0:clusters->num],clusters->wy[0:clusters->num],clusters->wz[0:clusters->num], \
+			clusters->wxy[0:clusters->num],clusters->wyz[0:clusters->num],clusters->wxz[0:clusters->num], clusters->wxyz[0:clusters->num])
 
-	addNodeToArray_hermite(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
+
+		addNodeToArray_hermite(troot, sources, clusters, order, numInterpPoints, pointsPerCluster);
 
 	return;
 }
@@ -104,7 +121,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 	// Make and zero-out arrays to store denominator sums
 	double sumX, sumY, sumZ;
 
-	int streamID = rand() % 2;
+	int streamID = rand() % 3;
 #pragma acc kernels present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ,tt,ww, \
 		clusterQ,clusterQx,clusterQy,clusterQz,clusterQxy,clusterQyz,clusterQxz,clusterQxyz) \
 	create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
@@ -438,13 +455,12 @@ void pc_interaction_list_treecode_hermite_coulomb(struct tnode_array *tree_array
 
 	#pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
 			xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
-			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num],tree_inter_list[0:numnodes*batches->num], \
+			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], \
 			qxC[0:clusters->num],qyC[0:clusters->num],qzC[0:clusters->num],qxyC[0:clusters->num], \
-			qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num], \
-			direct_inter_list[0:batches->num * numleaves], ibegs[0:numnodes], iends[0:numnodes]) \
+			qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num]) \
 			copy(EnP3[0:targets->num], EnP2[0:targets->num])
 
-//#pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
+//#pragma acc data copyin(targets->x[0:targets->num],targets->y[0:targets->num],  targets->z[0:targets->num], targets->q[0:targets->num], \
 //		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
 //		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
 //		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \

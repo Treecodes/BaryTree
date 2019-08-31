@@ -133,7 +133,7 @@ int main(int argc, char **argv)
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
     printf("Allocated sources and targets particles.\n");
-    double *originalWeights;
+    double *originalWeights, *rho;
     printf("PFLAG = %i\n",pflag);
     if (pflag == 0) {
     	printf("PFLAG = %i\n",pflag);
@@ -150,6 +150,7 @@ int main(int argc, char **argv)
         
 
 		make_vector(originalWeights, numparsS);
+		make_vector(rho, numparsS);
 
 
         if (rank == 0) {
@@ -318,9 +319,10 @@ int main(int argc, char **argv)
 			}
 	}
 
-    printf("Filling originalWeights.\n");
+    printf("Filling originalWeights and rho.\n");
     for (i=0;i<numparsT;i++){
-		originalWeights[i] = sources->w[i];}
+		originalWeights[i] = sources->w[i];
+		rho[i] = sources->q[i];}
     printf("originalWeights filled.  Starting timer.\n");
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
@@ -342,7 +344,7 @@ int main(int argc, char **argv)
     MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
-//    if (rank == 0) dpengglob = sum(denergyglob*originalWeights, numparsT);
+
     if (rank == 0) dpengglob = sum(denergyglob, numparsT);
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
@@ -445,6 +447,15 @@ int main(int argc, char **argv)
         printf("inf error occurring at %f, %f, %f \n\n", x, y,z);
     }
     
+    double hartreeEnergy = 0;
+	for (int i=0;i<numparsT; i++){
+		hartreeEnergy += tenergyglob[i]*originalWeights[targets->order[i]]*rho[targets->order[i]]/2.0;
+	}
+
+//    if (rank == 0) hartreeEnergy = sum(denergyglob*originalWeights, numparsT);
+	printf("\n\nHartree energy: %1.12f\n\n", hartreeEnergy);
+
+
     
 //    if (rank == 0) {
 //        fp = fopen(sampout, "a");
@@ -515,6 +526,7 @@ int main(int argc, char **argv)
     free(targets);
     free_vector(tenergy);
     free_vector(originalWeights);
+    free_vector(rho);
 
     if (rank == 0) {
         free_vector(denergyglob);

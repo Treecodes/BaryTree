@@ -22,10 +22,12 @@
 
 
 
-void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array,
+                                  struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double kappa, double *EnP, int numDevices, int numThreads)
+                                  double *tpeng, double eta, double *EnP,
+                                  int numDevices, int numThreads)
 {
 	    int i, j;
 
@@ -83,9 +85,10 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
 
 	#pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
 			xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
-			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], \
+			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num],tree_inter_list[0:numnodes*batches->num], \
 			qxC[0:clusters->num],qyC[0:clusters->num],qzC[0:clusters->num],qxyC[0:clusters->num], \
-			qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num]) \
+			qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num], \
+			direct_inter_list[0:batches->num * numleaves], ibegs[0:numnodes], iends[0:numnodes]) \
 			copy(EnP3[0:targets->num], EnP2[0:targets->num])
 
 //#pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
@@ -109,12 +112,16 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
 		int source_start;
 		int source_end;
 
-		double d_peng, r, r2, r3, r4;
+		double d_peng, r;
 		double xi,yi,zi;
-		double rinv,r3inv,r5inv,r7inv;
 
-		double kappa2=kappa*kappa;
-		double kappa3=kappa*kappa*kappa;
+		double rinv, r2inv, r4inv;
+        double r_eta, pot, auxpot, auxpot_eta, dpot1, dpot2, dpot3;
+
+		double twoinvEta2 = 2.0 / (eta * eta);
+		double teninvEta2 = 5.0 * twoinvEta2;
+        double fourinvEta4 = twoinvEta2 * twoinvEta2;
+
 		int numberOfTargets;
 		int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
 		int clusterStart, batchStart, sourceIdx;
@@ -122,7 +129,7 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
 		int numberOfClusterApproximations, numberOfDirectSums;
 
 		int streamID;
-		#pragma omp for private(j,ii,jj,sourceIdx,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID,rinv,r3inv,r5inv,r7inv)
+		#pragma omp for private(j,ii,jj,sourceIdx,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID,rinv,r2inv,r4inv,r_eta,pot,auxpot,auxpot_eta,dpot1,dpot2,dpot3)
 	    for (i = 0; i < batches->num; i++) {
 	    	batch_ibeg = batches->index[i][0];
 			batch_iend = batches->index[i][1];
@@ -157,29 +164,30 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
 						dzt = zi - zC[sourceIdx];
 //						tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 						r = sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-						r2 = r*r;
-						r3 = r2*r;
-						r4 = r2*r2;
+
 						rinv = 1 / r;
-						r3inv = rinv*rinv*rinv;
-						r5inv = r3inv*rinv*rinv;
-						r7inv = r5inv*rinv*rinv;
+						r2inv = rinv * rinv;
+						r4inv = r2inv * r2inv;
+                        r_eta = r / eta;
 
+                        pot = erf(r_eta) * rinv; 
+                        auxpot = 2.0 / sqrt(M_PI) * exp(-r_eta * r_eta);
+                        auxpot_eta = auxpot / eta;
 
+                        dpot1 = r2inv * (pot - auxpot);
+                        dpot2 = r2inv * ( 3.0 * pot * r2inv - auxpot_eta
+                              * ( 3.0 * r2inv + twoinvEta2));
+                        dpot3 = r2inv * (15.0 * pot * r4inv - auxpot_eta
+                              * (15.0 * r4inv + teninvEta2 * r2inv + fourinvEta4));
 
-//						tempPotential +=       rinv  * ( qC[sourceIdx])
-//														+      r3inv * ( qxC[sourceIdx]*dxt +  qyC[sourceIdx]*dyt +  qzC[sourceIdx]*dzt )
-//														+ 3 *  r5inv * ( qxyC[sourceIdx]*dxt*dyt +  qyzC[sourceIdx]*dyt*dzt +  qxzC[sourceIdx]*dxt*dzt )
-//														+ 15 * r7inv *   qxyzC[sourceIdx]*dxt*dyt*dzt
-//														;
-
-
-						tempPotential +=       exp(-kappa*r)*(
-											   rinv  * ( qC[sourceIdx])
-										+      r3inv * (1 + kappa*r) * ( qxC[sourceIdx]*dxt +  qyC[sourceIdx]*dyt +  qzC[sourceIdx]*dzt )
-										+      r5inv * (3 + 3*kappa*r + kappa2*r2 ) * ( qxyC[sourceIdx]*dxt*dyt +  qyzC[sourceIdx]*dyt*dzt +  qxzC[sourceIdx]*dxt*dzt )
-										+      r7inv * (15 + 15*kappa*r + 6*kappa2*r2 + kappa3*r3) * qxyzC[sourceIdx]*dxt*dyt*dzt
-										);
+						tempPotential +=  pot  *    qC[sourceIdx]
+								       + dpot1 *  (qxC[sourceIdx] * dxt
+                                               +   qyC[sourceIdx] * dyt
+                                               +   qzC[sourceIdx] * dzt)
+                                       + dpot2 * (qxyC[sourceIdx] * dxt * dyt
+                                               +  qyzC[sourceIdx] * dyt * dzt
+                                               +  qxzC[sourceIdx] * dxt * dzt)
+                                       + dpot3 * qxyzC[sourceIdx] * dxt * dyt * dzt;
 
 
 
@@ -210,7 +218,7 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
 		            tz = zS[jj] - zT[ii];
 		            r = sqrt(tx*tx + ty*ty + tz*tz);
 		            if (r > DBL_MIN) {
-		            	d_peng += exp(-kappa*r)*qS[jj] * wS[jj] / r;
+		            	d_peng += erf(r / eta) * qS[jj] * wS[jj] / r;
 		            }
 		        }
 				#pragma acc atomic
