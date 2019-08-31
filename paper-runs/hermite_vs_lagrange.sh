@@ -54,4 +54,3 @@ OUTFILE=/home/njvaughn/synchronizedDataFiles/KITCpaperData/treecodeVersusDirectS
 #     done
 # done
  
- 
