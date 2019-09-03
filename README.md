@@ -40,13 +40,13 @@ BaryTree
 
 Summary of executables
 ----------------------
-  tree.exe:     Runs the particle-cluster or cluster-particle treecode for Coulomb or
-                screened Coulomb interactions.
+BaryTree:  Runs the particle-cluster or cluster-particle treecode for Coulomb or
+           screened Coulomb interactions.
 	     
-  direct.exe:   Directly computes Coulomb or screened Coulomb interactions.
+  direct:  Directly computes Coulomb or screened Coulomb interactions.
   
-  txt2bin.exe:  Turns a text file of sources (pqr or x/y/z/q file) or targets into a 
-  		binary file for use by the tree.exe or direct.exe executables.
+ txt2bin:  Turns a text file of sources (pqr or x/y/z/q file) or targets into a 
+           binary file for use by the tree.exe or direct.exe executables.
 
 
                      
@@ -55,13 +55,7 @@ Building
 To compile with GPU support, first load all modules necessary for PGI compilers.
 For instance, on Michigan Flux, first run:
 	      
-	module load cuda cupti pgi openmpi/1.10.2/pgi/16.4
-	      
-To profile the code, either add the flag `-ta=nvidia,time` to the Makefile in
-src, or run the following commands:
-	      
-	export PGI_ACC_TIME=1
-	export ACC_NOTIFY=1
+	module load cuda pgi openmpi
 	      
 The code is compiled with a `make` command in the src directory. This will generate
 executables in the bin directory. By default, on Linux, the compilation will rely
@@ -71,10 +65,9 @@ include GPU support. Edit the flags in Makefile to change this behavior.
    
               
                                                      
-Input for tree.exe:
+Input for BaryTree
 -------------------------------
-
-      Enter the following as command line arguments:
+Enter the following as command line arguments:
  
                    sampin1:  sources input file 
                    sampin2:  targets input file 
@@ -84,14 +77,12 @@ Input for tree.exe:
                   numparsT:  number of targets
                      theta:  multipole acceptance criterion
                      order:  order of treecode Taylor expansion 
-                 tree_type:  0--cluster-particle, 1--particle-cluster 
                 maxparnode:  maximum particles in leaf 
                      kappa:  screened Coulomb parameter
-                  pot_type:  0--Coulomb, 1--screened Coulomb
-                     pflag:  distribute 0--targets, 1--sources
-                     sflag:  on distr 0--sort, 1--no sort
-                     dflag:  if sorted, direction 0--x, 1--y, 2--z	
+                  pot_type:  0--Coulomb, 1--screened Coulomb	
 		     batch:  maximum particles in batch
+	       num devices:  number of GPUs available
+	       num threads:  number of OpenMP threads
 
 License
 -------
