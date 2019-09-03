@@ -81,8 +81,8 @@ Enter the following as command line arguments:
                      kappa:  screened Coulomb parameter
                   pot_type:  0--Coulomb, 1--screened Coulomb	
 		     batch:  maximum particles in batch
-	       num devices:  number of GPUs available
-	       num threads:  number of OpenMP threads
+	       	num devices:  number of GPUs available
+	       	num threads:  number of OpenMP threads
 
 License
 -------
