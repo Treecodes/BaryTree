@@ -19,13 +19,13 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 /* The treedriver routine in Fortran */
 int main(int argc, char **argv)
 {
-
     int rank, p;
     
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &p);
     printf("rank = %i\n",rank);
+    
     /* runtime parameters */
     int numparsS, numparsT, numDevices, numThreads;
     int pot_type;
@@ -71,9 +71,6 @@ int main(int argc, char **argv)
     printf("Setup MPI file variables.\n");
 //    omp_set_num_threads(4);
 
-
-
-
     sampin1 = argv[1];
     if (strcmp(sampin1,"--help") == 0)
     {
@@ -88,8 +85,8 @@ int main(int argc, char **argv)
             printf("      numparsT:  number of targets \n");                 // 1000000
             printf("         kappa:  screened Coulomb parameter \n");        // 0.00
             printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");   // 1
-            printf("      number of devices: \n");   // 1
-
+            printf("   num devices:  number of GPUs available \n");   // 1
+            printf("   num threads:  number of OpenMP threads \n");   // 1
         }
         return 0;
     }
@@ -110,7 +107,6 @@ int main(int argc, char **argv)
     if (rank == 0) numparsTloc = maxparsTloc;
     globparsTloc = maxparsTloc + numparsTloc * (rank-1);
 
-
     make_vector(xS,numparsS);
     make_vector(yS,numparsS);
     make_vector(zS,numparsS);
@@ -123,7 +119,6 @@ int main(int argc, char **argv)
     make_vector(qT,numparsTloc);
 
     make_vector(denergy,numparsTloc);
-
 
     /* Reading in coordinates and charges for the source particles*/
     MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -138,7 +133,6 @@ int main(int argc, char **argv)
     }
     MPI_File_close(&fpmpi);
     
-
     /* Reading in coordinates for the targets */
     MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
     MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*4*sizeof(double), MPI_SEEK_SET);
@@ -155,19 +149,19 @@ int main(int argc, char **argv)
 	double *originalWeights, *rho;
     make_vector(originalWeights, numparsS);
 	make_vector(rho, numparsS);
-    for (i=0;i<numparsT;i++){
+    for (int i = 0; i < numparsT; ++i) {
 		originalWeights[i] = wS[i];
 		rho[i] = qS[i];
     }
 	printf("originalWeights filled.  Starting timer.\n");
 
 	// Initialize all GPUs
-	if (numDevices>0){
+	if (numDevices > 0) {
 		#pragma omp parallel num_threads(numDevices)
-			{
+        {
 			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 			acc_init(acc_get_device_type());
-			}
+        }
 	}
 
     /* Calling main treecode subroutine to calculate approximate energy */
@@ -178,9 +172,9 @@ int main(int argc, char **argv)
     time2 = MPI_Wtime();
     time_direct = time2-time1;
 
-    double hartreeEnergy=0.0;
-    for (int i=0;i<numparsTloc;i++){
-    	hartreeEnergy += denergy[i]*rho[i]*originalWeights[i]/2.0;  // sum ( V_H * RHO * W )
+    double hartreeEnergy = 0.0;
+    for (int i = 0; i < numparsTloc; ++i) {
+    	hartreeEnergy += denergy[i] * rho[i] * originalWeights[i] / 2.0;  // sum ( V_H * RHO * W )
     }
     printf("Hartree energy = %1.12f\n", hartreeEnergy);
 
@@ -190,12 +184,6 @@ int main(int argc, char **argv)
     MPI_Reduce(&time_direct, &time_direct_min, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    
-
-
-//    if (rank == 0) dpengglob = sum(denergyglob*originalWeights, numparsT);
-
-
 
     MPI_File_open(MPI_COMM_WORLD, sampout, MPI_MODE_CREATE|MPI_MODE_WRONLY, MPI_INFO_NULL, &fpmpi);
     if (rank == 0)
@@ -221,7 +209,6 @@ int main(int argc, char **argv)
 
     }
 
-    
     if (rank == 0) {
         fp = fopen(sampdatout, "a");
         fprintf(fp, "%s \t %s \t %s \t %d \t %d \t %f \t %d \t %d \t"
@@ -251,273 +238,229 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
                 int pot_type, double kappa, int numDevices, int numThreads)
 {
-        /* local variables */
-        int i, j;
-        double tx, ty, tz, xi, yi, zi, qi, teng, rad;
+    /* local variables */
+    int i, j;
+    double tx, ty, tz, xi, yi, zi, qi, teng, rad;
 
-
-//#pragma omp parallel num_threads(acc_get_num_devices(acc_get_device_type()))
-        if (numDevices>0){
-	#pragma omp parallel num_threads(numDevices)
-			{
-//			if (omp_get_thread_num()<=numDevices){
-				acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-//			}
-	#pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
+    if (numDevices > 0) {
+	    #pragma omp parallel num_threads(numDevices)
+        {
+            acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+	        #pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
 			xT [ 0 : numparsT ] , yT [ 0 : numparsT ] , zT [ 0 : numparsT ] , qT [ 0 : numparsT ] )
 			{
 
-
-	//		int numDevices = acc_get_num_devices(acc_get_device_type());
-	//		printf("numDevices: %i\n", numDevices);
-			int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-			if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-			if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-			printf("this thread: %i\n", this_thread);
-	//		printf("num_threads: %i\n", num_threads);
-
-	//		numDevices=1;
-	//		num_threads=1;
+			int this_thread = omp_get_thread_num();
+            int num_threads = omp_get_num_threads();
+			if (this_thread == 0) printf("numDevices: %i\n", numDevices);
+			if (this_thread == 0) printf("num_threads: %i\n", num_threads);
 
 			int targetStart, targetEnd;
 			#pragma omp for schedule(guided)
-			for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
+			for (int deviceNumber = 0; deviceNumber < num_threads; ++deviceNumber) {
 
 				targetStart = deviceNumber*numparsT/num_threads;
 				targetEnd = (deviceNumber+1)*numparsT/num_threads;
 				printf("Device number: %i\n",deviceNumber);
 				printf("Target start: %i\n", targetStart);
 				printf("Target end: %i\n", targetEnd);
-			if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.  Lagrange or Hermite.
-	//			#pragma omp for schedule(static)
-	//        	for (int deviceNumber=0;deviceNumber<num_threads;deviceNumber++){
-	//
-	//        		targetStart = deviceNumber*numparsT/num_threads;
-	//        		targetEnd = (deviceNumber+1)*numparsT/num_threads;
-	//        		if (numThreads > numDevices){
-	//        			#pragma omp for private(j) num_threads(numThreads)}
+                
+			    if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.
 					#pragma acc kernels
 					{
 					#pragma acc loop independent
-	//				#pragma omp for num_threads(numThreads)
-					for (i = targetStart; i < targetEnd; i++) {
-								xi = xT[i];
-								yi = yT[i];
-								zi = zT[i];
-								teng = 0.0;
-								#pragma acc loop independent
-								for (j = 0; j < numparsS; j++) {
-										tx = xi - xS[j];
-										ty = yi - yS[j];
-										tz = zi - zS[j];
-										rad = sqrt(tx*tx + ty*ty + tz*tz);
-										if (rad>1e-14){
-											teng = teng + qS[j]*wS[j] / rad;
-										}
-								}
-								denergy[i] =  teng;
-
+					for (int i = targetStart; i < targetEnd; ++i) {
+                        xi = xT[i];
+                        yi = yT[i];
+                        zi = zT[i];
+                        teng = 0.0;
+                        #pragma acc loop independent
+                        for (int j = 0; j < numparsS; ++j) {
+                            tx = xi - xS[j];
+                            ty = yi - yS[j];
+                            tz = zi - zS[j];
+                            rad = sqrt(tx*tx + ty*ty + tz*tz);
+                            if (rad > 1e-14) {
+                                teng = teng + qS[j]*wS[j] / rad;
+                            }
+                        }
+                        denergy[i] =  teng;
 					}
+				    }
 
-				}
-	//        	queue = (queue%2)+1;
-
-
-			} else if (pot_type == 1 || pot_type == 5) {
-	#pragma acc kernels
-				{
-	#pragma acc loop independent
-					for (i = targetStart; i < targetEnd; i++) {
-							xi = xT[i];
-							yi = yT[i];
-							zi = zT[i];
-							teng = 0.0;
-
-							for (j = 0; j < numparsS; j++) {
-									tx = xi - xS[j];
-									ty = yi - yS[j];
-									tz = zi - zS[j];
-									rad = sqrt(tx*tx + ty*ty + tz*tz);
-									if (rad>1e-14){
-										teng = teng + qS[j]*wS[j] * exp(-kappa * rad) / rad;
-									}
-							}
-							denergy[i] = teng;
-					}
-			}
-
-			} else if (pot_type == 2 || pot_type == 6) {
-				double kappaSq = kappa*kappa;
-	#pragma acc kernels
-				{
-	#pragma acc loop independent
-					for (i = targetStart; i < targetEnd; i++) {
-							xi = xT[i];
-							yi = yT[i];
-							zi = zT[i];
-							qi = qT[i];
-							teng = 2*M_PI*kappaSq*qi;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
-
-							for (j = 0; j < numparsS; j++) {
-									tx = xi - xS[j];
-									ty = yi - yS[j];
-									tz = zi - zS[j];
-									rad = sqrt(tx*tx + ty*ty + tz*tz);
-									if (rad>1e-14){
-										teng = teng + ( qS[j] - qi* exp(-rad*rad/kappaSq)) *wS[j]/ rad;
-									}
-							}
-							denergy[i] = teng;
-					}
-			}
-
-			} else if (pot_type == 3 || pot_type == 7) {
-	#pragma acc kernels
-				{
-	#pragma acc loop independent
-				for (i = targetStart; i < targetEnd; i++) {
-						xi = xT[i];
-						yi = yT[i];
-						zi = zT[i];
-						qi = qT[i];
-						teng = 4*M_PI*qi/kappa/kappa;  // 4pi*f_t/k^2
-
-						for (j = 0; j < numparsS; j++) {
-								tx = xi - xS[j];
-								ty = yi - yS[j];
-								tz = zi - zS[j];
-								rad = sqrt(tx*tx + ty*ty + tz*tz);
-								if (rad>1e-14){
-									teng += ( qS[j] - qi) *wS[j] * exp(-kappa * rad) / rad;
-								}
-						}
-						denergy[i] = teng;
-				}
-			} // end kernels
-
-			} // end pot=3 or 7
-			} // end loop over device number
-			} // end acc parallel
-			} // end omp parallel
-		} // end if (numDevices>0)
-
-
-			else{ //numDevices=0, parallelize with openMP
-				printf("Using openMP only, no GPU devices.\n");
-#pragma omp parallel num_threads(numThreads)
-        {
-
-
-		int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-		printf("this thread: %i\n", this_thread);
-
-
-
-        if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.  Lagrange or Hermite.
-        	printf("Entering pot_type==0 or 4 section.\n");
-			#pragma omp for private(j,xi,yi,zi,tx,ty,tz,rad,teng) schedule(guided)
-			for (i = 0; i < numparsT; i++) {
-						xi = xT[i];
-						yi = yT[i];
-						zi = zT[i];
-						teng = 0.0;
-						for (j = 0; j < numparsS; j++) {
-								tx = xi - xS[j];
-								ty = yi - yS[j];
-								tz = zi - zS[j];
-								rad = sqrt(tx*tx + ty*ty + tz*tz);
-								if (rad>1e-14){
-									teng = teng + qS[j]*wS[j] / rad;
-								}
-						}
-						denergy[i] =  teng;
-
-				}
-
-
-        } else if (pot_type == 1 || pot_type == 5) {
-				#pragma omp for private(j,xi,yi,zi,tx,ty,tz,rad,teng)
-        		for (i = 0; i < numparsT; i++) {
+			    } else if (pot_type == 1 || pot_type == 5) {
+	                #pragma acc kernels
+				    {
+	                #pragma acc loop independent
+                    for (i = targetStart; i < targetEnd; i++) {
                         xi = xT[i];
                         yi = yT[i];
                         zi = zT[i];
                         teng = 0.0;
 
                         for (j = 0; j < numparsS; j++) {
-                                tx = xi - xS[j];
-                                ty = yi - yS[j];
-                                tz = zi - zS[j];
-                                rad = sqrt(tx*tx + ty*ty + tz*tz);
-                                if (rad>1e-14){
-                                	teng = teng + qS[j]*wS[j] * exp(-kappa * rad) / rad;
-                                }
+                            tx = xi - xS[j];
+                            ty = yi - yS[j];
+                            tz = zi - zS[j];
+                            rad = sqrt(tx*tx + ty*ty + tz*tz);
+                            if (rad > 1e-14) {
+                                teng += qS[j] * wS[j] * exp(-kappa * rad) / rad;
+                            }
                         }
                         denergy[i] = teng;
+                    }
+			        }
+
+			    } else if (pot_type == 2 || pot_type == 6) {
+				    double kappaSq = kappa * kappa;
+	                #pragma acc kernels
+				    {
+	                #pragma acc loop independent
+					for (i = targetStart; i < targetEnd; i++) {
+                        xi = xT[i];
+                        yi = yT[i];
+                        zi = zT[i];
+                        qi = qT[i];
+                        teng = 2 * M_PI * kappaSq * qi;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
+
+                        for (j = 0; j < numparsS; j++) {
+                            tx = xi - xS[j];
+                            ty = yi - yS[j];
+                            tz = zi - zS[j];
+                            rad = sqrt(tx*tx + ty*ty + tz*tz);
+                            if (rad > 1e-14) {
+                                teng += (qS[j] - qi * exp(-rad*rad/kappaSq)) * wS[j] / rad;
+                            }
+                        }
+                        denergy[i] = teng;
+					}
+			        }
+
+			    } else if (pot_type == 3 || pot_type == 7) {
+	                #pragma acc kernels
+				    {
+	                #pragma acc loop independent
+				    for (i = targetStart; i < targetEnd; i++) {
+						xi = xT[i];
+						yi = yT[i];
+						zi = zT[i];
+						qi = qT[i];
+						teng = 4 * M_PI * qi / kappa / kappa;  // 4pi*f_t/k^2
+
+						for (j = 0; j < numparsS; j++) {
+                            tx = xi - xS[j];
+                            ty = yi - yS[j];
+                            tz = zi - zS[j];
+                            rad = sqrt(tx*tx + ty*ty + tz*tz);
+                            if (rad>1e-14){
+                                teng += ( qS[j] - qi) *wS[j] * exp(-kappa * rad) / rad;
+                            }
+						}
+						denergy[i] = teng;
+				    }
+			        }
+
+			    } // end pot
+			} // end loop over device number
+			} // end acc parallel
+        } // end omp parallel
+        
+    } else { //numDevices=0, parallelize with openMP
+        printf("Using OpenMP only, no GPU devices.\n");
+        #pragma omp parallel num_threads(numThreads)
+        {
+		    int this_thread = omp_get_thread_num();
+            int num_threads = omp_get_num_threads();
+		    if (this_thread == 0) printf("numDevices: %i\n", numDevices);
+		    if (this_thread == 0) printf("num_threads: %i\n", num_threads);
+
+            if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.
+        	    printf("Entering pot_type==0 or 4 section.\n");
+			    #pragma omp for private(j,xi,yi,zi,tx,ty,tz,rad,teng) schedule(guided)
+			    for (i = 0; i < numparsT; i++) {
+                    xi = xT[i];
+                    yi = yT[i];
+                    zi = zT[i];
+                    teng = 0.0;
+                    for (j = 0; j < numparsS; j++) {
+                        tx = xi - xS[j];
+                        ty = yi - yS[j];
+                        tz = zi - zS[j];
+                        rad = sqrt(tx*tx + ty*ty + tz*tz);
+                        if (rad > 1e-14) {
+                            teng = teng + qS[j] * wS[j] / rad;
+                        }
+                    }
+                    denergy[i] =  teng;
+				}
+
+            } else if (pot_type == 1 || pot_type == 5) {
+				#pragma omp for private(j,xi,yi,zi,tx,ty,tz,rad,teng)
+        		for (i = 0; i < numparsT; i++) {
+                    xi = xT[i];
+                    yi = yT[i];
+                    zi = zT[i];
+                    teng = 0.0;
+
+                    for (j = 0; j < numparsS; j++) {
+                        tx = xi - xS[j];
+                        ty = yi - yS[j];
+                        tz = zi - zS[j];
+                        rad = sqrt(tx*tx + ty*ty + tz*tz);
+                        if (rad > 1e-14) {
+                            teng += qS[j] * wS[j] * exp(-kappa * rad) / rad;
+                        }
+                    }
+                    denergy[i] = teng;
                 }
 
-        } else if (pot_type == 2 || pot_type == 6) {
-        	double kappaSq = kappa*kappa;
-			#pragma omp for private(j,xi,yi,zi,qi,tx,ty,tz,rad,teng) schedule(guided)
-			for (i = 0; i < numparsT; i++) {
-				xi = xT[i];
-				yi = yT[i];
-				zi = zT[i];
-				qi = qT[i];
-				teng = 2.0*M_PI*kappaSq*qi;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
-//						teng = 0.0;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
-//						teng = 2.0*M_PI*kappaSq*qT[i];
+            } else if (pot_type == 2 || pot_type == 6) {
+        	    double kappaSq = kappa*kappa;
+			    #pragma omp for private(j,xi,yi,zi,qi,tx,ty,tz,rad,teng) schedule(guided)
+			    for (i = 0; i < numparsT; i++) {
+				    xi = xT[i];
+				    yi = yT[i];
+				    zi = zT[i];
+				    qi = qT[i];
+				    teng = 2.0 * M_PI * kappaSq * qi;  // 2pi alpha^2*f_t for SS scheme exp(-r^2/alpha^2)
 
-				for (j = 0; j < numparsS; j++) {
-						tx = xi - xS[j];
-						ty = yi - yS[j];
-						tz = zi - zS[j];
-						rad = sqrt(tx*tx + ty*ty + tz*tz);
-						if (rad>DBL_MIN){
-							teng = teng + ( qS[j] - qi * exp(-rad*rad/kappaSq) ) *wS[j]/ rad;
-//                                	teng = teng + ( qS[j] ) *wS[j]/ rad;
-						}
-				}
-				denergy[i] = teng;
-			}
+				    for (j = 0; j < numparsS; j++) {
+                        tx = xi - xS[j];
+                        ty = yi - yS[j];
+                        tz = zi - zS[j];
+                        rad = sqrt(tx*tx + ty*ty + tz*tz);
+                        if (rad > DBL_MIN) {
+                            teng += (qS[j] - qi * exp(-rad*rad/kappaSq)) * wS[j] / rad;
+                        }
+				    }
+				    denergy[i] = teng;
+                }
 
-        } else if (pot_type == 3 || pot_type == 7) {
+            } else if (pot_type == 3 || pot_type == 7) {
+			    #pragma omp for private(j,xi,yi,zi,tx,ty,tz,rad,teng)
+			    for (i = 0; i < numparsT; i++) {
+                    xi = xT[i];
+                    yi = yT[i];
+                    zi = zT[i];
+                    qi = qT[i];
+                    teng = 4 * M_PI * qi / kappa / kappa;  // 4pi*f_t/k^2
 
-			#pragma omp for private(j,xi,yi,zi,tx,ty,tz,rad,teng)
-			for (i = 0; i < numparsT; i++) {
-					xi = xT[i];
-					yi = yT[i];
-					zi = zT[i];
-					qi = qT[i];
-					teng = 4*M_PI*qi/kappa/kappa;  // 4pi*f_t/k^2
-
-					for (j = 0; j < numparsS; j++) {
-							tx = xi - xS[j];
-							ty = yi - yS[j];
-							tz = zi - zS[j];
-							rad = sqrt(tx*tx + ty*ty + tz*tz);
-							if (rad>1e-14){
-								teng += ( qS[j] - qi) *wS[j] * exp(-kappa * rad) / rad;
-							}
-					}
-					denergy[i] = teng;
-			}
-        } // emd pot=3 or 7
-
-
+                    for (j = 0; j < numparsS; j++) {
+                        tx = xi - xS[j];
+                        ty = yi - yS[j];
+                        tz = zi - zS[j];
+                        rad = sqrt(tx*tx + ty*ty + tz*tz);
+                        if (rad > 1e-14) {
+                            teng += (qS[j] - qi) * wS[j] * exp(-kappa * rad) / rad;
+                        }
+                    }
+                    denergy[i] = teng;
+			    }
+            } // end pot
         } // end omp parallel
-
 	} // end numDevices=0 region
 
+    *dpeng = sum(denergy, numparsT);
 
-
-        *dpeng = sum(denergy, numparsT);
-
-
-//} // end pragma omp parallel
-
-
-        return;
-
+    return;
 }
