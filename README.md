@@ -80,9 +80,9 @@ Enter the following as command line arguments:
                 maxparnode:  maximum particles in leaf 
                      kappa:  screened Coulomb parameter
                   pot_type:  0--Coulomb, 1--screened Coulomb	
-		     batch:  maximum particles in batch
-	       	num devices:  number of GPUs available
-	       	num threads:  number of OpenMP threads
+                     batch:  maximum particles in batch
+               num devices:  number of GPUs available
+               num threads:  number of OpenMP threads
 
 License
 -------
