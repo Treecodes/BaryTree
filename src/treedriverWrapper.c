@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <mpi.h>
 #include <limits.h>
+#include <omp.h>
 
 #include "array.h"
 #include "particles.h"

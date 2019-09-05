@@ -28,7 +28,6 @@ option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         O
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
 option(ENABLE_CPU_BUILD "build CPU version"                                    ON)
 
-find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 
 #Some PGI versions seem to require a link flag for OpenMP
@@ -49,5 +48,10 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_LINK_LIBRARIES
                                          -acc
                                          -ta=tesla:ccall,cc60)
+
+if(ENABLE_GPU_BUILD AND NOT $<C_COMPILER_ID:PGI>) 
+    message("GPU build requires PGI compilers! Turning GPU build off.")
+    set(ENABLE_GPU_BUILD OFF)
+endif()
 
 add_subdirectory(src)

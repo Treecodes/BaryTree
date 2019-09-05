@@ -50,7 +50,6 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE
                                         OpenMP::OpenMP_C
-                                        MPI::MPI_C
                                         $<$<C_COMPILER_ID:GNU>:m>)
     install(TARGETS ${TRGT} DESTINATION bin)
 endif()
@@ -63,7 +62,6 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
                                       main.c)
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
-                                      MPI::MPI_C
                                       OpenACC_C
                                       $<$<C_COMPILER_ID:GNU>:m>)
     install(TARGETS ${TRGT} DESTINATION bin)
@@ -77,7 +75,6 @@ if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE
                                         OpenMP::OpenMP_C
-                                        MPI::MPI_C
                                         $<$<C_COMPILER_ID:GNU>:m>)
     install(TARGETS ${TRGT} DESTINATION bin)
 endif()
@@ -88,7 +85,6 @@ if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
     add_executable(${TRGT} ${SRCS_DIRECT})
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
-                                      MPI::MPI_C
                                       OpenACC_C
                                       $<$<C_COMPILER_ID:GNU>:m>)
     install(TARGETS ${TRGT} DESTINATION bin)
@@ -114,7 +110,6 @@ if(BUILD_TREE_LIBRARIES AND ENABLE_CPU_BUILD)
                                         c_std_99)
     target_link_libraries(${TRGT}   PUBLIC
                                         OpenMP::OpenMP_C
-                                        MPI::MPI_C
                                         $<$<C_COMPILER_ID:GNU>:m>)
 
     install(TARGETS ${TRGT}               LIBRARY DESTINATION lib)
@@ -133,7 +128,6 @@ if(BUILD_TREE_LIBRARIES AND ENABLE_GPU_BUILD)
                                       POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC
                                       OpenMP::OpenMP_C
-                                      MPI::MPI_C
                                       OpenACC_C
                                       $<$<C_COMPILER_ID:GNU>:m>)
 

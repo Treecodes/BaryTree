@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <mpi.h>
+#include <omp.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -341,7 +341,7 @@ void cp_treecode(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 0.0;
 
-    time1 = MPI_Wtime();
+    time1 = omp_get_wtime();
     
     for (i = 0; i < sources->num; i++) {
         tarpos[0] = sources->x[i];
@@ -353,11 +353,11 @@ void cp_treecode(struct tnode *p, struct batch *batches,
             compute_cp1(p->child[j], EnP, targets->x, targets->y, targets->z);
     }
     
-    time2 = MPI_Wtime();
+    time2 = omp_get_wtime();
 
     compute_cp2(p, targets->x, targets->y, targets->z, EnP);
     
-    time3 = MPI_Wtime();
+    time3 = omp_get_wtime();
     timetree[0] = time2 - time1;
     timetree[1] = time3 - time2;
 

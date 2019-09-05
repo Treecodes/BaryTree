@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <mpi.h>
 #include <limits.h>
+#include <omp.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -34,7 +34,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     /* date and time */
     double time1, time2, timeFillClusters1, timeFillClusters2;
 
-    time1 = MPI_Wtime();
+    time1 = omp_get_wtime();
     
     level = 0;
     numleaves = 0;
@@ -92,7 +92,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         setup_batch(&batches, batch_lim, targets, batch_size);
         create_target_batch(batches, targets, 1, targets->num,batch_size, batch_lim);
 
-        timeFillClusters1 = MPI_Wtime();
+        timeFillClusters1 = omp_get_wtime();
         if        ((pot_type == 0) || (pot_type == 1)) {
             fill_in_cluster_data(clusters, sources, troot, order,
                                  numDevices, numThreads, tree_array);
@@ -107,11 +107,11 @@ void treedriver(struct particles *sources, struct particles *targets,
         	printf("Not set up to do singularity subtraction for Hermite yet.\n");
             fill_in_cluster_data_hermite(clusters, sources, troot, order);
         }
-        timeFillClusters2 = MPI_Wtime();
+        timeFillClusters2 = omp_get_wtime();
         timeFillClusters1 = timeFillClusters2-timeFillClusters1;
     }
 
-    time2 = MPI_Wtime();
+    time2 = omp_get_wtime();
     timetree[0] = time2-time1;
 
     if (verbosity > 0) {
@@ -140,7 +140,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         printf("           number of batches: %d\n\n", batches->num);
     }
 
-    time1 = MPI_Wtime();
+    time1 = omp_get_wtime();
     
     if (tree_type == 0) {
         fprintf(stderr, "ERROR: Cluster-particle treecode is currently not enabled.\n");
@@ -198,7 +198,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         reorder_energies(batches->reorder, targets->num, tEn);
     }
 
-    time2 = MPI_Wtime();  // end time for tree evaluation
+    time2 = omp_get_wtime();  // end time for tree evaluation
     timetree[3] = time2-time1; //+ timetree[0];
 
     if (verbosity  > 0) printf("Time to compute: %f\n", time2-time1);

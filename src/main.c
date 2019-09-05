@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
-#include <mpi.h>
+#include <omp.h>
 #include <string.h>
 
 #include "array.h"
@@ -15,44 +15,25 @@
 int main(int argc, char **argv)
 {
 	printf("Welcome to BaryTree.\n");
-    int rank, p;
-    
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &p);
 
     /* runtime parameters */
-    int numparsS, numparsT, order;
-    int maxparnode;
+    int numparsS, numparsT;
+    int order, maxparnode, batch_size;
     int pot_type, tree_type;
-    int batch_size;
-    int numDevices;
-    int numThreads;
+    int numDevices, numThreads;
+    double theta, temp, kappa;
 
-    double theta, temp;
-    double kappa;
-
-    /* source particles */
-    struct particles *sources = NULL;
-    
-    /* target particles */
-    struct particles *targets = NULL;
-    
-    double *originalWeights, *rho;
+    /* particles */
+    struct particles *sources = NULL, *targets = NULL;
 
     /* exact energy, treecode energy */
-    double *denergyglob = NULL;
-    double *tenergyglob = NULL;
-    double *tenergy = NULL;
+    double *denergy = NULL, *tenergy = NULL;
 
     /* for potential energy calculation */
-    double tpeng = 0;
-    double dpengglob = 0;
-    double tpengglob = 0;
+    double tpeng = 0, dpeng = 0;
 
     /* insert variables for date-time calculation? */
     double time_direct, time_tree[4], time_preproc, time_treedriver;
-    double time_tree_glob[3][4];
     double time1, time2;
 
     /* input and output files */
@@ -62,46 +43,31 @@ int main(int argc, char **argv)
     char *sampout = NULL;
     FILE *fp;
 
-    /* variables for error calculations */
-    double inferr, relinferr, n2err, reln2err;
-
     /* local variables */
-    int i, j;
-    int numparsTloc, maxparsTloc, numparsSloc;
     double buf[5];
     
-    int *displs = NULL;
-    int *scounts = NULL;
-    
-    /* MPI Variables */
-    MPI_File fpmpi;
-    MPI_Status status;
-
 
     /* Executable statements begin here */
     sampin1 = argv[1];
     if (strcmp(sampin1,"--help") == 0)
     {
-        if (rank == 0)
-        {
-            printf("Input arguments: \n");
-            printf("       sampin1:  sources input file \n");               // "S10000.txt"
-            printf("       sampin2:  targets input file \n");               // "T1000000.txt"
-            printf("       sampin3:  direct calc potential input file \n"); // "ex_s4_t6.txt"
-            printf("       sampout:  tree calc potential output file \n");  // "out.txt"
-            printf("      numparsS:  number of sources \n");                // 10000
-            printf("      numparsT:  number of targets \n");                // 1000000
-            printf("         theta:  multipole acceptance criterion \n");   // 0.75
-            printf("         order:  order of treecode Taylor expansion \n");        // 20
-//            printf("     tree_type:  0--cluster-particle, 1--particle-cluster \n");  // 0
-            printf("    maxparnode:  maximum particles in leaf \n");                 // 500
-            printf("         kappa:  screened Coulomb parameter \n");                // 0.00
-            printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
-            printf("    batch_size:  size of target batches \n");     // 0
-            printf("   num devices:  number of GPUs available \n");     // 0
-            printf("   num threads:  number of OpenMP threads \n");     // 0
+        printf("Input arguments: \n");
+        printf("       sampin1:  sources input file \n");               // "S10000.txt"
+        printf("       sampin2:  targets input file \n");               // "T1000000.txt"
+        printf("       sampin3:  direct calc potential input file \n"); // "ex_s4_t6.txt"
+        printf("       sampout:  tree calc potential output file \n");  // "out.txt"
+        printf("      numparsS:  number of sources \n");                // 10000
+        printf("      numparsT:  number of targets \n");                // 1000000
+        printf("         theta:  multipole acceptance criterion \n");   // 0.75
+        printf("         order:  order of treecode Taylor expansion \n");        // 20
+//        printf("     tree_type:  0--cluster-particle, 1--particle-cluster \n");  // 0
+        printf("    maxparnode:  maximum particles in leaf \n");                 // 500
+        printf("         kappa:  screened Coulomb parameter \n");                // 0.00
+        printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
+        printf("    batch_size:  size of target batches \n");     // 0
+        printf("   num devices:  number of GPUs available \n");     // 0
+        printf("   num threads:  number of OpenMP threads \n");     // 0
 
-        }
         return 0;
     }
     
@@ -119,17 +85,11 @@ int main(int argc, char **argv)
     batch_size = atoi(argv[12]);
     numDevices = atoi(argv[13]);
     numThreads = atoi(argv[14]);
-
-    numparsTloc = numparsT;
-    numparsSloc = numparsS;
     
-    time1 = MPI_Wtime();
+    time1 = omp_get_wtime();
     
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
-
-    numparsTloc = numparsT/p;
-    maxparsTloc = numparsTloc + (numparsS - (numparsS / p) * p);
     
     sources->num = numparsS;
     make_vector(sources->x, numparsS);
@@ -137,235 +97,141 @@ int main(int argc, char **argv)
     make_vector(sources->z, numparsS);
     make_vector(sources->q, numparsS);
     make_vector(sources->w, numparsS);
+
+    targets->num = numparsT;
+    make_vector(targets->x, numparsT);
+    make_vector(targets->y, numparsT);
+    make_vector(targets->z, numparsT);
+    make_vector(targets->q, numparsT);
+    make_vector(targets->order, numparsT);
     
-    make_vector(originalWeights, numparsS);
-    make_vector(rho, numparsS);
+    make_vector(tenergy, numparsT);
+    make_vector(denergy, numparsT);
 
-    if (rank == 0) {
-        targets->num = numparsT;
-        make_vector(targets->x, numparsT);
-        make_vector(targets->y, numparsT);
-        make_vector(targets->z, numparsT);
-        make_vector(targets->q, numparsT);
-        make_vector(targets->order, numparsT);
-        
-        make_vector(tenergy, numparsT);
-        make_vector(tenergyglob, numparsT);
-        make_vector(denergyglob, numparsT);
-        
-        make_vector(displs, p);
-        make_vector(scounts, p);
-    } else {
-        targets->num = numparsTloc;
-        make_vector(targets->x, numparsTloc);
-        make_vector(targets->y, numparsTloc);
-        make_vector(targets->z, numparsTloc);
-        make_vector(targets->q, numparsTloc);
-        
-        make_vector(tenergy, numparsTloc);
-    }
 
-    if (rank == 0) {
-
-        MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
-        for (int i = 0; i < numparsT; ++i) {
-            MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
-            targets->x[i] = buf[0];
-            targets->y[i] = buf[1];
-            targets->z[i] = buf[2];
-            targets->q[i] = buf[3];
-            targets->order[i] = i;
-        }
-        MPI_File_close(&fpmpi);
-
-        MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-        MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
-        MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
-
-        MPI_File_read(fpmpi, denergyglob, numparsT, MPI_DOUBLE, &status);
-
-        MPI_File_close(&fpmpi);
-    
-        scounts[0] = 0;
-        displs[0] = 0;
-    
-        for (int i = 1; i < p; ++i) {
-            scounts[i] = numparsTloc;
-            displs[i] = (i-1) * numparsTloc;
-        }
-    }
-    
-    MPI_Scatterv(&(targets->x[maxparsTloc]), scounts, displs, MPI_DOUBLE,
-                targets->x, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&(targets->y[maxparsTloc]), scounts, displs, MPI_DOUBLE,
-                targets->y, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&(targets->z[maxparsTloc]), scounts, displs, MPI_DOUBLE,
-                targets->z, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Scatterv(&(targets->q[maxparsTloc]), scounts, displs, MPI_DOUBLE,
-                targets->q, numparsTloc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    
     /* Reading in coordinates and charges for the source particles*/
-    MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-    MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
+    fp = fopen(sampin1, "rb");
     for (int i = 0; i < numparsS; ++i) {
-        MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
+        fread(buf, sizeof(double), 5, fp);
         sources->x[i] = buf[0];
         sources->y[i] = buf[1];
         sources->z[i] = buf[2];
         sources->q[i] = buf[3];
         sources->w[i] = buf[4];
     }
-    MPI_File_close(&fpmpi);
+    fclose(fp);
 
-    if (rank == 0) numparsTloc = maxparsTloc;
+    fp = fopen(sampin2, "rb");
+    for (int i = 0; i < numparsT; ++i) {
+        fread(buf, sizeof(double), 4, fp);
+        targets->x[i] = buf[0];
+        targets->y[i] = buf[1];
+        targets->z[i] = buf[2];
+        targets->q[i] = buf[3];
+        targets->order[i] = i;
+    }
+    fclose(fp);
+
+    fp = fopen(sampin3, "rb");
+    fread(&time_direct, sizeof(double), 1, fp);
+    fread(denergy, sizeof(double), numparsT, fp);
+    fclose(fp);
+
 
     // Initialize all GPUs
-	if (numDevices>0){
+	if (numDevices > 0) {
 		#pragma omp parallel num_threads(numDevices)
         {
 			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 			acc_init(acc_get_device_type());
         }
 	}
-
-    for (int i = 0; i < numparsT; ++i) {
-		originalWeights[i] = sources->w[i];
-		rho[i] = sources->q[i];
-    }
     
-    time2 = MPI_Wtime();
+    time2 = omp_get_wtime();
     time_preproc = time2 - time1;
     
     printf("Setup complete, calling treedriver...\n");
     
     /* Calling main treecode subroutine to calculate approximate energy */
-    time1 = MPI_Wtime();
+    time1 = omp_get_wtime();
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
                tenergy, &tpeng, time_tree, numDevices, numThreads);
-    time2 = MPI_Wtime();
+    time2 = omp_get_wtime();
     time_treedriver = time2 - time1;
 
-    
-    /* Reducing values to root process */
-    MPI_Reduce(time_tree, &time_tree_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    
-    if (rank == 0) dpengglob = sum(denergyglob, numparsT);
-    MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    if (rank == 0)
-    {
-        /* Printing direct and treecode time calculations: */
-        printf("                   Direct time (s):  %f\n\n", time_direct);
-        printf("              Pre-process time (s):  %f\n", time_preproc);
-        printf("              Treedriver time (s):  %f\n", time_treedriver);
-        printf("      Min, Max tree setup time (s):  %f, %f\n", time_tree_glob[0][0],
-                                                                time_tree_glob[1][0]);
-        if (tree_type == 0) {
-            printf("             Min, Max cp1 time (s):  %f, %f\n", time_tree_glob[0][1],
-                                                                    time_tree_glob[1][1]);
-            printf("             Min, Max cp2 time (s):  %f, %f\n", time_tree_glob[0][2],
-                                                                    time_tree_glob[1][2]);
-        }
-        
-        printf("      Min, Max total tree time (s):  %f, %f\n\n", time_tree_glob[0][3],
-                                                                  time_tree_glob[1][3]);
-        printf(" Preproc + Max total tree time (s):  %f \n\n", time_tree_glob[1][3] + time_preproc);
+    dpeng = sum(denergy, numparsT);
+
+    /* Printing direct and treecode time calculations: */
+    printf("                   Direct time (s):  %f\n\n", time_direct);
+    printf("              Pre-process time (s):  %f\n", time_preproc);
+    printf("               Treedriver time (s):  %f\n", time_treedriver);
+    printf("               Tree setup time (s):  %f, %f\n", time_tree[0]);
     
-        printf("           Direct potential energy:  %f\n", dpengglob);
-        printf("             Tree potential energy:  %f\n\n", tpengglob);
-    
-        printf("Absolute error for total potential:  %e\n",
-               fabs(tpengglob-dpengglob));
-        printf("Relative error for total potential:  %e\n\n",
-               fabs((tpengglob-dpengglob)/dpengglob));
+    if (tree_type == 0) {
+        printf("             Min, Max cp1 time (s):  %f, %f\n", time_tree[1]);
+        printf("             Min, Max cp2 time (s):  %f, %f\n", time_tree[2]);
     }
+        
+    printf("      Min, Max total tree time (s):  %f, %f\n\n", time_tree[3]);
+    printf(" Preproc + Max total tree time (s):  %f \n\n", time_tree[3] + time_preproc);
+    
+    printf("           Direct potential energy:  %f\n", dpeng);
+    printf("             Tree potential energy:  %f\n\n", tpeng);
+    
+    printf("Absolute error for total potential:  %e\n", fabs(tpeng-dpeng));
+    printf("Relative error for total potential:  %e\n\n", fabs((tpeng-dpeng)/dpeng));
     
     
     /* Computing pointwise potential errors */
-    if (rank == 0) {
-        scounts[0] = maxparsTloc;
-        displs[0] = 0;
-        for (int i = 1; i < p; ++i) {
-            scounts[i] = numparsTloc;
-            displs[i] = maxparsTloc + (i-1) * numparsTloc;
-        }
-    }
 
-    MPI_Gatherv(tenergy, numparsTloc, MPI_DOUBLE, tenergyglob,
-                scounts, displs, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    double inferr = 0.0, relinferr = 0.0;
+    double n2err = 0.0, reln2err = 0.0;
+    double xinf, yinf, zinf;
 
-    if (rank == 0) {
-        inferr = 0.0;
-        relinferr = 0.0;
-        n2err = 0.0;
-        reln2err = 0.0;
-        double x, y, z;
-
-        for (int j = 0; j < numparsT; ++j) {
-            temp = fabs(denergyglob[targets->order[j]] - tenergyglob[j]);
+    for (int j = 0; j < numparsT; ++j) {
+        temp = fabs(denergy[targets->order[j]] - tenergy[j]);
         
-            if (temp >= inferr) {
-                inferr = temp;
-                x = targets->x[targets->order[j]];
-                y = targets->y[targets->order[j]];
-                z = targets->z[targets->order[j]];
-            }
-
-            if (fabs(denergyglob[j]) >= relinferr)
-                relinferr = fabs(denergyglob[j]);
-
-            n2err += pow(denergyglob[targets->order[j]]
-                       - tenergyglob[j], 2.0) * sources->w[j];
-            reln2err += pow(denergyglob[j], 2.0) * sources->w[j];
+        if (temp >= inferr) {
+            inferr = temp;
+            xinf = targets->x[targets->order[j]];
+            yinf = targets->y[targets->order[j]];
+            zinf = targets->z[targets->order[j]];
         }
 
-        relinferr = inferr / relinferr;
-        reln2err = sqrt(n2err / reln2err);
-        n2err = sqrt(n2err);
+        if (fabs(denergy[j]) >= relinferr)
+            relinferr = fabs(denergy[j]);
 
-        printf("Absolute inf norm error in potential:  %e \n", inferr);
-        printf("Relative inf norm error in potential:  %e \n\n", relinferr);
-        printf("  Absolute 2 norm error in potential:  %e \n", n2err);
-        printf("  Relative 2 norm error in potential:  %e \n\n", reln2err);
-        printf("              Inf error occurring at: %f, %f, %f \n\n", x, y,z);
+        n2err += pow(denergy[targets->order[j]]
+                    - tenergy[j], 2.0) * sources->w[j];
+        reln2err += pow(denergy[j], 2.0) * sources->w[j];
     }
+
+    relinferr = inferr / relinferr;
+    reln2err = sqrt(n2err / reln2err);
+    n2err = sqrt(n2err);
+
+    printf("Absolute inf norm error in potential:  %e \n", inferr);
+    printf("Relative inf norm error in potential:  %e \n\n", relinferr);
+    printf("  Absolute 2 norm error in potential:  %e \n", n2err);
+    printf("  Relative 2 norm error in potential:  %e \n\n", reln2err);
+    printf("              Inf error occurring at: %f, %f, %f \n\n", xinf, yinf, zinf);
     
-    double hartreeEnergy = 0;
-	for (int i = 0; i < numparsT; ++i) {
-		hartreeEnergy += tenergyglob[i] * originalWeights[targets->order[i]]
-                                        * rho[targets->order[i]]/2.0;
-	}
-	printf("\n\nHartree energy: %1.12f\n\n", hartreeEnergy);
 
-    if (rank == 0) {
-        fp = fopen(sampout, "a");
-        fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,"
-            "%d,%f,%f,%f,%f,%f,%f,%f,"
-            "%f,%f,%f,%f,%f,%f,%f,"
-            "%e,%e,%e,%e,%e,%e,%e,%e,%d\n",
-            sampin1, sampin2, sampin3, numparsS, numparsT,
-            theta, order, tree_type, maxparnode,batch_size,
-            kappa, pot_type, //2 ends
-            p, time_preproc,
-            time_tree_glob[0][0], time_tree_glob[1][0],
-            time_tree_glob[2][0]/(double)p,
-            time_tree_glob[0][1], time_tree_glob[1][1],
-            time_tree_glob[2][1]/(double)p, //3 ends
-            time_tree_glob[0][2], time_tree_glob[1][2],
-            time_tree_glob[2][2]/(double)p,
-            time_tree_glob[0][3], time_tree_glob[1][3],
-            time_tree_glob[2][3]/(double)p,
-            time_tree_glob[1][3] + time_preproc, //4 ends
-            dpengglob, tpengglob, fabs(tpengglob-dpengglob),
-            fabs((tpengglob-dpengglob)/dpengglob),
-            inferr, relinferr, n2err, reln2err, numDevices); //5 ends
-        fclose(fp);
-    }
+    fp = fopen(sampout, "a");
+    fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,"
+        "%f,%f,%f,%f,%f,%f,"
+        "%e,%e,%e,%e,%e,%e,%e,%e,%d,%d\n",
+        sampin1, sampin2, sampin3, numparsS, numparsT,
+        theta, order, tree_type, maxparnode,batch_size,
+        kappa, pot_type, //1 ends
+        time_preproc, time_tree[0], time_tree[1], time_tree[2], time_tree[3],
+        time_tree[3] + time_preproc, //2 ends
+        dpeng, tpeng, fabs(tpeng-dpeng), fabs((tpeng-dpeng)/dpeng),
+        inferr, relinferr, n2err, reln2err, numDevices, numThreads); //3 ends
+    fclose(fp);
     
     free_vector(sources->x);
     free_vector(sources->y);
@@ -381,19 +247,11 @@ int main(int argc, char **argv)
     
     free(sources);
     free(targets);
+
+    free_vector(denergy);
     free_vector(tenergy);
-    free_vector(originalWeights);
-    free_vector(rho);
 
-    if (rank == 0) {
-        free_vector(denergyglob);
-        free_vector(tenergyglob);
-        free_vector(displs);
-        free_vector(scounts);
-    }
-
-    MPI_Finalize();
-    printf("Finalized.\n");
+    printf("BaryTree has finished.\n");
     
     return 0;
 }
