@@ -193,7 +193,7 @@ int main(int argc, char **argv)
 
     for (int j = 0; j < numparsT; ++j) {
         temp = fabs(denergy[targets->order[j]] - tenergy[j]);
-        
+
         if (temp >= inferr) {
             inferr = temp;
             xinf = targets->x[targets->order[j]];
