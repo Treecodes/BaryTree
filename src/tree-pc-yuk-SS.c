@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
+#include <omp.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -23,49 +24,50 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
     /* local variables */
     int i, j;
     
-    for (i = 0; i < targets->num; i++){
-        EnP[i] = 4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
-    }
+    for (i = 0; i < targets->num; i++)
+        EnP[i] = 4.0 * M_PI * targets->q[i] / kappa / kappa;  // 4*pi*f_t/k**2
 
+    #pragma omp parallel num_threads(numThreads)
+    {
 
-#pragma omp parallel num_threads(numThreads)
-	{
-    	if (omp_get_thread_num()<numDevices){
-    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-    	}
+#ifdef OPENACC_ENABLED
+    if (omp_get_thread_num() < numDevices)
+        acc_set_device_num(omp_get_thread_num(), acc_get_device_type());
+#endif
+
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+        if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+        if (this_thread==0){printf("num_threads: %i\n", num_threads);}
 
-		double *EnP2;
-		make_vector(EnP2,targets->num);
-		for (i = 0; i < targets->num; i++)
-			EnP2[i] = 0.0;
+        double *EnP2;
+        make_vector(EnP2,targets->num);
+        for (i = 0; i < targets->num; i++)
+            EnP2[i] = 0.0;
 
 #pragma acc data copyin(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-		targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
-		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num]) \
-		copy(EnP2[0:targets->num])
+        targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
+        clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num]) \
+        copy(EnP2[0:targets->num])
     {
-	#pragma omp for private(j)
+    #pragma omp for private(j)
     for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc_yuk_SS(p->child[j],
                 batches->index[i], batches->center[i], batches->radius[i],
                 sources->x, sources->y, sources->z, sources->q, sources->w,
                 targets->x, targets->y, targets->z, targets->q, kappa, EnP2,
-				clusters->x, clusters->y, clusters->z, clusters->q, clusters->w);
+                clusters->x, clusters->y, clusters->z, clusters->q, clusters->w);
         }
     }
-	#pragma acc wait
+    #pragma acc wait
     } // end acc data region
     for (int k = 0; k < targets->num; k++){
-    		if (EnP2[k] != 0.0){
-    			EnP[k] += EnP2[k];
-    		}
-    		}
+            if (EnP2[k] != 0.0){
+                EnP[k] += EnP2[k];
+            }
+            }
     free_vector(EnP2);
-	} // end omp parallel region
+    } // end omp parallel region
     
 
     *tpeng = sum(EnP, targets->num);
@@ -81,67 +83,67 @@ void compute_pc_yuk_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterM, double * clusterM2 )
+                double * clusterX, double * clusterY, double * clusterZ, double * clusterM, double * clusterM2 )
 {
-	double dist;
-	double tx, ty, tz;
-	int i, j, k, ii, kk;
-	double dxt,dyt,dzt,tempPotential;
-	double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
+    double dist;
+    double tx, ty, tz;
+    int i, j, k, ii, kk;
+    double dxt,dyt,dzt,tempPotential;
+    double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
 
-	/* determine DIST for MAC test */
-	tx = batch_mid[0] - p->x_mid;
-	ty = batch_mid[1] - p->y_mid;
-	tz = batch_mid[2] - p->z_mid;
-	dist = sqrt(tx*tx + ty*ty + tz*tz);
+    /* determine DIST for MAC test */
+    tx = batch_mid[0] - p->x_mid;
+    ty = batch_mid[1] - p->y_mid;
+    tz = batch_mid[2] - p->z_mid;
+    dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-	int smallEnoughLeaf=0;
-	if (p->numpar < torderlim*torderlim*torderlim){
-		smallEnoughLeaf=1;
-	}else{
-		smallEnoughLeaf=0;
-	}
-	if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0)  ) {
-
-
-		int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
-		int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
-		int clusterStart = numberOfInterpolationPoints*p->node_index;
+    int smallEnoughLeaf=0;
+    if (p->numpar < torderlim*torderlim*torderlim){
+        smallEnoughLeaf=1;
+    }else{
+        smallEnoughLeaf=0;
+    }
+    if (((p->radius + batch_rad) < dist * sqrt(thetasq)) && (p->sqradius != 0.00) && (smallEnoughLeaf==0)  ) {
 
 
+        int numberOfTargets = batch_ind[1] - batch_ind[0] + 1;
+        int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
+        int clusterStart = numberOfInterpolationPoints*p->node_index;
 
-		double xi,yi,zi,qi,r;
-		int batchStart = batch_ind[0] - 1;
 
-		int streamID = rand() % 2;
-		# pragma acc kernels async(streamID) present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM, clusterM2)
-		{
-		#pragma acc loop independent
-		for (i = 0; i < numberOfTargets; i++){
-			tempPotential = 0.0;
-			xi = xT[ batchStart + i];
-			yi = yT[ batchStart + i];
-			zi = zT[ batchStart + i];
-			qi = qT[ batchStart + i];
-			#pragma acc loop independent
-			for (j = 0; j < numberOfInterpolationPoints; j++){
 
-				// Compute x, y, and z distances between target i and interpolation point j
-				dxt = xi - clusterX[clusterStart + j];
-				dyt = yi - clusterY[clusterStart + j];
-				dzt = zi - clusterZ[clusterStart + j];
+        double xi,yi,zi,qi,r;
+        int batchStart = batch_ind[0] - 1;
 
-				r = sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+        int streamID = rand() % 2;
+        # pragma acc kernels async(streamID) present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM, clusterM2)
+        {
+        #pragma acc loop independent
+        for (i = 0; i < numberOfTargets; i++){
+            tempPotential = 0.0;
+            xi = xT[ batchStart + i];
+            yi = yT[ batchStart + i];
+            zi = zT[ batchStart + i];
+            qi = qT[ batchStart + i];
+            #pragma acc loop independent
+            for (j = 0; j < numberOfInterpolationPoints; j++){
 
-//				tempPotential += (clusterM[clusterStart + j]-qi ) * exp(-kappa*r) / r;
-				tempPotential += (clusterM[clusterStart + j]-qi*clusterM2[clusterStart + j] ) * exp(-kappa*r) / r;
-	//			tempPotential += clusterM[clusterStart + j]* exp(-kappa*r) / r - qi*clusterM2[clusterStart + j] * exp(-kappa*r) / r;
+                // Compute x, y, and z distances between target i and interpolation point j
+                dxt = xi - clusterX[clusterStart + j];
+                dyt = yi - clusterY[clusterStart + j];
+                dzt = zi - clusterZ[clusterStart + j];
 
-							}
-			#pragma acc atomic
-			EnP[batchStart + i] += tempPotential;
-		}
-		}
+                r = sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+
+//              tempPotential += (clusterM[clusterStart + j]-qi ) * exp(-kappa*r) / r;
+                tempPotential += (clusterM[clusterStart + j]-qi*clusterM2[clusterStart + j] ) * exp(-kappa*r) / r;
+    //          tempPotential += clusterM[clusterStart + j]* exp(-kappa*r) / r - qi*clusterM2[clusterStart + j] * exp(-kappa*r) / r;
+
+                            }
+            #pragma acc atomic
+            EnP[batchStart + i] += tempPotential;
+        }
+        }
 
         
     } else {
@@ -152,15 +154,15 @@ void compute_pc_yuk_SS(struct tnode *p,
 
 
         if ( (p->num_children == 0)|(smallEnoughLeaf==1) ) {
-//        	printf("MAC rejected, and node has no children.  Calling pc_comp_dierct()...\n");
+//          printf("MAC rejected, and node has no children.  Calling pc_comp_dierct()...\n");
             pc_comp_direct_yuk_SS(p->ibeg, p->iend, batch_ind[0], batch_ind[1],
                            xS, yS, zS, qS, wS, xT, yT, zT, qT, kappa, EnP);
         } else {
-//        	printf("MAC rejected, recursing over children...\n");
+//          printf("MAC rejected, recursing over children...\n");
             for (i = 0; i < p->num_children; i++) {
-            	compute_pc_yuk_SS(p->child[i], batch_ind, batch_mid, batch_rad,
-                			xS, yS, zS, qS, wS, xT, yT, zT, qT, kappa, EnP,
-							clusterX, clusterY, clusterZ, clusterM, clusterM2);
+                compute_pc_yuk_SS(p->child[i], batch_ind, batch_mid, batch_rad,
+                            xS, yS, zS, qS, wS, xT, yT, zT, qT, kappa, EnP,
+                            clusterX, clusterY, clusterZ, clusterM, clusterM2);
             }
         }
     }
@@ -186,22 +188,22 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
     double d_peng, r;
 
     int streamID = rand() % 2;
-	# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+    # pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
-	#pragma acc loop independent
+    #pragma acc loop independent
     for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
         d_peng = 0.0;
-		#pragma acc loop independent
+        #pragma acc loop independent
         for (i = ibeg - 1; i < iend; i++) {
             tx = xS[i] - xT[ii];
             ty = yS[i] - yT[ii];
             tz = zS[i] - zT[ii];
             r = sqrt(tx*tx + ty*ty + tz*tz);
             if (r > DBL_MIN) {
-            	d_peng += (qS[i] - qT[ii]) * wS[i] * exp(-kappa*r) / r;
+                d_peng += (qS[i] - qT[ii]) * wS[i] * exp(-kappa*r) / r;
             }
         }
-		#pragma acc atomic
+        #pragma acc atomic
         EnP[ii] += d_peng;
     }
     }

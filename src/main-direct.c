@@ -13,13 +13,13 @@
 void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
-                int pot_type, double kappa, int numDevices, int numThreads);
+                int pot_type, double kappa, int numThreads);
 
 /* The treedriver routine in Fortran */
 int main(int argc, char **argv)
 {
     /* runtime parameters */
-    int numparsS, numparsT, pot_type, numDevices, numThreads;
+    int numparsS, numparsT, pot_type, numThreads;
     double kappa;
 
     /* arrays for coordinates, charges, energy of target particles */
@@ -65,8 +65,7 @@ int main(int argc, char **argv)
         printf("      numparsT:  number of targets \n");                 // 1000000
         printf("         kappa:  screened Coulomb parameter \n");        // 0.00
         printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");   // 1
-        printf("   num devices:  number of GPUs available \n");   // 1
-        printf("   num threads:  number of OpenMP threads \n");   // 1
+        printf("   num threads:  number of OpenMP threads (or GPUs) \n");   // 1
         return 0;
     }
     
@@ -77,8 +76,21 @@ int main(int argc, char **argv)
     numparsT = atoi(argv[6]);
     kappa = atof(argv[7]);
     pot_type = atoi(argv[8]);
-    numDevices = atoi(argv[9]);
-    numThreads = atoi(argv[10]);
+    numThreads = atoi(argv[9]);
+
+	// Initialize all GPUs
+#ifdef OPENACC_ENABLED
+	if (numThreads > 0) {
+		#pragma omp parallel num_threads(numThreads)
+        {
+			acc_set_device_num(omp_get_thread_num(), acc_get_device_type());
+			acc_init(acc_get_device_type());
+        }
+	} else {
+        printf("Error! At least one GPU must be present for GPU version!\n");
+        return 1;
+    }
+#endif
     
     make_vector(xS,numparsS);
     make_vector(yS,numparsS);
@@ -118,25 +130,15 @@ int main(int argc, char **argv)
 
     printf("Allocated sources and targets particles.\n");
 
-	// Initialize all GPUs
-	if (numDevices > 0) {
-		#pragma omp parallel num_threads(numDevices)
-        {
-			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-			acc_init(acc_get_device_type());
-        }
-	}
-
     /* Calling main treecode subroutine to calculate approximate energy */
     time1 = omp_get_wtime();
     direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, numparsS, numparsT,
-                denergy, &dpeng, pot_type, kappa, numDevices, numThreads);
+                denergy, &dpeng, pot_type, kappa, numThreads);
 
     time2 = omp_get_wtime();
     time_direct = time2-time1;
 
     
-
     fp = fopen(sampout, "wb");
     fwrite(&time_direct, sizeof(double), 1, fp);
     fwrite(denergy, sizeof(double), numparsT, fp);
@@ -172,14 +174,14 @@ int main(int argc, char **argv)
 void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 				double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
-                int pot_type, double kappa, int numDevices, int numThreads)
+                int pot_type, double kappa, int numThreads)
 {
     /* local variables */
     int i, j;
     double tx, ty, tz, xi, yi, zi, qi, teng, rad;
 
-    if (numDevices > 0) {
-	    #pragma omp parallel num_threads(numDevices)
+#ifdef OPENACC_ENABLED
+	    #pragma omp parallel num_threads(numThreads)
         {
             acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
 	        #pragma acc data copyin ( xS [ 0 : numparsS ] , yS [ 0 : numparsS ] , zS [ 0 : numparsS ] , qS [ 0 : numparsS ] , wS [ 0 : numparsS ] , \
@@ -296,13 +298,12 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 			} // end acc parallel
         } // end omp parallel
         
-    } else { //numDevices=0, parallelize with openMP
+#else
         printf("Using OpenMP only, no GPU devices.\n");
         #pragma omp parallel num_threads(numThreads)
         {
 		    int this_thread = omp_get_thread_num();
             int num_threads = omp_get_num_threads();
-		    if (this_thread == 0) printf("numDevices: %i\n", numDevices);
 		    if (this_thread == 0) printf("num_threads: %i\n", num_threads);
 
             if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.
@@ -389,7 +390,7 @@ void direct_eng( double *xS, double *yS, double *zS, double *qS, double *wS,
 			    }
             } // end pot
         } // end omp parallel
-	} // end numDevices=0 region
+#endif
 
     *dpeng = sum(denergy, numparsT);
 

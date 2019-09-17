@@ -58,6 +58,7 @@ endif()
 if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
     set(TRGT tree-gpu)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
+    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
                                       main.c)
     target_link_libraries(${TRGT} PRIVATE
@@ -83,6 +84,7 @@ endif()
 if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
     set(TRGT direct-gpu)
     add_executable(${TRGT} ${SRCS_DIRECT})
+    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
                                       OpenACC_C
@@ -120,6 +122,7 @@ endif()
 if(BUILD_TREE_LIBRARIES AND ENABLE_GPU_BUILD)
     set(TRGT treelib-gpu)
     add_library(${TRGT} ${SRCS_TREEDRIVER})
+    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
                                       treedriverWrapper.c
                                   PUBLIC 

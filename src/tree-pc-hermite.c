@@ -377,8 +377,11 @@ void pc_interaction_list_treecode_hermite_coulomb(struct tnode_array *tree_array
 
     #pragma omp parallel num_threads(numThreads)
     {
+
+#ifdef OPENACC_ENABLED
     if (omp_get_thread_num() < numDevices)
         acc_set_device_num(omp_get_thread_num(), acc_get_device_type());
+#endif
 
     int this_thread = omp_get_thread_num();
     int num_threads = omp_get_num_threads();
@@ -515,9 +518,8 @@ void pc_interaction_list_treecode_hermite_coulomb(struct tnode_array *tree_array
                     ty = yS[jj] - yT[ii];
                     tz = zS[jj] - zT[ii];
                     r = sqrt(tx*tx + ty*ty + tz*tz);
-                    if (r > DBL_MIN) {
+                    if (r > DBL_MIN)
                         d_peng += qS[jj] * wS[jj] / r;
-                    }
                 }
 
                 #pragma acc atomic

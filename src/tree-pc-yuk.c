@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
+#include <omp.h>
 
 #include "array.h"
 #include "globvars.h"
@@ -22,23 +23,20 @@ void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct par
                                       double *tpeng,double kappa, double *EnP,
                                       int numDevices, int numThreads)
 {
-	    int i, j;
+    int i, j;
+	    
+    for (i = 0; i < targets->num; i++)
+        EnP[i] = 0.0;
 
-	    for (i = 0; i < targets->num; i++)
-	        EnP[i] = 0.0;
+    #pragma omp parallel num_threads(numThreads)
+    {
 
-	    printf("Using interaction lists!\n");
-
-	#pragma omp parallel num_threads(numThreads)
-		{
-	    	if (omp_get_thread_num()<numDevices){
-	    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-	    	}
+#ifdef OPENACC_ENABLED
+	if (omp_get_thread_num() < numDevices)
+            acc_set_device_num(omp_get_thread_num(), acc_get_device_type());
+#endif
 
 	        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-			if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-			if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-			printf("this_thread: %i\n", this_thread);
 
 			double *EnP2, *EnP3;
 			make_vector(EnP2,targets->num);

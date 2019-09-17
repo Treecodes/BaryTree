@@ -14,13 +14,13 @@
 /* The treedriver routine in Fortran */
 int main(int argc, char **argv)
 {
-	printf("Welcome to BaryTree.\n");
+    printf("Welcome to BaryTree.\n");
 
     /* runtime parameters */
     int numparsS, numparsT;
     int order, maxparnode, batch_size;
     int pot_type, tree_type;
-    int numDevices, numThreads;
+    int numThreads;
     double theta, temp, kappa;
 
     /* particles */
@@ -59,14 +59,13 @@ int main(int argc, char **argv)
         printf("      numparsS:  number of sources \n");                // 10000
         printf("      numparsT:  number of targets \n");                // 1000000
         printf("         theta:  multipole acceptance criterion \n");   // 0.75
-        printf("         order:  order of treecode Taylor expansion \n");        // 20
+        printf("         order:  number of Chebyshev interpolation points \n");        // 20
 //        printf("     tree_type:  0--cluster-particle, 1--particle-cluster \n");  // 0
         printf("    maxparnode:  maximum particles in leaf \n");                 // 500
         printf("         kappa:  screened Coulomb parameter \n");                // 0.00
         printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
         printf("    batch_size:  size of target batches \n");     // 0
-        printf("   num devices:  number of GPUs available \n");     // 0
-        printf("   num threads:  number of OpenMP threads \n");     // 0
+        printf("   num threads:  number of OpenMP threads (or GPUs) \n");     // 0
 
         return 0;
     }
@@ -83,10 +82,23 @@ int main(int argc, char **argv)
     kappa = atof(argv[10]);
     pot_type = atoi(argv[11]);
     batch_size = atoi(argv[12]);
-    numDevices = atoi(argv[13]);
-    numThreads = atoi(argv[14]);
+    numThreads = atoi(argv[13]);
     
     time1 = omp_get_wtime();
+
+    // Initialize all GPUs
+#ifdef OPENACC_ENABLED
+    if (numThreads > 0) {
+        #pragma omp parallel num_threads(numThreads)
+        {
+            acc_set_device_num(omp_get_thread_num(), acc_get_device_type());
+            acc_init(acc_get_device_type());
+        }
+    } else {
+        printf("Error! At least one GPU must be present for GPU version!\n");
+        return 1;
+    }
+#endif
     
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
@@ -136,16 +148,6 @@ int main(int argc, char **argv)
     fread(&time_direct, sizeof(double), 1, fp);
     fread(denergy, sizeof(double), numparsT, fp);
     fclose(fp);
-
-
-    // Initialize all GPUs
-	if (numDevices > 0) {
-		#pragma omp parallel num_threads(numDevices)
-        {
-			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-			acc_init(acc_get_device_type());
-        }
-	}
     
     time2 = omp_get_wtime();
     time_preproc = time2 - time1;
@@ -157,7 +159,7 @@ int main(int argc, char **argv)
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
-               tenergy, &tpeng, time_tree, numDevices, numThreads);
+               tenergy, &tpeng, time_tree, numThreads, numThreads);
     time2 = omp_get_wtime();
     time_treedriver = time2 - time1;
 
@@ -223,14 +225,14 @@ int main(int argc, char **argv)
     fp = fopen(sampout, "a");
     fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,"
         "%f,%f,%f,%f,%f,%f,"
-        "%e,%e,%e,%e,%e,%e,%e,%e,%d,%d\n",
+        "%e,%e,%e,%e,%e,%e,%e,%e,%d\n",
         sampin1, sampin2, sampin3, numparsS, numparsT,
         theta, order, tree_type, maxparnode,batch_size,
         kappa, pot_type, //1 ends
         time_preproc, time_tree[0], time_tree[1], time_tree[2], time_tree[3],
         time_tree[3] + time_preproc, //2 ends
         dpeng, tpeng, fabs(tpeng-dpeng), fabs((tpeng-dpeng)/dpeng),
-        inferr, relinferr, n2err, reln2err, numDevices, numThreads); //3 ends
+        inferr, relinferr, n2err, reln2err, numThreads); //3 ends
     fclose(fp);
     
     free_vector(sources->x);

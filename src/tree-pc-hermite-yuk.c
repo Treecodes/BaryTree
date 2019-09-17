@@ -27,223 +27,222 @@ void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array,
                                   struct particles *sources, struct particles *targets,
                                   double *tpeng, double kappa, double *EnP, int numDevices, int numThreads)
 {
-	    int i, j;
+    int i, j;
 
-	    for (i = 0; i < targets->num; i++)
-	        EnP[i] = 0.0;
-
-
-	#pragma omp parallel num_threads(numThreads)
-		{
-	    	if (omp_get_thread_num()<numDevices){
-	    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-	    	}
-
-	        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-			if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-			if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-			printf("this_thread: %i\n", this_thread);
-
-			double *EnP2, *EnP3;
-			make_vector(EnP2,targets->num);
-			make_vector(EnP3,targets->num);
-			for (i = 0; i < targets->num; i++)
-				EnP3[i] = 0.0;
-				EnP2[i] = 0.0;
+    for (i = 0; i < targets->num; i++)
+        EnP[i] = 0.0;
 
 
-			double *xS = sources->x;
-			double *yS = sources->y;
-			double *zS = sources->z;
-			double *qS = sources->q;
-			double *wS = sources->w;
+    #pragma omp parallel num_threads(numThreads)
+    {
 
-			double *xT = targets->x;
-			double *yT = targets->y;
-			double *zT = targets->z;
-			double *qT = targets->q;
+#ifdef OPENACC_ENABLED
+    if (omp_get_thread_num() < numDevices)
+        acc_set_device_num(omp_get_thread_num(), acc_get_device_type());
+#endif
 
-			double *xC = clusters->x;
-			double *yC = clusters->y;
-			double *zC = clusters->z;
-			double *qC = clusters->q;
-			double *qxC = clusters->qx;
-			double *qyC = clusters->qy;
-			double *qzC = clusters->qz;
-			double *qxyC = clusters->qxy;
-			double *qyzC = clusters->qyz;
-			double *qxzC = clusters->qxz;
-			double *qxyzC = clusters->qxyz;
+            int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
+            if (this_thread==0){printf("numDevices: %i\n", numDevices);}
+            if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+            printf("this_thread: %i\n", this_thread);
 
-//			printf("\n\nInside compute region, clusters->q[0] = %f\n\n",clusters->q[0]);
-//			printf("\n\nInside compute region, clusters->q[213599] = %f\n\n",clusters->q[213599]);
+            double *EnP2, *EnP3;
+            make_vector(EnP2,targets->num);
+            make_vector(EnP3,targets->num);
+            for (i = 0; i < targets->num; i++)
+                EnP3[i] = 0.0;
+                EnP2[i] = 0.0;
 
-			int * ibegs = tree_array->ibeg;
-			int * iends = tree_array->iend;
 
-	#pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
-			xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
-			xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], \
-			qxC[0:clusters->num],qyC[0:clusters->num],qzC[0:clusters->num],qxyC[0:clusters->num], \
-			qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num]) \
-			copy(EnP3[0:targets->num], EnP2[0:targets->num])
+            double *xS = sources->x;
+            double *yS = sources->y;
+            double *zS = sources->z;
+            double *qS = sources->q;
+            double *wS = sources->w;
+
+            double *xT = targets->x;
+            double *yT = targets->y;
+            double *zT = targets->z;
+            double *qT = targets->q;
+
+            double *xC = clusters->x;
+            double *yC = clusters->y;
+            double *zC = clusters->z;
+            double *qC = clusters->q;
+            double *qxC = clusters->qx;
+            double *qyC = clusters->qy;
+            double *qzC = clusters->qz;
+            double *qxyC = clusters->qxy;
+            double *qyzC = clusters->qyz;
+            double *qxzC = clusters->qxz;
+            double *qxyzC = clusters->qxyz;
+
+            int *ibegs = tree_array->ibeg;
+            int *iends = tree_array->iend;
+
+    #pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], qS[0:sources->num], wS[0:sources->num], \
+            xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
+            xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], \
+            qxC[0:clusters->num],qyC[0:clusters->num],qzC[0:clusters->num],qxyC[0:clusters->num], \
+            qyzC[0:clusters->num],qxzC[0:clusters->num],qxyzC[0:clusters->num],qC[0:clusters->num]) \
+            copy(EnP3[0:targets->num], EnP2[0:targets->num])
 
 //#pragma acc data copyin(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], targets->q[0:targets->num], \
-//		sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
-//		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
-//		clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
-//		clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num]) \
-//		copy(EnP3[0:targets->num], EnP2[0:targets->num])
-	    {
+//      sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], sources->w[0:sources->num], \
+//      clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], \
+//      clusters->qx[0:clusters->num],clusters->qy[0:clusters->num],clusters->qz[0:clusters->num],clusters->qxy[0:clusters->num],clusters->qyz[0:clusters->num], \
+//      clusters->qxz[0:clusters->num], clusters->qxyz[0:clusters->num]) \
+//      copy(EnP3[0:targets->num], EnP2[0:targets->num])
+        {
 
 
 
 
-		int batch_ibeg, batch_iend, node_index;
-		double dist;
-		double tx, ty, tz;
-		int i, j, k, ii, jj;
-		double dxt,dyt,dzt,tempPotential;
-		double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
+        int batch_ibeg, batch_iend, node_index;
+        double dist;
+        double tx, ty, tz;
+        int i, j, k, ii, jj;
+        double dxt,dyt,dzt,tempPotential;
+        double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
 
-		int source_start;
-		int source_end;
+        int source_start;
+        int source_end;
 
-		double d_peng, r, r2, r3, r4;
-		double xi,yi,zi;
-		double rinv,r3inv,r5inv,r7inv;
+        double d_peng, r, r2, r3, r4;
+        double xi,yi,zi;
+        double rinv,r3inv,r5inv,r7inv;
 
-		double kappa2=kappa*kappa;
-		double kappa3=kappa*kappa*kappa;
-		int numberOfTargets;
-		int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
-		int clusterStart, batchStart, sourceIdx;
+        double kappa2=kappa*kappa;
+        double kappa3=kappa*kappa*kappa;
+        int numberOfTargets;
+        int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
+        int clusterStart, batchStart, sourceIdx;
 
-		int numberOfClusterApproximations, numberOfDirectSums;
+        int numberOfClusterApproximations, numberOfDirectSums;
 
-		int streamID;
-		#pragma omp for private(j,ii,jj,sourceIdx,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID,rinv,r3inv,r5inv,r7inv)
-	    for (i = 0; i < batches->num; i++) {
-	    	batch_ibeg = batches->index[i][0];
-			batch_iend = batches->index[i][1];
-			numberOfClusterApproximations = batches->index[i][2];
-			numberOfDirectSums = batches->index[i][3];
-
-
-			numberOfTargets = batch_iend - batch_ibeg + 1;
-			batchStart =  batch_ibeg - 1;
-
-			for (j = 0; j < numberOfClusterApproximations; j++) {
-				node_index = tree_inter_list[i * numnodes + j];
-				clusterStart = numberOfInterpolationPoints*node_index;
+        int streamID;
+        #pragma omp for private(j,ii,jj,sourceIdx,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID,rinv,r3inv,r5inv,r7inv)
+        for (i = 0; i < batches->num; i++) {
+            batch_ibeg = batches->index[i][0];
+            batch_iend = batches->index[i][1];
+            numberOfClusterApproximations = batches->index[i][2];
+            numberOfDirectSums = batches->index[i][3];
 
 
+            numberOfTargets = batch_iend - batch_ibeg + 1;
+            batchStart =  batch_ibeg - 1;
 
-				streamID = j%3;
-				#pragma acc kernels async(streamID) //present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
-				{
-				#pragma acc loop independent
-				for (ii = 0; ii < numberOfTargets; ii++){
-					tempPotential = 0.0;
-					xi = xT[ batchStart + ii];
-					yi = yT[ batchStart + ii];
-					zi = zT[ batchStart + ii];
-
-					for (jj = 0; jj < numberOfInterpolationPoints; jj++){
-						sourceIdx = clusterStart + jj;
-						// Compute x, y, and z distances between target i and interpolation point j
-						dxt = xi - xC[sourceIdx];
-						dyt = yi - yC[sourceIdx];
-						dzt = zi - zC[sourceIdx];
-//						tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-						r = sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-						r2 = r*r;
-						r3 = r2*r;
-						r4 = r2*r2;
-						rinv = 1 / r;
-						r3inv = rinv*rinv*rinv;
-						r5inv = r3inv*rinv*rinv;
-						r7inv = r5inv*rinv*rinv;
+            for (j = 0; j < numberOfClusterApproximations; j++) {
+                node_index = tree_inter_list[i * numnodes + j];
+                clusterStart = numberOfInterpolationPoints*node_index;
 
 
 
-//						tempPotential +=       rinv  * ( qC[sourceIdx])
-//														+      r3inv * ( qxC[sourceIdx]*dxt +  qyC[sourceIdx]*dyt +  qzC[sourceIdx]*dzt )
-//														+ 3 *  r5inv * ( qxyC[sourceIdx]*dxt*dyt +  qyzC[sourceIdx]*dyt*dzt +  qxzC[sourceIdx]*dxt*dzt )
-//														+ 15 * r7inv *   qxyzC[sourceIdx]*dxt*dyt*dzt
-//														;
+                streamID = j%3;
+                #pragma acc kernels async(streamID) //present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
+                {
+                #pragma acc loop independent
+                for (ii = 0; ii < numberOfTargets; ii++){
+                    tempPotential = 0.0;
+                    xi = xT[ batchStart + ii];
+                    yi = yT[ batchStart + ii];
+                    zi = zT[ batchStart + ii];
+
+                    for (jj = 0; jj < numberOfInterpolationPoints; jj++){
+                        sourceIdx = clusterStart + jj;
+                        // Compute x, y, and z distances between target i and interpolation point j
+                        dxt = xi - xC[sourceIdx];
+                        dyt = yi - yC[sourceIdx];
+                        dzt = zi - zC[sourceIdx];
+//                      tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+                        r = sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+                        r2 = r*r;
+                        r3 = r2*r;
+                        r4 = r2*r2;
+                        rinv = 1 / r;
+                        r3inv = rinv*rinv*rinv;
+                        r5inv = r3inv*rinv*rinv;
+                        r7inv = r5inv*rinv*rinv;
 
 
-						tempPotential +=       exp(-kappa*r)*(
-											   rinv  * ( qC[sourceIdx])
-										+      r3inv * (1 + kappa*r) * ( qxC[sourceIdx]*dxt +  qyC[sourceIdx]*dyt +  qzC[sourceIdx]*dzt )
-										+      r5inv * (3 + 3*kappa*r + kappa2*r2 ) * ( qxyC[sourceIdx]*dxt*dyt +  qyzC[sourceIdx]*dyt*dzt +  qxzC[sourceIdx]*dxt*dzt )
-										+      r7inv * (15 + 15*kappa*r + 6*kappa2*r2 + kappa3*r3) * qxyzC[sourceIdx]*dxt*dyt*dzt
-										);
+
+//                      tempPotential +=       rinv  * ( qC[sourceIdx])
+//                                                      +      r3inv * ( qxC[sourceIdx]*dxt +  qyC[sourceIdx]*dyt +  qzC[sourceIdx]*dzt )
+//                                                      + 3 *  r5inv * ( qxyC[sourceIdx]*dxt*dyt +  qyzC[sourceIdx]*dyt*dzt +  qxzC[sourceIdx]*dxt*dzt )
+//                                                      + 15 * r7inv *   qxyzC[sourceIdx]*dxt*dyt*dzt
+//                                                      ;
+
+
+                        tempPotential +=       exp(-kappa*r)*(
+                                               rinv  * ( qC[sourceIdx])
+                                        +      r3inv * (1 + kappa*r) * ( qxC[sourceIdx]*dxt +  qyC[sourceIdx]*dyt +  qzC[sourceIdx]*dzt )
+                                        +      r5inv * (3 + 3*kappa*r + kappa2*r2 ) * ( qxyC[sourceIdx]*dxt*dyt +  qyzC[sourceIdx]*dyt*dzt +  qxzC[sourceIdx]*dxt*dzt )
+                                        +      r7inv * (15 + 15*kappa*r + 6*kappa2*r2 + kappa3*r3) * qxyzC[sourceIdx]*dxt*dyt*dzt
+                                        );
 
 
 
-									}
-					#pragma acc atomic
-					EnP3[batchStart + ii] += tempPotential;
-				}
-					} // end kernel
-	        } // end for loop over cluster approximations
+                                    }
+                    #pragma acc atomic
+                    EnP3[batchStart + ii] += tempPotential;
+                }
+                    } // end kernel
+            } // end for loop over cluster approximations
 
-			for (j = 0; j < numberOfDirectSums; j++) {
+            for (j = 0; j < numberOfDirectSums; j++) {
 
-				node_index = direct_inter_list[i * numleaves + j];
+                node_index = direct_inter_list[i * numleaves + j];
 
-				source_start=ibegs[node_index]-1;
-				source_end=iends[node_index];
+                source_start=ibegs[node_index]-1;
+                source_end=iends[node_index];
 
 
-				streamID = j%3;
-		    # pragma acc kernels async(streamID)
-		    {
-			#pragma acc loop independent
-		    for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
-		        d_peng = 0.0;
-		        for (jj = source_start; jj < source_end; jj++) {
-		            tx = xS[jj] - xT[ii];
-		            ty = yS[jj] - yT[ii];
-		            tz = zS[jj] - zT[ii];
-		            r = sqrt(tx*tx + ty*ty + tz*tz);
-		            if (r > DBL_MIN) {
-		            	d_peng += exp(-kappa*r)*qS[jj] * wS[jj] / r;
-		            }
-		        }
-				#pragma acc atomic
-		        EnP2[ii] += d_peng;
-		    }
-		    } // end kernel
-			} // end loop over number of leaves
+                streamID = j%3;
+            # pragma acc kernels async(streamID)
+            {
+            #pragma acc loop independent
+            for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
+                d_peng = 0.0;
+                for (jj = source_start; jj < source_end; jj++) {
+                    tx = xS[jj] - xT[ii];
+                    ty = yS[jj] - yT[ii];
+                    tz = zS[jj] - zT[ii];
+                    r = sqrt(tx*tx + ty*ty + tz*tz);
+                    if (r > DBL_MIN) {
+                        d_peng += exp(-kappa*r)*qS[jj] * wS[jj] / r;
+                    }
+                }
+                #pragma acc atomic
+                EnP2[ii] += d_peng;
+            }
+            } // end kernel
+            } // end loop over number of leaves
 //#pragma acc wait
 
-	    } // end loop over target batches
+        } // end loop over target batches
 
 
-		#pragma acc wait
-	    } // end acc data region
+        #pragma acc wait
+        } // end acc data region
 
 
-	    for (int k = 0; k < targets->num; k++){
-	    	if (EnP2[k] != 0.0)
-			#pragma omp critical
-	    	{
-				EnP[k] += EnP2[k];
-				EnP[k] += EnP3[k];
-	    	}
-			}
+        for (int k = 0; k < targets->num; k++){
+            if (EnP2[k] != 0.0)
+            #pragma omp critical
+            {
+                EnP[k] += EnP2[k];
+                EnP[k] += EnP3[k];
+            }
+            }
 
-	    free_vector(EnP2);
-	    free_vector(EnP3);
-		} // end omp parallel region
+        free_vector(EnP2);
+        free_vector(EnP3);
+        } // end omp parallel region
 
-	    printf("Exited the main comp_pc call.\n");
-	    *tpeng = sum(EnP, targets->num);
+        printf("Exited the main comp_pc call.\n");
+        *tpeng = sum(EnP, targets->num);
 
-	    return;
+        return;
 
-	} /* END of function pc_treecode */
+    } /* END of function pc_treecode */
 

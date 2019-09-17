@@ -49,7 +49,7 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          -acc
                                          -ta=tesla:ccall,cc60)
 
-if(ENABLE_GPU_BUILD AND NOT $<C_COMPILER_ID:PGI>) 
+if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
     message("GPU build requires PGI compilers! Turning GPU build off.")
     set(ENABLE_GPU_BUILD OFF)
 endif()

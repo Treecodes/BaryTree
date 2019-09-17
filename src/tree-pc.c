@@ -195,38 +195,6 @@ int pc_set_tree_index(struct tnode *p, int index)
 
 
 
-
-//void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
-//{
-//    int i;
-//
-//    /*midpoint coordinates, RADIUS and SQRADIUS*/
-//    tree_array->x_mid[p->node_index] = p->x_mid;
-//    tree_array->y_mid[p->node_index] = p->y_mid;
-//    tree_array->z_mid[p->node_index] = p->z_mid;
-//
-//    tree_array->x_min[p->node_index] = p->x_min;
-//    tree_array->y_min[p->node_index] = p->y_min;
-//    tree_array->z_min[p->node_index] = p->z_min;
-//
-//    tree_array->x_max[p->node_index] = p->x_max;
-//    tree_array->y_max[p->node_index] = p->y_max;
-//    tree_array->z_max[p->node_index] = p->z_max;
-//
-//    tree_array->ibeg[p->node_index] = p->ibeg;
-//    tree_array->iend[p->node_index] = p->iend;
-//
-//    for (i = 0; i < p->num_children; i++) {
-//        pc_create_tree_array(p->child[i], tree_array);
-//    }
-//
-//    return;
-//
-//} /* END of function create_tree_n0 */
-
-
-
-
 void pc_partition_8(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2])
@@ -356,9 +324,12 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 
 #pragma omp parallel num_threads(numThreads)
     {
-        if (omp_get_thread_num()<numDevices){
-            acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+
+#ifdef OPENACC_ENABLED
+        if (omp_get_thread_num() < numDevices) {
+            acc_set_device_num(omp_get_thread_num(), acc_get_device_type());
         }
+#endif
 
         int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
         if (this_thread==0){printf("numDevices: %i\n", numDevices);}
@@ -771,16 +742,18 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                                   struct particles *sources, struct particles *targets,
                                   double *tpeng, double *EnP, int numDevices, int numThreads)
 {
-        int i, j;
+    int i, j;
 
-        for (i = 0; i < targets->num; i++)
-            EnP[i] = 0.0;
+    for (i = 0; i < targets->num; i++)
+        EnP[i] = 0.0;
 
     #pragma omp parallel num_threads(numThreads)
-        {
-            if (omp_get_thread_num()<numDevices){
-                acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-            }
+    {
+
+#ifdef OPENACC_ENABLED
+    if (omp_get_thread_num()<numDevices)
+        acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+#endif
 
             int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
             if (this_thread==0){printf("numDevices: %i\n", numDevices);}
