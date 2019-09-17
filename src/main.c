@@ -170,15 +170,15 @@ int main(int argc, char **argv)
     printf("                   Direct time (s):  %f\n\n", time_direct);
     printf("              Pre-process time (s):  %f\n", time_preproc);
     printf("               Treedriver time (s):  %f\n", time_treedriver);
-    printf("               Tree setup time (s):  %f, %f\n", time_tree[0]);
+    printf("               Tree setup time (s):  %f\n", time_tree[0]);
     
     if (tree_type == 0) {
-        printf("             Min, Max cp1 time (s):  %f, %f\n", time_tree[1]);
-        printf("             Min, Max cp2 time (s):  %f, %f\n", time_tree[2]);
+        printf("                      cp1 time (s):  %f\n", time_tree[1]);
+        printf("                      cp2 time (s):  %f\n", time_tree[2]);
     }
         
-    printf("      Min, Max total tree time (s):  %f, %f\n\n", time_tree[3]);
-    printf(" Preproc + Max total tree time (s):  %f \n\n", time_tree[3] + time_preproc);
+    printf("               Total tree time (s):  %f\n\n", time_tree[3]);
+    printf("     Preproc + total tree time (s):  %f\n\n", time_tree[3] + time_preproc);
     
     printf("           Direct potential energy:  %f\n", dpeng);
     printf("             Tree potential energy:  %f\n\n", tpeng);
