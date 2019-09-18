@@ -87,6 +87,7 @@ Some potentiall useful CMake flags during configure:
 Running the executables
 -----------------------
 To run tree-cpu or tree-gpu, enter the following as command line arguments:
+
               infile 1:  sources binary input file
               infile 2:  targets binary input file
               infile 3:  direct calc potential binary input file 
