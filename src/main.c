@@ -159,7 +159,7 @@ int main(int argc, char **argv)
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
-               tenergy, &tpeng, time_tree, numThreads, numThreads);
+               tenergy, &tpeng, time_tree, numThreads);
     time2 = omp_get_wtime();
     time_treedriver = time2 - time1;
 
@@ -167,24 +167,23 @@ int main(int argc, char **argv)
     dpeng = sum(denergy, numparsT);
 
     /* Printing direct and treecode time calculations: */
-    printf("                   Direct time (s):  %f\n\n", time_direct);
-    printf("              Pre-process time (s):  %f\n", time_preproc);
-    printf("               Treedriver time (s):  %f\n", time_treedriver);
-    printf("               Tree setup time (s):  %f\n", time_tree[0]);
+    printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
+    printf("|    Total time......................  %e s\n", time_preproc + time_treedriver);
+    printf("|    |\n");
+    printf("|    |....Pre-process................  %e s\n", time_preproc);
+    printf("|    |....Treedriver.................  %e s\n", time_treedriver);
+    printf("|         |\n");
+    printf("|         |....Tree setup............  %e s\n", time_tree[0]);
+    printf("|         |....Computation...........  %e s\n", time_tree[3]);
+    printf("|         |....Cleanup...............  %e s\n\n", time_tree[2]);
     
-    if (tree_type == 0) {
-        printf("                      cp1 time (s):  %f\n", time_tree[1]);
-        printf("                      cp2 time (s):  %f\n", time_tree[2]);
-    }
-        
-    printf("               Total tree time (s):  %f\n\n", time_tree[3]);
-    printf("     Preproc + total tree time (s):  %f\n\n", time_tree[3] + time_preproc);
+    printf("\nTreecode comparison summary...\n\n");
+    printf("   Speedup over reported direct time:  %fx\n\n", time_direct/(time_preproc+time_treedriver));
+    printf("             Direct potential energy:  %f\n", dpeng);
+    printf("               Tree potential energy:  %f\n\n", tpeng);
     
-    printf("           Direct potential energy:  %f\n", dpeng);
-    printf("             Tree potential energy:  %f\n\n", tpeng);
-    
-    printf("Absolute error for total potential:  %e\n", fabs(tpeng-dpeng));
-    printf("Relative error for total potential:  %e\n\n", fabs((tpeng-dpeng)/dpeng));
+    printf("  Absolute error for total potential:  %e\n", fabs(tpeng-dpeng));
+    printf("  Relative error for total potential:  %e\n\n", fabs((tpeng-dpeng)/dpeng));
     
     
     /* Computing pointwise potential errors */
@@ -219,7 +218,7 @@ int main(int argc, char **argv)
     printf("Relative inf norm error in potential:  %e \n\n", relinferr);
     printf("  Absolute 2 norm error in potential:  %e \n", n2err);
     printf("  Relative 2 norm error in potential:  %e \n\n", reln2err);
-    printf("              Inf error occurring at: %f, %f, %f \n\n", xinf, yinf, zinf);
+    printf("           Inf norm error occurrs at:  %f, %f, %f \n\n", xinf, yinf, zinf);
     
 
     fp = fopen(sampout, "a");
@@ -229,8 +228,8 @@ int main(int argc, char **argv)
         sampin1, sampin2, sampin3, numparsS, numparsT,
         theta, order, tree_type, maxparnode,batch_size,
         kappa, pot_type, //1 ends
-        time_preproc, time_tree[0], time_tree[1], time_tree[2], time_tree[3],
-        time_tree[3] + time_preproc, //2 ends
+        time_preproc+time_treedriver, time_preproc, time_treedriver, time_tree[0], time_tree[3],
+        time_tree[2], //2 ends
         dpeng, tpeng, fabs(tpeng-dpeng), fabs((tpeng-dpeng)/dpeng),
         inferr, relinferr, n2err, reln2err, numThreads); //3 ends
     fclose(fp);

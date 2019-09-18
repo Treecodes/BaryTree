@@ -18,7 +18,7 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
-                double *tEn, double *tpeng, double *timetree, int numDevices, int numThreads)
+                double *tEn, double *tpeng, double *timetree, int numThreads)
 {
 
     int verbosity = 0;
@@ -95,7 +95,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         timeFillClusters1 = omp_get_wtime();
         if        ((pot_type == 0) || (pot_type == 1)) {
             fill_in_cluster_data(clusters, sources, troot, order,
-                                 numDevices, numThreads, tree_array);
+                                 numThreads, numThreads, tree_array);
 
         } else if ((pot_type == 2) || (pot_type == 3)) {
             fill_in_cluster_data_SS(clusters, sources, troot, order);
@@ -115,9 +115,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     timetree[0] = time2-time1;
 
     if (verbosity > 0) {
-        printf("Tree creation (s):  %f\n\n", time2-time1);
         printf("Tree information: \n\n");
-
         printf("                      numpar: %d\n", troot->numpar);
         printf("                       x_mid: %e\n", troot->x_mid);
         printf("                       y_mid: %e\n", troot->y_mid);
@@ -135,7 +133,11 @@ void treedriver(struct particles *sources, struct particles *targets,
         printf("                tree minpars: %d\n", minpars);
         printf("            number of leaves: %d\n", numleaves);
         printf("             number of nodes: %d\n", numnodes);
-        printf("           number of devices: %d\n", numDevices);
+#ifdef OPENACC_ENABLED
+        printf("           number of devices: %d\n", numThreads);
+#else
+        printf("           number of threads: %d\n", numThreads);
+#endif
         printf("           target batch size: %d\n", batch_size);
         printf("           number of batches: %d\n\n", batches->num);
     }
@@ -156,52 +158,52 @@ void treedriver(struct particles *sources, struct particles *targets,
             if (verbosity > 0) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
             pc_interaction_list_treecode(tree_array, clusters, batches,
                                          tree_inter_list, direct_inter_list, sources, targets,
-                                         tpeng, tEn, numDevices, numThreads);
+                                         tpeng, tEn, numThreads, numThreads);
 
         } else if (pot_type == 1) {
             if (verbosity > 0) printf("Entering particle-cluster, pot_type=1 (Yukawa).\n");
             pc_interaction_list_treecode_yuk(tree_array, clusters, batches,
                                              tree_inter_list, direct_inter_list, sources, targets,
-                                             tpeng, kappa, tEn, numDevices, numThreads);
+                                             tpeng, kappa, tEn, numThreads, numThreads);
 
         } else if (pot_type == 2) {
             if (verbosity > 0) printf("Entering particle-cluster, pot_type=2 (Coulomb w/ singularity subtraction).\n");
             pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
-                                   kappa, tpeng, tEn, numDevices, numThreads);
+                                   kappa, tpeng, tEn, numThreads, numThreads);
 //          pc_interaction_list_treecode_Coulomb_SS(tree_array, clusters, batches,
 //                                                  tree_inter_list, direct_inter_list, sources, targets,
-//                                                  tpeng, kappa, tEn, numDevices, numThreads);
+//                                                  tpeng, kappa, tEn, numThreads, numThreads);
 
         } else if (pot_type == 3) {
             if (verbosity > 0) printf("Entering particle-cluster, pot_type=3 (Yukawa w/ singularity subtraction).\n");
             pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
-                               kappa, tpeng, tEn, numDevices, numThreads);
+                               kappa, tpeng, tEn, numThreads, numThreads);
 
         } else if (pot_type == 4) {
             if (verbosity > 0) printf("Entering particle-cluster, pot_type=4 (Coulomb Hermite).\n");
             pc_interaction_list_treecode_hermite_coulomb(tree_array, clusters, batches,
                                                     tree_inter_list, direct_inter_list, sources, targets,
-                                                    tpeng, tEn, numDevices, numThreads);
+                                                    tpeng, tEn, numThreads, numThreads);
 
         } else if (pot_type == 5) {
             if (verbosity > 0) printf("Entering particle-cluster, pot_type=4 (Yukawa Hermite).\n");
             pc_interaction_list_treecode_hermite_yukawa(tree_array, clusters, batches,
                                                     tree_inter_list, direct_inter_list, sources, targets,
-                                                    tpeng, kappa, tEn, numDevices, numThreads);
+                                                    tpeng, kappa, tEn, numThreads, numThreads);
 
         } else if (pot_type == 6) {
             if (verbosity > 0) printf("Entering particle-cluster, pot_type=6 (Coulomb Hermite w/ singularity subtraction).\n");
             pc_treecode_hermite_coulomb_SS(troot, batches, sources, targets,clusters,
-                                           kappa, tpeng, tEn, numDevices, numThreads);
+                                           kappa, tpeng, tEn, numThreads, numThreads);
         }
         
         reorder_energies(batches->reorder, targets->num, tEn);
     }
 
     time2 = omp_get_wtime();  // end time for tree evaluation
-    timetree[3] = time2-time1; //+ timetree[0];
+    timetree[3] = time2-time1;
 
-    if (verbosity  > 0) printf("Time to compute: %f\n", time2-time1);
+    time1 = omp_get_wtime();
 
     cleanup(troot);
 
@@ -237,6 +239,9 @@ void treedriver(struct particles *sources, struct particles *targets,
     free_matrix(batches->center);
     free_vector(batches->radius);
     free(batches);
+
+    time2 = omp_get_wtime();
+    timetree[2] = time2-time1;
 
     return;
 
