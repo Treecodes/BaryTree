@@ -40,21 +40,21 @@ BaryTree
 
 Summary of executables
 ----------------------
- tree-cpu:    Runs the particle-cluster Lagrange or Hermite barycentric
+- tree-cpu:    Runs the particle-cluster Lagrange or Hermite barycentric
               treecode for Coulomb or screened Coulomb interactions on
               CPUs, using OpenMP for single-node parallelization.
 	     
- tree-gpu:    Runs the particle-cluster Lagrange or Hermite barycentric
+- tree-gpu:    Runs the particle-cluster Lagrange or Hermite barycentric
               treecode for Coulomb or screened Coulomb interactions on
               one or more GPUs connected to one compute node.
 	     
- direct-cpu:  Directly computes Coulomb or screened Coulomb interactions
+- direct-cpu:  Directly computes Coulomb or screened Coulomb interactions
               on CPUs, using OpenMP for single-node parallelization.
 
- direct-gpu:  Directly computes Coulomb or screened Coulomb interactions
+- direct-gpu:  Directly computes Coulomb or screened Coulomb interactions
               on one or more GPUs connected to one compute node.
   
- txt2bin:  Turns a text file of sources (pqr or x/y/z/q file) or targets into a 
+- txt2bin:  Turns a text file of sources (pqr or x/y/z/q file) or targets into a 
            binary file for use by the BaryTree or direct executables.
 
 
