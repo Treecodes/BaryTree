@@ -17,7 +17,7 @@ BaryTree
    University of Michigan, Ann Arbor
    
 
-   Please include the following references in any work that utilizes this code:
+   Please refer to the following references for more background:
 		
    - Boateng. H. A., Krasny, R.: Comparison of Treecodes for
             Computing Electrostatic Potentials in Charged Particle 
@@ -40,49 +40,79 @@ BaryTree
 
 Summary of executables
 ----------------------
-BaryTree:  Runs the particle-cluster or cluster-particle treecode for Coulomb or
-           screened Coulomb interactions.
+ tree-cpu:    Runs the particle-cluster Lagrange or Hermite barycentric
+              treecode for Coulomb or screened Coulomb interactions on
+              CPUs, using OpenMP for single-node parallelization.
 	     
-  direct:  Directly computes Coulomb or screened Coulomb interactions.
+ tree-gpu:    Runs the particle-cluster Lagrange or Hermite barycentric
+              treecode for Coulomb or screened Coulomb interactions on
+              one or more GPUs connected to one compute node.
+	     
+ direct-cpu:  Directly computes Coulomb or screened Coulomb interactions
+              on CPUs, using OpenMP for single-node parallelization.
+
+ direct-gpu:  Directly computes Coulomb or screened Coulomb interactions
+              on one or more GPUs connected to one compute node.
   
  txt2bin:  Turns a text file of sources (pqr or x/y/z/q file) or targets into a 
-           binary file for use by the tree.exe or direct.exe executables.
+           binary file for use by the BaryTree or direct executables.
 
 
                      
 Building
 ------------------------------
-To compile with GPU support, first load all modules necessary for PGI compilers.
-For instance, on Michigan Flux, first run:
+This project uses CMake to manage and configure its build system. In principle, 
+building this project is as simple as executing the following from the top level
+directory of BaryTree:
+
+    mkdir build; cd build; export CC=<C compiler>; cmake ..; make
+
+Compiling GPU versions requires that a PGI C compiler be used. If another compiler
+other than pgcc is used, for instance gcc or icc, support for building GPU versions
+will be automatically turned off during configuration.
+
+Some potentiall useful CMake flags during configure:
+
+    -DCMAKE_RELEASE_TYPE={Debug, Release}   build either the debug or release version
+    -DENABLE_GPU_BUILD={ON, OFF}   manually toggle whether to build the GPU versions
+    -DCMAKE_INSTALL_PREFIX=/where/to/install   specify install location for `make install`
+    
+
+    
 	      
-	module load cuda pgi openmpi
-	      
-The code is compiled with a `make` command in the src directory. This will generate
-executables in the bin directory. By default, on Linux, the compilation will rely
-on PGI compilers for GPU support, and by default, on Mac, the compilation will not
-include GPU support. Edit the flags in Makefile to change this behavior.
    
    
               
                                                      
-Input for BaryTree
--------------------------------
-Enter the following as command line arguments:
- 
-                   sampin1:  sources input file 
-                   sampin2:  targets input file 
-                   sampin3:  direct calc potential input file 
-                   sampout:  tree calc potential output file
-                  numparsS:  number of sources 
-                  numparsT:  number of targets
-                     theta:  multipole acceptance criterion
-                     order:  order of treecode Taylor expansion 
-                maxparnode:  maximum particles in leaf 
-                     kappa:  screened Coulomb parameter
-                  pot_type:  0--Coulomb, 1--screened Coulomb	
-                     batch:  maximum particles in batch
-               num devices:  number of GPUs available
-               num threads:  number of OpenMP threads
+Running the executables
+-----------------------
+To run tree-cpu or tree-gpu, enter the following as command line arguments:
+              infile 1:  sources binary input file
+              infile 2:  targets binary input file
+              infile 3:  direct calc potential binary input file 
+            csv output:  results summary to CSV file 
+              numparsS:  number of sources 
+              numparsT:  number of targets 
+                 theta:  multipole acceptance criterion 
+                 order:  number of Chebyshev interp. pts per Cartesian direction 
+            maxparnode:  maximum particles in leaf 
+            batch size:  maximum size of target batch 
+       pot/approx type:  0--Coulomb, Lagrange approx.
+                         1--screened Coulomb/Yukawa, Lagrange approx.
+                         4--Coulomb, Hermite approx.
+                         5--screened Coulomb/Yukawa, Hermite approx.
+                 kappa:  screened Coulomb parameter 
+      num threads/GPUs:  number of OpenMP threads or available GPUs
+
+For example, running:
+
+    tree-gpu sources.bin targets.bin direct_result.bin tree_result.csv 100000 100000 0.5 5 500 500 4 0 2
+
+would run tree-gpu on 2 GPUs for the Coulomb potential, using Hermite interpolation with
+5 interpolation points per Cartesian direction and a MAC of 0.5. The executable would 
+compare the results to a direct result produced by direct-gpu or direct-cpu and saved in
+the file direct\_result.bin. 
+
 
 License
 -------

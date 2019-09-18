@@ -51,21 +51,28 @@ int main(int argc, char **argv)
     sampin1 = argv[1];
     if (strcmp(sampin1,"--help") == 0)
     {
-        printf("Input arguments: \n");
-        printf("       sampin1:  sources input file \n");               // "S10000.txt"
-        printf("       sampin2:  targets input file \n");               // "T1000000.txt"
-        printf("       sampin3:  direct calc potential input file \n"); // "ex_s4_t6.txt"
-        printf("       sampout:  tree calc potential output file \n");  // "out.txt"
-        printf("      numparsS:  number of sources \n");                // 10000
-        printf("      numparsT:  number of targets \n");                // 1000000
-        printf("         theta:  multipole acceptance criterion \n");   // 0.75
-        printf("         order:  number of Chebyshev interpolation points \n");        // 20
-//        printf("     tree_type:  0--cluster-particle, 1--particle-cluster \n");  // 0
-        printf("    maxparnode:  maximum particles in leaf \n");                 // 500
-        printf("         kappa:  screened Coulomb parameter \n");                // 0.00
-        printf("      pot_type:  0--Coulomb, 1--screened Coulomb \n");           // 1
-        printf("    batch_size:  size of target batches \n");     // 0
-        printf("   num threads:  number of OpenMP threads (or GPUs) \n");     // 0
+        printf("Input arguments... \n");
+        printf("        infile 1:  sources input file \n");
+        printf("        infile 2:  targets input file \n");
+        printf("        infile 3:  direct calc potential input file \n");
+        printf("      csv output:  results summary to CSV file \n");
+        printf("        numparsS:  number of sources \n");
+        printf("        numparsT:  number of targets \n");
+        printf("           theta:  multipole acceptance criterion \n");
+        printf("           order:  number of Chebyshev interp. pts per Cartesian direction \n");
+//        printf("     tree_type:  0--cluster-particle, 1--particle-cluster \n");
+        printf("      maxparnode:  maximum particles in leaf \n");
+        printf("      batch size:  maximum size of target batch \n");
+        printf(" pot/approx type:  0--Coulomb, Lagrange approx.\n");           
+        printf("                   1--screened Coulomb/Yukawa, Lagrange approx.\n");
+        printf("                   4--Coulomb, Hermite approx.\n");
+        printf("                   5--screened Coulomb/Yukawa, Hermite approx.\n");
+        printf("           kappa:  screened Coulomb parameter \n");
+#ifdef OPENACC_ENABLED
+        printf("     num devices:  number of GPUs available \n");
+#else
+        printf("     num threads:  number of OpenMP threads \n");
+#endif
 
         return 0;
     }
@@ -79,9 +86,9 @@ int main(int argc, char **argv)
     order = atoi(argv[8]);
     tree_type = 1;
     maxparnode = atoi(argv[9]);
-    kappa = atof(argv[10]);
+    batch_size = atoi(argv[10]);
     pot_type = atoi(argv[11]);
-    batch_size = atoi(argv[12]);
+    kappa = atof(argv[12]);
     numThreads = atoi(argv[13]);
     
     time1 = omp_get_wtime();
@@ -166,16 +173,19 @@ int main(int argc, char **argv)
 
     dpeng = sum(denergy, numparsT);
 
+    double time_total = time_preproc + time_treedriver;
+    double time_percent = 100. / time_total;
+
     /* Printing direct and treecode time calculations: */
     printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
-    printf("|    Total time......................  %e s\n", time_preproc + time_treedriver);
+    printf("|    Total time......................  %e s    (100.00%)\n", time_total);
     printf("|    |\n");
-    printf("|    |....Pre-process................  %e s\n", time_preproc);
-    printf("|    |....Treedriver.................  %e s\n", time_treedriver);
+    printf("|    |....Pre-process................  %e s    (%6.2f%)\n", time_preproc, time_preproc * time_percent);
+    printf("|    |....Treedriver.................  %e s    (%6.2f%)\n", time_treedriver, time_treedriver * time_percent);
     printf("|         |\n");
-    printf("|         |....Tree setup............  %e s\n", time_tree[0]);
-    printf("|         |....Computation...........  %e s\n", time_tree[3]);
-    printf("|         |....Cleanup...............  %e s\n\n", time_tree[2]);
+    printf("|         |....Tree setup............  %e s    (%6.2f%)\n", time_tree[0], time_tree[0] * time_percent);
+    printf("|         |....Computation...........  %e s    (%6.2f%)\n", time_tree[3], time_tree[3] * time_percent);
+    printf("|         |....Cleanup...............  %e s    (%6.2f%)\n\n", time_tree[2], time_tree[2] * time_percent);
     
     printf("\nTreecode comparison summary...\n\n");
     printf("   Speedup over reported direct time:  %fx\n\n", time_direct/(time_preproc+time_treedriver));
