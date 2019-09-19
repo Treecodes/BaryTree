@@ -35,12 +35,6 @@ SET(SRCS_DIRECT
     xmalloc.c xmalloc.h)
 
 
-SET(SRCS_TXT2BIN
-    txt2bin.c array.h
-    xmalloc.c xmalloc.h
-    sort.c)
-
-
 if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT tree-cpu)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
@@ -90,12 +84,6 @@ if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
                                       OpenACC_C
                                       $<$<C_COMPILER_ID:GNU>:m>)
     install(TARGETS ${TRGT} DESTINATION bin)
-endif()
-
-
-if (BUILD_TOOLS)
-    add_executable(txt2bin ${SRCS_TXT2BIN})
-    install (TARGETS txt2bin DESTINATION bin)
 endif()
 
 

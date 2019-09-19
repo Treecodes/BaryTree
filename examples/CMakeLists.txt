@@ -4,7 +4,7 @@ if(BUILD_EXAMPLES AND ENABLE_CPU_BUILD)
    install(TARGETS library_example_cpu DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
-if(BUILD_EXAMPLES AND ENABLE_CPU_BUILD)
+if(BUILD_EXAMPLES AND ENABLE_GPU_BUILD)
    add_executable(library_example_gpu library_example.c)
    target_link_libraries(library_example_gpu PUBLIC treelib-gpu)
    install(TARGETS library_example_gpu DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})

@@ -54,9 +54,6 @@ Summary of executables
 - direct-gpu:  Directly computes Coulomb or screened Coulomb interactions
               on one or more GPUs connected to one compute node.
   
-- txt2bin:  Turns a text file of sources (pqr or x/y/z/q file) or targets into a 
-           binary file for use by the BaryTree or direct executables.
-
 
                      
 Building
