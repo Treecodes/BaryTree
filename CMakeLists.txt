@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9...3.14)
-project(GPU-TREECODE VERSION 0.7 LANGUAGES C)
+project(GPU-TREECODE VERSION 0.5 LANGUAGES C)
 
 set(default_build_type "Release")
 
