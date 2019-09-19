@@ -23,6 +23,7 @@ option(BUILD_DIRECT "build direct computation executables"                     O
 option(BUILD_TOOLS "build auxiliary utilities"                                 ON)
 
 option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
+option(BUILD_EXAMPLES "build examples using the libraries"                     ON)
 option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
 
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
@@ -55,3 +56,4 @@ if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
 endif()
 
 add_subdirectory(src)
+add_subdirectory(examples)
