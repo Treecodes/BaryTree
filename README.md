@@ -83,7 +83,23 @@ Some potentiall useful CMake flags during configure:
                                                      
 Running the executables
 -----------------------
-To run tree-cpu or tree-gpu, enter the following as command line arguments:
+To run `direct-cpu` or `direct-gpu`, enter the following as command line arguments:
+
+              infile 1:  sources input file 
+              infile 2:  targets input file 
+              infile 3:  direct calc potential binary output file 
+            csv output:  results summary to CSV file
+              numparsS:  number of sources 
+              numparsT:  number of targets 
+                 kappa:  screened Coulomb parameter 
+              pot type:  0--Coulomb
+                         1--screened Coulomb 
+      num threads/GPUs:  number of OpenMP threads or available GPUs
+
+Running `direct-cpu --help` or `direct-gpu --help` help will produce a list of these command
+line arguments
+
+To run `tree-cpu` or `tree-gpu`, enter the following as command line arguments:
 
               infile 1:  sources binary input file
               infile 2:  targets binary input file
@@ -93,7 +109,7 @@ To run tree-cpu or tree-gpu, enter the following as command line arguments:
               numparsT:  number of targets 
                  theta:  multipole acceptance criterion 
                  order:  number of Chebyshev interp. pts per Cartesian direction 
-            maxparnode:  maximum particles in leaf 
+             leaf size:  maximum particles in leaf 
             batch size:  maximum size of target batch 
        pot/approx type:  0--Coulomb, Lagrange approx.
                          1--screened Coulomb/Yukawa, Lagrange approx.
@@ -110,6 +126,9 @@ would run tree-gpu on 2 GPUs for the Coulomb potential, using Hermite interpolat
 5 interpolation points per Cartesian direction and a MAC of 0.5. The executable would 
 compare the results to a direct result produced by direct-gpu or direct-cpu and saved in
 the file direct\_result.bin. 
+
+Running `tree-cpu --help` or `tree-gpu --help` will produce a list of these command line arguments.
+
 
 
 License
