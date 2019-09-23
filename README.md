@@ -1,12 +1,11 @@
 BaryTree
 ========
 
-   This file is the partial documentation for hybrid-gpu-treecode, 
-   a work-in-progress set of routines for approximating the electrostatic 
-   energy at a set of M targets due to a disjoint set of N source particles.
-   The current code employs an OpenACC GPU implementation to handle direct
-   source-target interactions, and can also be compiled with MPI 
-   capabilities.
+   This file is the partial documentation for BaryTree, 
+   a work-in-progress set of routines for approximating kernel evaluations 
+   at a set of M targets due to a set of N source particles using 
+   particle-cluster Lagrange or Hermite barycentric treecodes.
+   The current code employs an OpenACC GPU implementation.
 
 
    Authors:  
