@@ -128,6 +128,8 @@ compare the results to a direct result produced by direct-gpu or direct-cpu and 
 the file direct\_result.bin. 
 
 Running `tree-cpu --help` or `tree-gpu --help` will produce a list of these command line arguments.
+Running with a non-existent file for the direct calc potential binary input file argument (the third
+argument) will still produce timing info, just with no benchmark comparison.
 
 
 
