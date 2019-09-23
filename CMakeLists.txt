@@ -23,7 +23,7 @@ option(BUILD_DIRECT "build direct computation executables"                     O
 
 option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
 option(BUILD_EXAMPLES "build examples using the libraries"                     ON)
-option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
+option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         OFF)
 
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
 option(ENABLE_CPU_BUILD "build CPU version"                                    ON)

@@ -51,6 +51,8 @@ int main(int argc, char **argv)
                       pot_type, kappa, order, theta, max_per_leaf, max_per_batch,
                       number_of_threads);
 
+    printf("Treedriver has finished.\n");
+
     free(xS);
     free(yS);
     free(zS);
