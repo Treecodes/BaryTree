@@ -102,7 +102,8 @@ if(BUILD_TREE_LIBRARIES AND ENABLE_CPU_BUILD)
                                         OpenMP::OpenMP_C
                                         $<$<C_COMPILER_ID:GNU>:m>)
 
-    install(TARGETS ${TRGT}               LIBRARY DESTINATION lib)
+    install(TARGETS ${TRGT}               LIBRARY DESTINATION lib
+                                          ARCHIVE DESTINATION lib)
     install(FILES   treedriverWrapper.h           DESTINATION include)
 endif()
 
@@ -122,6 +123,7 @@ if(BUILD_TREE_LIBRARIES AND ENABLE_GPU_BUILD)
                                       OpenACC_C
                                       $<$<C_COMPILER_ID:GNU>:m>)
 
-    install(TARGETS ${TRGT}             LIBRARY DESTINATION lib)
+    install(TARGETS ${TRGT}             LIBRARY DESTINATION lib
+                                        ARCHIVE DESTINATION lib)
     install(FILES   treedriverWrapper.h         DESTINATION include)
 endif()
