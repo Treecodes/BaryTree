@@ -272,9 +272,17 @@ int main(int argc, char **argv)
 //		#pragma omp parallel num_threads(numDevices)
 //			{
 //			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
+//
+//
+//
 //			acc_init(acc_get_device_type());
 //			}
 //	}
+
+
+	#pragma acc set device_num(rank%numDevices) device_type(acc_get_device_type())
+	#pragma acc init device_type(acc_get_device_type())
+
 
 
     time2 = MPI_Wtime();
@@ -444,7 +452,7 @@ int main(int argc, char **argv)
 //                inferr, relinferr, n2err, reln2err); //5 ends
 //        fclose(fp);
 //    }
-    if (rank == 0) {
+    if (rank == 0){
             fp = fopen(sampout, "a");
             fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e,%d\n",
                     sampin1, sampin2, sampin3, numparsS, numparsT,
