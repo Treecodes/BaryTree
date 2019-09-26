@@ -280,8 +280,8 @@ int main(int argc, char **argv)
 //	}
 
 
-	#pragma acc set device_num(rank%numDevices) device_type(acc_get_device_type())
-	#pragma acc init device_type(acc_get_device_type())
+	#pragma acc set device_num(rank%numDevices) device_type(acc_device_nvidia)
+	#pragma acc init device_type(acc_device_nvidia)
 
 
 
