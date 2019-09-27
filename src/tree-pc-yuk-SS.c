@@ -18,7 +18,7 @@
 
 void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads)
+                     double kappa, double *tpeng, double *EnP)
 {
     /* local variables */
     int i, j;
@@ -28,14 +28,7 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
     }
 
 
-#pragma omp parallel num_threads(numThreads)
-	{
-    	if (omp_get_thread_num()<numDevices){
-    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-    	}
-        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
+
 
 		double *EnP2;
 		make_vector(EnP2,targets->num);
@@ -47,7 +40,6 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
 		clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], clusters->q[0:clusters->num], clusters->w[0:clusters->num]) \
 		copy(EnP2[0:targets->num])
     {
-	#pragma omp for private(j)
     for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc_yuk_SS(p->child[j],
@@ -65,7 +57,6 @@ void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
     		}
     		}
     free_vector(EnP2);
-	} // end omp parallel region
     
 
     *tpeng = sum(EnP, targets->num);

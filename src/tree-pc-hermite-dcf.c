@@ -26,25 +26,13 @@ void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array,
                                   struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double eta, double *EnP,
-                                  int numDevices, int numThreads)
+                                  double *tpeng, double eta, double *EnP)
 {
 	    int i, j;
 
 	    for (i = 0; i < targets->num; i++)
 	        EnP[i] = 0.0;
 
-
-	#pragma omp parallel num_threads(numThreads)
-		{
-	    	if (omp_get_thread_num()<numDevices){
-	    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-	    	}
-
-	        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-			if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-			if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-			printf("this_thread: %i\n", this_thread);
 
 			double *EnP2, *EnP3;
 			make_vector(EnP2,targets->num);
@@ -129,7 +117,6 @@ void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array,
 		int numberOfClusterApproximations, numberOfDirectSums;
 
 		int streamID;
-		#pragma omp for private(j,ii,jj,sourceIdx,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID,rinv,r2inv,r4inv,r_eta,pot,auxpot,auxpot_eta,dpot1,dpot2,dpot3)
 	    for (i = 0; i < batches->num; i++) {
 	    	batch_ibeg = batches->index[i][0];
 			batch_iend = batches->index[i][1];
@@ -237,16 +224,12 @@ void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array,
 
 	    for (int k = 0; k < targets->num; k++){
 	    	if (EnP2[k] != 0.0)
-			#pragma omp critical
-	    	{
 				EnP[k] += EnP2[k];
 				EnP[k] += EnP3[k];
-	    	}
 			}
 
 	    free_vector(EnP2);
 	    free_vector(EnP3);
-		} // end omp parallel region
 
 	    printf("Exited the main comp_pc call.\n");
 	    *tpeng = sum(EnP, targets->num);

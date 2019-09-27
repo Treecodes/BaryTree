@@ -284,7 +284,7 @@ void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS
 
 void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads)
+                     double kappa, double *tpeng, double *EnP)
 {
     /* local variables */
     int i, j;
@@ -292,14 +292,6 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
     for (i = 0; i < targets->num; i++)
         EnP[i] = 2.0*M_PI*kappaSq*targets->q[i]; // change this to whatever it should be
     
-#pragma omp parallel num_threads(numThreads)
-	{
-    	if (omp_get_thread_num()<numDevices){
-    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-    	}
-        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
 
 		double *EnP2;
 		make_vector(EnP2,targets->num);
@@ -312,7 +304,6 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
 		copy(EnP2[0:targets->num])
     {
 
-	#pragma omp for private(j)
 	for (i = 0; i < batches->num; i++) {
         for (j = 0; j < p->num_children; j++) {
             compute_pc_coulomb_SS(p->child[j],
@@ -331,7 +322,6 @@ void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
     		EnP[k] += EnP2[k];
     	}
     free_vector(EnP2);
-	} // end omp parallel region
 
     *tpeng = sum(EnP, targets->num);
     
@@ -482,7 +472,7 @@ void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_ien
 void pc_interaction_list_treecode_Coulomb_SS(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng,double kappaSq, double *EnP, int numDevices, int numThreads)
+                                  double *tpeng,double kappaSq, double *EnP)
 {
 	    int i, j;
 
@@ -491,16 +481,7 @@ void pc_interaction_list_treecode_Coulomb_SS(struct tnode_array *tree_array, str
 
 	    printf("Using interaction lists!\n");
 
-	#pragma omp parallel num_threads(numThreads)
-		{
-	    	if (omp_get_thread_num()<numDevices){
-	    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-	    	}
 
-	        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-			if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-			if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-			printf("this_thread: %i\n", this_thread);
 
 			double *EnP2, *EnP3;
 			make_vector(EnP2,targets->num);
@@ -561,7 +542,6 @@ void pc_interaction_list_treecode_Coulomb_SS(struct tnode_array *tree_array, str
 		int numberOfClusterApproximations, numberOfDirectSums;
 
 		int streamID;
-		#pragma omp for private(j,ii,jj,batch_ibeg,batch_iend,numberOfClusterApproximations,numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID)
 	    for (i = 0; i < batches->num; i++) {
 	    	batch_ibeg = batches->index[i][0];
 			batch_iend = batches->index[i][1];
@@ -653,7 +633,6 @@ void pc_interaction_list_treecode_Coulomb_SS(struct tnode_array *tree_array, str
 
 	    free_vector(EnP2);
 	    free_vector(EnP3);
-		} // end omp parallel region
 
 	    printf("Exited the main comp_pc call.\n");
 	    *tpeng = sum(EnP, targets->num);

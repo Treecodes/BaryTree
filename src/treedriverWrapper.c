@@ -18,7 +18,7 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *targetX, double *targetY, double *targetZ, double *targetValue,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
 		double *outputArray, int pot_type, double kappa,
-		int order, double theta, int maxparnode, int batch_size, int numDevices, int numThreads) {
+		int order, double theta, int maxparnode, int batch_size) {
 
 	int particleOrder[numTargets];
 	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
@@ -54,21 +54,12 @@ void treedriverWrapper(int numTargets, int numSources,
 	int tree_type=1;   // particle cluster
 	double tpeng = 0;
 
-	// Initialize all GPUs
-	if (numDevices>0){
-		#pragma omp parallel num_threads(numDevices)
-			{
-			printf("Initializing device: %i\n", omp_get_thread_num());
-			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-			acc_init(acc_get_device_type());
-			}
-	}
 
 	// Call the treedriver
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
 			   pot_type, kappa, tree_type,
-			   outputArray, &tpeng, time_tree, numDevices, numThreads);
+			   outputArray, &tpeng, time_tree);
 
 
 //	free_vector(sources->x);

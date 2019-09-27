@@ -27,8 +27,6 @@ int main(int argc, char **argv)
     int pot_type, tree_type;
     int pflag, sflag, dflag, gflag = 0;
     int batch_size;
-    int numDevices;
-    int numThreads;
 
     double theta, temp;
     double kappa;
@@ -136,8 +134,6 @@ int main(int argc, char **argv)
     sflag = atoi(argv[14]);
     dflag = atoi(argv[15]);
     batch_size = atoi(argv[16]);
-    numDevices = atoi(argv[17]);
-    numThreads = atoi(argv[18]);
 
 //    printf("Read in arguments.c\n");
 
@@ -221,75 +217,17 @@ int main(int argc, char **argv)
 	MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
 	MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
 	MPI_File_close(&fpmpi);
-//	printf("Did MPI file stuff.\n");
 
 
 
-//    printf("Allocated sources and targets particles.\n");
-//    printf("PFLAG = %i\n",pflag);
-//
-//    int ierr;
-//    /* Reading in coordinates and charges for the source particles*/
-//	ierr = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-//	if (ierr != MPI_SUCCESS) {
-//		fprintf(stderr,"FILE COULD NOT OPEN\n");
-//		exit(1);
-//	}
-//
-//	MPI_File_seek(fpmpi, (MPI_Offset)globparsSloc*5*sizeof(double), MPI_SEEK_SET);
-//	for (i = 0; i < numparsSloc; i++) {
-//		MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
-//		xS[i] = buf[0];
-//		yS[i] = buf[1];
-//		zS[i] = buf[2];
-//		qS[i] = buf[3];
-//		wS[i] = buf[4];
-//	}
-//	MPI_File_close(&fpmpi);
-
-//    MPI_Barrier(MPI_COMM_WORLD);
-
-	/* Reading in coordinates for the targets */
-//	ierr = MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-//	if (ierr != MPI_SUCCESS) {
-//		fprintf(stderr,"FILE COULD NOT OPEN\n");
-//		exit(1);
-//	}
-//
-//	MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*4*sizeof(double), MPI_SEEK_SET);
-//	for (i = 0; i < numparsTloc; i++) {
-//		MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
-//		xT[i] = buf[0];
-//		yT[i] = buf[1];
-//		zT[i] = buf[2];
-//		qT[i] = buf[3];
-//	}
-//	MPI_File_close(&fpmpi);
-        
-        
-    // Initialize all GPUs
-//	if (numDevices>0){
-//		#pragma omp parallel num_threads(numDevices)
-//			{
-//			acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-//
-//
-//
-//			acc_init(acc_get_device_type());
-//			}
-//	}
-
-
-	#pragma acc set device_num(rank%numDevices) device_type(acc_device_nvidia)
+	#pragma acc set device_num(rank) device_type(acc_device_nvidia)
 	#pragma acc init device_type(acc_device_nvidia)
 
 
 
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
-//    printf("Setup complete, calling treedriver...\n");
-//    printf("numThreads: %i\n", numThreads);
-//    fflush(stdout);
+
     /* Calling main treecode subroutine to calculate approximate energy */
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -297,7 +235,7 @@ int main(int argc, char **argv)
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
-               tenergy, &tpeng, time_tree, numDevices, numThreads);
+               tenergy, &tpeng, time_tree);
 
     MPI_Barrier(MPI_COMM_WORLD);
     time2 = MPI_Wtime();
@@ -470,7 +408,7 @@ int main(int argc, char **argv)
                     time_tree_glob[1][3] + time_preproc, //4 ends
                     dpengglob, tpengglob, fabs(tpengglob-dpengglob),
                     fabs((tpengglob-dpengglob)/dpengglob),
-                    inferr, relinferr, n2err, reln2err,numDevices); //5 ends
+                    inferr, relinferr, n2err, reln2err); //5 ends
             fclose(fp);
         }
 //    printf("Wrote to output file.\n");

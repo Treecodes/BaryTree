@@ -120,8 +120,8 @@ int main(int argc, char **argv)
     sflag = atoi(argv[14]);
     dflag = atoi(argv[15]);
     batch_size = atoi(argv[16]);
-    numDevices = atoi(argv[17]);
-    numThreads = atoi(argv[18]);
+//    numDevices = atoi(argv[17]);
+//    numThreads = atoi(argv[18]);
 
     printf("Read in arguments.c\n");
 
@@ -332,7 +332,7 @@ int main(int argc, char **argv)
     treedriver(sources, targets,
                order, theta, maxparnode, batch_size,
                pot_type, kappa, tree_type,
-               tenergy, &tpeng, time_tree, numDevices, numThreads);
+               tenergy, &tpeng, time_tree);
     time2 = MPI_Wtime();
     time_treedriver = time2 - time1;
 
@@ -473,7 +473,7 @@ int main(int argc, char **argv)
 //    }
     if (rank == 0) {
             fp = fopen(sampout, "a");
-            fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e,%d\n",
+            fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e\n",
                     sampin1, sampin2, sampin3, numparsS, numparsT,
                     theta, order, tree_type, maxparnode,batch_size,
                     kappa, pot_type, sflag, pflag, //2 ends
@@ -489,7 +489,7 @@ int main(int argc, char **argv)
                     time_tree_glob[1][3] + time_preproc, //4 ends
                     dpengglob, tpengglob, fabs(tpengglob-dpengglob),
                     fabs((tpengglob-dpengglob)/dpengglob),
-                    inferr, relinferr, n2err, reln2err,numDevices); //5 ends
+                    inferr, relinferr, n2err, reln2err); //5 ends
             fclose(fp);
         }
     printf("Wrote to output file.\n");

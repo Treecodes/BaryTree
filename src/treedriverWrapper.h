@@ -7,6 +7,6 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *targetX, double *targetY, double *targetZ, double *targetValue,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
 		double *outputArray, int pot_type, double kappa,
-		int order, double theta, int maxparnode, int batch_size, int numDevices, int numThreads);
+		int order, double theta, int maxparnode, int batch_size);
 
 #endif /* H_TREEDRIVERWRAPPER_H */

@@ -13,12 +13,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
                 "Debug" "Release" "None")
 endif()
-
+ 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
-option(BUILD_TREECODE "build treecode computation executables"                 ON)
+option(BUILD_TREECODE "build treecode computation executables"                 ON) 
 option(BUILD_DIRECT "build direct computation executables"                     ON)
 option(BUILD_TOOLS "build auxiliary utilities"                                 ON)
 

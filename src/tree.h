@@ -26,7 +26,7 @@ void cleanup(struct tnode *p);
 void setup(struct particles *particles, int order, double theta,
            double *xyzminmax);
 
-void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, int numDevices, int numThreads, struct tnode_array * tree_array);
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array);
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
@@ -132,37 +132,37 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double *EnP);
 
 void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double kappa, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double kappa, double *EnP);
 
 void pc_interaction_list_treecode_dcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double eta, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double eta, double *EnP);
 
 void pc_interaction_list_treecode_tcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double kappa, double eta, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double kappa, double eta, double *EnP);
 
 void pc_interaction_list_treecode_hermite_coulomb(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double *EnP);
 
 void pc_interaction_list_treecode_hermite_yukawa(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double kappa, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double kappa, double *EnP);
 
 void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double eta, double *EnP, int numDevices, int numThreads);
+                                  double *tpeng, double eta, double *EnP);
 
 
 /* used by particle-cluster Coulomb */
@@ -172,7 +172,7 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-				 double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
+				 double kappa, double *tpeng, double *EnP);
 
 void compute_pc_hermite_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
@@ -186,7 +186,7 @@ void compute_pc_hermite_SS(struct tnode *p,
 
 void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP, int numDevices, int numThreads);
+                     double kappa, double *tpeng, double *EnP);
 
 void compute_pc_yuk_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,
@@ -203,7 +203,7 @@ void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
 void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappaSq, double *tpeng, double *EnP, int numDevices, int numThreads);
+                     double kappaSq, double *tpeng, double *EnP);
 
 void compute_pc_coulomb_SS(struct tnode *p,
                 int *batch_ind, double *batch_mid, double batch_rad,

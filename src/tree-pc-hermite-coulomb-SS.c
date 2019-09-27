@@ -105,7 +105,7 @@ void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struc
 
 void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,
-				 double kappa, double *tpeng, double *EnP, int numDevices, int numThreads)
+				 double kappa, double *tpeng, double *EnP)
 {
 	printf("Entered pc_treecode_hermite_coulomb_SS.\n");
     /* local variables */
@@ -117,14 +117,6 @@ void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
 
     
 
-#pragma omp parallel num_threads(numThreads)
-	{
-    	if (omp_get_thread_num()<numDevices){
-    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-    	}
-        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-		if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-		if (this_thread==0){printf("num_threads: %i\n", num_threads);}
 
 
 		double *EnP2;
@@ -146,7 +138,6 @@ void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
 
 
 
-	#pragma omp for private(j)
 	for (i = 0; i < batches->num; i++) {
 		for (j = 0; j < p->num_children; j++ ) {
 			compute_pc_hermite_SS(p->child[j],
@@ -169,7 +160,6 @@ void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
 		}
     free_vector(EnP2);
 
-} // end omp parallel region
 
 
     printf("Exited the main comp_pc call.\n");

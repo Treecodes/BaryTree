@@ -19,8 +19,7 @@ void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct par
                                       struct batch *batches,
                                       int *tree_inter_list, int *direct_inter_list,
                                       struct particles *sources, struct particles *targets,
-                                      double *tpeng,double kappa, double *EnP,
-                                      int numDevices, int numThreads)
+                                      double *tpeng,double kappa, double *EnP)
 {
 	    int i, j;
 
@@ -29,16 +28,6 @@ void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct par
 
 	    printf("Using interaction lists!\n");
 
-	#pragma omp parallel num_threads(numThreads)
-		{
-	    	if (omp_get_thread_num()<numDevices){
-	    		acc_set_device_num(omp_get_thread_num(),acc_get_device_type());
-	    	}
-
-	        int this_thread = omp_get_thread_num(), num_threads = omp_get_num_threads();
-			if (this_thread==0){printf("numDevices: %i\n", numDevices);}
-			if (this_thread==0){printf("num_threads: %i\n", num_threads);}
-			printf("this_thread: %i\n", this_thread);
 
 			double *EnP2, *EnP3;
 			make_vector(EnP2,targets->num);
@@ -180,16 +169,13 @@ void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct par
 
 	    for (int k = 0; k < targets->num; k++){
 	    	if (EnP2[k] != 0.0)
-			#pragma omp critical
-	    	{
+
 				EnP[k] += EnP2[k];
 				EnP[k] += EnP3[k];
-	    	} // end omp critical
 			}
 
 	    free_vector(EnP2);
 	    free_vector(EnP3);
-		} // end omp parallel region
 
 	    printf("Exited the main comp_pc call.\n");
 	    *tpeng = sum(EnP, targets->num);
