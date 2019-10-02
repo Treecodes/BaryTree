@@ -11,10 +11,8 @@
 #include "sort.h"
 
 
-/* The treedriver routine in Fortran */
 int main(int argc, char **argv)
 {
-//	printf("Entering main.c\n");
     int rank, numProcs;
     
     MPI_Init(&argc, &argv);
@@ -83,7 +81,7 @@ int main(int argc, char **argv)
             printf("        infile 3:  sources offset file \n");
             printf("        infile 4:  targets offset file \n");
             printf("        infile 5:  direct calc potential input file \n");
-            printf("      csv output:  results summary to CSV file \n");
+            printf("     csv outfile:  results summary to CSV file \n");
             printf("        numparsS:  number of sources \n");
             printf("        numparsT:  number of targets \n");
             printf("           theta:  multipole acceptance criterion \n");
@@ -125,7 +123,7 @@ int main(int argc, char **argv)
         int *sources_offset;
         make_vector(sources_offset, numProcs);
         MPI_File_read(fpmpi, sources_offset, numProcs, MPI_INT, &status);
-        if (rank == numProcs-1)
+        if (rank < numProcs-1)
             numparsSloc = sources_offset[rank+1] - sources_offset[rank];
         else
             numparsSloc = numparsS - sources_offset[rank];
@@ -144,7 +142,7 @@ int main(int argc, char **argv)
         int *targets_offset;
         make_vector(targets_offset, numProcs);
         MPI_File_read(fpmpi, targets_offset, numProcs, MPI_INT, &status);
-        if (rank == numProcs-1)
+        if (rank < numProcs-1)
             numparsTloc = targets_offset[rank+1] - targets_offset[rank];
         else
             numparsTloc = numparsT - targets_offset[rank];
