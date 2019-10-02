@@ -1,0 +1,23 @@
+100000
+NX
+NY
+NZ
+/ccsopen/home/njvaughn/.lsbatch/1570042732.21726.shell: line 29: 2*2*2: command not found
+NP
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@login1>
+Subject: Job 21726: <testing> in cluster <ascent> Exited
+
+Job <testing> was submitted from host <login1> by user <njvaughn> in cluster <ascent> at Wed Oct  2 14:58:52 2019
+Job was executed on host(s) <1*login1>, in queue <batch>, as user <njvaughn> in cluster <ascent> at Wed Oct  2 14:58:52 2019
+                            <42*h49n01>
+</ccsopen/home/njvaughn> was used as the home directory.
+</ccsopen/home/njvaughn/BaryTree/ascent-testing> was used as the working directory.
+Started at Wed Oct  2 14:58:52 2019
+Terminated at Wed Oct  2 14:59:29 2019
+Results reported at Wed Oct  2 14:59:29 2019
+
+The output (if any) is above this job summary.
+

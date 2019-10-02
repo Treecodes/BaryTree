@@ -1,0 +1,38 @@
+#!/bin/bash
+
+
+
+N=100000
+NX=2
+NY=2
+NZ=2
+
+echo $N
+echo $NX
+echo $NY
+echo $NZ
+NP=$(($NX * $NY * $NZ))
+
+echo $NP
+
+SOURCES=/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/S${N}_${NX}x_${NY}y_${NZ}z.bin
+TARGETS=/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/T${N}_${NX}x_${NY}y_${NZ}z.bin
+OFFESTS='/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/offsets${N}_${NX}x_${NY}y_${NZ}z.bin'
+
+DIRECT='/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/direct_gpu_${N}.bin'
+OUTPUT='/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/tree_gpu_${N}.csv'
+
+echo $SOURCES
+
+THETA=0.8
+ORDER=8
+CLUSTERSIZE=4000
+BATCHSIZE=4000
+ 
+KERNEL=0
+KAPPA=0.0
+
+
+
+
+
