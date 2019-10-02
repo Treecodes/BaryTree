@@ -234,6 +234,7 @@ int main(int argc, char **argv)
 
     MPI_Barrier(MPI_COMM_WORLD);
     time1 = MPI_Wtime();
+    
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
                pot_type, kappa, 1, tenergy, &tpeng, time_tree);
 
@@ -242,12 +243,15 @@ int main(int argc, char **argv)
     time_treedriver = time2 - time1;
 
     
-    
     /* Reducing values to root process */
     MPI_Reduce(time_tree, &time_tree_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    
+//    double time_setup_max, time_treedriver_max;
+//    MPI_Reduce(&time_treedriver, &time_treedriver_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+//    MPI_Reduce(&time_setup,      &time_setup_max,      1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     dpeng = sum(denergy, numparsTloc);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -255,6 +259,21 @@ int main(int argc, char **argv)
     
     if (rank == 0)
     {
+    
+//        double time_total = time_preproc_max + time_treedriver_max;
+//        double time_percent = 100. / time_total;
+//
+//        /* Printing direct and treecode time calculations: */
+//        printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
+//        printf("|    Total time......................  %e s    (100.00%)\n", time_total);
+//        printf("|    |\n");
+//        printf("|    |....Pre-process................  %e s    (%6.2f%)\n", time_preproc, time_preproc * time_percent);
+//        printf("|    |....Treedriver.................  %e s    (%6.2f%)\n", time_treedriver, time_treedriver * time_percent);
+//        printf("|         |\n");
+//        printf("|         |....Tree setup............  %e s    (%6.2f%)\n", time_tree[0], time_tree[0] * time_percent);
+//        printf("|         |....Computation...........  %e s    (%6.2f%)\n", time_tree[3], time_tree[3] * time_percent);
+//        printf("|         |....Cleanup...............  %e s    (%6.2f%)\n\n", time_tree[2], time_tree[2] * time_percent);
+        
         /* Printing direct and treecode time calculations: */
         printf("                   Direct time (s):  %f\n\n", time_direct);
         printf("              Pre-process time (s):  %f\n", time_preproc);
