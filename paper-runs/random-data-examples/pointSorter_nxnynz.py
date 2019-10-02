@@ -14,7 +14,7 @@ def sortIntoBoxes(points,nx,ny,nz):
     Lz = np.max(points[:,2]) - np.min(points[:,2])
     
     
-    offsets = np.zeros(nx*ny*nz,dtype=np.int)
+    offsets = np.zeros(nx*ny*nz,dtype=np.intc)
     sortedPoints = np.zeros_like(points)
     
     
