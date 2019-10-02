@@ -1,0 +1,11 @@
+#!/bin/bash
+
+for N in 100000 1000000 10000000
+do
+	for n in 2 4 8
+	do
+    
+		python pointSorter_nxnynz.py $N $n $n $n '/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/'    
+		
+	done  
+done    
