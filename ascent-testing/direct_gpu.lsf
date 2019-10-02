@@ -2,7 +2,7 @@
 # Begin LSF Directives
 #BSUB -P GEN135
 #BSUB -W 1:00
-#BSUB -nnodes 4
+#BSUB -nnodes 1
 #BSUB -alloc_flags gpumps
 #BSUB -J testing
 #BSUB -o testing.%J
@@ -17,7 +17,7 @@
 cd $SHARED/
 
 
-N=10000000
+N=1000000
 THETA=0.8
 ORDER=8
 CLUSTERSIZE=4000          
@@ -39,7 +39,7 @@ TARGETS=/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/T${N}_${NX}x_${NY}y_
 OFFSETS=/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/offsets${N}_${NX}x_${NY}y_${NZ}z.bin
 DIRECT=/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/direct_gpu_${N}.bin
 OUTPUT=/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/tree_gpu_${N}.csv
-jsrun -n ${NP} -a 1 -c 1 -g 1 ~/.local/bin/tree-distributed-gpu $SOURCES $TARGETS $OFFSETS $OFFSETS $DIRECT $OUTPUT $N $N $THETA $ORDER $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA
+jsrun -n ${NP} -a 1 -c 1 -g 1 ~/.local/bin/direct-gpu $SOURCES $TARGETS $DIRECT $OUTPUT $N $N $THETA $KAPPA $KERNEL 1 1
 done
 
 
