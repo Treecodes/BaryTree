@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9...3.14)
-project(GPU-TREECODE VERSION 0.7 LANGUAGES C)
+project(BaryTree VERSION 1.0 LANGUAGES C)
 
 set(default_build_type "Release")
 
@@ -23,7 +23,7 @@ option(BUILD_DIRECT "build direct computation executables"                     O
 option(BUILD_TOOLS "build auxiliary utilities"                                 ON)
 
 option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
-option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
+option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         OFF)
 
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
 option(ENABLE_CPU_BUILD "build CPU version"                                    ON)
@@ -49,5 +49,10 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_LINK_LIBRARIES
                                          -acc
                                          -ta=tesla:ccall,cc60)
+
+if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
+    message("GPU build requires PGI compilers! Turning GPU build off.")
+    set(ENABLE_GPU_BUILD OFF)
+endif()
 
 add_subdirectory(src)

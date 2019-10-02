@@ -17,9 +17,6 @@
 #include "partition.h"
 #include "tree.h"
 
-#include <omp.h>
-
-
 void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
                        int level)
@@ -54,7 +51,6 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
 
 
     /* increment number of nodes */
-    #pragma omp critical 
     numnodes++;
 
     /* set node fields: number of particles, exist_ms, and xyz bounds */
@@ -103,10 +99,7 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
     (*p)->level = level;
 
 
-    #pragma omp critical
-    {
-        if (maxlevel < level) maxlevel = level;
-    }
+    if (maxlevel < level) maxlevel = level;
 
     (*p)->num_children = 0;
     for (i = 0; i < 8; i++)
@@ -154,20 +147,15 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
 
                 struct tnode **paddress = &((*p)->child[idx]);
 
-                #pragma omp task firstprivate(paddress,ind,i,lxyzmm,loclev), \
-                                 shared(sources,maxparnode)
                 pc_create_tree_n0(paddress,
                                   sources, ind[i][0], ind[i][1],
                                   maxparnode, lxyzmm, loclev);
 
             }
         }
-
-        #pragma omp taskwait
         
     } else {
    
-        #pragma omp critical
         {     
             if (level < minlevel) minlevel = level;
             if (minpars > (*p)->numpar) minpars = (*p)->numpar;
@@ -356,17 +344,20 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         int clusterNum = clusters->num;
         int sourceNum = sources->num;
 
-#pragma acc data copyin(tt[0:torderlim], \
+#ifdef OPENACC_ENABLED
+        #pragma acc data copyin(tt[0:torderlim], \
         xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum]) \
         copy(tempX[0:clusterNum], tempY[0:clusterNum], tempZ[0:clusterNum], tempQ[0:clusterNum])
         {
-            #pragma omp for schedule(guided)
+#endif
             for (int i = 0; i < tree_numnodes; i++) {  // start from i=1, don't need to compute root moments
                 pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
                                      tempX, tempY, tempZ, tempQ);
             }
+#ifdef OPENACC_ENABLED
             #pragma acc wait
         } // end ACC DATA REGION
+#endif
 
         int counter=0;
         for (int j = 0; j < clusters->num; j++)
@@ -407,9 +398,12 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
 
     double d_peng, r;
     int streamID = rand() % 2;
-# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+
+#ifdef OPENACC_ENABLED
+    #pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
     {
     #pragma acc loop independent
+#endif
     for (ii = batch_start; ii < batch_end; ii++) {
         d_peng = 0.0;
         for (i = source_start; i < source_end; i++) {
@@ -421,10 +415,14 @@ void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
                 d_peng += qS[i] * wS[i] / r;
             }
         }
+#ifdef OPENACC_ENABLED
         #pragma acc atomic
+#endif
         EnP[ii] += d_peng;
     }
+#ifdef OPENACC_ENABLED
     }
+#endif
     return;
 
 } /* END function pc_comp_direct */
@@ -468,12 +466,16 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
     double sx,sy,sz,cx,cy,cz,denominator,w;
 
     int streamID = rand() % 4;
-#pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
+#ifdef OPENACC_ENABLED
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
     create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
             nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
     {
+#endif
 
+#ifdef OPENACC_ENABLED
     #pragma acc loop independent
+#endif
     for (j = 0; j < pointsInNode; j++) {
         modifiedF[j] = qS[startingIndexInSources+j] * wS[startingIndexInSources+j];
         exactIndX[j] = -1;
@@ -482,7 +484,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
     }
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
+#ifdef OPENACC_ENABLED
     #pragma acc loop independent
+#endif
     for (i = 0; i < torderlim; i++) {
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
@@ -491,20 +495,26 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
     }
 
     // Compute weights
+#ifdef OPENACC_ENABLED
     #pragma acc loop independent
+#endif
     for (j = 0; j < torder+1; j++){
         dj[j] = 1.0;
         if (j==0) dj[j] = 0.5;
         if (j==torder) dj[j]=0.5;
     }
 
+#ifdef OPENACC_ENABLED
     #pragma acc loop independent
+#endif
     for (j = 0; j < torderlim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
     }
 
     // Compute modified f values
+#ifdef OPENACC_ENABLED
     #pragma acc loop independent
+#endif
     for (i = 0; i < pointsInNode; i++) { // loop through the source points
 
         sumX=0.0;
@@ -515,7 +525,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
         sy = yS[startingIndexInSources+i];
         sz = zS[startingIndexInSources+i];
 
+#ifdef OPENACC_ENABLED
         #pragma acc loop independent
+#endif
         for (j = 0; j < torderlim; j++) {  // loop through the degree
 
             cx = sx-nodeX[j];
@@ -548,7 +560,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
     int k1, k2, k3, kk;
     double w1,w2,w3;
 
+#ifdef OPENACC_ENABLED
     #pragma acc loop independent
+#endif
     for (j = 0; j < pointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
         // compute k1, k2, k3 from j
         k1 = j%torderlim;
@@ -573,7 +587,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 
         // Increment cluster Q array
         temp = 0.0;
+#ifdef OPENACC_ENABLED
         #pragma acc loop independent
+#endif
         for (i = 0; i < pointsInNode; i++) {  // loop over source points
             sx = xS[startingIndexInSources+i];
             sy = yS[startingIndexInSources+i];
@@ -605,8 +621,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
         }
         clusterQ[startingIndexInClusters + j] += temp;
     }
-
+#ifdef OPENACC_ENABLED
     }
+#endif
 
     free_vector(modifiedF);
     free_vector(exactIndX);
@@ -833,12 +850,14 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 
             int * clusterInd = tree_array->cluster_ind;
 
-    #pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], \
+#ifdef OPENACC_ENABLED
+        #pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], \
                             qS[0:sources->num], wS[0:sources->num], \
                             xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
                             xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], qC[0:clusters->num], \
                             tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(EnP3[0:targets->num], EnP2[0:targets->num])
+#endif
         {
 
         int batch_ibeg, batch_iend, node_index;
@@ -861,8 +880,6 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         int numberOfClusterApproximations, numberOfDirectSums;
         int streamID;
 
-//        #pragma omp for private(j,ii,jj,batch_ibeg,batch_iend,numberOfClusterApproximations,\
-//                                numberOfDirectSums,numberOfTargets,batchStart,node_index,clusterStart,streamID)
         for (i = 0; i < batches->num; i++) {
             batch_ibeg = batches->index[i][0];
             batch_iend = batches->index[i][1];
@@ -881,9 +898,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                 clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
 
                 streamID = j%3;
+#ifdef OPENACC_ENABLED
                 #pragma acc kernels async(streamID) //present(xT,yT,zT,qT,EnP, clusterX, clusterY, clusterZ, clusterM)
                 {
                 #pragma acc loop independent
+#endif
                 for (ii = 0; ii < numberOfTargets; ii++) {
                     tempPotential = 0.0;
                     xi = xT[ batchStart + ii];
@@ -897,11 +916,15 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                         dzt = zi - zC[clusterStart + jj];
                         tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
 
-                    }   
+                    }
+#ifdef OPENACC_ENABLED
                     #pragma acc atomic
+#endif
                     EnP3[batchStart + ii] += tempPotential;
                 }
+#ifdef OPENACC_ENABLED
                 } // end kernel
+#endif
             } // end for loop over cluster approximations
 
             for (j = 0; j < numberOfDirectSums; j++) {
@@ -912,9 +935,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                 source_end=iends[node_index];
 
                 streamID = j%3;
+#ifdef OPENACC_ENABLED
                 # pragma acc kernels async(streamID)
                 {
                 #pragma acc loop independent
+#endif
                 for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
                     d_peng = 0.0;
 
@@ -928,28 +953,30 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                             d_peng += qS[jj] * wS[jj] / r;
                         }
                     }
-
+#ifdef OPENACC_ENABLED
                     #pragma acc atomic
+#endif
                     EnP2[ii] += d_peng;
                 }
+#ifdef OPENACC_ENABLED
                 } // end kernel
+#endif
             } // end loop over number of leaves
         } // end loop over target batches
-
+#ifdef OPENACC_ENABLED
         #pragma acc wait
+#endif
         } // end acc data region
-        double totalDueToApprox=0.0; double totalDueToDirect=0.0;
-        totalDueToApprox = sum(EnP3,targets->num);
-        totalDueToDirect = sum(EnP2,targets->num);
+
+        double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
+        totalDueToApprox = sum(EnP3, targets->num);
+        totalDueToDirect = sum(EnP2, targets->num);
 //        printf("Potential due to approximations: %f\n",totalDueToApprox);
 //        printf("Potential due to direct: %f\n",totalDueToDirect);
         for (int k = 0; k < targets->num; k++) {
             if (EnP2[k] != 0.0)
-//                #pragma omp critical
-//                {
                 EnP[k] += EnP2[k];
                 EnP[k] += EnP3[k];
-//                } // end omp critical
             }
 
             free_vector(EnP2);

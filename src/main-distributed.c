@@ -176,7 +176,12 @@ int main(int argc, char **argv)
 	make_vector(tenergy, numparsTloc);
 
 	/* Reading in coordinates and charges for the source particles*/
-	MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+	if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY,
+                  MPI_INFO_NULL, &fpmpi)) != MPI_SUCCESS) {
+        printf("Error! Could not open sources input file. Exiting.\n");
+        return 1;
+    }
+    
 	MPI_File_seek(fpmpi, (MPI_Offset) (local_sources_offset * 5 * sizeof(double)), MPI_SEEK_SET);
 	for (int i = 0; i < numparsSloc; ++i) {
 		MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
@@ -189,7 +194,12 @@ int main(int argc, char **argv)
 	MPI_File_close(&fpmpi);
 
 	/* Reading in coordinates for target particles*/
-	MPI_File_open(MPI_COMM_SELF, sampin2, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+    if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY,
+                  MPI_INFO_NULL, &fpmpi)) != MPI_SUCCESS) {
+        printf("Error! Could not open sources input file. Exiting.\n");
+        return 1;
+    }
+    
 	MPI_File_seek(fpmpi, (MPI_Offset) (local_targets_offset * 4 * sizeof(double)), MPI_SEEK_SET);
 	for (int i = 0; i < numparsTloc; ++i) {
 		MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
@@ -206,14 +216,15 @@ int main(int argc, char **argv)
 
 	// reading in file containing direct sum results.
 	MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
-	MPI_File_seek(fpmpi, (MPI_Offset)(local_targets_offset * sizeof(double)), MPI_SEEK_SET);
-	MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+    if (rank == 0) MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
+	MPI_File_seek(fpmpi, (MPI_Offset)((1 + local_targets_offset) * sizeof(double)), MPI_SEEK_SET);
 	MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
 	MPI_File_close(&fpmpi);
 
-
+#ifdef OPENACC_ENABLED
 	#pragma acc set device_num(rank) device_type(acc_device_nvidia)
 	#pragma acc init device_type(acc_device_nvidia)
+#endif
 
     time2 = MPI_Wtime();
     time_preproc = time2 - time1;
