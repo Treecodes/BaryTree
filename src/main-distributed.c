@@ -236,7 +236,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               pot_type, kappa, 1, tenergy, &tpeng, time_tree);
+               pot_type, kappa, 1, tenergy, &tpeng, time_tree, MPI_COMM_WORLD);
 
     MPI_Barrier(MPI_COMM_WORLD);
     time2 = MPI_Wtime();

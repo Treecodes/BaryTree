@@ -21,15 +21,21 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
-                double *tEn, double *tpeng, double *timetree)
+                double *tEn, double *tpeng, double *timetree, MPI_Comm comm)
 {
 
+	int verbosity = 1;
+
+
+	printf("Entered treedriver.\n");
 	int rank; int numProcs;	int ierr;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
+	if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
 
-    int verbosity = 0;
+
+
     /* local variables */
     struct tnode *troot = NULL;
     int level;

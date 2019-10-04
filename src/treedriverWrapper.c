@@ -18,7 +18,9 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *targetX, double *targetY, double *targetZ, double *targetValue,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
 		double *outputArray, int pot_type, double kappa,
-		int order, double theta, int maxparnode, int batch_size) {
+		int order, double theta, int maxparnode, int batch_size, MPI_Comm comm) {
+
+	printf("Entered treedriverwrapper.c\n");
 
 	int particleOrder[numTargets];
 	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
@@ -56,10 +58,11 @@ void treedriverWrapper(int numTargets, int numSources,
 
 
 	// Call the treedriver
+	printf("Calling treedriver in the c wrapper.c\n");
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
 			   pot_type, kappa, tree_type,
-			   outputArray, &tpeng, time_tree);
+			   outputArray, &tpeng, time_tree, comm);
 
 
 //	free_vector(sources->x);
