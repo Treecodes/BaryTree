@@ -31,15 +31,13 @@ int main(int argc, char **argv)
     double *denergy = NULL;
 
     /* for potential energy calculation */
-    double dpeng = 0;
-    double tpeng = 0;
-    double dpengglob = 0;
-    double tpengglob = 0;
+    double dpeng = 0, tpeng = 0;
+    double dpengglob = 0, tpengglob = 0;
 
     /* variables for date-time calculation */
-    double time_direct, time_tree[4], time_preproc, time_treedriver;
-    double time_tree_glob[3][4];
-    double time1, time2;
+    double time_run[3], time_tree[9];
+    double time_run_glob[3][3], time_tree_glob[3][9];
+    double time1, time2, time_direct;
 
     /* input and output files */
     char *sampin1 = NULL;
@@ -152,9 +150,6 @@ int main(int argc, char **argv)
     }
 
     
-	int globparsTloc = numparsT;
-	int globparsSloc = numparsS;
-    
     time1 = MPI_Wtime();
     
     sources = malloc(sizeof(struct particles));
@@ -226,65 +221,97 @@ int main(int argc, char **argv)
 	#pragma acc init device_type(acc_device_nvidia)
 #endif
 
-    time2 = MPI_Wtime();
-    time_preproc = time2 - time1;
-
+    time_run[0] = MPI_Wtime() - time1;
 
     /* Calling main treecode subroutine to calculate approximate energy */
 
     MPI_Barrier(MPI_COMM_WORLD);
+    
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
                pot_type, kappa, 1, tenergy, &tpeng, time_tree, MPI_COMM_WORLD);
-
+               
+    time_run[1] = MPI_Wtime() - time1;
+    time_run[2] = time_run[0] + time_run[1];
+    
     MPI_Barrier(MPI_COMM_WORLD);
-    time2 = MPI_Wtime();
-    time_treedriver = time2 - time1;
 
     
     /* Reducing values to root process */
-    MPI_Reduce(time_tree, &time_tree_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[0], 9, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[1], 9, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[2], 9, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
-//    double time_setup_max, time_treedriver_max;
-//    MPI_Reduce(&time_treedriver, &time_treedriver_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-//    MPI_Reduce(&time_setup,      &time_setup_max,      1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-
+    MPI_Reduce(time_run, &time_run_glob[0], 3, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_run, &time_run_glob[1], 3, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_run, &time_run_glob[2], 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    
     dpeng = sum(denergy, numparsTloc);
+    MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     
     if (rank == 0)
     {
     
-//        double time_total = time_preproc_max + time_treedriver_max;
-//        double time_percent = 100. / time_total;
-//
-//        /* Printing direct and treecode time calculations: */
-//        printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
-//        printf("|    Total time......................  %e s    (100.00%)\n", time_total);
-//        printf("|    |\n");
-//        printf("|    |....Pre-process................  %e s    (%6.2f%)\n", time_preproc, time_preproc * time_percent);
-//        printf("|    |....Treedriver.................  %e s    (%6.2f%)\n", time_treedriver, time_treedriver * time_percent);
-//        printf("|         |\n");
-//        printf("|         |....Tree setup............  %e s    (%6.2f%)\n", time_tree[0], time_tree[0] * time_percent);
-//        printf("|         |....Computation...........  %e s    (%6.2f%)\n", time_tree[3], time_tree[3] * time_percent);
-//        printf("|         |....Cleanup...............  %e s    (%6.2f%)\n\n", time_tree[2], time_tree[2] * time_percent);
-        
+        double min_percent = 100. / time_run_glob[0][2];
+        double max_percent = 100. / time_run_glob[1][2];
+        double avg_percent = 100. / time_run_glob[2][2];
+
         /* Printing direct and treecode time calculations: */
-        printf("                   Direct time (s):  %f\n\n", time_direct);
-        printf("              Pre-process time (s):  %f\n", time_preproc);
-        printf("              Treedriver time (s):  %f\n", time_treedriver);
-        printf("      Min, Max tree setup time (s):  %f, %f\n", time_tree_glob[0][0],
-                                                                time_tree_glob[1][0]);
-        
-        printf("      Min, Max total tree time (s):  %f, %f\n\n", time_tree_glob[0][3],
-                                                                  time_tree_glob[1][3]);
-        printf(" Preproc + Max total tree time (s):  %f \n\n", time_tree_glob[1][3] + time_preproc);
-        
+        printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
+        printf("                                       Avg                    Min                  Max");
+        printf("|    Total time......................  %e s    (100.00%)      %e s    (100.00%)    %e s    (100.00%) \n",
+                     time_run_glob[2][2]/numProcs, time_run_glob[0][2], time_run_glob[1][2]);
+        printf("|    |\n");
+        printf("|    |....Pre-process................  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_run_glob[2][0]/numProcs, time_run_glob[2][0] * avg_percent,
+                     time_run_glob[0][0], time_run_glob[0][0] * min_percent,
+                     time_run_glob[1][0], time_run_glob[1][0] * max_percent);
+        printf("|    |....Treedriver.................  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_run_glob[2][1]/numProcs, time_run_glob[2][1] * avg_percent,
+                     time_run_glob[0][1], time_run_glob[0][1] * min_percent,
+                     time_run_glob[1][1], time_run_glob[1][1] * max_percent);
+        printf("|         |\n");
+        printf("|         |....Setup.................  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][0]/numProcs, time_tree_glob[2][0] * avg_percent,
+                     time_tree_glob[0][0], time_tree_glob[0][0] * min_percent,
+                     time_tree_glob[1][0], time_tree_glob[1][0] * max_percent);
+        printf("|              |\n");
+        printf("|              |....Build tree.......  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][1]/numProcs, time_tree_glob[2][1] * avg_percent,
+                     time_tree_glob[0][1], time_tree_glob[0][1] * min_percent,
+                     time_tree_glob[1][1], time_tree_glob[1][1] * max_percent);
+        printf("|              |....Build array......  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][2]/numProcs, time_tree_glob[2][2] * avg_percent,
+                     time_tree_glob[0][2], time_tree_glob[0][2] * min_percent,
+                     time_tree_glob[1][2], time_tree_glob[1][2] * max_percent);
+        printf("|              |....Build batches....  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][3]/numProcs, time_tree_glob[2][3] * avg_percent,
+                     time_tree_glob[0][3], time_tree_glob[0][3] * min_percent,
+                     time_tree_glob[1][3], time_tree_glob[1][3] * max_percent);
+        printf("|              |....Fill clusters....  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][4]/numProcs, time_tree_glob[2][4] * avg_percent,
+                     time_tree_glob[0][4], time_tree_glob[0][4] * min_percent,
+                     time_tree_glob[1][4], time_tree_glob[1][4] * max_percent);
+        printf("|              |....Build LET........  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][5]/numProcs, time_tree_glob[2][5] * avg_percent,
+                     time_tree_glob[0][5], time_tree_glob[0][5] * min_percent,
+                     time_tree_glob[1][5], time_tree_glob[1][5] * max_percent);
+        printf("|              |....Build lists......  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][6]/numProcs, time_tree_glob[2][6] * avg_percent,
+                     time_tree_glob[0][6], time_tree_glob[0][6] * min_percent,
+                     time_tree_glob[1][6], time_tree_glob[1][6] * max_percent);
+        printf("|         |\n");
+        printf("|         |....Computation...........  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+                     time_tree_glob[2][7]/numProcs, time_tree_glob[2][7] * avg_percent,
+                     time_tree_glob[0][7], time_tree_glob[0][7] * min_percent,
+                     time_tree_glob[1][7], time_tree_glob[1][7] * max_percent);
+        printf("|         |....Cleanup...............  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n\n",
+                     time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent,
+                     time_tree_glob[0][8], time_tree_glob[0][8] * min_percent,
+                     time_tree_glob[1][8], time_tree_glob[1][8] * max_percent);
 
         printf("           Direct potential energy:  %f\n", dpengglob);
         printf("             Tree potential energy:  %f\n\n", tpengglob);
@@ -338,7 +365,7 @@ int main(int argc, char **argv)
                     "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e,%d\n",
             sampin1, sampin2, sampin3, numparsS, numparsT,
             theta, order, maxparnode, batch_size, kappa, pot_type, //2 ends
-            numProcs, time_preproc,
+            numProcs, time_run[0],
             time_tree_glob[0][0], time_tree_glob[1][0],
             time_tree_glob[2][0]/(double)numProcs,
             time_tree_glob[0][1], time_tree_glob[1][1],
@@ -347,7 +374,7 @@ int main(int argc, char **argv)
             time_tree_glob[2][2]/(double)numProcs,
             time_tree_glob[0][3], time_tree_glob[1][3],
             time_tree_glob[2][3]/(double)numProcs,
-            time_tree_glob[1][3] + time_preproc, //4 ends
+            time_run[2], //4 ends
             dpengglob, tpengglob, fabs(tpengglob-dpengglob),
             fabs((tpengglob-dpengglob)/dpengglob),
             inferr, relinferr, n2err, reln2err); //5 ends
