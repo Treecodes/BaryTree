@@ -191,7 +191,7 @@ int main(int argc, char **argv)
 	/* Reading in coordinates for target particles*/
     if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY,
                   MPI_INFO_NULL, &fpmpi)) != MPI_SUCCESS) {
-        printf("Error! Could not open sources input file. Exiting.\n");
+        printf("Error! Could not open targets input file. Exiting.\n");
         return 1;
     }
     
@@ -248,6 +248,8 @@ int main(int argc, char **argv)
     MPI_Reduce(time_run, &time_run_glob[2], 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
     dpeng = sum(denergy, numparsTloc);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
     MPI_Reduce(&tpeng, &tpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
