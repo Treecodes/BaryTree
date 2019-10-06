@@ -365,23 +365,26 @@ int main(int argc, char **argv)
     
     if (rank == 0) {
         fp = fopen(sampout, "a");
-        fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%f,%d,%d,%f,"
-                    "%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%e,%e,%e,%e,%e,%e,%e,%e,%d\n",
-            sampin1, sampin2, sampin3, numparsS, numparsT,
-            theta, order, maxparnode, batch_size, kappa, pot_type, //2 ends
-            numProcs, time_run[0],
+        fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e\n",
+            sampin1, sampin2, sampin3, numparsS, numparsT, theta, order,
+            maxparnode, batch_size, kappa, pot_type, numProcs, //1 ends
+            time_run_glob[0][0],  time_run_glob[1][0],
+            time_run_glob[2][0]/numProcs,
+            time_run_glob[0][1],  time_run_glob[1][1],
+            time_run_glob[2][1]/numProcs,
             time_tree_glob[0][0], time_tree_glob[1][0],
-            time_tree_glob[2][0]/(double)numProcs,
-            time_tree_glob[0][1], time_tree_glob[1][1],
-            time_tree_glob[2][1]/(double)numProcs, //3 ends
-            time_tree_glob[0][2], time_tree_glob[1][2],
-            time_tree_glob[2][2]/(double)numProcs,
-            time_tree_glob[0][3], time_tree_glob[1][3],
-            time_tree_glob[2][3]/(double)numProcs,
-            time_run[2], //4 ends
+            time_tree_glob[2][0]/numProcs,
+            time_tree_glob[0][7], time_tree_glob[1][7],
+            time_tree_glob[2][7]/numProcs,
+            time_tree_glob[0][8], time_tree_glob[1][8],
+            time_tree_glob[2][8]/numProcs,
+            time_run_glob[0][2],  time_run_glob[1][2],
+            time_run_glob[2][2]/numProcs, //2 ends
             dpengglob, tpengglob, fabs(tpengglob-dpengglob),
             fabs((tpengglob-dpengglob)/dpengglob),
-            inferr, relinferr, n2err, reln2err); //5 ends
+            inferr, relinferr, n2err, reln2err); //3 ends
         fclose(fp);
     }
     
