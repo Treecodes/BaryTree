@@ -359,7 +359,7 @@ int main(int argc, char **argv)
 	MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     
     if (rank == 0) {
-        printf("Relative inf norm error in potential:  %e \n\n", glob_relinf_err);
+        printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);
         printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
     }
     
