@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 	/* Reading in coordinates and charges for the source particles*/
 	if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY,
                   MPI_INFO_NULL, &fpmpi)) != MPI_SUCCESS) {
-        printf("Error! Could not open sources input file. Exiting.\n")
+        printf("Error! Could not open sources input file. Exiting.\n");
         return 1;
     }
     
