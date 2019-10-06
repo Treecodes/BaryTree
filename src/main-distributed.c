@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
         /* Printing direct and treecode time calculations: */
         printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
-        printf("                                       Avg                            Min                        Max\n");
+        printf("                                       Avg                           Min                         Max\n");
         printf("|    Total time......................  %9.3e s    (100.00%)      %9.3e s    (100.00%)    %9.3e s    (100.00%) \n",
                      time_run_glob[2][2]/numProcs, time_run_glob[0][2], time_run_glob[1][2]);
         printf("|    |\n");
