@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 	/* Reading in coordinates and charges for the source particles*/
 	if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY,
                   MPI_INFO_NULL, &fpmpi)) != MPI_SUCCESS) {
-        printf("Error! Could not open sources input file. Exiting.\n");
+        printf("Error! Could not open sources input file. Exiting.\n")
         return 1;
     }
     
@@ -263,54 +263,54 @@ int main(int argc, char **argv)
 
         /* Printing direct and treecode time calculations: */
         printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
-        printf("                                       Avg                    Min                  Max");
-        printf("|    Total time......................  %e s    (100.00%)      %e s    (100.00%)    %e s    (100.00%) \n",
+        printf("                                       Avg                             Min                  Max\n");
+        printf("|    Total time......................  %9.3e s    (100.00%)      %9.3e s    (100.00%)    %9.3e s    (100.00%) \n",
                      time_run_glob[2][2]/numProcs, time_run_glob[0][2], time_run_glob[1][2]);
         printf("|    |\n");
-        printf("|    |....Pre-process................  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|    |....Pre-process................  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_run_glob[2][0]/numProcs, time_run_glob[2][0] * avg_percent,
                      time_run_glob[0][0], time_run_glob[0][0] * min_percent,
                      time_run_glob[1][0], time_run_glob[1][0] * max_percent);
-        printf("|    |....Treedriver.................  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|    |....Treedriver.................  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_run_glob[2][1]/numProcs, time_run_glob[2][1] * avg_percent,
                      time_run_glob[0][1], time_run_glob[0][1] * min_percent,
                      time_run_glob[1][1], time_run_glob[1][1] * max_percent);
         printf("|         |\n");
-        printf("|         |....Setup.................  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|         |....Setup.................  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][0]/numProcs, time_tree_glob[2][0] * avg_percent,
                      time_tree_glob[0][0], time_tree_glob[0][0] * min_percent,
                      time_tree_glob[1][0], time_tree_glob[1][0] * max_percent);
         printf("|              |\n");
-        printf("|              |....Build tree.......  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|              |....Build tree.......  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][1]/numProcs, time_tree_glob[2][1] * avg_percent,
                      time_tree_glob[0][1], time_tree_glob[0][1] * min_percent,
                      time_tree_glob[1][1], time_tree_glob[1][1] * max_percent);
-        printf("|              |....Build array......  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|              |....Build array......  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][2]/numProcs, time_tree_glob[2][2] * avg_percent,
                      time_tree_glob[0][2], time_tree_glob[0][2] * min_percent,
                      time_tree_glob[1][2], time_tree_glob[1][2] * max_percent);
-        printf("|              |....Build batches....  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|              |....Build batches....  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][3]/numProcs, time_tree_glob[2][3] * avg_percent,
                      time_tree_glob[0][3], time_tree_glob[0][3] * min_percent,
                      time_tree_glob[1][3], time_tree_glob[1][3] * max_percent);
-        printf("|              |....Fill clusters....  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|              |....Fill clusters....  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][4]/numProcs, time_tree_glob[2][4] * avg_percent,
                      time_tree_glob[0][4], time_tree_glob[0][4] * min_percent,
                      time_tree_glob[1][4], time_tree_glob[1][4] * max_percent);
-        printf("|              |....Build LET........  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|              |....Build LET........  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][5]/numProcs, time_tree_glob[2][5] * avg_percent,
                      time_tree_glob[0][5], time_tree_glob[0][5] * min_percent,
                      time_tree_glob[1][5], time_tree_glob[1][5] * max_percent);
-        printf("|              |....Build lists......  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|              |....Build lists......  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][6]/numProcs, time_tree_glob[2][6] * avg_percent,
                      time_tree_glob[0][6], time_tree_glob[0][6] * min_percent,
                      time_tree_glob[1][6], time_tree_glob[1][6] * max_percent);
         printf("|         |\n");
-        printf("|         |....Computation...........  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n",
+        printf("|         |....Computation...........  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n",
                      time_tree_glob[2][7]/numProcs, time_tree_glob[2][7] * avg_percent,
                      time_tree_glob[0][7], time_tree_glob[0][7] * min_percent,
                      time_tree_glob[1][7], time_tree_glob[1][7] * max_percent);
-        printf("|         |....Cleanup...............  %e s    (%6.2f%)       %e s    (%6.2f%)     %e s    (%6.2f%) \n\n",
+        printf("|         |....Cleanup...............  %9.3e s    (%6.2f%)       %9.3e s    (%6.2f%)     %9.3e s    (%6.2f%) \n\n",
                      time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent,
                      time_tree_glob[0][8], time_tree_glob[0][8] * min_percent,
                      time_tree_glob[1][8], time_tree_glob[1][8] * max_percent);

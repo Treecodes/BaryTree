@@ -26,7 +26,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     double time_beg = MPI_Wtime();
 
-	int verbosity = 1;
+	int verbosity = 0;
 
 	int rank, numProcs, ierr;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
