@@ -21,14 +21,14 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
-                double *tEn, double *tpeng, double *time_tree, MPI_Comm comm)
+                double *tEn, double *tpeng, double *time_tree)
 {
 
     double time_beg = MPI_Wtime();
 
 	int verbosity = 0;
 
-	int rank, numProcs, ierr;
+	int rank=0, numProcs=1, ierr;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 

@@ -230,7 +230,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               pot_type, kappa, 1, tenergy, &tpeng, time_tree, MPI_COMM_WORLD);
+               pot_type, kappa, 1, tenergy, &tpeng, time_tree);
                
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];
