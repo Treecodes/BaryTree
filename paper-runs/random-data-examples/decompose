@@ -1,11 +1,17 @@
 #!/bin/bash
 
-for N in 100000 1000000 10000000
+for N in 10000 100000 1000000 10000000
 do
-	for n in 1 2 4 
+	for nx in 7 
 	do
+		for ny in 7
+		do
+			for nz in 5
+			do
     
-		python pointSorter_nxnynz.py $N $n 3 2 '/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/'    
-		
+				#python pointSorter_nxnynz.py $N $n 3 2 '/gpfs/wolf/proj-shared/gen135/BaryTree/randomPoints/'    
+				python pointSorter_nxnynz.py $N $nx $ny $nz '/scratch/krasny_root/krasny/njvaughn/randomPoints/' 
+			done
+		done   
 	done  
 done    
