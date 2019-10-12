@@ -85,7 +85,7 @@ def sortIntoBoxes(points,nx,ny,nz):
 #                 sortedPoints[offsets[procID]:offsets[procID]+len(temp),:] = np.copy(temp)
                 offset = offsets[procID]
 #                 print(offset)
-                np.copyto(sortedPoints[offset:offset+len(temp),:],temp)
+                if len(temp)>0: np.copyto(sortedPoints[offset:offset+len(temp),:],temp)
 #                 print(sortedPoints)
 #                 print()
                 
