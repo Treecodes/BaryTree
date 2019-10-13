@@ -1,0 +1,11 @@
+if(BUILD_EXAMPLES AND ENABLE_CPU_BUILD)
+   add_executable(zoltan_example_cpu zoltan_example.c)
+   target_link_libraries(zoltan_example_cpu PRIVATE treelib-cpu zoltan)
+   install(TARGETS zoltan_example_cpu DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
+if(BUILD_EXAMPLES AND ENABLE_GPU_BUILD)
+   add_executable(zoltan_example_gpu zoltan_example.c)
+   target_link_libraries(zoltan_example_gpu PRIVATE treelib-gpu zoltan)
+   install(TARGETS zoltan_example_gpu DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
