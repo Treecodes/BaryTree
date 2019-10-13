@@ -211,7 +211,7 @@ if __name__=="__main__":
 
 
 
-#     plot_points_single_proc(x,y,z,rank,'Initial points for rank %i'%rank)
+    plot_points_single_proc(x,y,z,rank,'Initial points for rank %i'%rank)
     x,y,z = loadBalance(x,y,z,LBMETHOD='RCB')
 #     x,y,z = loadBalance(x,y,z,LBMETHOD='HSFC')
 #     x,y,z,data = loadBalance(x,y,z,data,LBMETHOD='RCB')
