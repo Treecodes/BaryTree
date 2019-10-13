@@ -120,7 +120,9 @@ void treedriver(struct particles *sources, struct particles *targets,
                                   tree_array);
 
         } else if  ((pot_type == 2) || (pot_type==3)) {
-            fill_in_cluster_data_SS(clusters, sources, troot, order);
+//            fill_in_cluster_data_SS(clusters, sources, troot, order);
+            fill_in_cluster_data_SS(   clusters, sources, troot, order,
+                                              tree_array);
 
         } else if  ((pot_type == 4) || (pot_type==5)) {
             fill_in_cluster_data_hermite(clusters, sources, troot, order);
@@ -474,16 +476,19 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         } else if (pot_type == 2) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=2 (Coulomb w/ singularity subtraction).\n");
-            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
-                                   kappa, tpeng, tEn);
-//          pc_interaction_list_treecode_Coulomb_SS(tree_array, clusters, batches,
-//                                                  tree_inter_list, direct_inter_list, sources, targets,
-//                                                  tpeng, kappa, tEn);
+//            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
+//                                   kappa, tpeng, tEn);
+          pc_interaction_list_treecode_Coulomb_SS(let_tree_array, let_clusters, batches,
+												  tree_inter_list, direct_inter_list, let_sources, targets,
+												  tpeng, kappa, tEn);
 
         } else if (pot_type == 3) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=3 (Yukawa w/ singularity subtraction).\n");
-            pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
-                               kappa, tpeng, tEn);
+//            pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
+//                               kappa, tpeng, tEn);
+            pc_interaction_list_treecode_yuk_SS(let_tree_array, let_clusters, batches,
+                                             tree_inter_list, direct_inter_list, let_sources, targets,
+                                             tpeng, kappa, tEn);
 
         } else if (pot_type == 4) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=4 (Coulomb Hermite).\n");

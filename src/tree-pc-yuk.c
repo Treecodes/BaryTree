@@ -198,43 +198,44 @@ void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct par
 
         int tree_numnodes = tree_array->numnodes;
 
-        for (i = 0; i < targets->num; i++)
+        for (i = 0; i < targets->num; i++){
             EnP[i] = 0.0;
+        }
 
 
 
-            double *EnP2, *EnP3;
-            make_vector(EnP2,targets->num);
-            make_vector(EnP3,targets->num);
+		double *EnP2, *EnP3;
+		make_vector(EnP2,targets->num);
+		make_vector(EnP3,targets->num);
 
-            for (i = 0; i < targets->num; i++) {
-                EnP3[i] = 0.0;
-                EnP2[i] = 0.0;
-            }
+		for (i = 0; i < targets->num; i++) {
+			EnP3[i] = 0.0;
+			EnP2[i] = 0.0;
+		}
 
-            double *xS = sources->x;
-            double *yS = sources->y;
-            double *zS = sources->z;
-            double *qS = sources->q;
-            double *wS = sources->w;
+		double *xS = sources->x;
+		double *yS = sources->y;
+		double *zS = sources->z;
+		double *qS = sources->q;
+		double *wS = sources->w;
 
-            double *xT = targets->x;
-            double *yT = targets->y;
-            double *zT = targets->z;
-            double *qT = targets->q;
+		double *xT = targets->x;
+		double *yT = targets->y;
+		double *zT = targets->z;
+		double *qT = targets->q;
 
-            double *xC = clusters->x;
-            double *yC = clusters->y;
-            double *zC = clusters->z;
-            double *qC = clusters->q;
+		double *xC = clusters->x;
+		double *yC = clusters->y;
+		double *zC = clusters->z;
+		double *qC = clusters->q;
 
 //          printf("\n\nInside compute region, clusters->q[0] = %f\n\n",clusters->q[0]);
 //          printf("\n\nInside compute region, clusters->q[213599] = %f\n\n",clusters->q[213599]);
 
-            int * ibegs = tree_array->ibeg;
-            int * iends = tree_array->iend;
+		int * ibegs = tree_array->ibeg;
+		int * iends = tree_array->iend;
 
-            int * clusterInd = tree_array->cluster_ind;
+		int * clusterInd = tree_array->cluster_ind;
 
 #ifdef OPENACC_ENABLED
         #pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], \
