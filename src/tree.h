@@ -27,7 +27,8 @@ void setup(struct particles *particles, int order, double theta,
            double *xyzminmax);
 
 void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array);
-void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
+void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array);
+//void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
 void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
@@ -110,8 +111,11 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ,
 		double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
-void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
-		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ , double *clusterW);
+void pc_comp_ms_modifiedF_SS(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
+		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
+
+//void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
+//		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ , double *clusterW);
 
 void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ,
@@ -135,6 +139,16 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                                   double *tpeng, double *EnP);
 
 void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double kappa, double *EnP);
+
+void pc_interaction_list_treecode_yuk_SS(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+                                  struct particles *sources, struct particles *targets,
+                                  double *tpeng, double kappa, double *EnP);
+
+void pc_interaction_list_treecode_Coulomb_SS(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
                                   double *tpeng, double kappa, double *EnP);
