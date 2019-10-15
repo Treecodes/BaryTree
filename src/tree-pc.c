@@ -52,12 +52,13 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         double *qC = clusters->q;
 
         int totalNumberSourcePoints = sources->num;
+        int interpolationPointsPerDimension = (interpolationOrder+1);
 
 
 #ifdef OPENACC_ENABLED
-        #pragma acc data copyin(tt[0:(interpolationOrder+1)], \
-        xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints], \
-        xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qZ[0:totalNumberInterpolationPoints])
+        #pragma acc data copyin(tt[0:interpolationPointsPerDimension], \
+        xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints]) \
+        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
         {
 #endif
             for (int i = 0; i < tree_numnodes; i++) {
@@ -439,6 +440,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
         totalDueToApprox = sum(potentialDueToApprox, targets->num);
         totalDueToDirect = sum(potentialDueToDirect, targets->num);
+        printf("Total due to direct = %f\n", totalDueToDirect);
+        printf("Total due to approx = %f\n", totalDueToApprox);
         for (int k = 0; k < targets->num; k++) {
 //            if (potentialDueToDirect[k] != 0.0){
                 pointwisePotential[k] += potentialDueToDirect[k];
