@@ -317,18 +317,6 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         clusters->w[i]=0.0;
     }
 
-//        double *tempQ, *tempX, *tempY, *tempZ;
-//        make_vector(tempX,clusters->num);
-//        make_vector(tempY,clusters->num);
-//        make_vector(tempZ,clusters->num);
-//        make_vector(tempQ,clusters->num);
-//
-//        for (int i = 0; i < clusters->num; i++) {
-//            tempX[i] = 0.0;
-//            tempY[i] = 0.0;
-//            tempZ[i] = 0.0;
-//            tempQ[i] = 0.0;
-//        }
 
         double *xS = sources->x;
         double *yS = sources->y;
@@ -343,23 +331,16 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 
         int clusterNum = clusters->num;
         int sourceNum = sources->num;
-//
-//#ifdef OPENACC_ENABLED
-//        #pragma acc data copyin(tt[0:torderlim], \
-//        xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum]) \
-//        copy(tempX[0:clusterNum], tempY[0:clusterNum], tempZ[0:clusterNum], tempQ[0:clusterNum])
-//        {
-//#endif
+
 
 #ifdef OPENACC_ENABLED
         #pragma acc data copyin(tt[0:torderlim], \
-        xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum]) \
-        copyin(xC[0:clusterNum], yC[0:clusterNum], zC[0:clusterNum], qZ[0:clusterNum])
+        xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum], \
+        xC[0:clusterNum], yC[0:clusterNum], zC[0:clusterNum], qZ[0:clusterNum])
         {
 #endif
             for (int i = 0; i < tree_numnodes; i++) {
-//            	pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
-//									 tempX, tempY, tempZ, tempQ);
+
             	pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
 									 xC, yC, zC, qC);
             }
@@ -367,23 +348,6 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
             #pragma acc wait
         } // end ACC DATA REGION
 #endif
-
-//        int counter=0;
-//        for (int j = 0; j < clusters->num; j++)
-//        {
-//            if (tempQ[j]!=0.0){
-//                clusters->x[j] = tempX[j];
-//                clusters->y[j] = tempY[j];
-//                clusters->z[j] = tempZ[j];
-//                clusters->q[j] += tempQ[j];
-//            }
-//        } // end j loop
-//
-//        free_vector(tempX);
-//        free_vector(tempY);
-//        free_vector(tempZ);
-//        free_vector(tempQ);
-
 
     return;
 }
