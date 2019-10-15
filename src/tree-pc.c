@@ -422,7 +422,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                         }
                     }
 #ifdef OPENACC_ENABLED
-                    #pragma acc atomic  // is this still needed now that we don't have openMP?  Or was this necessary due to streams?
+                    #pragma acc atomic  // is this still needed now that we don't have openMP?  Or was this necessary due to async streams?
 #endif
                     potentialDueToDirect[ii] += d_peng;
                 }
@@ -440,10 +440,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         totalDueToApprox = sum(potentialDueToApprox, targets->num);
         totalDueToDirect = sum(potentialDueToDirect, targets->num);
         for (int k = 0; k < targets->num; k++) {
-            if (potentialDueToDirect[k] != 0.0)
+//            if (potentialDueToDirect[k] != 0.0){
                 pointwisePotential[k] += potentialDueToDirect[k];
                 pointwisePotential[k] += potentialDueToApprox[k];
-            }
+//        	}
+         }
 
             free_vector(potentialDueToDirect);
             free_vector(potentialDueToApprox);
