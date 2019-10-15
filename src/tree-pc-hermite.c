@@ -376,7 +376,6 @@ void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct p
 
 
 
-
 void pc_interaction_list_treecode_hermite_coulomb(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,

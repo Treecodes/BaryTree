@@ -28,12 +28,11 @@ void setup(struct particles *particles, int order, double theta,
 
 void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array);
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array);
-//void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *sources, struct tnode *troot, int order);
 
 void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
-void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
+//void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void comp_tcoeff(double dx, double dy, double dz);
 
 
@@ -192,15 +191,15 @@ void compute_pc_hermite_SS(struct tnode *p,
 
 /* used by particle-cluster Coulomb kernel w/ singularity subtraction */
 
-void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
-                     struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappaSq, double *tpeng, double *EnP);
-
-void compute_pc_coulomb_SS(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterM, double * clusterM2 );
+//void pc_treecode_coulomb_SS(struct tnode *p, struct batch *batches,
+//                     struct particles *sources, struct particles *targets, struct particles *clusters,
+//                     double kappaSq, double *tpeng, double *EnP);
+//
+//void compute_pc_coulomb_SS(struct tnode *p,
+//                int *batch_ind, double *batch_mid, double batch_rad,
+//                double *xS, double *yS, double *zS, double *qS, double *wS,
+//                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP,
+//				double * clusterX, double * clusterY, double * clusterZ, double * clusterM, double * clusterM2 );
 
 void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
                     double *xS, double *yS, double *zS, double *qS, double *wS,

@@ -18,6 +18,40 @@
 
 #include <omp.h>
 
+void pc_comp_direct_coulomb_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
+                    double *xS, double *yS, double *zS, double *qS, double *wS,
+                    double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP)
+{
+    /* local variables */
+    int i, ii;
+    double tx, ty, tz;
+    double d_peng, r;
+
+    int streamID = rand() % 2;
+	# pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
+    {
+	#pragma acc loop independent
+    for (ii = batch_ibeg - 1; ii < batch_iend; ii++) {
+        d_peng = 0.0;
+		#pragma acc loop independent
+        for (i = ibeg - 1; i < iend; i++) {
+            tx = xS[i] - xT[ii];
+            ty = yS[i] - yT[ii];
+            tz = zS[i] - zT[ii];
+            r = sqrt(tx*tx + ty*ty + tz*tz);
+            if (r > DBL_MIN) {
+            	d_peng += wS[i]* ( qS[i] - qT[ii]* exp(-r*r/kappaSq) )  / r;
+            }
+        }
+		#pragma acc atomic
+        EnP[ii] += d_peng;
+    }
+    }
+
+    return;
+
+} /* END function pc_comp_direct_yuk */
+
 
 void fill_in_cluster_data_hermite_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order){
 
