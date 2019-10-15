@@ -317,18 +317,18 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         clusters->w[i]=0.0;
     }
 
-        double *tempQ, *tempX, *tempY, *tempZ;
-        make_vector(tempX,clusters->num);
-        make_vector(tempY,clusters->num);
-        make_vector(tempZ,clusters->num);
-        make_vector(tempQ,clusters->num);
-
-        for (int i = 0; i < clusters->num; i++) {
-            tempX[i] = 0.0;
-            tempY[i] = 0.0;
-            tempZ[i] = 0.0;
-            tempQ[i] = 0.0;
-        }
+//        double *tempQ, *tempX, *tempY, *tempZ;
+//        make_vector(tempX,clusters->num);
+//        make_vector(tempY,clusters->num);
+//        make_vector(tempZ,clusters->num);
+//        make_vector(tempQ,clusters->num);
+//
+//        for (int i = 0; i < clusters->num; i++) {
+//            tempX[i] = 0.0;
+//            tempY[i] = 0.0;
+//            tempZ[i] = 0.0;
+//            tempQ[i] = 0.0;
+//        }
 
         double *xS = sources->x;
         double *yS = sources->y;
@@ -343,37 +343,46 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 
         int clusterNum = clusters->num;
         int sourceNum = sources->num;
+//
+//#ifdef OPENACC_ENABLED
+//        #pragma acc data copyin(tt[0:torderlim], \
+//        xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum]) \
+//        copy(tempX[0:clusterNum], tempY[0:clusterNum], tempZ[0:clusterNum], tempQ[0:clusterNum])
+//        {
+//#endif
 
 #ifdef OPENACC_ENABLED
         #pragma acc data copyin(tt[0:torderlim], \
         xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum]) \
-        copy(tempX[0:clusterNum], tempY[0:clusterNum], tempZ[0:clusterNum], tempQ[0:clusterNum])
+        copyin(xC[0:clusterNum], yC[0:clusterNum], zC[0:clusterNum], qZ[0:clusterNum])
         {
 #endif
-            for (int i = 0; i < tree_numnodes; i++) {  // start from i=1, don't need to compute root moments
-                pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
-                                     tempX, tempY, tempZ, tempQ);
+            for (int i = 0; i < tree_numnodes; i++) {
+//            	pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
+//									 tempX, tempY, tempZ, tempQ);
+            	pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
+									 xC, yC, zC, qC);
             }
 #ifdef OPENACC_ENABLED
             #pragma acc wait
         } // end ACC DATA REGION
 #endif
 
-        int counter=0;
-        for (int j = 0; j < clusters->num; j++)
-        {
-            if (tempQ[j]!=0.0){
-                clusters->x[j] = tempX[j];
-                clusters->y[j] = tempY[j];
-                clusters->z[j] = tempZ[j];
-                clusters->q[j] += tempQ[j];
-            }
-        } // end j loop
-
-        free_vector(tempX);
-        free_vector(tempY);
-        free_vector(tempZ);
-        free_vector(tempQ);
+//        int counter=0;
+//        for (int j = 0; j < clusters->num; j++)
+//        {
+//            if (tempQ[j]!=0.0){
+//                clusters->x[j] = tempX[j];
+//                clusters->y[j] = tempY[j];
+//                clusters->z[j] = tempZ[j];
+//                clusters->q[j] += tempQ[j];
+//            }
+//        } // end j loop
+//
+//        free_vector(tempX);
+//        free_vector(tempY);
+//        free_vector(tempZ);
+//        free_vector(tempQ);
 
 
     return;
@@ -454,7 +463,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
     make_vector(exactIndY, pointsInNode);
     make_vector(exactIndZ, pointsInNode);
 
-    x0 = tree_array->x_min[idx];  // 1e-15 fails for large meshes, mysteriously.
+    x0 = tree_array->x_min[idx];
     x1 = tree_array->x_max[idx];
     y0 = tree_array->y_min[idx];
     y1 = tree_array->y_max[idx];
@@ -753,18 +762,18 @@ void pc_compute_interaction_list_remote(int tree_numnodes, const int *tree_level
     /* local variables */
     double tx, ty, tz, dist;
     int j, current_level;
-    
+
     current_level = 0;
-    
+
     for (j = 0; j < tree_numnodes; j++) {
         if (tree_level[j] <= current_level) {
-            
+
             /* determine DIST for MAC test */
             tx = batch_mid[0] - tree_x_mid[j];
             ty = batch_mid[1] - tree_y_mid[j];
             tz = batch_mid[2] - tree_z_mid[j];
             dist = sqrt(tx*tx + ty*ty + tz*tz);
-            
+
             if (((tree_radius[j] + batch_rad) < dist * sqrt(thetasq))
                 && (tree_radius[j] > 0.00)) {
 //                && (torder*torder*torder < tree_numpar[j])) {
@@ -773,28 +782,28 @@ void pc_compute_interaction_list_remote(int tree_numnodes, const int *tree_level
                  * If MAC is accepted and there is more than 1 particle
                  * in the box, use the expansion for the approximation.
                  */
-                
+
                 batch_tree_list[j] = j;
-                
+
             } else {
                 /*
                  * If MAC fails check to see if there are children. If not, perform direct
                  * calculation. If there are children, call routine recursively for each.
                  */
-                
+
                 if ( (j==tree_numnodes-1) || (tree_level[j+1] <= tree_level[j]) ) {
-                    
+
                     batch_direct_list[j] = j;
-                    
+
                 } else {
-                    
+
                     current_level = tree_level[j+1];
-                    
+
                 }
             }
         }
     }
-    
+
     return;
 }
 
@@ -817,13 +826,13 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 
 
 
-            double *EnP2, *EnP3;
-            make_vector(EnP2,targets->num);
-            make_vector(EnP3,targets->num);
+            double *potentialDueToDirect, *potentialDueToApprox;
+            make_vector(potentialDueToDirect,targets->num);
+            make_vector(potentialDueToApprox,targets->num);
 
             for (i = 0; i < targets->num; i++) {
-                EnP3[i] = 0.0;
-                EnP2[i] = 0.0;
+                potentialDueToApprox[i] = 0.0;
+                potentialDueToDirect[i] = 0.0;
             }
 
             double *xS = sources->x;
@@ -856,7 +865,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
                             xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
                             xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], qC[0:clusters->num], \
                             tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
-                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(EnP3[0:targets->num], EnP2[0:targets->num])
+                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:targets->num], potentialDueToDirect[0:targets->num])
 #endif
         {
 
@@ -920,7 +929,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 #ifdef OPENACC_ENABLED
                     #pragma acc atomic
 #endif
-                    EnP3[batchStart + ii] += tempPotential;
+                    potentialDueToApprox[batchStart + ii] += tempPotential;
                 }
 #ifdef OPENACC_ENABLED
                 } // end kernel
@@ -956,7 +965,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 #ifdef OPENACC_ENABLED
                     #pragma acc atomic
 #endif
-                    EnP2[ii] += d_peng;
+                    potentialDueToDirect[ii] += d_peng;
                 }
 #ifdef OPENACC_ENABLED
                 } // end kernel
@@ -969,18 +978,18 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         } // end acc data region
 
         double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
-        totalDueToApprox = sum(EnP3, targets->num);
-        totalDueToDirect = sum(EnP2, targets->num);
+        totalDueToApprox = sum(potentialDueToApprox, targets->num);
+        totalDueToDirect = sum(potentialDueToDirect, targets->num);
 //        printf("Potential due to approximations: %f\n",totalDueToApprox);
 //        printf("Potential due to direct: %f\n",totalDueToDirect);
         for (int k = 0; k < targets->num; k++) {
-            if (EnP2[k] != 0.0)
-                EnP[k] += EnP2[k];
-                EnP[k] += EnP3[k];
+            if (potentialDueToDirect[k] != 0.0)
+                EnP[k] += potentialDueToDirect[k];
+                EnP[k] += potentialDueToApprox[k];
             }
 
-            free_vector(EnP2);
-            free_vector(EnP3);
+            free_vector(potentialDueToDirect);
+            free_vector(potentialDueToApprox);
 
         *tpeng = sum(EnP, targets->num);
 
