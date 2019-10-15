@@ -188,21 +188,6 @@ void compute_pc_hermite_SS(struct tnode *p,
 				double * clusterQx,double * clusterQy,double * clusterQz,double * clusterQxy,double * clusterQyz,double * clusterQxz,double * clusterQxyz,
 				double * clusterW, double * clusterWx,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWxz,double * clusterWxyz);
 
-/* used by particle-cluster Yukawa w/ singularity subtraction */
-
-void pc_treecode_yuk_SS(struct tnode *p, struct batch *batches,
-                     struct particles *sources, struct particles *targets, struct particles *clusters,
-                     double kappa, double *tpeng, double *EnP);
-
-void compute_pc_yuk_SS(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterM , double * clusterM2);
-
-void pc_comp_direct_yuk_SS(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                    double *xS, double *yS, double *zS, double *qS, double *wS,
-                    double *xT, double *yT, double *zT, double *qT, double kappa, double *EnP);
 
 
 /* used by particle-cluster Coulomb kernel w/ singularity subtraction */
