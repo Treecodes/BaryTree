@@ -3,6 +3,7 @@ SET(SRCS_TREEDRIVER
     treedriver.c
     partition.c
     partition.h
+    setup-interaction-lists.c
     tree-creation.c
     tree-cp.c tree.h
     tree-cp-yuk.c
