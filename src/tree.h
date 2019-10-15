@@ -95,7 +95,7 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
 
 
 
-void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
+void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpolationOrder, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,
@@ -127,7 +127,7 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double *EnP);
+                                  double *tpeng, double *EnP, int interpolationOrder);
 
 void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,

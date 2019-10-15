@@ -19,10 +19,10 @@
 
 
 
-void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array){
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int interpolationOrder, struct tnode_array * tree_array){
 
 	int tree_numnodes = tree_array->numnodes;
-    int interpolationPointsPerCluster = (order+1)*(order+1)*(order+1);
+    int interpolationPointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
     int totalNumberInterpolationPoints = tree_numnodes * interpolationPointsPerCluster;
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
@@ -55,14 +55,14 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 
 
 #ifdef OPENACC_ENABLED
-        #pragma acc data copyin(tt[0:torderlim], \
+        #pragma acc data copyin(tt[0:(interpolationOrder+1)], \
         xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints], \
         xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qZ[0:totalNumberInterpolationPoints])
         {
 #endif
             for (int i = 0; i < tree_numnodes; i++) {
 
-            	pc_comp_ms_modifiedF(tree_array, i, xS, yS, zS, qS, wS,
+            	pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS,
 									 xC, yC, zC, qC);
             }
 #ifdef OPENACC_ENABLED
@@ -74,24 +74,24 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 }
 
 
-void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
+void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpolationOrder,
         double *xS, double *yS, double *zS, double *qS, double *wS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
     int i,j,k;
-    int interpolationPointsPerCluster = torderlim*torderlim*torderlim;
+    int interpolationPointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
     int pointsInNode = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
     int startingIndexInClusters = idx * interpolationPointsPerCluster;
     int startingIndexInSources = tree_array->ibeg[idx]-1;
 
     double x0, x1, y0, y1, z0, z1;  // bounding box
 
-    double weights[torderlim];
-    double dj[torderlim];
+    double weights[(interpolationOrder+1)];
+    double dj[(interpolationOrder+1)];
     double *modifiedF;
     make_vector(modifiedF,pointsInNode);
 
-    double nodeX[torderlim], nodeY[torderlim], nodeZ[torderlim];
+    double nodeX[(interpolationOrder+1)], nodeY[(interpolationOrder+1)], nodeZ[(interpolationOrder+1)];
 
     int *exactIndX, *exactIndY, *exactIndZ;
     make_vector(exactIndX, pointsInNode);
@@ -113,7 +113,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
     create(modifiedF[0:pointsInNode],exactIndX[0:pointsInNode],exactIndY[0:pointsInNode],exactIndZ[0:pointsInNode], \
-            nodeX[0:torderlim],nodeY[0:torderlim],nodeZ[0:torderlim],weights[0:torderlim],dj[0:torderlim])
+            nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
     {
 #endif
 
@@ -131,7 +131,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (i = 0; i < torderlim; i++) {
+    for (i = 0; i < (interpolationOrder+1); i++) {
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -142,16 +142,16 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (j = 0; j < torder+1; j++){
+    for (j = 0; j < interpolationOrder+1; j++){
         dj[j] = 1.0;
         if (j==0) dj[j] = 0.5;
-        if (j==torder) dj[j]=0.5;
+        if (j==interpolationOrder) dj[j]=0.5;
     }
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (j = 0; j < torderlim; j++) {
+    for (j = 0; j < (interpolationOrder+1); j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
     }
 
@@ -172,7 +172,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent
 #endif
-        for (j = 0; j < torderlim; j++) {  // loop through the degree
+        for (j = 0; j < (interpolationOrder+1); j++) {  // loop through the degree
 
             cx = sx-nodeX[j];
             cy = sy-nodeY[j];
@@ -209,11 +209,11 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 #endif
     for (j = 0; j < interpolationPointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
         // compute k1, k2, k3 from j
-        k1 = j%torderlim;
-        kk = (j-k1)/torderlim;
-        k2 = kk%torderlim;
+        k1 = j%(interpolationOrder+1);
+        kk = (j-k1)/(interpolationOrder+1);
+        k2 = kk%(interpolationOrder+1);
         kk = kk - k2;
-        k3 = kk / torderlim;
+        k3 = kk / (interpolationOrder+1);
 
         cz = nodeZ[k3];
         w3 = weights[k3];
@@ -281,7 +281,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   struct particles *sources, struct particles *targets,
-                                  double *tpeng, double *EnP)
+                                  double *tpeng, double *EnP, int interpolationOrder)
 {
         int i, j;
         int rank; int numProcs;	int ierr;
@@ -343,7 +343,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         double tx, ty, tz;
         int i, j, k, ii, jj;
         double dxt,dyt,dzt,tempPotential;
-        double temp_i[torderlim], temp_j[torderlim], temp_k[torderlim];
+        double temp_i[(interpolationOrder+1)], temp_j[(interpolationOrder+1)], temp_k[(interpolationOrder+1)];
 
         int source_start;
         int source_end;
@@ -352,7 +352,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         double xi,yi,zi;
 
         int numberOfTargets;
-        int numberOfInterpolationPoints = torderlim*torderlim*torderlim;
+        int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
         int clusterStart, batchStart;
 
         int numberOfClusterApproximations, numberOfDirectSums;

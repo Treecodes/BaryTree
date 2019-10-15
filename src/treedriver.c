@@ -19,7 +19,7 @@
 /* definition of primary treecode driver */
 
 void treedriver(struct particles *sources, struct particles *targets,
-                int order, double theta, int maxparnode, int batch_size,
+                int interpolationOrder, double theta, int maxparnode, int batch_size,
                 int pot_type, double kappa, int tree_type,
                 double *tEn, double *tpeng, double *time_tree)
 {
@@ -79,7 +79,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     } else if (tree_type == 1) {
 
         time1 = MPI_Wtime();
-        setup(sources, order, theta, xyzminmax);
+        setup(sources, interpolationOrder, theta, xyzminmax);
         pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, level);
         int final_index = pc_set_tree_index(troot, 0);
@@ -116,19 +116,19 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
         if         ((pot_type == 0) || (pot_type==1)) {
-            fill_in_cluster_data(   clusters, sources, troot, order,
+            fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
                                   tree_array);
 
         } else if  ((pot_type == 2) || (pot_type==3)) {
-//            fill_in_cluster_data_SS(clusters, sources, troot, order);
-            fill_in_cluster_data_SS(   clusters, sources, troot, order,
+//            fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder);
+            fill_in_cluster_data_SS(   clusters, sources, troot, interpolationOrder,
                                               tree_array);
 
         } else if  ((pot_type == 4) || (pot_type==5)) {
-            fill_in_cluster_data_hermite(clusters, sources, troot, order);
+            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
 
         } else if  ((pot_type == 6) || (pot_type==7)) {
-            fill_in_cluster_data_hermite(clusters, sources, troot, order);
+            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
         }
         time_tree[4] = MPI_Wtime() - time1; //time_fillclusters
     }
@@ -181,7 +181,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     			numNodesOnProc, 1, MPI_INT,
 				MPI_COMM_WORLD);
 
-    	int pointsPerCluster = (order+1)*(order+1)*(order+1);
+    	int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
 		int let_sources_length, let_clusters_length;
 
     	struct tnode_array *let_tree_array = NULL;
@@ -465,7 +465,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             if (verbosity>0) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
             pc_interaction_list_treecode(let_tree_array, let_clusters, batches,
                                          tree_inter_list, direct_inter_list, let_sources, targets,
-                                         tpeng, tEn);
+                                         tpeng, tEn, interpolationOrder);
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");
 
         } else if (pot_type == 1) {
