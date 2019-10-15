@@ -49,11 +49,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
                        int level);
 
-void cp_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6][8],
-                    double xl, double yl, double zl,
-                    double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid,
-                    int ind[8][2]);
+
 
 void cp_comp_ms(struct tnode *p);
 
@@ -98,11 +94,7 @@ int pc_set_tree_index(struct tnode *p, int index);
 
 void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
 
-void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
-                    double xyzmms[6][8], double xl, double yl, double zl,
-                    double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid,
-                    int ind[8][2]);
+
 
 void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);

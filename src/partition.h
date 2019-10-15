@@ -15,5 +15,17 @@ void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
 void pc_partition(double *a, double *b, double *c, double *d, double *w, int *indarr,
                   int ibeg, int iend, double val, int *midind);
 
+void pc_partition_8(double *x, double *y, double *z, double *q, double *w,
+                    double xyzmms[6][8], double xl, double yl, double zl,
+                    double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid,
+                    int ind[8][2]);
+
+void cp_partition_8(double *x, double *y, double *z, double *q, double xyzmms[6][8],
+                    double xl, double yl, double zl,
+                    double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid,
+                    int ind[8][2]);
+
 
 #endif /* H_PARTITION_H */
