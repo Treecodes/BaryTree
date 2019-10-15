@@ -180,9 +180,9 @@ void pc_interaction_list_treecode_hermite_dcf(struct tnode_array *tree_array, st
 
 
 /* used by particle-cluster Coulomb */
-void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                    double *xS, double *yS, double *zS, double *qS, double *wS,
-                    double *xT, double *yT, double *zT, double *qT, double *EnP);
+//void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
+//                    double *xS, double *yS, double *zS, double *qS, double *wS,
+//                    double *xT, double *yT, double *zT, double *qT, double *EnP);
 
 void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
                  struct particles *sources, struct particles *targets, struct particles *clusters,

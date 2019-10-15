@@ -300,16 +300,16 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
 void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array){
 
 	int tree_numnodes = tree_array->numnodes;
-    int pointsPerCluster = (order+1)*(order+1)*(order+1);
-    int numInterpPoints = tree_numnodes * pointsPerCluster;
-    make_vector(clusters->x, numInterpPoints);
-    make_vector(clusters->y, numInterpPoints);
-    make_vector(clusters->z, numInterpPoints);
-    make_vector(clusters->q, numInterpPoints);
-    make_vector(clusters->w, numInterpPoints);  // will be used in singularity subtraction
-    clusters->num=numInterpPoints;
+    int interpolationPointsPerCluster = (order+1)*(order+1)*(order+1);
+    int totalNumberInterpolationPoints = tree_numnodes * interpolationPointsPerCluster;
+    make_vector(clusters->x, totalNumberInterpolationPoints);
+    make_vector(clusters->y, totalNumberInterpolationPoints);
+    make_vector(clusters->z, totalNumberInterpolationPoints);
+    make_vector(clusters->q, totalNumberInterpolationPoints);
+    make_vector(clusters->w, totalNumberInterpolationPoints);  // will be used in singularity subtraction
+    clusters->num=totalNumberInterpolationPoints;
 
-    for (int i = 0; i < numInterpPoints; i++) {
+    for (int i = 0; i < totalNumberInterpolationPoints; i++) {
         clusters->x[i]=0.0;
         clusters->y[i]=0.0;
         clusters->z[i]=0.0;
@@ -329,14 +329,13 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         double *zC = clusters->z;
         double *qC = clusters->q;
 
-        int clusterNum = clusters->num;
-        int sourceNum = sources->num;
+        int totalNumberSourcePoints = sources->num;
 
 
 #ifdef OPENACC_ENABLED
         #pragma acc data copyin(tt[0:torderlim], \
-        xS[0:sourceNum], yS[0:sourceNum], zS[0:sourceNum], qS[0:sourceNum], wS[0:sourceNum], \
-        xC[0:clusterNum], yC[0:clusterNum], zC[0:clusterNum], qZ[0:clusterNum])
+        xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints], \
+        xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qZ[0:totalNumberInterpolationPoints])
         {
 #endif
             for (int i = 0; i < tree_numnodes; i++) {
@@ -355,52 +354,6 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 
 
 
-void pc_comp_direct(int ibeg, int iend, int batch_ibeg, int batch_iend,
-                     double *xS, double *yS,  double *zS,  double *qS,  double *wS,
-                     double *xT,  double *yT,  double *zT,  double *qT,  double *EnP)
-{
-    /* local variables */
-    int i, ii;
-    double tx, ty, tz;
-
-    int batch_start=batch_ibeg - 1;
-    int batch_end = batch_iend;
-
-    int source_start=ibeg - 1;
-    int source_end=iend;
-
-    double d_peng, r;
-    int streamID = rand() % 2;
-
-#ifdef OPENACC_ENABLED
-    #pragma acc kernels async(streamID) present(xS,yS,zS,qS,wS,xT,yT,zT,qT,EnP)
-    {
-    #pragma acc loop independent
-#endif
-    for (ii = batch_start; ii < batch_end; ii++) {
-        d_peng = 0.0;
-        for (i = source_start; i < source_end; i++) {
-            tx = xS[i] - xT[ii];
-            ty = yS[i] - yT[ii];
-            tz = zS[i] - zT[ii];
-            r = sqrt(tx*tx + ty*ty + tz*tz);
-            if (r > DBL_MIN) {
-                d_peng += qS[i] * wS[i] / r;
-            }
-        }
-#ifdef OPENACC_ENABLED
-        #pragma acc atomic
-#endif
-        EnP[ii] += d_peng;
-    }
-#ifdef OPENACC_ENABLED
-    }
-#endif
-    return;
-
-} /* END function pc_comp_direct */
-
-
 
 
 void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
@@ -408,9 +361,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
     int i,j,k;
-    int pointsPerCluster = torderlim*torderlim*torderlim;
+    int interpolationPointsPerCluster = torderlim*torderlim*torderlim;
     int pointsInNode = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
-    int startingIndexInClusters = idx * pointsPerCluster;
+    int startingIndexInClusters = idx * interpolationPointsPerCluster;
     int startingIndexInSources = tree_array->ibeg[idx]-1;
 
     double x0, x1, y0, y1, z0, z1;  // bounding box
@@ -536,7 +489,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx,
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (j = 0; j < pointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+    for (j = 0; j < interpolationPointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
         // compute k1, k2, k3 from j
         k1 = j%torderlim;
         kk = (j-k1)/torderlim;
