@@ -12,11 +12,11 @@ KAPPA=0.0
 
 for N in 1000000 
 do
-	for NX in 5 
+	for NX in 1 
 	do
-		for NY in 5
+		for NY in 1
 		do
-			for NZ in 4
+			for NZ in 1
 			do
 				NP=$(($NX * $NY * $NZ))
 				echo $NP
