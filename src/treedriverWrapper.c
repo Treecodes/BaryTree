@@ -20,8 +20,6 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *outputArray, int pot_type, double kappa,
 		int order, double theta, int maxparnode, int batch_size) {
 
-//	printf("Entered treedriverwrapper.c\n");
-
 	int particleOrder[numTargets];
 	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
 
@@ -36,8 +34,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	targets->y = targetY;
 	targets->z = targetZ;
 	targets->q = targetValue;
-	targets->order=particleOrder;
-
+	targets->order = particleOrder;
 
 	sources->num = numSources;
 	sources->x = sourceX;
@@ -45,40 +42,19 @@ void treedriverWrapper(int numTargets, int numSources,
 	sources->z = sourceZ;
 	sources->q = sourceValue;
 	sources->w = sourceWeight;
-	sources->order=particleOrder;
-
-//	for (int j=0;j<15;j++){printf("target->order[%d] = %d\n", j, targets->order[j]);}
-
-
-	// Set other things, like *timetree and pot_type...
+	sources->order = particleOrder;
 
 	double time_tree[9];
-	int tree_type=1;   // particle cluster
+	int tree_type = 1;   // particle cluster
 	double tpeng = 0;
 
-
 	// Call the treedriver
-//	printf("Calling treedriver in the c wrapper.c\n");
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
 			   pot_type, kappa, tree_type,
 			   outputArray, &tpeng, time_tree);
 
-
-//	free_vector(sources->x);
-//	free_vector(sources->y);
-//	free_vector(sources->z);
-//	free_vector(sources->q);
-//	free_vector(sources->w);
-//	free_vector(sources->order);
 	free(sources);
-
-//	free_vector(targets->x);
-//	free_vector(targets->y);
-//	free_vector(targets->z);
-//	free_vector(targets->q);
-//	free_vector(targets->w);
-//	free_vector(targets->order);
 	free(targets);
 
 	return;

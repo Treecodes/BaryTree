@@ -440,8 +440,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
         totalDueToApprox = sum(potentialDueToApprox, targets->num);
         totalDueToDirect = sum(potentialDueToDirect, targets->num);
-        printf("Total due to direct = %f\n", totalDueToDirect);
-        printf("Total due to approx = %f\n", totalDueToApprox);
+        //printf("Total due to direct = %f\n", totalDueToDirect);
+        //printf("Total due to approx = %f\n", totalDueToApprox);
         for (int k = 0; k < targets->num; k++) {
 //            if (potentialDueToDirect[k] != 0.0){
                 pointwisePotential[k] += potentialDueToDirect[k];

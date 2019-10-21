@@ -51,15 +51,15 @@ int main(int argc, char **argv)
     double buf[5];
     
     double *xS = NULL;
-	double *yS = NULL;
-	double *zS = NULL;
-	double *qS = NULL;
-	double *wS = NULL;
+    double *yS = NULL;
+    double *zS = NULL;
+    double *qS = NULL;
+    double *wS = NULL;
 
-	double *xT = NULL;
-	double *yT = NULL;
-	double *zT = NULL;
-	double *qT = NULL;
+    double *xT = NULL;
+    double *yT = NULL;
+    double *zT = NULL;
+    double *qT = NULL;
 
     /* MPI Variables */
     int *displs = NULL;
@@ -156,69 +156,69 @@ int main(int argc, char **argv)
     targets = malloc(sizeof(struct particles));
 
     sources->num = numparsSloc;
-	make_vector(sources->x, numparsSloc);
-	make_vector(sources->y, numparsSloc);
-	make_vector(sources->z, numparsSloc);
-	make_vector(sources->q, numparsSloc);
-	make_vector(sources->w, numparsSloc);
+    make_vector(sources->x, numparsSloc);
+    make_vector(sources->y, numparsSloc);
+    make_vector(sources->z, numparsSloc);
+    make_vector(sources->q, numparsSloc);
+    make_vector(sources->w, numparsSloc);
 
-	targets->num = numparsTloc;
-	make_vector(targets->x, numparsTloc);
-	make_vector(targets->y, numparsTloc);
-	make_vector(targets->z, numparsTloc);
-	make_vector(targets->q, numparsTloc);
-	make_vector(targets->order, numparsTloc);
-	make_vector(tenergy, numparsTloc);
+    targets->num = numparsTloc;
+    make_vector(targets->x, numparsTloc);
+    make_vector(targets->y, numparsTloc);
+    make_vector(targets->z, numparsTloc);
+    make_vector(targets->q, numparsTloc);
+    make_vector(targets->order, numparsTloc);
+    make_vector(tenergy, numparsTloc);
 
-	/* Reading in coordinates and charges for the source particles*/
-	if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY,
+    /* Reading in coordinates and charges for the source particles*/
+    if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin1, MPI_MODE_RDONLY,
                   MPI_INFO_NULL, &fpmpi)) != MPI_SUCCESS) {
         printf("Error! Could not open sources input file. Exiting.\n");
         return 1;
     }
     
-	MPI_File_seek(fpmpi, (MPI_Offset) (local_sources_offset * 5 * sizeof(double)), MPI_SEEK_SET);
-	for (int i = 0; i < numparsSloc; ++i) {
-		MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
-		sources->x[i] = buf[0];
-		sources->y[i] = buf[1];
-		sources->z[i] = buf[2];
-		sources->q[i] = buf[3];
-		sources->w[i] = buf[4];
-	}
-	MPI_File_close(&fpmpi);
+    MPI_File_seek(fpmpi, (MPI_Offset) (local_sources_offset * 5 * sizeof(double)), MPI_SEEK_SET);
+    for (int i = 0; i < numparsSloc; ++i) {
+        MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
+        sources->x[i] = buf[0];
+        sources->y[i] = buf[1];
+    sources->z[i] = buf[2];
+    sources->q[i] = buf[3];
+    sources->w[i] = buf[4];
+    }
+    MPI_File_close(&fpmpi);
 
-	/* Reading in coordinates for target particles*/
+    /* Reading in coordinates for target particles*/
     if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, sampin2, MPI_MODE_RDONLY,
                   MPI_INFO_NULL, &fpmpi)) != MPI_SUCCESS) {
         printf("Error! Could not open targets input file. Exiting.\n");
         return 1;
     }
     
-	MPI_File_seek(fpmpi, (MPI_Offset) (local_targets_offset * 4 * sizeof(double)), MPI_SEEK_SET);
-	for (int i = 0; i < numparsTloc; ++i) {
-		MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
-		targets->x[i] = buf[0];
-		targets->y[i] = buf[1];
-		targets->z[i] = buf[2];
-		targets->q[i] = buf[3];
-		targets->order[i] = i;
-	}
-	MPI_File_close(&fpmpi);
+    MPI_File_seek(fpmpi, (MPI_Offset) (local_targets_offset * 4 * sizeof(double)), MPI_SEEK_SET);
+    for (int i = 0; i < numparsTloc; ++i) {
+        MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
+        targets->x[i] = buf[0];
+        targets->y[i] = buf[1];
+        targets->z[i] = buf[2];
+        targets->q[i] = buf[3];
+        targets->order[i] = i;
+    }
+    MPI_File_close(&fpmpi);
 
-	make_vector(tenergy, numparsTloc);
-	make_vector(denergy, numparsTloc);
+    make_vector(tenergy, numparsTloc);
+    make_vector(denergy, numparsTloc);
 
-	// reading in file containing direct sum results.
-	MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
+    // reading in file containing direct sum results.
+    MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
     if (rank == 0) MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
-	MPI_File_seek(fpmpi, (MPI_Offset)((1 + local_targets_offset) * sizeof(double)), MPI_SEEK_SET);
-	MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
-	MPI_File_close(&fpmpi);
+    MPI_File_seek(fpmpi, (MPI_Offset)((1 + local_targets_offset) * sizeof(double)), MPI_SEEK_SET);
+    MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
+    MPI_File_close(&fpmpi);
 
 #ifdef OPENACC_ENABLED
-	#pragma acc set device_num(rank) device_type(acc_device_nvidia)
-	#pragma acc init device_type(acc_device_nvidia)
+    #pragma acc set device_num(rank) device_type(acc_device_nvidia)
+    #pragma acc init device_type(acc_device_nvidia)
 #endif
 
     time_run[0] = MPI_Wtime() - time1;
@@ -329,34 +329,34 @@ int main(int argc, char **argv)
     
     double glob_reln2_err, glob_relinf_err;
     double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
-	double x, y, z, temp;
+    double x, y, z, temp;
 
-	for (int j = 0; j < numparsTloc; ++j) {
-		temp = fabs(denergy[targets->order[j]] - tenergy[j]);
+    for (int j = 0; j < numparsTloc; ++j) {
+        temp = fabs(denergy[targets->order[j]] - tenergy[j]);
 
-		if (temp >= inferr) {
-			inferr = temp;
-			x = targets->x[targets->order[j]];
-			y = targets->y[targets->order[j]];
-			z = targets->z[targets->order[j]];
-		}
-
-
-		if (fabs(denergy[j]) >= relinferr)
-			relinferr = fabs(denergy[j]);
-
-		n2err = n2err + pow(denergy[targets->order[j]]
-						  - tenergy[j], 2.0)*sources->w[j];
-		reln2err = reln2err + pow(denergy[j], 2.0)*sources->w[j];
-	}
-
-	relinferr = inferr / relinferr;
-	reln2err = sqrt(n2err / reln2err);
-	n2err = sqrt(n2err);
+        if (temp >= inferr) {
+            inferr = temp;
+            x = targets->x[targets->order[j]];
+            y = targets->y[targets->order[j]];
+            z = targets->z[targets->order[j]];
+        }
 
 
-	MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+        if (fabs(denergy[j]) >= relinferr)
+            relinferr = fabs(denergy[j]);
+
+        n2err = n2err + pow(denergy[targets->order[j]]
+                          - tenergy[j], 2.0)*sources->w[j];
+        reln2err = reln2err + pow(denergy[j], 2.0)*sources->w[j];
+    }
+
+    relinferr = inferr / relinferr;
+    reln2err = sqrt(n2err / reln2err);
+    n2err = sqrt(n2err);
+
+
+    MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     
     if (rank == 0) {
         printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);

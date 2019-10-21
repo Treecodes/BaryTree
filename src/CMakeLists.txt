@@ -5,7 +5,8 @@ SET(SRCS_TREEDRIVER
     partition.h
     setup-interaction-lists.c
     tree-creation.c
-    tree-cp.c tree.h
+    tree-cp.c
+    tree.h
     tree-cp-yuk.c
     tree-pc.c
     tree-pc-hermite.c
@@ -26,7 +27,9 @@ SET(SRCS_TREEDRIVER
     treedriver.h
     array.h
     structAllocations.c
+    structAllocations.h
     interaction-masks.c
+    interaction-masks.h
     xmalloc.h
     tools.h
     particles.h
@@ -43,11 +46,7 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT tree-distributed-cpu)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_sources(${TRGT}          PRIVATE 
-                                        main-distributed.c
-                                        interaction-masks.c
-                                        interaction-masks.h
-                                        structAllocations.c
-                                        structAllocations.h)
+                                        main-distributed.c)
     target_compile_features(${TRGT} PRIVATE
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE
@@ -63,11 +62,7 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
-                                      main-distributed.c
-                                      interaction-masks.c
-                                      interaction-masks.h
-                                      structAllocations.c
-                                      structAllocations.h)
+                                      main-distributed.c)
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
                                       MPI::MPI_C
