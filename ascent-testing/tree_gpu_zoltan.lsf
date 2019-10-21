@@ -1,0 +1,36 @@
+#!/bin/bash
+# Begin LSF Directives
+#BSUB -P GEN135
+#BSUB -W 1:00
+#BSUB -nnodes 2
+#BSUB -alloc_flags gpumps
+#BSUB -J gpu_zoltan_example_testing
+#BSUB -o gpu_zoltan_example_testing.%J
+#BSUB -e gpu_zoltan_example_testing.%J
+
+# -n is number of resource sets
+# -a is number of MPI tasks per resource set
+# -c is number of CPU cores per resource set (i.e., number of total threads!)
+# -g is number of GPUs
+
+
+#cd $SHARED/
+
+
+N=1000000
+THETA=0.8
+ORDER=8
+CLUSTERSIZE=4000          
+BATCHSIZE=4000
+ 
+KERNEL=0
+TREETYPE=1
+KAPPA=0.0
+
+NR=4
+
+#jsrun -n ${NR} -a 1 -c 1 -g 1 zoltan_example_gpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE
+
+
+jsrun -n 4 -a 2 -c 2 -g 1 zoltan_example_gpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE
+jsrun -n 2 -a 2 -c 2 -g 2 zoltan_example_gpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE
