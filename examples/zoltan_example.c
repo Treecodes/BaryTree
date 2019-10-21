@@ -70,6 +70,8 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
+    if (rank == 0) fprintf(stderr,"Beginning BaryTree with %d ranks.\n", numProcs);
+
 
     float ver;
     struct Zoltan_Struct *zz;
@@ -126,7 +128,7 @@ int main(int argc, char **argv)
 
     /* General parameters */
 
-    Zoltan_Set_Param(zz, "DEBUG_LEVEL", "1");
+    Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
     Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
     Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
     Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
@@ -168,14 +170,14 @@ int main(int argc, char **argv)
                 &exportProcs,    /* Process to which I send each of the vertices */
                 &exportToPart);  /* Partition to which each vertex will belong */
 
-    if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
-
     if (rc != ZOLTAN_OK) {
         printf("Error! Zoltan has failed. Exiting. \n");
         MPI_Finalize();
         Zoltan_Destroy(&zz);
         exit(0);
     }
+
+    if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
 
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
