@@ -2,7 +2,7 @@
 # Begin LSF Directives
 #BSUB -P GEN135
 #BSUB -W 1:00
-#BSUB -nnodes 4
+#BSUB -nnodes 1
 #BSUB -alloc_flags gpumps
 #BSUB -J gpu_tree_testing
 #BSUB -o gpu_tree_testing.%J
@@ -14,7 +14,7 @@
 # -g is number of GPUs
 
 
-cd $SHARED/
+#cd $SHARED/
 
 
 N=1000000
@@ -26,9 +26,9 @@ BATCHSIZE=4000
 KERNEL=0
 KAPPA=0.0
 
-NZ=2
-NY=3
-for NX in 1 2 4
+NZ=1
+NY=1
+for NX in 1
 do
 #NY=$NX
 #NZ=$NX
