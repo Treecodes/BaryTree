@@ -591,8 +591,13 @@ void treedriver(struct particles *sources, struct particles *targets,
     cleanup(troot);
 
     // free interaction lists
-    free_vector(tree_inter_list);
-    free_vector(direct_inter_list);
+    free_vector(local_tree_inter_list);
+    free_vector(local_direct_inter_list);
+
+    if (numProcs>1){
+    	free_vector(tree_inter_list);
+		free_vector(direct_inter_list);
+    }
 
     // free clusters
     free_vector(clusters->x);
