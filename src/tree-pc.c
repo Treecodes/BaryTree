@@ -288,8 +288,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 
         int tree_numnodes = tree_array->numnodes;
 
-        for (i = 0; i < targets->num; i++)
-            pointwisePotential[i] = 0.0;
+//        for (i = 0; i < targets->num; i++){
+//            pointwisePotential[i] = 0.0;
+//        }
 
 
 
