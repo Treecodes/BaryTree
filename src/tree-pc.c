@@ -276,10 +276,18 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 }
 
 
-void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+//void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
+//                                  int *tree_inter_list, int *direct_inter_list,
+//                                  struct particles *sources, struct particles *targets,
+//                                  double *totalPotential, double *pointwisePotential, int interpolationOrder)
+
+void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
-                                  struct particles *sources, struct particles *targets,
-                                  double *totalPotential, double *pointwisePotential, int interpolationOrder)
+								  double *xS, double *yS, double *zS, double *qS, double *wS,
+								  double *xT, double *yT, double *zT, double *qT,
+								  double *xC, double *yC, double *zC, double *qC,
+                                  double *totalPotential, double *pointwisePotential, int interpolationOrder,
+								  int numSources, int numTargets, int numClusters)
 {
         int i, j;
         int rank; int numProcs;	int ierr;
@@ -295,29 +303,29 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
 
 
             double *potentialDueToDirect, *potentialDueToApprox;
-            make_vector(potentialDueToDirect,targets->num);
-            make_vector(potentialDueToApprox,targets->num);
+            make_vector(potentialDueToDirect,numTargets);
+            make_vector(potentialDueToApprox,numTargets);
 
-            for (i = 0; i < targets->num; i++) {
+            for (i = 0; i < numTargets; i++) {
                 potentialDueToApprox[i] = 0.0;
                 potentialDueToDirect[i] = 0.0;
             }
 
-            double *xS = sources->x;
-            double *yS = sources->y;
-            double *zS = sources->z;
-            double *qS = sources->q;
-            double *wS = sources->w;
-
-            double *xT = targets->x;
-            double *yT = targets->y;
-            double *zT = targets->z;
-            double *qT = targets->q;
-
-            double *xC = clusters->x;
-            double *yC = clusters->y;
-            double *zC = clusters->z;
-            double *qC = clusters->q;
+//            double *xS = sources->x;
+//            double *yS = sources->y;
+//            double *zS = sources->z;
+//            double *qS = sources->q;
+//            double *wS = sources->w;
+//
+//            double *xT = targets->x;
+//            double *yT = targets->y;
+//            double *zT = targets->z;
+//            double *qT = targets->q;
+//
+//            double *xC = clusters->x;
+//            double *yC = clusters->y;
+//            double *zC = clusters->z;
+//            double *qC = clusters->q;
 
             int * ibegs = tree_array->ibeg;
             int * iends = tree_array->iend;
@@ -325,12 +333,12 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
             int * clusterInd = tree_array->cluster_ind;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc data copyin(xS[0:sources->num], yS[0:sources->num], zS[0:sources->num], \
-                            qS[0:sources->num], wS[0:sources->num], \
-                            xT[0:targets->num], yT[0:targets->num], zT[0:targets->num], qT[0:targets->num], \
-                            xC[0:clusters->num], yC[0:clusters->num], zC[0:clusters->num], qC[0:clusters->num], \
+        #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
+                            qS[0:numSources], wS[0:numSources], \
+                            xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
+                            xC[0:numClusters], yC[0:numClusters], zC[0:numClusters], qC[0:numClusters], \
                             tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
-                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:targets->num], potentialDueToDirect[0:targets->num])
+                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
         {
 
@@ -439,11 +447,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
         } // end acc data region
 
         double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
-        totalDueToApprox = sum(potentialDueToApprox, targets->num);
-        totalDueToDirect = sum(potentialDueToDirect, targets->num);
+        totalDueToApprox = sum(potentialDueToApprox, numTargets);
+        totalDueToDirect = sum(potentialDueToDirect, numTargets);
         //printf("Total due to direct = %f\n", totalDueToDirect);
         //printf("Total due to approx = %f\n", totalDueToApprox);
-        for (int k = 0; k < targets->num; k++) {
+        for (int k = 0; k < numTargets; k++) {
 //            if (potentialDueToDirect[k] != 0.0){
                 pointwisePotential[k] += potentialDueToDirect[k];
                 pointwisePotential[k] += potentialDueToApprox[k];
@@ -453,7 +461,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct particl
             free_vector(potentialDueToDirect);
             free_vector(potentialDueToApprox);
 
-        *totalPotential = sum(pointwisePotential, targets->num);
+        *totalPotential = sum(pointwisePotential, numTargets);
 
         return;
 

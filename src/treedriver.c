@@ -239,9 +239,16 @@ void treedriver(struct particles *sources, struct particles *targets,
 		make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
 		pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
 		printf("Creates interaction lists for local particles.\n");
-		pc_interaction_list_treecode(tree_array, clusters, batches,
-				local_tree_inter_list, local_direct_inter_list, sources, targets,
-                tpeng, tEn, interpolationOrder);
+//		pc_interaction_list_treecode(tree_array, clusters, batches,
+//						local_tree_inter_list, local_direct_inter_list, sources, targets,
+//		                tpeng, tEn, interpolationOrder);
+		pc_interaction_list_treecode(tree_array, batches,
+						local_tree_inter_list, local_direct_inter_list,
+						sources->x, sources->y, sources->z, sources->q, sources->w,
+						targets->x, targets->y, targets->z, targets->q,
+						clusters->x, clusters->y, clusters->z, clusters->q,
+		                tpeng, tEn, interpolationOrder,
+						sources->num, targets->num, clusters->num);
 
 
 
@@ -498,9 +505,16 @@ void treedriver(struct particles *sources, struct particles *targets,
     	time1 = MPI_Wtime(); // start timer for tree evaluation
         if (pot_type == 0) {
             if (verbosity>-1) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
-            pc_interaction_list_treecode(let_tree_array, let_clusters, batches,
-                                         tree_inter_list, direct_inter_list, let_sources, targets,
-                                         tpeng, tEn, interpolationOrder);
+//            pc_interaction_list_treecode(let_tree_array, let_clusters, batches,
+//                                         tree_inter_list, direct_inter_list, let_sources, targets,
+//                                         tpeng, tEn, interpolationOrder);
+            pc_interaction_list_treecode(let_tree_array, batches,
+            						tree_inter_list, direct_inter_list,
+									let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
+            						targets->x, targets->y, targets->z, targets->q,
+									let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q,
+            		                tpeng, tEn, interpolationOrder,
+									let_sources->num, targets->num, let_clusters->num);
             printf("tEn[0] after all: %f\n", tEn[0]);
     		printf("tpeng after all: %f\n", *tpeng);
 
