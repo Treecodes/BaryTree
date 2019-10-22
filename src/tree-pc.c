@@ -62,7 +62,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 //        {
 //#endif
 #ifdef OPENACC_ENABLED
-        #pragma acc data enter copyin(tt[0:interpolationPointsPerDimension], \
+        #pragma acc enter data copyin(tt[0:interpolationPointsPerDimension], \
         xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints], \
         xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
 #endif
@@ -71,7 +71,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
             }
 #ifdef OPENACC_ENABLED
             #pragma acc wait
-			#pragma acc data exit delete(tt)
+			#pragma acc exit data delete(tt)
 //        } // end ACC DATA REGION
 #endif
 
@@ -348,7 +348,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 //#endif
 //{
 #ifdef OPENACC_ENABLED
-        #pragma acc data enter copyin(xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
+        #pragma acc enter data copyin(xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
                             tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes], potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
@@ -458,8 +458,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 #endif
 //        } // end acc data region
 #ifdef OPENACC_ENABLED
-        #pragma acc data exit copyout(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
-		#pragma acc data exit delete(xS, yS, zS, qS, wS, \
+        #pragma acc exit data copyout(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
+		#pragma acc exit data delete(xS, yS, zS, qS, wS, \
 									 xT, yT, zT, qT, \
 									 xC, yC, zC, qC, \
 									 tree_inter_list, direct_inter_list, ibegs, iends)
