@@ -238,7 +238,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 		make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
 		make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
 		pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
-		printf("Creates interaction lists for local particles.\n");
+	//	printf("Creates interaction lists for local particles.\n");
 //		pc_interaction_list_treecode(tree_array, clusters, batches,
 //						local_tree_inter_list, local_direct_inter_list, sources, targets,
 //		                tpeng, tEn, interpolationOrder);
@@ -249,11 +249,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 						clusters->x, clusters->y, clusters->z, clusters->q,
 		                tpeng, tEn, interpolationOrder,
 						sources->num, targets->num, clusters->num);
-
-
-
-		printf("tpeng after local: %f\n", *tpeng);
-		printf("tEn[0] after local: %f\n", tEn[0]);
 
         
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
@@ -537,7 +532,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     	// Compute interaction lists based on LET
         if (numProcs > 1) {
-        	printf("More than 1 MPI rank, entering LET phase.\n");
         time1 = MPI_Wtime();
         make_vector(tree_inter_list, batches->num * let_tree_array->numnodes);
         make_vector(direct_inter_list, batches->num * let_tree_array->numnodes);
