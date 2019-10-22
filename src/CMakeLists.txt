@@ -38,6 +38,7 @@ SET(SRCS_TREEDRIVER
 
 SET(SRCS_DIRECT_DISTRIBUTED
     main-direct-distributed.c array.h
+    direct.c direct.h
     tools.c tools.h 
     xmalloc.c xmalloc.h)
 

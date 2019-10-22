@@ -52,7 +52,7 @@ static int ztn_obj_size(void *data, int num_gid_entries, int num_lid_entries,
 int main(int argc, char **argv)
 {
     //run parameters
-    int N, pot_type, tree_type, order, max_per_leaf, max_per_batch;
+    int N, pot_type, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison;
     double kappa, theta; 
 
     N = atoi(argv[1]);
@@ -63,6 +63,7 @@ int main(int argc, char **argv)
     pot_type = atoi(argv[6]);
     kappa = atof(argv[7]);
     tree_type = atoi(argv[8]);
+    run_direct_comparison = atoi(argv[9]);
 
 
     int rc, rank, numProcs;
@@ -85,12 +86,13 @@ int main(int argc, char **argv)
     struct particles *sources = NULL;
     struct particles *targets = NULL;
     int *particleOrder = NULL;
-    double *potential = NULL;
+    double *potential = NULL, *potential_direct = NULL;
     double potential_engy = 0, potential_engy_glob = 0;
+    double potential_engy_direct = 0, potential_engy_direct_glob = 0;
 
     /* variables for date-time calculation */
-    double time_run[3], time_tree[9];
-    double time_run_glob[3][3], time_tree_glob[3][9];
+    double time_run[3], time_tree[9], time_direct;
+    double time_run_glob[3][3], time_tree_glob[3][9], time_direct_glob[3];
     double time1, time2;
 
 
@@ -182,6 +184,7 @@ int main(int argc, char **argv)
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
     potential = malloc(sizeof(double) * mySources.numMyPoints);
+    potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
     particleOrder = malloc(sizeof(int) * mySources.numMyPoints);
 	for (int i = 0; i < mySources.numMyPoints; i++) particleOrder[i] = i;
 
@@ -212,9 +215,17 @@ int main(int argc, char **argv)
     /* Calling main treecode subroutine to calculate approximate energy */
 
     MPI_Barrier(MPI_COMM_WORLD);
+
+    if (run_direct_comparison == 1) {
+        if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
+        time1 = MPI_Wtime();
+        treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
+			       pot_type, kappa, tree_type, potential_direct, &potential_engy_direct, time_tree);
+        time_direct = MPI_Wtime() - time1;
+    }
     
+    if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
-    
 	treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
 			   pot_type, kappa, tree_type, potential, &potential_engy, time_tree);
 
@@ -235,7 +246,12 @@ int main(int argc, char **argv)
     MPI_Reduce(time_run, &time_run_glob[1], 3, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_run, &time_run_glob[2], 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
+    MPI_Reduce(&time_direct, &time_direct_glob[0], 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&time_direct, &time_direct_glob[1], 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&time_direct, &time_direct_glob[2], 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    
     MPI_Reduce(&potential_engy, &potential_engy_glob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&potential_engy_direct, &potential_engy_direct_glob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
     
@@ -301,6 +317,49 @@ int main(int argc, char **argv)
                      time_tree_glob[1][8], time_tree_glob[1][8] * max_percent);
         
         printf("               Tree potential energy:  %f\n\n", potential_engy_glob);
+
+        if (run_direct_comparison == 1) {
+            printf("\nDirect timing summary (all times in seconds)...\n\n");
+            printf("                                       Avg                           Min                         Max\n");
+            printf("|    Total time......................  %9.3e s    (100.00%)      %9.3e s    (100.00%)    %9.3e s    (100.00%) \n\n",
+                         time_direct_glob[2]/numProcs, time_direct_glob[0], time_direct_glob[1]);
+            printf("             Direct potential energy:  %f\n\n\n", potential_engy_direct_glob);
+            printf("  Absolute error for total potential:  %e\n",
+                   fabs(potential_engy_glob-potential_engy_direct_glob));
+            printf("  Relative error for total potential:  %e\n\n",
+                   fabs((potential_engy_glob-potential_engy_direct_glob)/potential_engy_direct_glob));
+        }
+    }
+
+    if (run_direct_comparison == 1) {
+        double glob_reln2_err, glob_relinf_err, glob_n2_err, glob_inf_err;
+        double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
+        double temp;
+
+        for (int j = 0; j < targets->num; ++j) {
+            temp = fabs(potential_direct[j] - potential[j]);
+
+            if (temp >= inferr) inferr = temp;
+
+            if (fabs(potential_direct[j]) >= relinferr)
+                relinferr = fabs(potential_direct[j]);
+
+            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * sources->w[j];
+            reln2err = reln2err + pow(potential_direct[j], 2.0) * sources->w[j];
+        }
+
+        MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&n2err, &glob_n2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&inferr, &glob_inf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    
+        if (rank == 0) {
+            glob_reln2_err = sqrt(glob_n2_err / glob_reln2_err);
+            glob_n2_err = sqrt(glob_n2_err);
+            glob_relinf_err = glob_inf_err / glob_relinf_err;
+            printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);
+            printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
+        }
     }
 
     //for (int i = 0; i < mySources.numMyPoints; i++) {
@@ -328,6 +387,7 @@ int main(int argc, char **argv)
     free(mySources.myGlobalIDs);
     free(particleOrder);
     free(potential);
+    free(potential_direct);
     free(sources);
     free(targets);
 

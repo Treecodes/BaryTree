@@ -332,7 +332,7 @@ int main(int argc, char **argv)
     }
     
     
-    double glob_reln2_err, glob_relinf_err;
+    double glob_reln2_err, glob_relinf_err, glob_n2_err, glob_inf_err;
     double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
     double x, y, z, temp;
 
@@ -346,7 +346,6 @@ int main(int argc, char **argv)
             z = targets->z[targets->order[j]];
         }
 
-
         if (fabs(denergy[j]) >= relinferr)
             relinferr = fabs(denergy[j]);
 
@@ -355,15 +354,15 @@ int main(int argc, char **argv)
         reln2err = reln2err + pow(denergy[j], 2.0)*sources->w[j];
     }
 
-    relinferr = inferr / relinferr;
-    reln2err = sqrt(n2err / reln2err);
-    n2err = sqrt(n2err);
-
-
     MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&n2err, &glob_n2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&inferr, &glob_inf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     
     if (rank == 0) {
+        glob_reln2_err = sqrt(glob_n2_err / glob_reln2_err);
+        glob_n2_err = sqrt(glob_n2_err);
+        glob_relinf_err = glob_inf_err / glob_relinf_err;
         printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);
         printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
     }
@@ -389,7 +388,7 @@ int main(int argc, char **argv)
             time_run_glob[2][2]/numProcs, //2 ends
             dpengglob, tpengglob, fabs(tpengglob-dpengglob),
             fabs((tpengglob-dpengglob)/dpengglob),
-            inferr, relinferr, n2err, reln2err); //3 ends
+            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err); //3 ends
         fclose(fp);
     }
     
