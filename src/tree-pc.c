@@ -55,18 +55,24 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         int interpolationPointsPerDimension = (interpolationOrder+1);
 
 
+//#ifdef OPENACC_ENABLED
+//        #pragma acc data copyin(tt[0:interpolationPointsPerDimension], \
+//        xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints]) \
+//        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
+//        {
+//#endif
 #ifdef OPENACC_ENABLED
-        #pragma acc data copyin(tt[0:interpolationPointsPerDimension], \
-        xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints]) \
-        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
-        {
+        #pragma acc enter data copyin(tt[0:interpolationPointsPerDimension], \
+        xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints], \
+        xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
 #endif
             for (int i = 0; i < tree_numnodes; i++) {
             	pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC);
             }
 #ifdef OPENACC_ENABLED
             #pragma acc wait
-        } // end ACC DATA REGION
+			#pragma acc exit data delete(tt)
+//        } // end ACC DATA REGION
 #endif
 
     return;
@@ -332,15 +338,21 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
             int * clusterInd = tree_array->cluster_ind;
 
+//#ifdef OPENACC_ENABLED
+//        #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
+//                            qS[0:numSources], wS[0:numSources], \
+//                            xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
+//                            xC[0:numClusters], yC[0:numClusters], zC[0:numClusters], qC[0:numClusters], \
+//                            tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
+//                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
+//#endif
+//{
 #ifdef OPENACC_ENABLED
-        #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
-                            qS[0:numSources], wS[0:numSources], \
-                            xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
-                            xC[0:numClusters], yC[0:numClusters], zC[0:numClusters], qC[0:numClusters], \
+        #pragma acc enter data copyin(xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
                             tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
-                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
+                            ibegs[0:tree_numnodes], iends[0:tree_numnodes], potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
-        {
+
 
         int batch_ibeg, batch_iend, node_index;
         double dist;
@@ -444,7 +456,14 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 #ifdef OPENACC_ENABLED
         #pragma acc wait
 #endif
-        } // end acc data region
+//        } // end acc data region
+#ifdef OPENACC_ENABLED
+        #pragma acc exit data copyout(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
+		#pragma acc exit data delete(xS, yS, zS, qS, wS, \
+									 xT, yT, zT, qT, \
+									 xC, yC, zC, qC, \
+									 tree_inter_list, direct_inter_list, ibegs, iends)
+#endif
 
         double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
         totalDueToApprox = sum(potentialDueToApprox, numTargets);
