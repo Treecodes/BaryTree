@@ -282,6 +282,10 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_create(sources->w, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
 
     	// Perform MPI round robin, filling LET with remote data
+        int num_remote_approx_array[numProcs], new_sources_length_array[numProcs];
+        int previous_let_clusters_length_array[numProcs], previous_let_sources_length_array[numProcs];
+        MPI_Datatype approx_type[numProcs], direct_type[numProcs];
+
 		for (int procID = 1; procID < numProcs; ++procID) {
 
 			int getFrom = (numProcs+rank-procID) % numProcs;
@@ -340,7 +344,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_ibeg_list, numNodesOnProc[getFrom]);
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
             
-			remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed, direct_list, numNodesOnProc[getFrom]);
+			remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
+                                     direct_list, numNodesOnProc[getFrom]);
 
 			MPI_Barrier(MPI_COMM_WORLD);
 
@@ -365,7 +370,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int numberOfRemoteDirect = 0;
             int previous_let_sources_length = let_sources_length;
-
 
             // Fill in LET tree array from Remote tree array.
             int appendCounter = 0;
@@ -401,6 +405,11 @@ void treedriver(struct particles *sources, struct particles *targets,
                 appendCounter+=1;
 			}
             
+            num_remote_approx_array[getFrom] = numberOfRemoteApprox;
+            new_sources_length_array[getFrom] = let_sources_length - previous_let_sources_length;
+            previous_let_clusters_length_array[getFrom] = previous_let_clusters_length; 
+            previous_let_sources_length_array[getFrom] = previous_let_sources_length; 
+            
             MPI_Barrier(MPI_COMM_WORLD);
             
             if (procID==1){
@@ -412,16 +421,26 @@ void treedriver(struct particles *sources, struct particles *targets,
             }
 
 			// Use masks to get remote data
-            MPI_Datatype approx_type, direct_type;
-            
             for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
                 approx_list_packed[ii] *= pointsPerCluster;
             
-            MPI_Type_create_indexed_block(numberOfRemoteApprox, pointsPerCluster, approx_list_packed, MPI_DOUBLE, &approx_type);
-            MPI_Type_commit(&approx_type);
-            int new_sources_length = let_sources_length - previous_let_sources_length;
-            MPI_Type_indexed(numberOfRemoteDirect, direct_length_list, direct_ibeg_list, MPI_DOUBLE, &direct_type);
-            MPI_Type_commit(&direct_type);
+            MPI_Type_create_indexed_block(numberOfRemoteApprox, pointsPerCluster, approx_list_packed, MPI_DOUBLE, &approx_type[getFrom]);
+            MPI_Type_commit(&approx_type[getFrom]);
+            MPI_Type_indexed(numberOfRemoteDirect, direct_length_list, direct_ibeg_list, MPI_DOUBLE, &direct_type[getFrom]);
+            MPI_Type_commit(&direct_type[getFrom]);
+
+			free_vector(approx_list_packed);
+			free_vector(approx_list_unpacked);
+			free_vector(direct_list);
+            free_vector(direct_ibeg_list);
+            free_vector(direct_length_list);
+			free_tree_array(remote_tree_array);
+        } //end loop over numProcs
+    
+
+		for (int procID = 1; procID < numProcs; ++procID) {
+
+			int getFrom = (numProcs+rank-procID) % numProcs;
 
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_x);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_y);
@@ -437,29 +456,38 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 			MPI_Barrier(MPI_COMM_WORLD);
 
-            MPI_Get(&(let_clusters->x[previous_let_clusters_length]), numberOfRemoteApprox * pointsPerCluster, MPI_DOUBLE,
-                    getFrom, 0, 1, approx_type, win_clusters_x);
-            MPI_Get(&(let_clusters->y[previous_let_clusters_length]), numberOfRemoteApprox * pointsPerCluster, MPI_DOUBLE,
-                    getFrom, 0, 1, approx_type, win_clusters_y);
-            MPI_Get(&(let_clusters->z[previous_let_clusters_length]), numberOfRemoteApprox * pointsPerCluster, MPI_DOUBLE,
-                    getFrom, 0, 1, approx_type, win_clusters_z);
-            MPI_Get(&(let_clusters->q[previous_let_clusters_length]), numberOfRemoteApprox * pointsPerCluster, MPI_DOUBLE,
-                    getFrom, 0, 1, approx_type, win_clusters_q);
-            MPI_Get(&(let_clusters->w[previous_let_clusters_length]), numberOfRemoteApprox * pointsPerCluster, MPI_DOUBLE,
-                    getFrom, 0, 1, approx_type, win_clusters_w);
-            
+            MPI_Get(&(let_clusters->x[previous_let_clusters_length_array[getFrom]]),
+                    num_remote_approx_array[getFrom] * pointsPerCluster, MPI_DOUBLE,
+                    getFrom, 0, 1, approx_type[getFrom], win_clusters_x);
+            MPI_Get(&(let_clusters->y[previous_let_clusters_length_array[getFrom]]),
+                    num_remote_approx_array[getFrom] * pointsPerCluster, MPI_DOUBLE,
+                    getFrom, 0, 1, approx_type[getFrom], win_clusters_y);
+            MPI_Get(&(let_clusters->z[previous_let_clusters_length_array[getFrom]]),
+                    num_remote_approx_array[getFrom] * pointsPerCluster, MPI_DOUBLE,
+                    getFrom, 0, 1, approx_type[getFrom], win_clusters_z);
+            MPI_Get(&(let_clusters->q[previous_let_clusters_length_array[getFrom]]),
+                    num_remote_approx_array[getFrom] * pointsPerCluster, MPI_DOUBLE,
+                    getFrom, 0, 1, approx_type[getFrom], win_clusters_q);
+            MPI_Get(&(let_clusters->w[previous_let_clusters_length_array[getFrom]]),
+                    num_remote_approx_array[getFrom] * pointsPerCluster, MPI_DOUBLE,
+                    getFrom, 0, 1, approx_type[getFrom], win_clusters_w);
 
 
-            MPI_Get(&(let_sources->x[previous_let_sources_length]), new_sources_length, MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type, win_sources_x);
-            MPI_Get(&(let_sources->y[previous_let_sources_length]), new_sources_length, MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type, win_sources_y);
-            MPI_Get(&(let_sources->z[previous_let_sources_length]), new_sources_length, MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type, win_sources_z);
-            MPI_Get(&(let_sources->q[previous_let_sources_length]), new_sources_length, MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type, win_sources_q);
-            MPI_Get(&(let_sources->w[previous_let_sources_length]), new_sources_length, MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type, win_sources_w);
+            MPI_Get(&(let_sources->x[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_x);
+            MPI_Get(&(let_sources->y[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_y);
+            MPI_Get(&(let_sources->z[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_z);
+            MPI_Get(&(let_sources->q[previous_let_sources_length_array[getFrom]]), 
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_q);
+            MPI_Get(&(let_sources->w[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_w);
             
 
             MPI_Win_unlock(getFrom, win_clusters_x);
@@ -475,20 +503,13 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_z);
             MPI_Win_unlock(getFrom, win_sources_q);
             MPI_Win_unlock(getFrom, win_sources_w);
-
-			free_vector(approx_list_packed);
-			free_vector(approx_list_unpacked);
-			free_vector(direct_list);
-            free_vector(direct_ibeg_list);
-            free_vector(direct_length_list);
-
-			free_tree_array(remote_tree_array);
 		} // end loop over numProcs
+
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 
     	// Compute interaction lists based on LET
-        if (numProcs>1){
+        if (numProcs > 1) {
         	printf("More than 1 MPI rank, entering LET phase.\n");
         time1 = MPI_Wtime();
         make_vector(tree_inter_list, batches->num * let_tree_array->numnodes);
