@@ -209,6 +209,11 @@ int main(int argc, char **argv)
     make_vector(tenergy, numparsTloc);
     make_vector(denergy, numparsTloc);
 
+    for (int i=0; i<numparsTloc; i++){
+    	tenergy[i]=0.0;
+    	denergy[i]=0.0;
+    }
+
     // reading in file containing direct sum results.
     MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
     if (rank == 0) MPI_File_read(fpmpi, &time_direct, 1, MPI_DOUBLE, &status);
