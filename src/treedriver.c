@@ -525,7 +525,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         // After filling LET, call interaction_list_treecode
     	time1 = MPI_Wtime(); // start timer for tree evaluation
         if (pot_type == 0) {
-            if (verbosity>-1) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
+            if (verbosity>0) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
 //            pc_interaction_list_treecode(let_tree_array, let_clusters, batches,
 //                                         tree_inter_list, direct_inter_list, let_sources, targets,
 //                                         tpeng, tEn, interpolationOrder);
@@ -536,8 +536,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 									let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q,
             		                tpeng, tEn, interpolationOrder,
 									let_sources->num, targets->num, let_clusters->num);
-            printf("tEn[0] after all: %f\n", tEn[0]);
-    		printf("tpeng after all: %f\n", *tpeng);
+
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");
 
