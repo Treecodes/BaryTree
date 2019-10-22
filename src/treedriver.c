@@ -242,6 +242,9 @@ void treedriver(struct particles *sources, struct particles *targets,
 		pc_interaction_list_treecode(tree_array, clusters, batches,
 				local_tree_inter_list, local_direct_inter_list, sources, targets,
                 tpeng, tEn, interpolationOrder);
+
+
+
 		printf("tpeng after local: %f\n", *tpeng);
 		printf("tEn[0] after local: %f\n", tEn[0]);
 
