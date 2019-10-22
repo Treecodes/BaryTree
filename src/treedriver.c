@@ -235,20 +235,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //			let_sources->w[i] = sources->w[i];
 //		}
 
-		make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
-		make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
-		pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
-	//	printf("Creates interaction lists for local particles.\n");
-//		pc_interaction_list_treecode(tree_array, clusters, batches,
-//						local_tree_inter_list, local_direct_inter_list, sources, targets,
-//		                tpeng, tEn, interpolationOrder);
-		pc_interaction_list_treecode(tree_array, batches,
-						local_tree_inter_list, local_direct_inter_list,
-						sources->x, sources->y, sources->z, sources->q, sources->w,
-						targets->x, targets->y, targets->z, targets->q,
-						clusters->x, clusters->y, clusters->z, clusters->q,
-		                tpeng, tEn, interpolationOrder,
-						sources->num, targets->num, clusters->num);
+
 
         
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
@@ -514,6 +501,19 @@ void treedriver(struct particles *sources, struct particles *targets,
 			MPI_Barrier(MPI_COMM_WORLD);
 */
 		} // end loop over numProcs
+
+
+		make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
+		make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
+		pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
+		pc_interaction_list_treecode(tree_array, batches,
+						local_tree_inter_list, local_direct_inter_list,
+						sources->x, sources->y, sources->z, sources->q, sources->w,
+						targets->x, targets->y, targets->z, targets->q,
+						clusters->x, clusters->y, clusters->z, clusters->q,
+						tpeng, tEn, interpolationOrder,
+						sources->num, targets->num, clusters->num);
+
 
         MPI_Win_unlock_all(win_clusters_x);
         MPI_Win_unlock_all(win_clusters_y);
