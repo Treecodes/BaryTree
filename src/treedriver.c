@@ -437,11 +437,25 @@ void treedriver(struct particles *sources, struct particles *targets,
 			free_tree_array(remote_tree_array);
         } //end loop over numProcs
     
+    	MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Win_lock_all(0, win_clusters_x);
+        MPI_Win_lock_all(0, win_clusters_y);
+        MPI_Win_lock_all(0, win_clusters_z);
+	    MPI_Win_lock_all(0, win_clusters_w);
+		MPI_Win_lock_all(0, win_clusters_q);
+
+        MPI_Win_lock_all(0, win_sources_x);
+        MPI_Win_lock_all(0, win_sources_y);
+        MPI_Win_lock_all(0, win_sources_z);
+        MPI_Win_lock_all(0, win_sources_q);
+        MPI_Win_lock_all(0, win_sources_w);
 
 		for (int procID = 1; procID < numProcs; ++procID) {
 
 			int getFrom = (numProcs+rank-procID) % numProcs;
 
+/*
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_x);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_y);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_z);
@@ -455,7 +469,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_w);
 
 			MPI_Barrier(MPI_COMM_WORLD);
-
+*/
             MPI_Get(&(let_clusters->x[previous_let_clusters_length_array[getFrom]]),
                     num_remote_approx_array[getFrom] * pointsPerCluster, MPI_DOUBLE,
                     getFrom, 0, 1, approx_type[getFrom], win_clusters_x);
@@ -489,21 +503,34 @@ void treedriver(struct particles *sources, struct particles *targets,
                     new_sources_length_array[getFrom], MPI_DOUBLE,
                     getFrom, 0, 1, direct_type[getFrom], win_sources_w);
             
-
+/*
             MPI_Win_unlock(getFrom, win_clusters_x);
             MPI_Win_unlock(getFrom, win_clusters_y);
             MPI_Win_unlock(getFrom, win_clusters_z);
             MPI_Win_unlock(getFrom, win_clusters_q);
             MPI_Win_unlock(getFrom, win_clusters_w);
             
-			MPI_Barrier(MPI_COMM_WORLD);
-
             MPI_Win_unlock(getFrom, win_sources_x);
             MPI_Win_unlock(getFrom, win_sources_y);
             MPI_Win_unlock(getFrom, win_sources_z);
             MPI_Win_unlock(getFrom, win_sources_q);
             MPI_Win_unlock(getFrom, win_sources_w);
+
+			MPI_Barrier(MPI_COMM_WORLD);
+*/
 		} // end loop over numProcs
+
+        MPI_Win_unlock_all(win_clusters_x);
+        MPI_Win_unlock_all(win_clusters_y);
+        MPI_Win_unlock_all(win_clusters_z);
+	    MPI_Win_unlock_all(win_clusters_w);
+		MPI_Win_unlock_all(win_clusters_q);
+
+        MPI_Win_unlock_all(win_sources_x);
+        MPI_Win_unlock_all(win_sources_y);
+        MPI_Win_unlock_all(win_sources_z);
+        MPI_Win_unlock_all(win_sources_q);
+        MPI_Win_unlock_all(win_sources_w);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
