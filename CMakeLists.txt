@@ -47,8 +47,7 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_COMPILE_OPTIONS
                                          -acc
                                          -ta=tesla:ccall,cc60$<$<CONFIG:Debug>:,time>
-                                         $<$<AND:$<CONFIG:Debug>,$<C_COMPILER_ID:PGI>>:
-                                             -Minfo>)
+                                         -Minfo)
 set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_LINK_LIBRARIES
                                          -acc
