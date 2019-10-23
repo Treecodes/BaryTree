@@ -177,9 +177,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
             cy = sy-nodeY[j];
             cz = sz-nodeZ[j];
 
-            if (fabs(cx)<DBL_MIN) exactIndX[i]=j;
-            if (fabs(cy)<DBL_MIN) exactIndY[i]=j;
-            if (fabs(cz)<DBL_MIN) exactIndZ[i]=j;
+            if (fabs(cx)<FLT_MIN) exactIndX[i]=j;
+            if (fabs(cy)<FLT_MIN) exactIndY[i]=j;
+            if (fabs(cz)<FLT_MIN) exactIndZ[i]=j;
 
             // Increment the sums
             w = weights[j];
@@ -262,7 +262,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 
             temp += numerator * modifiedF[i];
         }
-        clusterQ[startingIndexInClustersArray + j] += temp;
+        clusterQ[startingIndexInClustersArray + j] += (double) (float) temp;
     }
 #ifdef OPENACC_ENABLED
     }
@@ -428,7 +428,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                         tz = zS[jj] - zT[ii];
                         r = sqrt(tx*tx + ty*ty + tz*tz);
 
-                        if (r > DBL_MIN) {
+                        if (r > FLT_MIN) {
                             //d_peng += qS[jj] * wS[jj] / r;
                             d_peng += qS[jj] / r;
                         }
