@@ -284,10 +284,10 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
-								  double * restrict xS, double * restrict yS, double * restrict zS, double * restrict qS, double * restrict wS,
-								  double * restrict xT, double * restrict yT, double * restrict zT, double * restrict qT,
-								  double * restrict xC, double * restrict yC, double * restrict zC, double * restrict qC,
-                                  double * restrict totalPotential, double * restrict pointwisePotential, int interpolationOrder,
+								  float * restrict xS, float * restrict yS, float * restrict zS, float * restrict qS, float * restrict wS,
+								  float * restrict xT, float * restrict yT, float * restrict zT, float * restrict qT,
+								  float * restrict xC, float * restrict yC, float * restrict zC, float * restrict qC,
+                                  float * restrict totalPotential, float * restrict pointwisePotential, int interpolationOrder,
 								  int numSources, int numTargets, int numClusters)
 {
         int i, j;
@@ -303,7 +303,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
 
 
-            double *potentialDueToDirect, *potentialDueToApprox;
+            float *potentialDueToDirect; float *potentialDueToApprox;
             make_vector(potentialDueToDirect,numTargets);
             make_vector(potentialDueToApprox,numTargets);
 
@@ -312,21 +312,6 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 potentialDueToDirect[i] = 0.0;
             }
 
-//            double *xS = sources->x;
-//            double *yS = sources->y;
-//            double *zS = sources->z;
-//            double *qS = sources->q;
-//            double *wS = sources->w;
-//
-//            double *xT = targets->x;
-//            double *yT = targets->y;
-//            double *zT = targets->z;
-//            double *qT = targets->q;
-//
-//            double *xC = clusters->x;
-//            double *yC = clusters->y;
-//            double *zC = clusters->z;
-//            double *qC = clusters->q;
 
             int * ibegs = tree_array->ibeg;
             int * iends = tree_array->iend;
@@ -344,17 +329,17 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         {
 
         int batch_ibeg, batch_iend, node_index;
-        double dist;
-        double tx, ty, tz;
+        float dist;
+        float tx, ty, tz;
         int i, j, k, ii, jj;
-        double dxt,dyt,dzt,tempPotential;
-        double temp_i[(interpolationOrder+1)], temp_j[(interpolationOrder+1)], temp_k[(interpolationOrder+1)];
+        float dxt,dyt,dzt,tempPotential;
+        float temp_i[(interpolationOrder+1)], temp_j[(interpolationOrder+1)], temp_k[(interpolationOrder+1)];
 
         int source_start;
         int source_end;
 
-        double d_peng, r;
-        double xi,yi,zi;
+        float d_peng, r;
+        float xi,yi,zi;
 
         int numberOfTargets;
         int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
@@ -448,9 +433,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 #endif
         } // end acc data region
 
-        double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
-        totalDueToApprox = sum(potentialDueToApprox, numTargets);
-        totalDueToDirect = sum(potentialDueToDirect, numTargets);
+        float totalDueToApprox = 0.0, totalDueToDirect = 0.0;
+//        totalDueToApprox = sum(potentialDueToApprox, numTargets);
+        totalDueToApprox = sum_f(potentialDueToApprox, numTargets);
+//        totalDueToDirect = sum(potentialDueToDirect, numTargets);
+        totalDueToDirect = sum_f(potentialDueToDirect, numTargets);
         //printf("Total due to direct = %f\n", totalDueToDirect);
         //printf("Total due to approx = %f\n", totalDueToApprox);
         for (int k = 0; k < numTargets; k++) {
@@ -463,7 +450,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
             free_vector(potentialDueToDirect);
             free_vector(potentialDueToApprox);
 
-        *totalPotential = sum(pointwisePotential, numTargets);
+//            *totalPotential = sum(pointwisePotential, numTargets);
+            *totalPotential = sum_f(pointwisePotential, numTargets);
 
         return;
 

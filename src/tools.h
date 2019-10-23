@@ -6,6 +6,7 @@ double minval(double *x, int numels);
 double maxval(double *x, int numels);
 
 double sum(double *x, int numels);
+double sum_f(float *x, int numels);
 
 double max3(double a, double b, double c);
 double min3(double a, double b, double c);

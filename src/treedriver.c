@@ -498,16 +498,70 @@ void treedriver(struct particles *sources, struct particles *targets,
 		} // end loop over numProcs
 
 
+		float * f_xS; float * f_yS; float * f_zS; float * f_qS; float * f_wS;
+		float * f_xT; float * f_yT; float * f_zT; float * f_qT; float * f_tEn;
+		float * f_xC; float * f_yC; float * f_zC; float * f_qC;
+
+		make_vector(f_xS, sources->num);
+		make_vector(f_yS, sources->num);
+		make_vector(f_zS, sources->num);
+		make_vector(f_qS, sources->num);
+		make_vector(f_wS, sources->num);
+
+		for (int i=0; i<sources->num; i++){
+			f_xS[i] = (float)sources->x[i];
+			f_yS[i] = (float)sources->y[i];
+			f_zS[i] = (float)sources->z[i];
+			f_qS[i] = (float)sources->q[i];
+			f_wS[i] = (float)sources->w[i];
+		}
+
+		make_vector(f_xT, targets->num);
+		make_vector(f_yT, targets->num);
+		make_vector(f_zT, targets->num);
+		make_vector(f_qT, targets->num);
+		make_vector(f_tEn, targets->num);
+
+		for (int i=0; i<targets->num; i++){
+			f_xT[i] = (float)targets->x[i];
+			f_yT[i] = (float)targets->y[i];
+			f_zT[i] = (float)targets->z[i];
+			f_qT[i] = (float)targets->q[i];
+			f_tEn[i] = (float)tEn[i];
+		}
+
+		make_vector(f_xC, clusters->num);
+		make_vector(f_yC, clusters->num);
+		make_vector(f_zC, clusters->num);
+		make_vector(f_qC, clusters->num);
+
+		for (int i=0; i<clusters->num; i++){
+			f_xC[i] = (float)clusters->x[i];
+			f_yC[i] = (float)clusters->y[i];
+			f_zC[i] = (float)clusters->z[i];
+			f_qC[i] = (float)clusters->q[i];
+		}
+
+		float f_tpeng=0;
+//		f_tpeng = (float) tpeng;
+
 		make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
 		make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
 		pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
+//		pc_interaction_list_treecode(tree_array, batches,
+//								local_tree_inter_list, local_direct_inter_list,
+//								sources->x, sources->y, sources->z, sources->q, sources->w,
+//								targets->x, targets->y, targets->z, targets->q,
+//								clusters->x, clusters->y, clusters->z, clusters->q,
+//								tpeng, tEn, interpolationOrder,
+//								sources->num, targets->num, clusters->num);
 		pc_interaction_list_treecode(tree_array, batches,
-						local_tree_inter_list, local_direct_inter_list,
-						sources->x, sources->y, sources->z, sources->q, sources->w,
-						targets->x, targets->y, targets->z, targets->q,
-						clusters->x, clusters->y, clusters->z, clusters->q,
-						tpeng, tEn, interpolationOrder,
-						sources->num, targets->num, clusters->num);
+								local_tree_inter_list, local_direct_inter_list,
+								f_xS, f_yS, f_zS, f_qS, f_wS,
+								f_xT, f_yT, f_zT, f_qT,
+								f_xC, f_yC, f_zC, f_qC,
+								&f_tpeng, f_tEn, interpolationOrder,
+								sources->num, targets->num, clusters->num);
 
 
         MPI_Win_unlock_all(win_clusters_x);
@@ -545,13 +599,15 @@ void treedriver(struct particles *sources, struct particles *targets,
 //            pc_interaction_list_treecode(let_tree_array, let_clusters, batches,
 //                                         tree_inter_list, direct_inter_list, let_sources, targets,
 //                                         tpeng, tEn, interpolationOrder);
-            pc_interaction_list_treecode(let_tree_array, batches,
-            						tree_inter_list, direct_inter_list,
-									let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
-            						targets->x, targets->y, targets->z, targets->q,
-									let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q,
-            		                tpeng, tEn, interpolationOrder,
-									let_sources->num, targets->num, let_clusters->num);
+
+            printf("Not computing single-precision interaction list for remote processors...\n");
+//            pc_interaction_list_treecode(let_tree_array, batches,
+//            						tree_inter_list, direct_inter_list,
+//									let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
+//            						targets->x, targets->y, targets->z, targets->q,
+//									let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q,
+//            		                tpeng, tEn, interpolationOrder,
+//									let_sources->num, targets->num, let_clusters->num);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");

@@ -50,6 +50,17 @@ double sum(double *x, int numels)
     return sum;
 }
 
+double sum_f(float *x, int numels)
+{
+    int i;
+    float sum = 0.0;
+
+    for (i = 0; i < numels; i++)
+        sum = sum + x[i];
+
+    return sum;
+}
+
 
 
 
