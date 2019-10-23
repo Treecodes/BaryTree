@@ -378,7 +378,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                         dxt = xi - xC[clusterStart + jj];
                         dyt = yi - yC[clusterStart + jj];
                         dzt = zi - zC[clusterStart + jj];
-                        tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+                        tempPotential += qC[clusterStart + jj] / sqrtf(dxt*dxt + dyt*dyt + dzt*dzt);
 
                     }
 #ifdef OPENACC_ENABLED
@@ -411,7 +411,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                         tx = xS[jj] - xT[ii];
                         ty = yS[jj] - yT[ii];
                         tz = zS[jj] - zT[ii];
-                        r = sqrt(tx*tx + ty*ty + tz*tz);
+                        r = sqrtf(tx*tx + ty*ty + tz*tz);
 
                         if (r > FLT_MIN) {
                             //d_peng += qS[jj] * wS[jj] / r;
