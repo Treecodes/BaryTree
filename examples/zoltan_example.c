@@ -6,6 +6,7 @@
 
 #include "../src/treedriver.h"
 #include "../src/particles.h"
+#include "../src/tools.h"
 
 const unsigned m = 1664525u;
 const unsigned c = 1013904223u;
@@ -124,6 +125,7 @@ int main(int argc, char **argv)
         mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
         mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
         mySources.w[i] = 1.;
+        mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
     }
 
     zz = Zoltan_Create(MPI_COMM_WORLD);
@@ -140,7 +142,7 @@ int main(int argc, char **argv)
 
     /* RCB parameters */
 
-    Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
+    Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "2");
     Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
 
     /* Query functions, to provide geometry to Zoltan */
@@ -157,6 +159,14 @@ int main(int argc, char **argv)
     //    fprintf(stderr,"Rank %d, particle %d: %f, %f, %f, %d\n", rank, i, mySources.x[i], mySources.y[i], mySources.z[i], mySources.myGlobalIDs[i]);
     //}
 
+    double x_min = minval(mySources.x, mySources.numMyPoints);
+    double x_max = maxval(mySources.x, mySources.numMyPoints);
+    double y_min = minval(mySources.y, mySources.numMyPoints);
+    double y_max = maxval(mySources.y, mySources.numMyPoints);
+    double z_min = minval(mySources.z, mySources.numMyPoints);
+    double z_max = maxval(mySources.z, mySources.numMyPoints);
+    printf("Before: Rank %d: %e, %e;   %e, %e;   %e, %e\n", rank, x_min, x_max, y_min, y_max, z_min, z_max);
+
     rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
                 &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
                 &numGidEntries,  /* Number of integers used for a global ID */
@@ -171,6 +181,14 @@ int main(int argc, char **argv)
                 &exportLocalGids,   /* Local IDs of the vertices I must send */
                 &exportProcs,    /* Process to which I send each of the vertices */
                 &exportToPart);  /* Partition to which each vertex will belong */
+
+    x_min = minval(mySources.x, mySources.numMyPoints);
+    x_max = maxval(mySources.x, mySources.numMyPoints);
+    y_min = minval(mySources.y, mySources.numMyPoints);
+    y_max = maxval(mySources.y, mySources.numMyPoints);
+    z_min = minval(mySources.z, mySources.numMyPoints);
+    z_max = maxval(mySources.z, mySources.numMyPoints);
+    printf("After: Rank %d: %e, %e;   %e, %e;   %e, %e\n", rank, x_min, x_max, y_min, y_max, z_min, z_max);
 
     if (rc != ZOLTAN_OK) {
         printf("Error! Zoltan has failed. Exiting. \n");
@@ -476,7 +494,7 @@ static void ztn_pack(void *data, int num_gid_entries, int num_lid_entries,
     mesh->myGlobalIDs[(int)(*local_id)] = mesh->myGlobalIDs[mesh->numMyPoints-1];
 
     mesh->numMyPoints -= 1;
-
+   
     return;
 }
 
