@@ -142,7 +142,7 @@ int main(int argc, char **argv)
 
     /* RCB parameters */
 
-    Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "2");
+    Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
     Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
 
     /* Query functions, to provide geometry to Zoltan */
@@ -155,17 +155,12 @@ int main(int argc, char **argv)
     Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &mySources);
     Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
 
-    //for (int i = 0; i < mySources.numMyPoints; i++) {
-    //    fprintf(stderr,"Rank %d, particle %d: %f, %f, %f, %d\n", rank, i, mySources.x[i], mySources.y[i], mySources.z[i], mySources.myGlobalIDs[i]);
-    //}
-
     double x_min = minval(mySources.x, mySources.numMyPoints);
     double x_max = maxval(mySources.x, mySources.numMyPoints);
     double y_min = minval(mySources.y, mySources.numMyPoints);
     double y_max = maxval(mySources.y, mySources.numMyPoints);
     double z_min = minval(mySources.z, mySources.numMyPoints);
     double z_max = maxval(mySources.z, mySources.numMyPoints);
-    printf("Before: Rank %d: %e, %e;   %e, %e;   %e, %e\n", rank, x_min, x_max, y_min, y_max, z_min, z_max);
 
     rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
                 &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
@@ -182,13 +177,27 @@ int main(int argc, char **argv)
                 &exportProcs,    /* Process to which I send each of the vertices */
                 &exportToPart);  /* Partition to which each vertex will belong */
 
+    int i = 0;
+    while (i < mySources.numMyPoints) {
+        if ((int)mySources.myGlobalIDs[i] < 0) {
+            mySources.x[i] = mySources.x[mySources.numMyPoints-1];
+            mySources.y[i] = mySources.y[mySources.numMyPoints-1];
+            mySources.z[i] = mySources.z[mySources.numMyPoints-1];
+            mySources.q[i] = mySources.q[mySources.numMyPoints-1];
+            mySources.w[i] = mySources.w[mySources.numMyPoints-1];
+            mySources.myGlobalIDs[i] = mySources.myGlobalIDs[mySources.numMyPoints-1];
+            mySources.numMyPoints--; 
+        } else {
+          i++;
+        }
+    }
+
     x_min = minval(mySources.x, mySources.numMyPoints);
     x_max = maxval(mySources.x, mySources.numMyPoints);
     y_min = minval(mySources.y, mySources.numMyPoints);
     y_max = maxval(mySources.y, mySources.numMyPoints);
     z_min = minval(mySources.z, mySources.numMyPoints);
     z_max = maxval(mySources.z, mySources.numMyPoints);
-    printf("After: Rank %d: %e, %e;   %e, %e;   %e, %e\n", rank, x_min, x_max, y_min, y_max, z_min, z_max);
 
     if (rc != ZOLTAN_OK) {
         printf("Error! Zoltan has failed. Exiting. \n");
@@ -477,24 +486,15 @@ static void ztn_pack(void *data, int num_gid_entries, int num_lid_entries,
     SINGLE_MESH_DATA *mesh_single = (SINGLE_MESH_DATA *)buf;
     MESH_DATA *mesh = (MESH_DATA *)data;
 
-    mesh_single->x = mesh->x[(int)(*local_id)];
-    mesh_single->y = mesh->y[(int)(*local_id)];
-    mesh_single->z = mesh->z[(int)(*local_id)];
-    mesh_single->q = mesh->q[(int)(*local_id)];
-    mesh_single->w = mesh->w[(int)(*local_id)];
-    mesh_single->myGlobalID = mesh->myGlobalIDs[(int)(*local_id)];
+    mesh_single->x = mesh->x[(*local_id)];
+    mesh_single->y = mesh->y[(*local_id)];
+    mesh_single->z = mesh->z[(*local_id)];
+    mesh_single->q = mesh->q[(*local_id)];
+    mesh_single->w = mesh->w[(*local_id)];
+    mesh_single->myGlobalID = mesh->myGlobalIDs[(*local_id)];
 
-    //mesh->myGlobalIDs[(int)(*local_id)] = -1; // Mark local particle as exported
+    mesh->myGlobalIDs[(*local_id)] = (ZOLTAN_ID_TYPE)(-1); // Mark local particle as exported
 
-    mesh->x[(int)(*local_id)] = mesh->x[mesh->numMyPoints-1];
-    mesh->y[(int)(*local_id)] = mesh->y[mesh->numMyPoints-1];
-    mesh->z[(int)(*local_id)] = mesh->z[mesh->numMyPoints-1];
-    mesh->q[(int)(*local_id)] = mesh->q[mesh->numMyPoints-1];
-    mesh->w[(int)(*local_id)] = mesh->w[mesh->numMyPoints-1];
-    mesh->myGlobalIDs[(int)(*local_id)] = mesh->myGlobalIDs[mesh->numMyPoints-1];
-
-    mesh->numMyPoints -= 1;
-   
     return;
 }
 
