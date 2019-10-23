@@ -394,14 +394,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             
             MPI_Barrier(MPI_COMM_WORLD);
             
-            if (procID==1){
-				allocate_cluster(let_clusters, let_clusters_length);
-				allocate_sources(let_sources, let_sources_length);
-            }else{
-            	reallocate_cluster(let_clusters, let_clusters_length);
-				reallocate_sources(let_sources, let_sources_length);
-            }
-
 			// Use masks to get remote data
             for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
                 approx_list_packed[ii] *= pointsPerCluster;
@@ -418,6 +410,9 @@ void treedriver(struct particles *sources, struct particles *targets,
             free_vector(direct_length_list);
 			free_tree_array(remote_tree_array);
         } //end loop over numProcs
+
+        if (let_sources_length > 0) allocate_sources(let_sources, let_sources_length);
+        if (let_clusters_length > 0) allocate_cluster(let_clusters, let_clusters_length);
     
     	MPI_Barrier(MPI_COMM_WORLD);
 
