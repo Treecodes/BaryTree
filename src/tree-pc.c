@@ -282,7 +282,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 //                                  struct particles *sources, struct particles *targets,
 //                                  double *totalPotential, double *pointwisePotential, int interpolationOrder)
 
-void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
+void pc_interaction_list_treecode_f(struct tnode_array *tree_array, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
 								  float * restrict xS, float * restrict yS, float * restrict zS, float * restrict qS, float * restrict wS,
 								  float * restrict xT, float * restrict yT, float * restrict zT, float * restrict qT,
@@ -452,6 +452,182 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
 //            *totalPotential = sum(pointwisePotential, numTargets);
             *totalPotential = sum_f(pointwisePotential, numTargets);
+
+        return;
+
+    } /* END of function pc_treecode */
+
+
+void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
+                                  int *tree_inter_list, int *direct_inter_list,
+								  double * restrict xS, double * restrict yS, double * restrict zS, double * restrict qS, double * restrict wS,
+								  double * restrict xT, double * restrict yT, double * restrict zT, double * restrict qT,
+								  double * restrict xC, double * restrict yC, double * restrict zC, double * restrict qC,
+                                  double * restrict totalPotential, double * restrict pointwisePotential, int interpolationOrder,
+								  int numSources, int numTargets, int numClusters)
+{
+        int i, j;
+        int rank; int numProcs;	int ierr;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+        int tree_numnodes = tree_array->numnodes;
+
+//        for (i = 0; i < targets->num; i++){
+//            pointwisePotential[i] = 0.0;
+//        }
+
+
+
+            double *potentialDueToDirect; double *potentialDueToApprox;
+            make_vector(potentialDueToDirect,numTargets);
+            make_vector(potentialDueToApprox,numTargets);
+
+            for (i = 0; i < numTargets; i++) {
+                potentialDueToApprox[i] = 0.0;
+                potentialDueToDirect[i] = 0.0;
+            }
+
+
+            int * ibegs = tree_array->ibeg;
+            int * iends = tree_array->iend;
+
+            int * clusterInd = tree_array->cluster_ind;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
+                            qS[0:numSources], wS[0:numSources], \
+                            xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
+                            xC[0:numClusters], yC[0:numClusters], zC[0:numClusters], qC[0:numClusters], \
+                            tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
+                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
+#endif
+        {
+
+        int batch_ibeg, batch_iend, node_index;
+        double dist;
+        double tx, ty, tz;
+        int i, j, k, ii, jj;
+        double dxt,dyt,dzt,tempPotential;
+        double temp_i[(interpolationOrder+1)], temp_j[(interpolationOrder+1)], temp_k[(interpolationOrder+1)];
+
+        int source_start;
+        int source_end;
+
+        double d_peng, r;
+        double xi,yi,zi;
+
+        int numberOfTargets;
+        int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+        int clusterStart, batchStart;
+
+        int numberOfClusterApproximations, numberOfDirectSums;
+        int streamID;
+
+        for (i = 0; i < batches->num; i++) {
+            batch_ibeg = batches->index[i][0];
+            batch_iend = batches->index[i][1];
+            numberOfClusterApproximations = batches->index[i][2];
+            numberOfDirectSums = batches->index[i][3];
+
+            numberOfTargets = batch_iend - batch_ibeg + 1;
+            batchStart =  batch_ibeg - 1;
+
+            for (j = 0; j < numberOfClusterApproximations; j++) {
+                node_index = tree_inter_list[i * tree_numnodes + j];
+                clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
+
+                streamID = j%3;
+#ifdef OPENACC_ENABLED
+                #pragma acc kernels async(streamID)
+                {
+                #pragma acc loop independent
+#endif
+                for (ii = 0; ii < numberOfTargets; ii++) {
+                    tempPotential = 0.0;
+                    xi = xT[ batchStart + ii];
+                    yi = yT[ batchStart + ii];
+                    zi = zT[ batchStart + ii];
+
+                    for (jj = 0; jj < numberOfInterpolationPoints; jj++) {
+                        // Compute x, y, and z distances between target i and interpolation point j
+                        dxt = xi - xC[clusterStart + jj];
+                        dyt = yi - yC[clusterStart + jj];
+                        dzt = zi - zC[clusterStart + jj];
+                        tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+
+                    }
+#ifdef OPENACC_ENABLED
+                    #pragma acc atomic // is this still needed now that we don't have openMP?  Or was this necessary due to streams?
+#endif
+                    potentialDueToApprox[batchStart + ii] += tempPotential;
+                }
+#ifdef OPENACC_ENABLED
+                } // end kernel
+#endif
+            } // end for loop over cluster approximations
+
+            for (j = 0; j < numberOfDirectSums; j++) {
+
+                node_index = direct_inter_list[i * tree_numnodes + j];
+
+                source_start=ibegs[node_index]-1;
+                source_end=iends[node_index];
+
+                streamID = j%3;
+#ifdef OPENACC_ENABLED
+                # pragma acc kernels async(streamID)
+                {
+                #pragma acc loop independent
+#endif
+                for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
+                    d_peng = 0.0;
+
+                    for (jj = source_start; jj < source_end; jj++) {
+                        tx = xS[jj] - xT[ii];
+                        ty = yS[jj] - yT[ii];
+                        tz = zS[jj] - zT[ii];
+                        r = sqrt(tx*tx + ty*ty + tz*tz);
+
+                        if (r > DBL_MIN) {
+                            //d_peng += qS[jj] * wS[jj] / r;
+                            d_peng += qS[jj] / r;
+                        }
+                    }
+#ifdef OPENACC_ENABLED
+                    #pragma acc atomic  // is this still needed now that we don't have openMP?  Or was this necessary due to async streams?
+#endif
+                    potentialDueToDirect[ii] += d_peng;
+                }
+#ifdef OPENACC_ENABLED
+                } // end kernel
+#endif
+            } // end loop over number of leaves
+        } // end loop over target batches
+#ifdef OPENACC_ENABLED
+        #pragma acc wait
+#endif
+        } // end acc data region
+
+        double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
+//        totalDueToApprox = sum(potentialDueToApprox, numTargets);
+        totalDueToApprox = sum(potentialDueToApprox, numTargets);
+//        totalDueToDirect = sum(potentialDueToDirect, numTargets);
+        totalDueToDirect = sum(potentialDueToDirect, numTargets);
+        //printf("Total due to direct = %f\n", totalDueToDirect);
+        //printf("Total due to approx = %f\n", totalDueToApprox);
+        for (int k = 0; k < numTargets; k++) {
+//            if (potentialDueToDirect[k] != 0.0){
+                pointwisePotential[k] += potentialDueToDirect[k];
+                pointwisePotential[k] += potentialDueToApprox[k];
+//        	}
+         }
+
+            free_vector(potentialDueToDirect);
+            free_vector(potentialDueToApprox);
+
+//            *totalPotential = sum(pointwisePotential, numTargets);
+            *totalPotential = sum(pointwisePotential, numTargets);
 
         return;
 

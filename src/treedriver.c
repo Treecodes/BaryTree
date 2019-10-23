@@ -547,21 +547,37 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 		make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
 		make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
+
+		double time2, doubleTime, singleTime;
+
+		time2=MPI_Wtime();
 		pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
-//		pc_interaction_list_treecode(tree_array, batches,
-//								local_tree_inter_list, local_direct_inter_list,
-//								sources->x, sources->y, sources->z, sources->q, sources->w,
-//								targets->x, targets->y, targets->z, targets->q,
-//								clusters->x, clusters->y, clusters->z, clusters->q,
-//								tpeng, tEn, interpolationOrder,
-//								sources->num, targets->num, clusters->num);
 		pc_interaction_list_treecode(tree_array, batches,
+								local_tree_inter_list, local_direct_inter_list,
+								sources->x, sources->y, sources->z, sources->q, sources->w,
+								targets->x, targets->y, targets->z, targets->q,
+								clusters->x, clusters->y, clusters->z, clusters->q,
+								tpeng, tEn, interpolationOrder,
+								sources->num, targets->num, clusters->num);
+		doubleTime = MPI_Wtime() - time2;
+		time2=MPI_Wtime();
+		pc_interaction_list_treecode_f(tree_array, batches,
 								local_tree_inter_list, local_direct_inter_list,
 								f_xS, f_yS, f_zS, f_qS, f_wS,
 								f_xT, f_yT, f_zT, f_qT,
 								f_xC, f_yC, f_zC, f_qC,
 								&f_tpeng, f_tEn, interpolationOrder,
 								sources->num, targets->num, clusters->num);
+		singleTime = MPI_Wtime() - time2;
+
+		printf("===============================================================\n");
+		printf("===========COMPARISON OF SINGLE TO DOUBLE PRECISION============\n");
+		printf("===============================================================\n");
+
+		printf("Single precision took %f seconds.\n", singleTime);
+		printf("Double precision took %f seconds.\n", doubleTime);
+		printf("===============================================================\n");
+		printf("===============================================================\n");
 
 		for (int i=0; i<targets->num; i++){
 			tEn[i] = (double)f_tEn[i];

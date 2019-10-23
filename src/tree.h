@@ -130,6 +130,14 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
 //                                  double *tpeng, double *EnP, int interpolationOrder);
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
 								  int *tree_inter_list, int *direct_inter_list,
+								  double *xS, double *yS, double *zS, double *qS, double *wS,
+								  double *xT, double *yT, double *zT, double *qT,
+								  double *xC, double *yC, double *zC, double *qC,
+								  double *totalPotential, double *pointwisePotential, int interpolationOrder,
+								  int numSources, int numTargets, int numClusters);
+
+void pc_interaction_list_treecode_f(struct tnode_array *tree_array, struct batch *batches,
+								  int *tree_inter_list, int *direct_inter_list,
 								  float *xS, float *yS, float *zS, float *qS, float *wS,
 								  float *xT, float *yT, float *zT, float *qT,
 								  float *xC, float *yC, float *zC, float *qC,
