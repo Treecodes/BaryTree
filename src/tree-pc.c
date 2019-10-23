@@ -74,8 +74,8 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 
 
 void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpolationOrder,
-        double *xS, double *yS, double *zS, double *qS, double *wS,
-        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
+        double * restrict xS, double * restrict yS, double * restrict zS, double * restrict qS, double * restrict wS,
+        double * restrict clusterX, double * restrict clusterY, double * restrict clusterZ, double * restrict clusterQ)
 {
     int interpolationPointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
     int sourcePointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
@@ -119,7 +119,8 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
     #pragma acc loop independent
 #endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
-        modifiedF[j] = qS[startingIndexInSourcesArray+j] * wS[startingIndexInSourcesArray+j];
+        modifiedF[j] = qS[startingIndexInSourcesArray+j];
+        //modifiedF[j] = qS[startingIndexInSourcesArray+j] * wS[startingIndexInSourcesArray+j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;
@@ -283,10 +284,10 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
-								  double *xS, double *yS, double *zS, double *qS, double *wS,
-								  double *xT, double *yT, double *zT, double *qT,
-								  double *xC, double *yC, double *zC, double *qC,
-                                  double *totalPotential, double *pointwisePotential, int interpolationOrder,
+								  double * restrict xS, double * restrict yS, double * restrict zS, double * restrict qS, double * restrict wS,
+								  double * restrict xT, double * restrict yT, double * restrict zT, double * restrict qT,
+								  double * restrict xC, double * restrict yC, double * restrict zC, double * restrict qC,
+                                  double * restrict totalPotential, double * restrict pointwisePotential, int interpolationOrder,
 								  int numSources, int numTargets, int numClusters)
 {
         int i, j;
@@ -428,7 +429,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                         r = sqrt(tx*tx + ty*ty + tz*tz);
 
                         if (r > DBL_MIN) {
-                            d_peng += qS[jj] * wS[jj] / r;
+                            //d_peng += qS[jj] * wS[jj] / r;
+                            d_peng += qS[jj] / r;
                         }
                     }
 #ifdef OPENACC_ENABLED

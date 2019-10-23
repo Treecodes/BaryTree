@@ -14,11 +14,10 @@
 # -g is number of GPUs
 
 
-#cd $SHARED/
 
 
 N=1000000
-THETA=0.8
+THETA=0.7
 ORDER=8
 CLUSTERSIZE=4000          
 BATCHSIZE=4000
