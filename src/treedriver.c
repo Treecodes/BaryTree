@@ -563,6 +563,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 								&f_tpeng, f_tEn, interpolationOrder,
 								sources->num, targets->num, clusters->num);
 
+		for (int i=0; i<targets->num; i++){
+			tEn[i] = (double)f_tEn[i];
+				}
+		*tpeng = (double)f_tpeng;
 
         MPI_Win_unlock_all(win_clusters_x);
         MPI_Win_unlock_all(win_clusters_y);
