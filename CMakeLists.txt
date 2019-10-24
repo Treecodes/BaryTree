@@ -62,10 +62,10 @@ set_property(TARGET OpenACC_C        PROPERTY
 add_library(OpenMP_Acc_C INTERFACE)
 set_property(TARGET OpenMP_Acc_C     PROPERTY
                                          INTERFACE_COMPILE_OPTIONS
-                                         -qsmp=omp -qoffload)
+                                         -qsmp=omp -qoffload -qmaxmem=-1 -g)
 set_property(TARGET OpenMP_Acc_C     PROPERTY
                                          INTERFACE_LINK_LIBRARIES
-                                         -qsmp=omp -qoffload)
+                                         -qsmp=omp -qoffload -qmaxmem=-1)
 
 if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
     message("GPU build requires PGI compilers! Turning GPU build off.")
