@@ -505,6 +505,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 #ifdef OPENACC_ENABLED
         #pragma acc wait
 #endif
+#ifdef OPENMP_ENABLED
+        #pragma omp taskwait
+#endif
         } // end acc data region
 
 #ifdef OPENMP_ENABLED
