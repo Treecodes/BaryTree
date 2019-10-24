@@ -61,12 +61,22 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
         {
 #endif
+#ifdef OPENMP_ENABLED
+        #pragma target enter data map(to:	tt[0:interpolationPointsPerDimension], \
+        									xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints]) \
+								  map(tofrom: 	xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
+        {
+#endif
             for (int i = 0; i < tree_numnodes; i++) {
             	pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC);
             }
 #ifdef OPENACC_ENABLED
             #pragma acc wait
         } // end ACC DATA REGION
+#endif
+#ifdef OPENMP_ENABLED
+            #pragma omp wait
+        } // end OMP DATA REGION
 #endif
 
     return;
@@ -109,14 +119,19 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 
     int streamID = rand() % 4;
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
-    create(modifiedF[0:sourcePointsInCluster],exactIndX[0:sourcePointsInCluster],exactIndY[0:sourcePointsInCluster],exactIndZ[0:sourcePointsInCluster], \
-            nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
-    {
-#endif
+		#pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt) \
+		create(modifiedF[0:sourcePointsInCluster],exactIndX[0:sourcePointsInCluster],exactIndY[0:sourcePointsInCluster],exactIndZ[0:sourcePointsInCluster], \
+				nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
+		{
+		#pragma acc loop independent
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+#endif
+#ifdef OPENMP_ENABLED
+    	#pragma enter data map( alloc: modifiedF[0:sourcePointsInCluster],exactIndX[0:sourcePointsInCluster],exactIndY[0:sourcePointsInCluster],exactIndZ[0:sourcePointsInCluster], \
+            nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
+		#pragma omp target teams nowait
+		#pragma omp distribute parallel for
+    	{
 #endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
         modifiedF[j] = qS[startingIndexInSourcesArray+j] * wS[startingIndexInSourcesArray+j];
@@ -266,6 +281,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #ifdef OPENACC_ENABLED
     }
 #endif
+#ifdef OPENMP_ENABLED
+    }
+#endif
 
     free_vector(modifiedF);
     free_vector(exactIndX);
@@ -389,16 +407,15 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 #pragma acc loop independent
 #endif
 #ifdef OPENMP_ENABLED
-                #pragma omp target teams distribute parallel for device(0)
+				#pragma omp target teams nowait
+                #pragma omp  distribute parallel for
 #endif
                 for (ii = 0; ii < numberOfTargets; ii++) {
                     tempPotential = 0.0;
                     xi = xT[ batchStart + ii];
                     yi = yT[ batchStart + ii];
                     zi = zT[ batchStart + ii];
-#ifdef OPENMP_ENABLED
-                #pragma omp simd simdlen(128)
-#endif
+
                     for (jj = 0; jj < numberOfInterpolationPoints; jj++) {
                         // Compute x, y, and z distances between target i and interpolation point j
                         dxt = xi - xC[clusterStart + jj];
@@ -434,13 +451,12 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 #pragma acc loop independent
 #endif
 #ifdef OPENMP_ENABLED
-                #pragma omp target teams distribute parallel for device(0)
+				#pragma omp target teams nowait
+                #pragma omp  distribute parallel for
 #endif
                 for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
                     d_peng = 0.0;
-#ifdef OPENMP_ENABLED
-                #pragma omp simd simdlen(128)
-#endif
+
                     for (jj = source_start; jj < source_end; jj++) {
                         tx = xS[jj] - xT[ii];
                         ty = yS[jj] - yT[ii];
