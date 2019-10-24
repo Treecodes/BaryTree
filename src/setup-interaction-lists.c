@@ -45,11 +45,9 @@ void pc_make_interaction_list(const struct tnode_array *tree_array, struct batch
     tree_y_mid = tree_array->y_mid;
     tree_z_mid = tree_array->z_mid;
 
-    for (i = 0; i < batches->num * tree_numnodes; i++)
-        tree_inter_list[i] = -1;
-
-    for (i = 0; i < batches->num * tree_numnodes; i++)
-        direct_inter_list[i] = -1;
+    int sizeloop = batches->num * tree_numnodes;
+    for (i = 0; i < sizeloop; i++) tree_inter_list[i] = -1;
+    for (i = 0; i < sizeloop; i++) direct_inter_list[i] = -1;
     
     for (i = 0; i < batches->num; i++)
         pc_compute_interaction_list(tree_numnodes, tree_level, tree_numpar,

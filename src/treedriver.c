@@ -26,13 +26,13 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     double time_beg = MPI_Wtime();
 
-	int verbosity = 1;
+    int verbosity = 1;
 
-	int rank=0, numProcs=1, ierr;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+    int rank=0, numProcs=1, ierr;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-	if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
+    if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
 
 
     /* local variables */
@@ -172,68 +172,68 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        }
     } else if (tree_type == 1) {
 
-		MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
   
         time1 = MPI_Wtime();
 
-		int numNodesOnProc[numProcs];
-    	MPI_Allgather(&numnodes, 1, MPI_INT,
-    			numNodesOnProc, 1, MPI_INT,
-				MPI_COMM_WORLD);
+        int numNodesOnProc[numProcs];
+        MPI_Allgather(&numnodes, 1, MPI_INT,
+                numNodesOnProc, 1, MPI_INT,
+                MPI_COMM_WORLD);
 
-    	int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
-		int let_sources_length, let_clusters_length;
+        int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+        int let_sources_length, let_clusters_length;
 
-    	struct tnode_array *let_tree_array = NULL;
-//    	int let_tree_array_length=numnodes;
-    	int let_tree_array_length=0;
-    	let_tree_array = malloc(sizeof(struct tnode_array));
-//    	allocate_tree_array(let_tree_array,let_tree_array_length); // start by allocating let_tree_array with size numnodes
+        struct tnode_array *let_tree_array = NULL;
+//      int let_tree_array_length=numnodes;
+        int let_tree_array_length=0;
+        let_tree_array = malloc(sizeof(struct tnode_array));
+//      allocate_tree_array(let_tree_array,let_tree_array_length); // start by allocating let_tree_array with size numnodes
 
-		struct particles *let_clusters = NULL;
-		let_clusters_length=numnodes*pointsPerCluster;
-		let_clusters_length=0; // previously let_clusters included the local.  Now it should not
-//		int let_clusters_num=numnodes;
-		int let_clusters_num=0;
-		let_clusters = malloc(sizeof(struct particles)); // let_clusters will hold all cluster data for LET
-//		allocate_cluster(let_clusters,let_clusters_length);
+        struct particles *let_clusters = NULL;
+        let_clusters_length=numnodes*pointsPerCluster;
+        let_clusters_length=0; // previously let_clusters included the local.  Now it should not
+//      int let_clusters_num=numnodes;
+        int let_clusters_num=0;
+        let_clusters = malloc(sizeof(struct particles)); // let_clusters will hold all cluster data for LET
+//      allocate_cluster(let_clusters,let_clusters_length);
 
-		struct particles *let_sources = NULL;
-		let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
-//		let_sources_length = troot->numpar;
-		let_sources_length = 0;  // previously let_sources included local.  Now it should not
-//		allocate_sources(let_sources,let_sources_length);
+        struct particles *let_sources = NULL;
+        let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
+//      let_sources_length = troot->numpar;
+        let_sources_length = 0;  // previously let_sources included local.  Now it should not
+//      allocate_sources(let_sources,let_sources_length);
 
 
-		// Fill in local data into LETs
-//		for (int i=0; i<numnodes; i++) {
-//			let_tree_array->ibeg[i] = tree_array->ibeg[i];
-//			let_tree_array->iend[i] = tree_array->iend[i];
-//			let_tree_array->numpar[i] = tree_array->numpar[i];
-//			let_tree_array->x_mid[i] = tree_array->x_mid[i];
-//			let_tree_array->y_mid[i] = tree_array->y_mid[i];
-//			let_tree_array->z_mid[i] = tree_array->z_mid[i];
-//			let_tree_array->level[i] = tree_array->level[i];
-//			let_tree_array->cluster_ind[i] = tree_array->cluster_ind[i];
-//			let_tree_array->radius[i] = tree_array->radius[i];
-//		}
+        // Fill in local data into LETs
+//      for (int i=0; i<numnodes; i++) {
+//          let_tree_array->ibeg[i] = tree_array->ibeg[i];
+//          let_tree_array->iend[i] = tree_array->iend[i];
+//          let_tree_array->numpar[i] = tree_array->numpar[i];
+//          let_tree_array->x_mid[i] = tree_array->x_mid[i];
+//          let_tree_array->y_mid[i] = tree_array->y_mid[i];
+//          let_tree_array->z_mid[i] = tree_array->z_mid[i];
+//          let_tree_array->level[i] = tree_array->level[i];
+//          let_tree_array->cluster_ind[i] = tree_array->cluster_ind[i];
+//          let_tree_array->radius[i] = tree_array->radius[i];
+//      }
 //
-//		for (int i=0; i<numnodes*pointsPerCluster; i++) {
-//			// Fill in clusters
-//			let_clusters->x[i] = clusters->x[i];
-//			let_clusters->y[i] = clusters->y[i];
-//			let_clusters->z[i] = clusters->z[i];
-//			let_clusters->q[i] = clusters->q[i];
-//			let_clusters->w[i] = clusters->w[i];
-//		}
-//		for (int i=0; i<troot->numpar; i++) {
-//			// Fill in own sources
-//			let_sources->x[i] = sources->x[i];
-//			let_sources->y[i] = sources->y[i];
-//			let_sources->z[i] = sources->z[i];
-//			let_sources->q[i] = sources->q[i];
-//			let_sources->w[i] = sources->w[i];
-//		}
+//      for (int i=0; i<numnodes*pointsPerCluster; i++) {
+//          // Fill in clusters
+//          let_clusters->x[i] = clusters->x[i];
+//          let_clusters->y[i] = clusters->y[i];
+//          let_clusters->z[i] = clusters->z[i];
+//          let_clusters->q[i] = clusters->q[i];
+//          let_clusters->w[i] = clusters->w[i];
+//      }
+//      for (int i=0; i<troot->numpar; i++) {
+//          // Fill in own sources
+//          let_sources->x[i] = sources->x[i];
+//          let_sources->y[i] = sources->y[i];
+//          let_sources->z[i] = sources->z[i];
+//          let_sources->q[i] = sources->q[i];
+//          let_sources->w[i] = sources->w[i];
+//      }
 
 
 
@@ -263,22 +263,22 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_create(sources->q, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
         MPI_Win_create(sources->w, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
 
-    	// Perform MPI round robin, filling LET with remote data
+        // Perform MPI round robin, filling LET with remote data
         int num_remote_approx_array[numProcs], new_sources_length_array[numProcs];
         int previous_let_clusters_length_array[numProcs], previous_let_sources_length_array[numProcs];
         MPI_Datatype approx_type[numProcs], direct_type[numProcs];
 
-		for (int procID = 1; procID < numProcs; ++procID) {
+        for (int procID = 1; procID < numProcs; ++procID) {
 
-			int getFrom = (numProcs+rank-procID) % numProcs;
+            int getFrom = (numProcs+rank-procID) % numProcs;
 
-			// Allocate remote_tree_array
-			struct tnode_array *remote_tree_array = NULL;
-			remote_tree_array = malloc(sizeof(struct tnode_array));
-			allocate_tree_array(remote_tree_array, numNodesOnProc[getFrom]); // start by allocating let_tree_array with size numnodes
+            // Allocate remote_tree_array
+            struct tnode_array *remote_tree_array = NULL;
+            remote_tree_array = malloc(sizeof(struct tnode_array));
+            allocate_tree_array(remote_tree_array, numNodesOnProc[getFrom]); // start by allocating let_tree_array with size numnodes
 
-			// Get remote_tree_array
-			MPI_Barrier(MPI_COMM_WORLD);
+            // Get remote_tree_array
+            MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_y_mid);
@@ -320,33 +320,33 @@ void treedriver(struct particles *sources, struct particles *targets,
             
             MPI_Barrier(MPI_COMM_WORLD);
 
-			// Construct masks
-			int *approx_list_packed; int *approx_list_unpacked; int *direct_list; int *direct_ibeg_list; int *direct_length_list;
-			make_vector(approx_list_packed, numNodesOnProc[getFrom]);
-			make_vector(approx_list_unpacked, numNodesOnProc[getFrom]);
-			make_vector(direct_list, numNodesOnProc[getFrom]);
+            // Construct masks
+            int *approx_list_packed; int *approx_list_unpacked; int *direct_list; int *direct_ibeg_list; int *direct_length_list;
+            make_vector(approx_list_packed, numNodesOnProc[getFrom]);
+            make_vector(approx_list_unpacked, numNodesOnProc[getFrom]);
+            make_vector(direct_list, numNodesOnProc[getFrom]);
             make_vector(direct_ibeg_list, numNodesOnProc[getFrom]);
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
             
-			remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
+            remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
                                      direct_list, numNodesOnProc[getFrom]);
 
-			//MPI_Barrier(MPI_COMM_WORLD);
+            //MPI_Barrier(MPI_COMM_WORLD);
 
-			// Count number of unique clusters adding to LET
-			int numberOfUniqueClusters =  0;
-			int previousTreeArrayLength = let_tree_array_length;
-			for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
+            // Count number of unique clusters adding to LET
+            int numberOfUniqueClusters =  0;
+            int previousTreeArrayLength = let_tree_array_length;
+            for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
                 numberOfUniqueClusters+=1;
                 let_tree_array_length+=1;
-			}
-			//MPI_Barrier(MPI_COMM_WORLD);
+            }
+            //MPI_Barrier(MPI_COMM_WORLD);
             
-			if (procID==1){
-				allocate_tree_array(let_tree_array, let_tree_array_length);
-			}else{
-				reallocate_tree_array(let_tree_array, let_tree_array_length);
-			}
+            if (procID==1){
+                allocate_tree_array(let_tree_array, let_tree_array_length);
+            }else{
+                reallocate_tree_array(let_tree_array, let_tree_array_length);
+            }
             //MPI_Barrier(MPI_COMM_WORLD);
 
             int numberOfRemoteApprox = 0;
@@ -387,7 +387,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 }
                 
                 appendCounter+=1;
-			}
+            }
             
             num_remote_approx_array[getFrom] = numberOfRemoteApprox;
             new_sources_length_array[getFrom] = let_sources_length - previous_let_sources_length;
@@ -396,7 +396,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             
             //MPI_Barrier(MPI_COMM_WORLD);
             
-			// Use masks to get remote data
+            // Use masks to get remote data
             for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
                 approx_list_packed[ii] *= pointsPerCluster;
             
@@ -405,29 +405,29 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Type_indexed(numberOfRemoteDirect, direct_length_list, direct_ibeg_list, MPI_DOUBLE, &direct_type[getFrom]);
             MPI_Type_commit(&direct_type[getFrom]);
 
-			free_vector(approx_list_packed);
-			free_vector(approx_list_unpacked);
-			free_vector(direct_list);
+            free_vector(approx_list_packed);
+            free_vector(approx_list_unpacked);
+            free_vector(direct_list);
             free_vector(direct_ibeg_list);
             free_vector(direct_length_list);
-			free_tree_array(remote_tree_array);
+            free_tree_array(remote_tree_array);
         } //end loop over numProcs
 
         if (let_sources_length > 0) allocate_sources(let_sources, let_sources_length);
         if (let_clusters_length > 0) allocate_cluster(let_clusters, let_clusters_length);
     
 
-		for (int procID = 1; procID < numProcs; ++procID) {
+        for (int procID = 1; procID < numProcs; ++procID) {
 
-			int getFrom = (numProcs+rank-procID) % numProcs;
+            int getFrom = (numProcs+rank-procID) % numProcs;
 
-			MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_x);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_y);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_z);
-			MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_w);
-			MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_q);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_w);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_q);
 
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_x);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_y);
@@ -483,52 +483,52 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_q);
             MPI_Win_unlock(getFrom, win_sources_w);
 
-			MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(MPI_COMM_WORLD);
 
-		} // end loop over numProcs
+        } // end loop over numProcs
 
 
-		make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
-		make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
-		pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
-		pc_interaction_list_treecode(tree_array, batches,
-						local_tree_inter_list, local_direct_inter_list,
-						sources->x, sources->y, sources->z, sources->q, sources->w,
-						targets->x, targets->y, targets->z, targets->q,
-						clusters->x, clusters->y, clusters->z, clusters->q,
-						tpeng, tEn, interpolationOrder,
-						sources->num, targets->num, clusters->num);
+        make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
+        make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
+        pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list);
+        pc_interaction_list_treecode(tree_array, batches,
+                        local_tree_inter_list, local_direct_inter_list,
+                        sources->x, sources->y, sources->z, sources->q, sources->w,
+                        targets->x, targets->y, targets->z, targets->q,
+                        clusters->x, clusters->y, clusters->z, clusters->q,
+                        tpeng, tEn, interpolationOrder,
+                        sources->num, targets->num, clusters->num);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 
-    	// Compute interaction lists based on LET
+        // Compute interaction lists based on LET
         if (numProcs > 1) {
         time1 = MPI_Wtime();
         make_vector(tree_inter_list, batches->num * let_tree_array->numnodes);
         make_vector(direct_inter_list, batches->num * let_tree_array->numnodes);
-    	pc_make_interaction_list(let_tree_array, batches, tree_inter_list,  direct_inter_list);
+        pc_make_interaction_list(let_tree_array, batches, tree_inter_list,  direct_inter_list);
 
         time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
         time_tree[0] = MPI_Wtime() - time_beg; //time_setup
         
-    	//MPI_Barrier(MPI_COMM_WORLD);
+        //MPI_Barrier(MPI_COMM_WORLD);
 
 
         // After filling LET, call interaction_list_treecode
-    	time1 = MPI_Wtime(); // start timer for tree evaluation
+        time1 = MPI_Wtime(); // start timer for tree evaluation
         if (pot_type == 0) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
 //            pc_interaction_list_treecode(let_tree_array, let_clusters, batches,
 //                                         tree_inter_list, direct_inter_list, let_sources, targets,
 //                                         tpeng, tEn, interpolationOrder);
             pc_interaction_list_treecode(let_tree_array, batches,
-            						tree_inter_list, direct_inter_list,
-									let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
-            						targets->x, targets->y, targets->z, targets->q,
-									let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q,
-            		                tpeng, tEn, interpolationOrder,
-									let_sources->num, targets->num, let_clusters->num);
+                                    tree_inter_list, direct_inter_list,
+                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
+                                    targets->x, targets->y, targets->z, targets->q,
+                                    let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q,
+                                    tpeng, tEn, interpolationOrder,
+                                    let_sources->num, targets->num, let_clusters->num);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");
@@ -544,8 +544,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 //            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
 //                                   kappa, tpeng, tEn);
           pc_interaction_list_treecode_Coulomb_SS(let_tree_array, let_clusters, batches,
-												  tree_inter_list, direct_inter_list, let_sources, targets,
-												  tpeng, kappa, tEn);
+                                                  tree_inter_list, direct_inter_list, let_sources, targets,
+                                                  tpeng, kappa, tEn);
 
         } else if (pot_type == 3) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=3 (Yukawa w/ singularity subtraction).\n");
@@ -572,7 +572,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             pc_treecode_hermite_coulomb_SS(troot, batches, sources, targets, clusters,
                                            kappa, tpeng, tEn);
         }
-    	}
+        }
         
         reorder_energies(batches->reorder, targets->num, tEn);
     }
@@ -587,8 +587,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     free_vector(local_direct_inter_list);
 
     if (numProcs>1){
-    	free_vector(tree_inter_list);
-		free_vector(direct_inter_list);
+        free_vector(tree_inter_list);
+        free_vector(direct_inter_list);
     }
 
     // free clusters
