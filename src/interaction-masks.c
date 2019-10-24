@@ -46,11 +46,9 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     tree_y_mid = tree_array->y_mid;
     tree_z_mid = tree_array->z_mid;
 
-    for (i = 0; i < numnodes; i++){
-    	approx_list_unpacked[i] = -1;
-    	approx_list_packed[i] = -1;
-    	direct_list[i] = -1;
-    }
+    for (i = 0; i < numnodes; i++) approx_list_unpacked[i] = -1;
+    for (i = 0; i < numnodes; i++) approx_list_packed[i] = -1;
+   	for (i = 0; i < numnodes; i++) direct_list[i] = -1;
 
 
     // Make interaction lists and set to -1
@@ -58,14 +56,12 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     make_vector(temp_tree_inter_list, batches->num * numnodes);
 	make_vector(temp_direct_inter_list, batches->num * numnodes);
 
-//	printf("Allocated temp_tree_inter_list and temp_direct_inter_list.\n");
-//	printf("numnodes = %i\n", numnodes);
-	for (i = 0; i < batches->num * numnodes; i++)
-		temp_tree_inter_list[i] = -1;
-
-	for (i = 0; i < batches->num * numnodes; i++)
-		temp_direct_inter_list[i] = -1;
-
+    //size_t ii;
+    //size_t loopsize = (size_t)batches->num * (size_t)numnodes;
+    int loopsize = batches->num * numnodes;
+	for (i = 0; i < loopsize; i++) temp_tree_inter_list[i] = -1;
+	for (i = 0; i < loopsize; i++) temp_direct_inter_list[i] = -1;
+ 
     
 	// Fill interaction lists
     for (i = 0; i < batches->num; i++) {

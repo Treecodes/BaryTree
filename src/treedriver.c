@@ -278,6 +278,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 			allocate_tree_array(remote_tree_array, numNodesOnProc[getFrom]); // start by allocating let_tree_array with size numnodes
 
 			// Get remote_tree_array
+			MPI_Barrier(MPI_COMM_WORLD);
+
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_y_mid);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_z_mid);
@@ -286,6 +288,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_ibeg);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_iend);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_level);
+
             
             MPI_Get(remote_tree_array->x_mid, numNodesOnProc[getFrom], MPI_DOUBLE,
                     getFrom, 0, numNodesOnProc[getFrom], MPI_DOUBLE, win_x_mid);
@@ -304,8 +307,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Get(remote_tree_array->level, numNodesOnProc[getFrom], MPI_INT,
                     getFrom, 0, numNodesOnProc[getFrom], MPI_INT, win_level);
             
-            //
-
+            MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Win_unlock(getFrom, win_x_mid);
             MPI_Win_unlock(getFrom, win_y_mid);
@@ -329,7 +331,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 			remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
                                      direct_list, numNodesOnProc[getFrom]);
 
-			MPI_Barrier(MPI_COMM_WORLD);
+			//MPI_Barrier(MPI_COMM_WORLD);
 
 			// Count number of unique clusters adding to LET
 			int numberOfUniqueClusters =  0;
@@ -338,14 +340,14 @@ void treedriver(struct particles *sources, struct particles *targets,
                 numberOfUniqueClusters+=1;
                 let_tree_array_length+=1;
 			}
-			MPI_Barrier(MPI_COMM_WORLD);
+			//MPI_Barrier(MPI_COMM_WORLD);
             
 			if (procID==1){
 				allocate_tree_array(let_tree_array, let_tree_array_length);
 			}else{
 				reallocate_tree_array(let_tree_array, let_tree_array_length);
 			}
-            MPI_Barrier(MPI_COMM_WORLD);
+            //MPI_Barrier(MPI_COMM_WORLD);
 
             int numberOfRemoteApprox = 0;
             int previous_let_clusters_length = let_clusters_length;
@@ -392,7 +394,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             previous_let_clusters_length_array[getFrom] = previous_let_clusters_length; 
             previous_let_sources_length_array[getFrom] = previous_let_sources_length; 
             
-            MPI_Barrier(MPI_COMM_WORLD);
+            //MPI_Barrier(MPI_COMM_WORLD);
             
 			// Use masks to get remote data
             for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
@@ -414,25 +416,13 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (let_sources_length > 0) allocate_sources(let_sources, let_sources_length);
         if (let_clusters_length > 0) allocate_cluster(let_clusters, let_clusters_length);
     
-    	MPI_Barrier(MPI_COMM_WORLD);
-
-        MPI_Win_lock_all(0, win_clusters_x);
-        MPI_Win_lock_all(0, win_clusters_y);
-        MPI_Win_lock_all(0, win_clusters_z);
-	    MPI_Win_lock_all(0, win_clusters_w);
-		MPI_Win_lock_all(0, win_clusters_q);
-
-        MPI_Win_lock_all(0, win_sources_x);
-        MPI_Win_lock_all(0, win_sources_y);
-        MPI_Win_lock_all(0, win_sources_z);
-        MPI_Win_lock_all(0, win_sources_q);
-        MPI_Win_lock_all(0, win_sources_w);
 
 		for (int procID = 1; procID < numProcs; ++procID) {
 
 			int getFrom = (numProcs+rank-procID) % numProcs;
 
-/*
+			MPI_Barrier(MPI_COMM_WORLD);
+
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_x);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_y);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_z);
@@ -445,8 +435,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_q);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_w);
 
-			MPI_Barrier(MPI_COMM_WORLD);
-*/
+
             MPI_Get(&(let_clusters->x[previous_let_clusters_length_array[getFrom]]),
                     num_remote_approx_array[getFrom] * pointsPerCluster, MPI_DOUBLE,
                     getFrom, 0, 1, approx_type[getFrom], win_clusters_x);
@@ -479,8 +468,9 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Get(&(let_sources->w[previous_let_sources_length_array[getFrom]]),
                     new_sources_length_array[getFrom], MPI_DOUBLE,
                     getFrom, 0, 1, direct_type[getFrom], win_sources_w);
+
+            MPI_Barrier(MPI_COMM_WORLD);
             
-/*
             MPI_Win_unlock(getFrom, win_clusters_x);
             MPI_Win_unlock(getFrom, win_clusters_y);
             MPI_Win_unlock(getFrom, win_clusters_z);
@@ -494,7 +484,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_w);
 
 			MPI_Barrier(MPI_COMM_WORLD);
-*/
+
 		} // end loop over numProcs
 
 
@@ -509,19 +499,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 						tpeng, tEn, interpolationOrder,
 						sources->num, targets->num, clusters->num);
 
-
-        MPI_Win_unlock_all(win_clusters_x);
-        MPI_Win_unlock_all(win_clusters_y);
-        MPI_Win_unlock_all(win_clusters_z);
-	    MPI_Win_unlock_all(win_clusters_w);
-		MPI_Win_unlock_all(win_clusters_q);
-
-        MPI_Win_unlock_all(win_sources_x);
-        MPI_Win_unlock_all(win_sources_y);
-        MPI_Win_unlock_all(win_sources_z);
-        MPI_Win_unlock_all(win_sources_q);
-        MPI_Win_unlock_all(win_sources_w);
-
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 
@@ -535,7 +512,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
         time_tree[0] = MPI_Wtime() - time_beg; //time_setup
         
-    	MPI_Barrier(MPI_COMM_WORLD);
+    	//MPI_Barrier(MPI_COMM_WORLD);
 
 
         // After filling LET, call interaction_list_treecode
