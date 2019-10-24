@@ -340,6 +340,13 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                             tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
+#ifdef OPENMP_ENABLED
+        #pragma omp target enter data map(to: 	xS[0:numSources], yS[0:numSources], zS[0:numSources], qS[0:numSources], wS[0:numSources], \
+												xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
+												xC[0:numClusters], yC[0:numClusters], zC[0:numClusters], qC[0:numClusters], \
+												tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
+												ibegs[0:tree_numnodes], iends[0:tree_numnodes], potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
+#endif
         {
 
         int batch_ibeg, batch_iend, node_index;
@@ -381,12 +388,17 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 {
                 #pragma acc loop independent
 #endif
+#ifdef OPENMP_ENABLED
+                #pragma omp target teams distribute parallel for device(0)
+#endif
                 for (ii = 0; ii < numberOfTargets; ii++) {
                     tempPotential = 0.0;
                     xi = xT[ batchStart + ii];
                     yi = yT[ batchStart + ii];
                     zi = zT[ batchStart + ii];
-
+#ifdef OPENMP_ENABLED
+                #pragma omp simd simdlen(128)
+#endif
                     for (jj = 0; jj < numberOfInterpolationPoints; jj++) {
                         // Compute x, y, and z distances between target i and interpolation point j
                         dxt = xi - xC[clusterStart + jj];
@@ -397,6 +409,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                     }
 #ifdef OPENACC_ENABLED
                     #pragma acc atomic // is this still needed now that we don't have openMP?  Or was this necessary due to streams?
+#endif
+#ifdef OPENMP_ENABLED
+                    #pragma omp atomic // is this still needed now that we don't have openMP?  Or was this necessary due to streams?
 #endif
                     potentialDueToApprox[batchStart + ii] += tempPotential;
                 }
@@ -418,9 +433,14 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 {
                 #pragma acc loop independent
 #endif
+#ifdef OPENMP_ENABLED
+                #pragma omp target teams distribute parallel for device(0)
+#endif
                 for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
                     d_peng = 0.0;
-
+#ifdef OPENMP_ENABLED
+                #pragma omp simd simdlen(128)
+#endif
                     for (jj = source_start; jj < source_end; jj++) {
                         tx = xS[jj] - xT[ii];
                         ty = yS[jj] - yT[ii];
@@ -432,7 +452,10 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                         }
                     }
 #ifdef OPENACC_ENABLED
-                    #pragma acc atomic  // is this still needed now that we don't have openMP?  Or was this necessary due to async streams?
+                    #pragma acc atomic
+#endif
+#ifdef OPENMP_ENABLED
+                    #pragma omp atomic
 #endif
                     potentialDueToDirect[ii] += d_peng;
                 }
@@ -446,6 +469,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 #endif
         } // end acc data region
 
+#ifdef OPENMP_ENABLED
+		#pragma omp target exit data map(from: potentialDueToDirect[0:numTargets], potentialDueToApprox[0:numTargets]) device(0)
+#endif
         double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
         totalDueToApprox = sum(potentialDueToApprox, numTargets);
         totalDueToDirect = sum(potentialDueToDirect, numTargets);
