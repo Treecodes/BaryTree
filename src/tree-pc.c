@@ -61,10 +61,10 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
         {
 #endif
-//#ifdef OPENMP_ENABLED
-//        #pragma omp target enter data map(to: tt[0:interpolationPointsPerDimension], xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints], xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
-//        {
-//#endif
+#ifdef OPENMP_ENABLED
+        #pragma omp target enter data map(to: tt[0:interpolationPointsPerDimension], xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints], xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
+        {
+#endif
             for (int i = 0; i < tree_numnodes; i++) {
             	pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC);
             printf("i = %i\n", i);   
@@ -73,12 +73,12 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
             #pragma acc wait
         } // end ACC DATA REGION
 #endif
-//#ifdef OPENMP_ENABLED
-//	//#pragma omp taskwait
-//	#pragma omp target exit data map(from: xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] ) \
-//					map(delete: xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints])
-//	}
-//#endif
+#ifdef OPENMP_ENABLED
+	//#pragma omp taskwait
+	#pragma omp target exit data map(from: xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] ) \
+					map(delete: xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints])
+	}
+#endif
 	printf("xc, yc, zc, qc: %f,%f,%f,%f\n",xC[0],yC[0],zC[0],qC[0]);
 	printf("xc, yc, zc, qc: %f,%f,%f,%f\n",xC[200],yC[200],zC[200],qC[200]);
 	printf("xs, ys, zs, qs: %f,%f,%f,%f\n",xS[0],yS[0],zS[0],qS[0]);
@@ -129,15 +129,15 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 		#pragma acc loop independent
 
 #endif
-//#ifdef OPENMP_ENABLED
-//    	#pragma omp target enter data map( alloc: xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt, modifiedF[0:sourcePointsInCluster],exactIndX[0:sourcePointsInCluster],exactIndY[0:sourcePointsInCluster],exactIndZ[0:sourcePointsInCluster], \
-//            nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
-//		#pragma omp target teams //nowait
-//    	{
-//#endif
-//#ifdef OPENMP_ENABLED
-//	#pragma omp distribute parallel for
-//#endif
+#ifdef OPENMP_ENABLED
+    	#pragma omp target enter data map( alloc: xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ,tt, modifiedF[0:sourcePointsInCluster],exactIndX[0:sourcePointsInCluster],exactIndY[0:sourcePointsInCluster],exactIndZ[0:sourcePointsInCluster], \
+            nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
+		#pragma omp target teams //nowait
+    	{
+#endif
+#ifdef OPENMP_ENABLED
+	#pragma omp distribute parallel for
+#endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
         modifiedF[j] = qS[startingIndexInSourcesArray+j] * wS[startingIndexInSourcesArray+j];
         exactIndX[j] = -1;
@@ -149,9 +149,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-//#ifdef OPENMP_ENABLED
-//        #pragma omp distribute parallel for
-//#endif
+#ifdef OPENMP_ENABLED
+        #pragma omp distribute parallel for
+#endif
     for (int i = 0; i < (interpolationOrder+1); i++) {
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
@@ -163,9 +163,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-//#ifdef OPENMP_ENABLED
-//        #pragma omp distribute parallel for
-//#endif
+#ifdef OPENMP_ENABLED
+        #pragma omp distribute parallel for
+#endif
     for (int j = 0; j < interpolationOrder+1; j++){
         dj[j] = 1.0;
         if (j==0) dj[j] = 0.5;
@@ -175,9 +175,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-//#ifdef OPENMP_ENABLED
-//        #pragma omp distribute parallel for
-//#endif
+#ifdef OPENMP_ENABLED
+        #pragma omp distribute parallel for
+#endif
     for (int j = 0; j < (interpolationOrder+1); j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
     }
@@ -186,9 +186,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-//#ifdef OPENMP_ENABLED
-//        #pragma omp distribute parallel for
-//#endif
+#ifdef OPENMP_ENABLED
+        #pragma omp distribute parallel for
+#endif
     for (int i = 0; i < sourcePointsInCluster; i++) { // loop through the source points
 
         sumX=0.0;
@@ -237,9 +237,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-//#ifdef OPENMP_ENABLED
-//        #pragma omp distribute parallel for
-//#endif
+#ifdef OPENMP_ENABLED
+        #pragma omp distribute parallel for
+#endif
     for (int j = 0; j < interpolationPointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
         // compute k1, k2, k3 from j
         k1 = j%(interpolationOrder+1);
@@ -301,11 +301,11 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #ifdef OPENACC_ENABLED
     }
 #endif
-//#ifdef OPENMP_ENABLED
-//    }
-//#pragma omp target exit data map( delete: modifiedF[0:sourcePointsInCluster],exactIndX[0:sourcePointsInCluster],exactIndY[0:sourcePointsInCluster],exactIndZ[0:sourcePointsInCluster], \
-//            nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
-//#endif
+#ifdef OPENMP_ENABLED
+    }
+#pragma omp target exit data map( delete: modifiedF[0:sourcePointsInCluster],exactIndX[0:sourcePointsInCluster],exactIndY[0:sourcePointsInCluster],exactIndZ[0:sourcePointsInCluster], \
+            nodeX[0:(interpolationOrder+1)],nodeY[0:(interpolationOrder+1)],nodeZ[0:(interpolationOrder+1)],weights[0:(interpolationOrder+1)],dj[0:(interpolationOrder+1)])
+#endif
 
     free_vector(modifiedF);
     free_vector(exactIndX);
