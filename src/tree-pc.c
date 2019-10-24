@@ -389,7 +389,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 #pragma acc loop independent
 #endif
 #ifdef OPENMP_ENABLED
-                #pragma omp target teams distribute parallel for device(0)
+                #pragma omp target teams distribute parallel for nowait device(0)
 #endif
                 for (ii = 0; ii < numberOfTargets; ii++) {
                     tempPotential = 0.0;
@@ -434,7 +434,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 #pragma acc loop independent
 #endif
 #ifdef OPENMP_ENABLED
-                #pragma omp target teams distribute parallel for device(0)
+                #pragma omp target teams distribute parallel for nowait device(0)
 #endif
                 for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
                     d_peng = 0.0;
@@ -466,6 +466,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         } // end loop over target batches
 #ifdef OPENACC_ENABLED
         #pragma acc wait
+#endif
+#ifdef OPENMP_ENABLED
+	#pragma omp taskwait
 #endif
         } // end acc data region
 
