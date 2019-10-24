@@ -389,16 +389,17 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 #pragma acc loop independent
 #endif
 #ifdef OPENMP_ENABLED
-                #pragma omp target teams distribute parallel for nowait device(0)
+                #pragma omp target teams nowait
+		#pragma omp  distribute parallel for
 #endif
                 for (ii = 0; ii < numberOfTargets; ii++) {
                     tempPotential = 0.0;
                     xi = xT[ batchStart + ii];
                     yi = yT[ batchStart + ii];
                     zi = zT[ batchStart + ii];
-#ifdef OPENMP_ENABLED
-                #pragma omp simd simdlen(128)
-#endif
+//#ifdef OPENMP_ENABLED
+//                #pragma omp simd simdlen(128)
+//#endif
                     for (jj = 0; jj < numberOfInterpolationPoints; jj++) {
                         // Compute x, y, and z distances between target i and interpolation point j
                         dxt = xi - xC[clusterStart + jj];
@@ -427,20 +428,21 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 source_start=ibegs[node_index]-1;
                 source_end=iends[node_index];
 
-                streamID = j%3;
 #ifdef OPENACC_ENABLED
                 # pragma acc kernels async(streamID)
+                streamID = j%3;
                 {
                 #pragma acc loop independent
 #endif
 #ifdef OPENMP_ENABLED
-                #pragma omp target teams distribute parallel for nowait device(0)
+                #pragma omp target teams nowait
+		#pragma omp distribute parallel for
 #endif
                 for (ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
                     d_peng = 0.0;
-#ifdef OPENMP_ENABLED
-                #pragma omp simd simdlen(128)
-#endif
+//#ifdef OPENMP_ENABLED
+//                #pragma omp simd simdlen(128)
+//#endif
                     for (jj = source_start; jj < source_end; jj++) {
                         tx = xS[jj] - xT[ii];
                         ty = yS[jj] - yT[ii];
