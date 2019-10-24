@@ -573,7 +573,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 		printf("===============================================================\n");
 		printf("===========COMPARISON OF SINGLE TO DOUBLE PRECISION============\n");
 		printf("===============================================================\n");
-
 		printf("Single precision took %f seconds.\n", singleTime);
 		printf("Double precision took %f seconds.\n", doubleTime);
 		printf("===============================================================\n");

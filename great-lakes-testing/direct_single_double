@@ -2,15 +2,15 @@
 
 
 
-THETA=0.6
-ORDER=4
+THETA=0.8
+ORDER=7
 CLUSTERSIZE=100
 BATCHSIZE=100
 KERNEL=0
 KAPPA=0.0
 
 
-for N in 100000 
+for N in 10000 
 do
 	for NX in 1 
 	do
@@ -25,9 +25,8 @@ do
 				OFFSETS=/Users/nathanvaughn/Desktop/randomPoints/offsets${N}_${NX}x_${NY}y_${NZ}z.bin
 				DIRECT=/Users/nathanvaughn/Desktop/randomPoints/direct_gpu_${N}.bin
 				OUTPUT=/Users/nathanvaughn/Desktop/randomPoints/tree_gpu_${N}.csv
-				#mpirun -n ${NP} direct-distributed-cpu $SOURCES $TARGETS $DIRECT $OUTPUT $N $N $KAPPA $KERNEL 
-				#mpirun -n ${NP} tree-distributed-cpu-double $SOURCES $TARGETS $OFFSETS $OFFSETS $DIRECT $OUTPUT $N $N $THETA $ORDER $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA 
-				mpirun -n ${NP} tree-distributed-cpu $SOURCES $TARGETS $OFFSETS $OFFSETS $DIRECT $OUTPUT $N $N $THETA $ORDER $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA 
+				mpirun -n ${NP} direct-distributed-cpu $SOURCES $TARGETS $DIRECT $OUTPUT $N $N $KAPPA $KERNEL 
+				#mpirun -n ${NP} direct-distributed-cpu-double $SOURCES $TARGETS $DIRECT $OUTPUT $N $N $KAPPA $KERNEL 
 			done
 		done   
 	done  
