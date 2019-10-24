@@ -27,6 +27,7 @@ option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         O
 
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
 option(ENABLE_CPU_BUILD "build CPU version"                                    ON)
+option(ENABLE_GPU_BUILD_OPENMP "build OpenACC GPU version"                     ON)
 
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -47,21 +48,33 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_COMPILE_OPTIONS
                                          -acc
                                          -ta=tesla:ccall,cc60$<$<CONFIG:Debug>:,time>
-                                         -Minfo
-                                         -lnvToolsExt)
+                                         -Minfo)
 set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_LINK_LIBRARIES
                                          -acc
-                                         -ta=tesla:ccall,cc60
-                                         -lnvToolsExt)
+                                         -ta=tesla:ccall,cc60)
 
-target_link_directories(OpenACC_C INTERFACE /sw/ascent/cuda/10.1.105/lib64)
-#find_package(CUDA)
-#message(" its here ${CUDA_nvToolsExt_LIBRARY}")
+#target_link_directories(OpenACC_C INTERFACE /sw/ascent/cuda/10.1.105/lib64)
+#                                        -lnvToolsExt)
+#                                        -lnvToolsExt)
+
+#Creating an interface for OpenMP Acc offload--currently these flags are xl specific
+add_library(OpenMP_Acc_C INTERFACE)
+set_property(TARGET OpenMP_Acc_C     PROPERTY
+                                         INTERFACE_COMPILE_OPTIONS
+                                         -qsmp=omp -qoffload)
+set_property(TARGET OpenMP_Acc_C     PROPERTY
+                                         INTERFACE_LINK_LIBRARIES
+                                         -qsmp=omp -qoffload)
 
 if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
     message("GPU build requires PGI compilers! Turning GPU build off.")
     set(ENABLE_GPU_BUILD OFF)
+endif()
+
+if(ENABLE_GPU_BUILD_OPENMP AND NOT (CMAKE_C_COMPILER_ID MATCHES XL))
+    message("OpenMP GPU build requires XL compilers! Turning OpenMP GPU build off.")
+    set(ENABLE_GPU_BUILD_OPENMP OFF)
 endif()
 
 add_subdirectory(src)

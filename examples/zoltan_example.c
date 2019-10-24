@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
+#include <time.h>
 #include <zoltan.h>
 
 #include "../src/treedriver.h"
