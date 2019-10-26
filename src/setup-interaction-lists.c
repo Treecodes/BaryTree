@@ -204,7 +204,9 @@ void pc_compute_interaction_list_remote2(int tree_node, const int *tree_numpar, 
  *           * in the box, use the expansion for the approximation.
  *                */
 
-        batch_tree_list[*tree_index_counter] = tree_node;
+//        batch_tree_list[*tree_index_counter] = tree_node;
+//        (*tree_index_counter)++;
+        batch_tree_list[tree_node] = tree_node;
         (*tree_index_counter)++;
 
     } else {
@@ -213,7 +215,9 @@ void pc_compute_interaction_list_remote2(int tree_node, const int *tree_numpar, 
  *           * calculation. If there are children, call routine recursively for each.
  *                */
         if (tree_num_children[tree_node] == 0) {
-            batch_direct_list[*direct_index_counter] = tree_node; 
+//            batch_direct_list[*direct_index_counter] = tree_node; 
+//            (*direct_index_counter)++;
+            batch_direct_list[tree_node] = tree_node; 
             (*direct_index_counter)++;
 
         } else {

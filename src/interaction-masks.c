@@ -93,12 +93,14 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 //        for (int i=0;i<numnodes;i++){
 //        	printf("%i\n", temp_tree_inter_list[i]);
 //	}
-    if (rank==0){
-	printf("temp_direct_inter_list\n\n");
-		for (int i=0;i<numnodes;i++){
-			printf("%i\n", temp_direct_inter_list[i]);
-		}
-    }
+//    if (rank==0){
+//	printf("temp_direct_inter_list\n\n");
+//		for (int i=0;i<numnodes;i++){
+//			printf("%i\n", temp_direct_inter_list[i]);
+//		}
+//    }
+
+
     // Update masks using interaction lists (overkill, but okay for now)
     int approx_counter=0, direct_counter=0;
     for (i=0; i<numnodes; i++){
@@ -119,20 +121,51 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     			break;
 			}
     	}
-
     }
-    
+
+
+
+/*
+   	for (j=0;j<batches->num;j++){
+        for (i=0; i<numnodes; i++){
+    		if (temp_tree_inter_list[j*numnodes+i]=-1) { // then at least one target batch accepted the MAC for the ith node
+                break;
+            } else {
+    			approx_list_unpacked[temp_tree_inter_list[j*numnodes+i]] = temp_tree_inter_list[j*numnodes+i];
+    			//approx_list_packed[approx_counter]=i;
+    		}
+    	}
+
+        for (i=0; i<numnodes; i++) {
+    		if (temp_direct_inter_list[j*numnodes+i]=-1) { // then at least one target batch interacts directly with the ith node
+                break;
+            } else {
+    			direct_list[temp_direct_inter_list[j*numnodes+i]] = temp_direct_inter_list[j*numnodes+i];
+			}
+    	}
+    }
+
+    int approx_counter=0, direct_counter=0;
+    for (i=0; i<numnodes; i++) {
+        if (approx_list_unpacked[i]!=-1) {
+            approx_list_packed[approx_counter]=i;
+            approx_counter++;
+        }
+    }
+  */
+  
 //    exit(0);
 
-//    if (rank==0){
-//    for (int i=0;i<numnodes; i++){
-//		if (approx_list[i]!=-1) printf("approx_list[%i] = %i\n", i, approx_list[i]);
-//	}
-//    for (int i=0;i<numnodes; i++){
-//    	if (direct_list[i]!=-1) printf("direct_list[%i] = %i\n", i, direct_list[i]);
-//	}
-//    }
-
+/*
+    if (rank==0){
+    for (int i=0;i<numnodes*batches->num; i++){
+               printf("batch %d, approx_list[%i] = %i\n", i/numnodes, i, temp_tree_inter_list[i]);
+       }
+    for (int i=0;i<numnodes*batches->num; i++){
+       printf("batch %d, direct_list[%i] = %i\n", i/numnodes, i, temp_direct_inter_list[i]);
+       }
+    }
+*/
     free_vector(temp_tree_inter_list);
     free_vector(temp_direct_inter_list);
 
