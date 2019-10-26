@@ -83,6 +83,9 @@ void allocate_tree_array(struct tnode_array *let_tree_array, int length)  {
 	make_vector(let_tree_array->cluster_ind, length);
 	make_vector(let_tree_array->radius, length);
 
+	make_vector(let_tree_array->num_children, length);
+	make_vector(let_tree_array->children, 8*length);
+
     return;
 }   /* END of function allocate_tree_array */
 
@@ -103,6 +106,9 @@ void free_tree_array(struct tnode_array *let_tree_array)  {
 	free_vector(let_tree_array->level);
 	free_vector(let_tree_array->cluster_ind);
 	free_vector(let_tree_array->radius);
+
+	free_vector(let_tree_array->num_children);
+	free_vector(let_tree_array->children);
 	let_tree_array=NULL;
 
     return;
@@ -127,6 +133,9 @@ void reallocate_tree_array(struct tnode_array *let_tree_array, int newlength)  {
 	realloc_vector(let_tree_array->level, newlength);
 	realloc_vector(let_tree_array->cluster_ind, newlength);
 	realloc_vector(let_tree_array->radius, newlength);
+
+	realloc_vector(let_tree_array->num_children, newlength);
+	realloc_vector(let_tree_array->children, 8*newlength);
 
 	return;
 

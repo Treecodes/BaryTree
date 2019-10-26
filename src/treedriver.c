@@ -104,6 +104,8 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(tree_array->level, numnodes);
         make_vector(tree_array->cluster_ind, numnodes);
         make_vector(tree_array->radius, numnodes);
+        make_vector(tree_array->children, 8*numnodes);
+        make_vector(tree_array->num_children, numnodes);
         pc_create_tree_array(troot, tree_array);
         time_tree[2] = MPI_Wtime() - time1; //time_maketreearray
         
@@ -241,6 +243,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
         MPI_Win win_clusters_x, win_clusters_y, win_clusters_z, win_clusters_q, win_clusters_w;
         MPI_Win win_sources_x, win_sources_y, win_sources_z, win_sources_q, win_sources_w;
+        MPI_Win win_children, win_num_children;
         
         MPI_Win_create(tree_array->x_mid,  numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
         MPI_Win_create(tree_array->y_mid,  numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_y_mid);
@@ -250,6 +253,8 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_create(tree_array->ibeg,   numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
         MPI_Win_create(tree_array->iend,   numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
         MPI_Win_create(tree_array->level,  numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_level);
+        MPI_Win_create(tree_array->num_children,  numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_num_children);
+        MPI_Win_create(tree_array->children,    8*numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_children);
 
         MPI_Win_create(clusters->x, numnodes*pointsPerCluster*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_x);
         MPI_Win_create(clusters->y, numnodes*pointsPerCluster*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_y);
@@ -288,6 +293,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_ibeg);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_iend);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_level);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_children);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_num_children);
 
             
             MPI_Get(remote_tree_array->x_mid, numNodesOnProc[getFrom], MPI_DOUBLE,
@@ -306,6 +313,11 @@ void treedriver(struct particles *sources, struct particles *targets,
                     getFrom, 0, numNodesOnProc[getFrom], MPI_INT, win_iend);
             MPI_Get(remote_tree_array->level, numNodesOnProc[getFrom], MPI_INT,
                     getFrom, 0, numNodesOnProc[getFrom], MPI_INT, win_level);
+
+            MPI_Get(remote_tree_array->children, 8*numNodesOnProc[getFrom], MPI_INT,
+                    getFrom, 0, 8*numNodesOnProc[getFrom], MPI_INT, win_children);
+            MPI_Get(remote_tree_array->num_children, numNodesOnProc[getFrom], MPI_INT,
+                    getFrom, 0, numNodesOnProc[getFrom], MPI_INT, win_num_children);
             
             MPI_Barrier(MPI_COMM_WORLD);
 
@@ -317,6 +329,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_ibeg);
             MPI_Win_unlock(getFrom, win_iend);
             MPI_Win_unlock(getFrom, win_level);
+            MPI_Win_unlock(getFrom, win_children);
+            MPI_Win_unlock(getFrom, win_num_children);
             
             MPI_Barrier(MPI_COMM_WORLD);
 

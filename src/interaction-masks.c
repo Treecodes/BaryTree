@@ -33,6 +33,7 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     int tree_numnodes;
     const int *tree_numpar, *tree_level;
     const double *tree_x_mid, *tree_y_mid, *tree_z_mid, *tree_radius;
+    const int *tree_num_children, *tree_children;
 
     batches_ind = batches->index;
     batches_center = batches->center;
@@ -45,6 +46,9 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     tree_x_mid = tree_array->x_mid;
     tree_y_mid = tree_array->y_mid;
     tree_z_mid = tree_array->z_mid;
+
+    tree_num_children = tree_array->num_children;
+    tree_children = tree_array->children;
 
     for (i = 0; i < numnodes; i++) approx_list_unpacked[i] = -1;
     for (i = 0; i < numnodes; i++) approx_list_packed[i] = -1;
@@ -65,22 +69,36 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     
 	// Fill interaction lists
     for (i = 0; i < batches->num; i++) {
+/*
         pc_compute_interaction_list_remote(tree_numnodes, tree_level, tree_numpar,
                 tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
                 batches_ind[i], batches_center[i], batches_radius[i],
                 &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]));
+*/
+
+        int tree_index_counter = 0, direct_index_counter = 0;
+
+
+        pc_compute_interaction_list_remote2(0,
+                tree_numpar, tree_radius,
+                tree_x_mid, tree_y_mid, tree_z_mid,
+                tree_num_children, tree_children,     
+                batches_ind[i], batches_center[i], batches_radius[i],
+                &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]),
+                &tree_index_counter, &direct_index_counter);
+
     }
 
 //    printf("temp_tree_inter_list\n\n");
 //        for (int i=0;i<numnodes;i++){
 //        	printf("%i\n", temp_tree_inter_list[i]);
 //	}
-//    if (rank==0){
-//	printf("temp_direct_inter_list\n\n");
-//		for (int i=0;i<numnodes;i++){
-//			printf("%i\n", temp_direct_inter_list[i]);
-//		}
-//    }
+    if (rank==0){
+	printf("temp_direct_inter_list\n\n");
+		for (int i=0;i<numnodes;i++){
+			printf("%i\n", temp_direct_inter_list[i]);
+		}
+    }
     // Update masks using interaction lists (overkill, but okay for now)
     int approx_counter=0, direct_counter=0;
     for (i=0; i<numnodes; i++){

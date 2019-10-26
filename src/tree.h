@@ -15,6 +15,12 @@ void pc_compute_interaction_list_remote(int tree_numnodes, const int *tree_level
                                         int *batch_ind, double *batch_mid, double batch_rad,
                                         int *batch_tree_list, int *batch_direct_list);
 
+void pc_compute_interaction_list_remote2(int tree_node, const int *tree_numpar, const double *tree_radius,
+                const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
+                const int *tree_num_children, const int *tree_children,     
+                int *batch_ind, double *batch_mid, double batch_rad,
+                int *batch_tree_list, int *batch_direct_list,
+                int *tree_index_counter, int *direct_index_counter);
 
 /* used by cluster-particle and particle-cluster */
 void remove_node(struct tnode *p);

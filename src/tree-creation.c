@@ -211,7 +211,10 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array)
     tree_array->radius[p->node_index] = p->radius;
     tree_array->cluster_ind[p->node_index] = p->node_index;
 
+    tree_array->num_children[p->node_index] = p->num_children;
+
     for (i = 0; i < p->num_children; i++) {
+        tree_array->children[8*p->node_index+i] = (p->child[i])->node_index;
         pc_create_tree_array(p->child[i], tree_array);
     }
     

@@ -47,6 +47,9 @@ struct tnode_array
     double *x_max;
     double *y_max;
     double *z_max;
+
+    int *num_children;
+    int *children;
 };
 
 

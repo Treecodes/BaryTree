@@ -179,3 +179,56 @@ void pc_compute_interaction_list_remote(int tree_numnodes, const int *tree_level
 }
 
 
+
+
+void pc_compute_interaction_list_remote2(int tree_node, const int *tree_numpar, const double *tree_radius,
+                const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
+                const int *tree_num_children, const int *tree_children,     
+                int *batch_ind, double *batch_mid, double batch_rad,
+                int *batch_tree_list, int *batch_direct_list,
+                int *tree_index_counter, int *direct_index_counter)
+{
+    /* local variables */
+    double tx, ty, tz, dist;
+    int i;
+
+    /* determine DIST for MAC test */
+    tx = batch_mid[0] - tree_x_mid[tree_node];
+    ty = batch_mid[1] - tree_y_mid[tree_node];
+    tz = batch_mid[2] - tree_z_mid[tree_node];
+    dist = sqrt(tx*tx + ty*ty + tz*tz);
+
+    if (((tree_radius[tree_node] + batch_rad) < dist * sqrt(thetasq)) && (tree_radius[tree_node] != 0.00)) {
+    /*
+ *      * If MAC is accepted and there is more than 1 particle
+ *           * in the box, use the expansion for the approximation.
+ *                */
+
+        batch_tree_list[*tree_index_counter] = tree_node;
+        (*tree_index_counter)++;
+
+    } else {
+    /*
+ *      * If MAC fails check to see if there are children. If not, perform direct
+ *           * calculation. If there are children, call routine recursively for each.
+ *                */
+        if (tree_num_children[tree_node] == 0) {
+            batch_direct_list[*direct_index_counter] = tree_node; 
+            (*direct_index_counter)++;
+
+        } else {
+            for (i = 0; i < tree_num_children[tree_node]; i++) {
+                pc_compute_interaction_list_remote2(tree_children[8*tree_node + i],
+                           tree_numpar, tree_radius,
+                           tree_x_mid, tree_y_mid, tree_z_mid,
+                           tree_num_children, tree_children,     
+                           batch_ind, batch_mid, batch_rad,
+                           batch_tree_list, batch_direct_list,
+                           tree_index_counter, direct_index_counter);
+            }
+        }
+    }
+
+    return;
+
+} 
