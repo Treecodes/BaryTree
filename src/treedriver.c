@@ -195,8 +195,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         struct particles *let_clusters = NULL;
         let_clusters_length=numnodes*pointsPerCluster;
         let_clusters_length=0; // previously let_clusters included the local.  Now it should not
-//      int let_clusters_num=numnodes;
-        int let_clusters_num=0;
         let_clusters = malloc(sizeof(struct particles)); // let_clusters will hold all cluster data for LET
 //      allocate_cluster(let_clusters,let_clusters_length);
 
@@ -272,6 +270,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         int num_remote_approx_array[numProcs], new_sources_length_array[numProcs];
         int previous_let_clusters_length_array[numProcs], previous_let_sources_length_array[numProcs];
         MPI_Datatype approx_type[numProcs], direct_type[numProcs];
+        int let_clusters_num = 0;
 
         for (int procID = 1; procID < numProcs; ++procID) {
 

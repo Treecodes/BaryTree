@@ -102,26 +102,55 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 
 
     // Update masks using interaction lists (overkill, but okay for now)
+/*
     int approx_counter=0, direct_counter=0;
     for (i=0; i<numnodes; i++){
     	for (j=0;j<batches->num;j++){
     		if (temp_tree_inter_list[j*numnodes+i]!=-1){ // then at least one target batch accepted the MAC for the ith node
 
-    			approx_list_unpacked[i]=i;
-    			approx_list_packed[approx_counter]=i;
-				approx_counter+=1;
+    			approx_list_unpacked[temp_tree_inter_list[j*numnodes+i]] = temp_tree_inter_list[j*numnodes+i];
+    			approx_list_packed[approx_counter] = temp_tree_inter_list[j*numnodes+i];
+				approx_counter++;
 				break;
     		}
     	}
 		for (j=0;j<batches->num;j++){
     		if (temp_direct_inter_list[j*numnodes+i]!=-1){ // then at least one target batch interacts directly with the ith node
 //    			if (i==0) printf("Batch %i is putting the root in the direct list.\n", j);
-    			direct_list[i]=i;
-    			direct_counter+=1;
+    			direct_list[temp_direct_inter_list[j*numnodes+i]] = temp_direct_inter_list[j*numnodes+i];
+    			direct_counter++;
     			break;
 			}
     	}
     }
+*/
+
+    for (j=0; j < batches->num; j++) {
+        for (i = 0; i < numnodes; i++) {
+            if (temp_tree_inter_list[j*numnodes + i] > -1)
+                approx_list_unpacked[temp_tree_inter_list[j*numnodes+i]] = temp_tree_inter_list[j*numnodes+i];
+            else
+                break;
+        }
+
+        for (i = 0; i < numnodes; i++) {
+            if (temp_direct_inter_list[j*numnodes + i] > -1)
+                direct_list[temp_direct_inter_list[j*numnodes+i]] = temp_direct_inter_list[j*numnodes+i];
+            else
+                break;
+        }
+    }
+
+    int approx_counter = 0;
+    for (i = 0; i < numnodes; i++) {
+        if (approx_list_unpacked[i] > -1) {
+            approx_list_packed[approx_counter] = i;
+            approx_counter++;
+        }
+    }
+
+
+
 
 
 
