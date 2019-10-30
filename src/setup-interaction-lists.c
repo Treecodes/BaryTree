@@ -20,7 +20,8 @@
 
 
 void pc_make_interaction_list(const struct tnode_array *tree_array, struct batch *batches,
-                              int *tree_inter_list, int *direct_inter_list)
+                              int *tree_inter_list, int *direct_inter_list, int approx_offset,
+                              int direct_offset)
 {
     /* local variables */
     int i, j;
@@ -45,15 +46,17 @@ void pc_make_interaction_list(const struct tnode_array *tree_array, struct batch
     tree_y_mid = tree_array->y_mid;
     tree_z_mid = tree_array->z_mid;
 
-    int sizeloop = batches->num * tree_numnodes;
+    int sizeloop = batches->num * approx_offset;
     for (i = 0; i < sizeloop; i++) tree_inter_list[i] = -1;
+
+    sizeloop = batches->num * direct_offset;
     for (i = 0; i < sizeloop; i++) direct_inter_list[i] = -1;
     
     for (i = 0; i < batches->num; i++)
         pc_compute_interaction_list(tree_numnodes, tree_level, tree_numpar,
                 tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
                 batches_ind[i], batches_center[i], batches_radius[i],
-                &(tree_inter_list[i*tree_numnodes]), &(direct_inter_list[i*tree_numnodes]));
+                &(tree_inter_list[i*approx_offset]), &(direct_inter_list[i*direct_offset]));
 
     return;
 
@@ -185,29 +188,31 @@ void pc_compute_interaction_list_remote2(int tree_node, const int *tree_numpar, 
                 const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
                 const int *tree_num_children, const int *tree_children,     
                 int *batch_ind, double *batch_mid, double batch_rad,
-                int *batch_tree_list, int *batch_direct_list,
+                int **batch_tree_list, int **batch_direct_list,
+                int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter)
 {
-    /* local variables */
-    double tx, ty, tz, dist;
-    int i;
 
     /* determine DIST for MAC test */
-    tx = batch_mid[0] - tree_x_mid[tree_node];
-    ty = batch_mid[1] - tree_y_mid[tree_node];
-    tz = batch_mid[2] - tree_z_mid[tree_node];
-    dist = sqrt(tx*tx + ty*ty + tz*tz);
+    double tx = batch_mid[0] - tree_x_mid[tree_node];
+    double ty = batch_mid[1] - tree_y_mid[tree_node];
+    double tz = batch_mid[2] - tree_z_mid[tree_node];
+    double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    if (((tree_radius[tree_node] + batch_rad) < dist * sqrt(thetasq)) && (tree_radius[tree_node] != 0.00)) {
+    if (((tree_radius[tree_node] + batch_rad) < dist * sqrt(thetasq))
+      && (tree_radius[tree_node] != 0.00)) {
     /*
  *      * If MAC is accepted and there is more than 1 particle
  *           * in the box, use the expansion for the approximation.
  *                */
 
-        batch_tree_list[*tree_index_counter] = tree_node;
+        if (*tree_index_counter >= *sizeof_tree_list) {
+            (*sizeof_tree_list) *= 1.5;
+            (*batch_tree_list) = realloc_vector(*batch_tree_list, *sizeof_tree_list);
+        }
+
+        (*batch_tree_list)[*tree_index_counter] = tree_node;
         (*tree_index_counter)++;
-//        batch_tree_list[tree_node] = tree_node;
-//        (*tree_index_counter)++;
 
     } else {
     /*
@@ -215,19 +220,24 @@ void pc_compute_interaction_list_remote2(int tree_node, const int *tree_numpar, 
  *           * calculation. If there are children, call routine recursively for each.
  *                */
         if (tree_num_children[tree_node] == 0) {
-            batch_direct_list[*direct_index_counter] = tree_node; 
+
+            if (*direct_index_counter >= *sizeof_direct_list) {
+                (*sizeof_direct_list) *= 1.5;
+                *batch_direct_list = realloc_vector(*batch_direct_list, *sizeof_direct_list);
+            }
+
+            (*batch_direct_list)[*direct_index_counter] = tree_node; 
             (*direct_index_counter)++;
-//            batch_direct_list[tree_node] = tree_node; 
-//            (*direct_index_counter)++;
 
         } else {
-            for (i = 0; i < tree_num_children[tree_node]; i++) {
+            for (int i = 0; i < tree_num_children[tree_node]; i++) {
                 pc_compute_interaction_list_remote2(tree_children[8*tree_node + i],
                            tree_numpar, tree_radius,
                            tree_x_mid, tree_y_mid, tree_z_mid,
                            tree_num_children, tree_children,     
                            batch_ind, batch_mid, batch_rad,
                            batch_tree_list, batch_direct_list,
+                           sizeof_tree_list, sizeof_direct_list,
                            tree_index_counter, direct_index_counter);
             }
         }

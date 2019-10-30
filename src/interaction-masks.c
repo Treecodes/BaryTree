@@ -15,7 +15,8 @@
 
 
 void remote_interaction_lists(const struct tnode_array *tree_array, struct batch *batches,
-					int *approx_list_unpacked,int *approx_list_packed, int *direct_list, int numnodes)
+					int *approx_list_unpacked,int *approx_list_packed, int *direct_list, int numnodes,
+                    int *num_batch_approx, int *num_batch_direct)
 {
     /* local variables */
 	int rank, numProcs;
@@ -50,99 +51,75 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     tree_num_children = tree_array->num_children;
     tree_children = tree_array->children;
 
-    for (i = 0; i < numnodes; i++) approx_list_unpacked[i] = -1;
-    for (i = 0; i < numnodes; i++) approx_list_packed[i] = -1;
-   	for (i = 0; i < numnodes; i++) direct_list[i] = -1;
+    for (int i = 0; i < numnodes; i++) approx_list_unpacked[i] = -1;
+    for (int i = 0; i < numnodes; i++) approx_list_packed[i] = -1;
+   	for (int i = 0; i < numnodes; i++) direct_list[i] = -1;
 
 
-    // Make interaction lists and set to -1
-    int *temp_tree_inter_list, *temp_direct_inter_list;
-    make_vector(temp_tree_inter_list, batches->num * numnodes);
-	make_vector(temp_direct_inter_list, batches->num * numnodes);
+    int **temp_tree_inter_list, **temp_direct_inter_list;
+    int *num_tree_inter, *num_direct_inter;
+    int *sizeof_tree_inter_list, *sizeof_direct_inter_list;
 
-    //size_t ii;
-    //size_t loopsize = (size_t)batches->num * (size_t)numnodes;
-    int loopsize = batches->num * numnodes;
-	for (i = 0; i < loopsize; i++) temp_tree_inter_list[i] = -1;
-	for (i = 0; i < loopsize; i++) temp_direct_inter_list[i] = -1;
+    make_matrix(temp_tree_inter_list, batches->num, 50);
+    make_matrix(temp_direct_inter_list, batches->num, 50);
+
+    make_vector(num_tree_inter, batches->num);
+    make_vector(num_direct_inter, batches->num);
+
+    make_vector(sizeof_tree_inter_list, batches->num);
+    make_vector(sizeof_direct_inter_list, batches->num);
+   
+    int loopsize = batches->num;
+	for (int i = 0; i < loopsize; i++) num_tree_inter[i] = 0;
+	for (int i = 0; i < loopsize; i++) num_direct_inter[i] = 0;
+
+	for (int i = 0; i < loopsize; i++) sizeof_tree_inter_list[i] = 50;
+	for (int i = 0; i < loopsize; i++) sizeof_direct_inter_list[i] = 50;
+    
+    for (int i = 0; i < loopsize; i++)
+        for(int j = 0; j < 50; j++)
+            temp_tree_inter_list[i][j] = -1;
+
+    for (int i = 0; i < loopsize; i++)
+        for(int j = 0; j < 50; j++)
+            temp_direct_inter_list[i][j] = -1;
  
     
 	// Fill interaction lists
-    for (i = 0; i < batches->num; i++) {
-/*
-        pc_compute_interaction_list_remote(tree_numnodes, tree_level, tree_numpar,
-                tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
-                batches_ind[i], batches_center[i], batches_radius[i],
-                &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]));
-*/
-
-        int tree_index_counter = 0, direct_index_counter = 0;
-
+    for (int i = 0; i < batches->num; i++) {
 
         pc_compute_interaction_list_remote2(0,
                 tree_numpar, tree_radius,
                 tree_x_mid, tree_y_mid, tree_z_mid,
                 tree_num_children, tree_children,     
                 batches_ind[i], batches_center[i], batches_radius[i],
-                &(temp_tree_inter_list[i*numnodes]), &(temp_direct_inter_list[i*numnodes]),
-                &tree_index_counter, &direct_index_counter);
+                &(temp_tree_inter_list[i]), &(temp_direct_inter_list[i]),
+                &(sizeof_tree_inter_list[i]), &(sizeof_direct_inter_list[i]),
+                &(num_tree_inter[i]), &(num_direct_inter[i]));
+
+        num_batch_approx[i] += num_tree_inter[i];
+        num_batch_direct[i] += num_direct_inter[i];
 
     }
 
-//    printf("temp_tree_inter_list\n\n");
-//        for (int i=0;i<numnodes;i++){
-//        	printf("%i\n", temp_tree_inter_list[i]);
-//	}
-//    if (rank==0){
-//	printf("temp_direct_inter_list\n\n");
-//		for (int i=0;i<numnodes;i++){
-//			printf("%i\n", temp_direct_inter_list[i]);
-//		}
-//    }
 
+    for (int j = 0; j < batches->num; j++) {
+        for (int i = 0; i < num_tree_inter[j]; i++) {
 
-    // Update masks using interaction lists (overkill, but okay for now)
-/*
-    int approx_counter=0, direct_counter=0;
-    for (i=0; i<numnodes; i++){
-    	for (j=0;j<batches->num;j++){
-    		if (temp_tree_inter_list[j*numnodes+i]!=-1){ // then at least one target batch accepted the MAC for the ith node
-
-    			approx_list_unpacked[temp_tree_inter_list[j*numnodes+i]] = temp_tree_inter_list[j*numnodes+i];
-    			approx_list_packed[approx_counter] = temp_tree_inter_list[j*numnodes+i];
-				approx_counter++;
-				break;
-    		}
-    	}
-		for (j=0;j<batches->num;j++){
-    		if (temp_direct_inter_list[j*numnodes+i]!=-1){ // then at least one target batch interacts directly with the ith node
-//    			if (i==0) printf("Batch %i is putting the root in the direct list.\n", j);
-    			direct_list[temp_direct_inter_list[j*numnodes+i]] = temp_direct_inter_list[j*numnodes+i];
-    			direct_counter++;
-    			break;
-			}
-    	}
-    }
-*/
-
-    for (j=0; j < batches->num; j++) {
-        for (i = 0; i < numnodes; i++) {
-            if (temp_tree_inter_list[j*numnodes + i] > -1)
-                approx_list_unpacked[temp_tree_inter_list[j*numnodes+i]] = temp_tree_inter_list[j*numnodes+i];
-            else
-                break;
+            int node_index = temp_tree_inter_list[j][i];
+            approx_list_unpacked[node_index] = node_index;
         }
 
-        for (i = 0; i < numnodes; i++) {
-            if (temp_direct_inter_list[j*numnodes + i] > -1)
-                direct_list[temp_direct_inter_list[j*numnodes+i]] = temp_direct_inter_list[j*numnodes+i];
-            else
-                break;
+        for (int i = 0; i < num_direct_inter[j]; i++) {
+
+            int node_index = temp_direct_inter_list[j][i];
+            direct_list[node_index] = node_index;
         }
     }
+
 
     int approx_counter = 0;
-    for (i = 0; i < numnodes; i++) {
+    for (int i = 0; i < numnodes; i++) {
         if (approx_list_unpacked[i] > -1) {
             approx_list_packed[approx_counter] = i;
             approx_counter++;
@@ -150,60 +127,15 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     }
 
 
+    free_matrix(temp_tree_inter_list);
+    free_matrix(temp_direct_inter_list);
 
+    free_vector(sizeof_tree_inter_list);
+    free_vector(sizeof_direct_inter_list);
+    
+    free_vector(num_tree_inter);
+    free_vector(num_direct_inter);
 
-
-
-/*
-   	for (j=0;j<batches->num;j++){
-        for (i=0; i<numnodes; i++){
-    		if (temp_tree_inter_list[j*numnodes+i]=-1) { // then at least one target batch accepted the MAC for the ith node
-                break;
-            } else {
-    			approx_list_unpacked[temp_tree_inter_list[j*numnodes+i]] = temp_tree_inter_list[j*numnodes+i];
-    			//approx_list_packed[approx_counter]=i;
-    		}
-    	}
-
-        for (i=0; i<numnodes; i++) {
-    		if (temp_direct_inter_list[j*numnodes+i]=-1) { // then at least one target batch interacts directly with the ith node
-                break;
-            } else {
-    			direct_list[temp_direct_inter_list[j*numnodes+i]] = temp_direct_inter_list[j*numnodes+i];
-			}
-    	}
-    }
-
-    int approx_counter=0, direct_counter=0;
-    for (i=0; i<numnodes; i++) {
-        if (approx_list_unpacked[i]!=-1) {
-            approx_list_packed[approx_counter]=i;
-            approx_counter++;
-        }
-    }
-  */
-  
-//    exit(0);
-
-/*
-    if (rank==0){
-    for (int i=0;i<numnodes*batches->num; i++){
-               printf("batch %d, approx_list[%i] = %i\n", i/numnodes, i, temp_tree_inter_list[i]);
-       }
-    for (int i=0;i<numnodes*batches->num; i++){
-       printf("batch %d, direct_list[%i] = %i\n", i/numnodes, i, temp_direct_inter_list[i]);
-       }
-    }
-*/
-    free_vector(temp_tree_inter_list);
-    free_vector(temp_direct_inter_list);
-
-
-    // Example:
-    // At end of this function, approx_list and direct_list look like [c0, c3, c5, -1, -1, -1 ... ]
-    // indicating the 0th, 3rd, and 5th clusters in remote tree array are needed.
-
-//    printf("Exiting remote_interaction_lists\n");
     return;
 
 } /* END of function pc_treecode */

@@ -4,6 +4,7 @@
 
 double minval(double *x, int numels);
 double maxval(double *x, int numels);
+int maxval_int(int *x, int numels);
 
 double sum(double *x, int numels);
 

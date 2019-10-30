@@ -287,7 +287,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 								  double *xT, double *yT, double *zT, double *qT,
 								  double *xC, double *yC, double *zC, double *qC,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
-								  int numSources, int numTargets, int numClusters)
+								  int numSources, int numTargets, int numClusters,
+                                  int batch_approx_offset, int batch_direct_offset)
 {
         int i, j;
         int rank; int numProcs;	int ierr;
@@ -327,17 +328,16 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 //            double *zC = clusters->z;
 //            double *qC = clusters->q;
 
-            int * ibegs = tree_array->ibeg;
-            int * iends = tree_array->iend;
-
-            int * clusterInd = tree_array->cluster_ind;
+            int *ibegs = tree_array->ibeg;
+            int *iends = tree_array->iend;
+            int *clusterInd = tree_array->cluster_ind;
 
 #ifdef OPENACC_ENABLED
         #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
                             qS[0:numSources], wS[0:numSources], \
                             xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
                             xC[0:numClusters], yC[0:numClusters], zC[0:numClusters], qC[0:numClusters], \
-                            tree_inter_list[0:tree_numnodes*batches->num], direct_inter_list[0:batches->num * numleaves], \
+                            tree_inter_list[0:batch_approx_offset*batches->num], direct_inter_list[0:batch_direct_offset*batches->num], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes]) copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
         {
@@ -372,7 +372,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
             batchStart =  batch_ibeg - 1;
 
             for (j = 0; j < numberOfClusterApproximations; j++) {
-                node_index = tree_inter_list[i * tree_numnodes + j];
+                node_index = tree_inter_list[i * batch_approx_offset + j];
                 clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
 
                 streamID = j%3;
@@ -407,7 +407,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
             for (j = 0; j < numberOfDirectSums; j++) {
 
-                node_index = direct_inter_list[i * tree_numnodes + j];
+                node_index = direct_inter_list[i * batch_direct_offset + j];
 
                 source_start=ibegs[node_index]-1;
                 source_end=iends[node_index];

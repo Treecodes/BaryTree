@@ -19,7 +19,8 @@ void pc_compute_interaction_list_remote2(int tree_node, const int *tree_numpar, 
                 const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
                 const int *tree_num_children, const int *tree_children,     
                 int *batch_ind, double *batch_mid, double batch_rad,
-                int *batch_tree_list, int *batch_direct_list,
+                int **batch_tree_list, int **batch_direct_list,
+                int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter);
 
 /* used by cluster-particle and particle-cluster */
@@ -121,7 +122,7 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode *p, double *xS, double *yS, do
 
 
 void pc_make_interaction_list(const struct tnode_array *tarray, struct batch *batches,
-                              int *tree_inter_list, int *direct_inter_list);
+                              int *tree_inter_list, int *direct_inter_list, int approx_offset, int direct_offset);
 
 void pc_compute_interaction_list(int tree_numnodes, const int *tree_level, 
                 const int *tree_numpar, const double *tree_radius,
@@ -140,7 +141,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 								  double *xT, double *yT, double *zT, double *qT,
 								  double *xC, double *yC, double *zC, double *qC,
 								  double *totalPotential, double *pointwisePotential, int interpolationOrder,
-								  int numSources, int numTargets, int numClusters);
+								  int numSources, int numTargets, int numClusters,
+                                  int offset_approx, int offset_direct);
 
 void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,

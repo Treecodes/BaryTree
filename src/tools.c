@@ -79,3 +79,17 @@ double min3(double a, double b, double c)
 
     return min;
 }
+
+
+
+int maxval_int(int *x, int numels)
+{
+    int max = x[0];
+
+    for (int i = 1; i < numels; i++) {
+        if (max < x[i])
+            max = x[i];
+    }
+
+    return max;
+}
