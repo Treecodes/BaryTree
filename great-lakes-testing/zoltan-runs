@@ -1,0 +1,22 @@
+#!/bin/bash
+
+
+
+THETA=0.8
+ORDER=7
+CLUSTERSIZE=100
+BATCHSIZE=100
+KERNEL=0
+KAPPA=0.0
+
+
+
+COMPAREDIRECT=0
+for N in 10000 
+do
+	for NP in 1 
+	do
+    	echo $NP
+    	mpirun -n ${NP} tree-distributed-cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $COMPAREDIRECT
+	done  
+done    
