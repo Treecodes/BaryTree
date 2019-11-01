@@ -8,13 +8,13 @@
 #include "array.h"
 #include "tools.h"
 #include "direct.h"
-#include "kernels/kernels.h"
+
 
 
 void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 				double *xT, double *yT, double *zT, double *qT,
                 int numparsS, int numparsT, double *denergy, double *dpeng,
-                int pot_type, double kappa)
+                int pot_type, double kappa, double (*kernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double kappa))
 {
     /* local variables */
     int i, j;
@@ -27,7 +27,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
     {
 #endif
 
-    if (pot_type == 0 || pot_type == 4) { // Coulomb with singularity skipping.  Lagrange or Hermite.
+    if (pot_type == 0 || pot_type == 4 || pot_type == 1) { // Coulomb with singularity skipping.  Lagrange or Hermite.
 #ifdef OPENACC_ENABLED
         #pragma acc kernels
         {
@@ -49,7 +49,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                 rad = sqrt(tx*tx + ty*ty + tz*tz);
                 if (rad > 1e-14) {
 //                    teng = teng + qS[j] * wS[j] / rad;
-                	teng = teng + coulombKernel(xi, yi, zi, 0.0, xS[j], yS[j], zS[j], qS[j], wS[j]);
+                	teng = teng + kernel(xi, yi, zi, kappa, xS[j], yS[j], zS[j], qS[j], wS[j], kappa);
                 }
             }
             denergy[i] +=  teng;
@@ -58,7 +58,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
         }
 #endif
 
-    } else if (pot_type == 1 || pot_type == 5) {
+    } else if (pot_type == 5) {
 #ifdef OPENACC_ENABLED
         #pragma acc kernels
         {
