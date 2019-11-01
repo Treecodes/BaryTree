@@ -8,6 +8,8 @@
 #include "array.h"
 #include "tools.h"
 #include "direct.h"
+#include "kernels/kernels.h"
+
 
 void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 				double *xT, double *yT, double *zT, double *qT,
@@ -46,7 +48,8 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
                 tz = zi - zS[j];
                 rad = sqrt(tx*tx + ty*ty + tz*tz);
                 if (rad > 1e-14) {
-                    teng = teng + qS[j] * wS[j] / rad;
+//                    teng = teng + qS[j] * wS[j] / rad;
+                	teng = teng + coulombKernel(xi, yi, zi, 0.0, xS[j], yS[j], zS[j], qS[j], wS[j]);
                 }
             }
             denergy[i] +=  teng;

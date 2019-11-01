@@ -33,14 +33,18 @@ SET(SRCS_TREEDRIVER
     xmalloc.h
     tools.h
     particles.h
-    sort.h)
+    sort.h
+    kernels/kernels.h
+    kernels/Coulomb.c)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED
     main-direct-distributed.c array.h
     direct.c direct.h
     tools.c tools.h 
-    xmalloc.c xmalloc.h)
+    xmalloc.c xmalloc.h
+    kernels/kernels.h
+    kernels/Coulomb.c)
 
 
 if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
