@@ -36,7 +36,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         clusters->y[i]=0.0;
         clusters->z[i]=0.0;
         clusters->q[i]=0.0;
-        clusters->w[i]=0.0;
+        clusters->w[i]=1.0;
     }
 
 
@@ -285,10 +285,12 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                   int *tree_inter_list, int *direct_inter_list,
 								  double *xS, double *yS, double *zS, double *qS, double *wS,
 								  double *xT, double *yT, double *zT, double *qT,
-								  double *xC, double *yC, double *zC, double *qC,
+								  double *xC, double *yC, double *zC, double *qC, double *wC,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
 								  int numSources, int numTargets, int numClusters,
-                                  int batch_approx_offset, int batch_direct_offset)
+                                  int batch_approx_offset, int batch_direct_offset,
+								  double (*kernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+								  double kappa)
 {
         int i, j;
         int rank; int numProcs;	int ierr;
@@ -353,7 +355,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         int source_end;
 
         double d_peng, r;
-        double xi,yi,zi;
+        double xi,yi,zi,qi;
 
         int numberOfTargets;
         int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
@@ -386,13 +388,15 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                     xi = xT[ batchStart + ii];
                     yi = yT[ batchStart + ii];
                     zi = zT[ batchStart + ii];
+                    qi = qT[ batchStart + ii];
 
                     for (jj = 0; jj < numberOfInterpolationPoints; jj++) {
                         // Compute x, y, and z distances between target i and interpolation point j
-                        dxt = xi - xC[clusterStart + jj];
-                        dyt = yi - yC[clusterStart + jj];
-                        dzt = zi - zC[clusterStart + jj];
-                        tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+//                        dxt = xi - xC[clusterStart + jj];
+//                        dyt = yi - yC[clusterStart + jj];
+//                        dzt = zi - zC[clusterStart + jj];
+//                        tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
+                        tempPotential += kernel(xi, yi, zi, qi, xC[clusterStart + jj], yC[clusterStart + jj], zC[clusterStart + jj], qC[clusterStart + jj], wC[clusterStart + jj], kappa);
 
                     }
 #ifdef OPENACC_ENABLED
@@ -422,14 +426,15 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                     d_peng = 0.0;
 
                     for (jj = source_start; jj < source_end; jj++) {
-                        tx = xS[jj] - xT[ii];
-                        ty = yS[jj] - yT[ii];
-                        tz = zS[jj] - zT[ii];
-                        r = sqrt(tx*tx + ty*ty + tz*tz);
+//                        tx = xS[jj] - xT[ii];
+//                        ty = yS[jj] - yT[ii];
+//                        tz = zS[jj] - zT[ii];
+//                        r = sqrt(tx*tx + ty*ty + tz*tz);
+                        d_peng += kernel(xT[ii], yT[ii], zT[ii], qT[ii], xS[jj], yS[jj], zS[jj], qS[jj], wS[jj], kappa);
 
-                        if (r > DBL_MIN) {
-                            d_peng += qS[jj] * wS[jj] / r;
-                        }
+//                        if (r > DBL_MIN) {
+//                            d_peng += qS[jj] * wS[jj] / r;
+//                        }
                     }
 #ifdef OPENACC_ENABLED
                     #pragma acc atomic  // is this still needed now that we don't have openMP?  Or was this necessary due to async streams?
@@ -449,8 +454,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         double totalDueToApprox = 0.0, totalDueToDirect = 0.0;
         totalDueToApprox = sum(potentialDueToApprox, numTargets);
         totalDueToDirect = sum(potentialDueToDirect, numTargets);
-        //printf("Total due to direct = %f\n", totalDueToDirect);
-        //printf("Total due to approx = %f\n", totalDueToApprox);
+//        printf("Total due to direct = %f\n", totalDueToDirect);
+//        printf("Total due to approx = %f\n", totalDueToApprox);
         for (int k = 0; k < numTargets; k++) {
 //            if (potentialDueToDirect[k] != 0.0){
                 pointwisePotential[k] += potentialDueToDirect[k];

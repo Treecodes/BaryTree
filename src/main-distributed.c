@@ -9,6 +9,7 @@
 #include "tools.h"
 #include "particles.h"
 #include "sort.h"
+#include "kernels/kernels.h"
 
 
 int main(int argc, char **argv)
@@ -21,7 +22,7 @@ int main(int argc, char **argv)
 
     /* runtime parameters */
     int numparsS, numparsT, order;
-    int maxparnode, batch_size, pot_type;
+    int maxparnode, batch_size;
     double theta, kappa;
 
     struct particles *sources = NULL;
@@ -46,6 +47,7 @@ int main(int argc, char **argv)
     char *offset1 = NULL;
     char *offset2 = NULL;
     char *sampout = NULL;
+    char *kernelName = NULL;
     FILE *fp;
 
     double buf[5];
@@ -106,9 +108,39 @@ int main(int argc, char **argv)
     order = atoi(argv[10]);
     maxparnode = atoi(argv[11]);
     batch_size = atoi(argv[12]);
-    pot_type = atoi(argv[13]);
     kappa = atof(argv[14]);
     
+    kernelName = argv[13];
+
+
+    // Set up kernel
+	double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
+				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+				double kappa);
+
+	if       (strcmp(kernelName,"coulomb")==0){
+		kernel = &coulombKernel;
+		if (rank==0) printf("Set kernel to coulombKernel.\n");
+
+	}else if (strcmp(kernelName,"yukawa")==0){
+		kernel = &yukawaKernel;
+		if (rank==0) printf("Set kernel to yukawaKernel.\n");
+
+	}else if (strcmp(kernelName,"coulomb_SS")==0){
+		kernel = &coulombKernel_SS;
+		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+
+	}else if (strcmp(kernelName,"yukawa_SS")==0){
+		kernel = &yukawaKernel_SS;
+		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+
+	}else{
+		if (rank==0) printf("kernelName = %s.\n", kernelName);
+		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+		return 1;
+	}
+
+
     int numparsSloc, numparsTloc, local_sources_offset, local_targets_offset;
     
     if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, offset1,
@@ -235,7 +267,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               pot_type, kappa, 1, tenergy, &tpeng, time_tree);
+               kappa, (*kernel), 1, tenergy, &tpeng, time_tree);
                
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];
@@ -368,12 +400,13 @@ int main(int argc, char **argv)
     }
     
     if (rank == 0) {
+//    	printf("Opening sampout...\n");
         fp = fopen(sampout, "a");
-        fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,"
+        fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%f,%s,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
             sampin1, sampin2, sampin3, numparsS, numparsT, theta, order,
-            maxparnode, batch_size, kappa, pot_type, numProcs, //1 ends
+            maxparnode, batch_size, kappa, kernelName, numProcs, //1 ends
             time_run_glob[0][0],  time_run_glob[1][0],
             time_run_glob[2][0]/numProcs,
             time_run_glob[0][1],  time_run_glob[1][1],

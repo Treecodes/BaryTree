@@ -7,7 +7,7 @@
 
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
-                int pot_type, double kappa, int tree_type,
+                double kappa, double (*kernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double), int tree_type,
                 double *tEn, double *tpeng, double *timetree);
 
 #endif /* H_TREEDRIVER_H */

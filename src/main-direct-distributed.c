@@ -104,19 +104,23 @@ int main(int argc, char **argv)
 
     if       (strcmp(kernelName,"coulomb")==0){
     	kernel = &coulombKernel;
-    	printf("Set kernel to coulombKernel.\n");
+    	if (rank==0) printf("Set kernel to coulombKernel.\n");
+
     }else if (strcmp(kernelName,"yukawa")==0){
         kernel = &yukawaKernel;
-    	printf("Set kernel to yukawaKernel.\n");
+        if (rank==0) printf("Set kernel to yukawaKernel.\n");
+
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
         kernel = &coulombKernel_SS;
-    	printf("Set kernel to coulombKernel_SS.\n");
+        if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+
     }else if (strcmp(kernelName,"yukawa_SS")==0){
         kernel = &yukawaKernel_SS;
-    	printf("Set kernel to yukawaKernel_SS.\n");
+        if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+
     }else{
-    	printf("kernelName = %s.\n", kernelName);
-    	printf("Invalid command line argument for kernelName... aborting.\n");
+    	if (rank==0) printf("kernelName = %s.\n", kernelName);
+    	if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
     	return 1;
     }
 
@@ -347,7 +351,7 @@ int main(int argc, char **argv)
     
     if (rank == 0) {
         fp = fopen(sampdatout, "a");
-        fprintf(fp, "%s, %s, %s, %d, %d, %f, %d, %d,"
+        fprintf(fp, "%s, %s, %s, %d, %d, %f, %s, %d,"
                 "%f, %f, %f, %e \n",
                 sampin1, sampin2, sampout, numparsS, numparsT,
                 kappa, kernelName, numProcs, time_direct_max, time_direct_min,
