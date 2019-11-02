@@ -35,7 +35,7 @@ SET(SRCS_TREEDRIVER
     particles.h
     sort.h
     kernels/kernels.h
-    kernels/Coulomb.c)
+    kernels/kernels.c)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED
@@ -44,7 +44,7 @@ SET(SRCS_DIRECT_DISTRIBUTED
     tools.c tools.h 
     xmalloc.c xmalloc.h
     kernels/kernels.h
-    kernels/Coulomb.c)
+    kernels/kernels.c)
 
 
 if(BUILD_TREECODE AND ENABLE_CPU_BUILD)

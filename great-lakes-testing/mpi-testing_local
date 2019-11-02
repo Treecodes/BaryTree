@@ -9,23 +9,26 @@ BATCHSIZE=100
 KERNEL=1
 KAPPA=0.5
 
+NZ=1
 
-for N in 100000 
+
+for N in 10000 
 do
 	for NX in 2 
 	do
 		for NY in 2
 		do
-			for NZ in 1
+			for KERNEL in coulomb yukawa coulomb_SS yukawa_SS
 			do
 				NP=$(($NX * $NY * $NZ))
-				echo $NP
+				#echo $NP
+				echo $KERNEL
 				SOURCES=/Users/nathanvaughn/Desktop/randomPoints/S${N}_${NX}x_${NY}y_${NZ}z.bin
 				TARGETS=/Users/nathanvaughn/Desktop/randomPoints/T${N}_${NX}x_${NY}y_${NZ}z.bin
 				OFFSETS=/Users/nathanvaughn/Desktop/randomPoints/offsets${N}_${NX}x_${NY}y_${NZ}z.bin
 				DIRECT=/Users/nathanvaughn/Desktop/randomPoints/direct_gpu_${N}.bin
 				OUTPUT=/Users/nathanvaughn/Desktop/randomPoints/tree_gpu_${N}.csv
-				mpirun -n ${NP} direct-distributed-cpu $SOURCES $TARGETS $DIRECT $OUTPUT $N $N $KAPPA $KERNEL 
+                mpirun -n ${NP} direct-distributed-cpu $SOURCES $TARGETS $DIRECT $OUTPUT $N $N $KAPPA $KERNEL 
 				#mpirun -n ${NP} tree-distributed-cpu $SOURCES $TARGETS $OFFSETS $OFFSETS $DIRECT $OUTPUT $N $N $THETA $ORDER $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA 
 			done
 		done   
