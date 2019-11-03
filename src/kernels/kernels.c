@@ -65,7 +65,7 @@ double yukawaKernel_SS( double targetX, double targetY, double targetZ, double t
 					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
 					double kappa){
 
-	double dx, dy, dz, r;
+	double dx, dy, dz, r, G;
 
 	dx = targetX-sourceX;
 	dy = targetY-sourceY;
@@ -73,9 +73,11 @@ double yukawaKernel_SS( double targetX, double targetY, double targetZ, double t
 
 	r = sqrt( (dx*dx) + (dy*dy) + (dz*dz));
 
+	G = exp(-kappa*r)/r;
+
 
 	if (r>DBL_MIN){
-		return (sourceQ-targetQ)*sourceW*exp(-kappa*r)/r;
+		return (sourceQ-targetQ)*sourceW*G;
 	}else{
 		return 0.0;
 	}

@@ -113,32 +113,7 @@ int main(int argc, char **argv)
     kernelName = argv[13];
 
 
-    // Set up kernel
-	double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
-				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-				double kappa);
 
-	if       (strcmp(kernelName,"coulomb")==0){
-		kernel = &coulombKernel;
-		if (rank==0) printf("Set kernel to coulombKernel.\n");
-
-	}else if (strcmp(kernelName,"yukawa")==0){
-		kernel = &yukawaKernel;
-		if (rank==0) printf("Set kernel to yukawaKernel.\n");
-
-	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		kernel = &coulombKernel_SS;
-		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
-
-	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		kernel = &yukawaKernel_SS;
-		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
-
-	}else{
-		if (rank==0) printf("kernelName = %s.\n", kernelName);
-		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
-		return 1;
-	}
 
 
     int numparsSloc, numparsTloc, local_sources_offset, local_targets_offset;
@@ -186,6 +161,9 @@ int main(int argc, char **argv)
     
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
+
+    make_vector(tenergy, numparsTloc);
+	make_vector(denergy, numparsTloc);
 
     sources->num = numparsSloc;
     make_vector(sources->x, numparsSloc);
@@ -238,13 +216,7 @@ int main(int argc, char **argv)
     }
     MPI_File_close(&fpmpi);
 
-    make_vector(tenergy, numparsTloc);
-    make_vector(denergy, numparsTloc);
 
-    for (int i=0; i<numparsTloc; i++){
-    	tenergy[i]=0.0;
-    	denergy[i]=0.0;
-    }
 
     // reading in file containing direct sum results.
     MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -252,6 +224,54 @@ int main(int argc, char **argv)
     MPI_File_seek(fpmpi, (MPI_Offset)((1 + local_targets_offset) * sizeof(double)), MPI_SEEK_SET);
     MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
     MPI_File_close(&fpmpi);
+
+
+    // Set up kernel
+	double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
+				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+				double kappa);
+
+
+
+
+
+
+	if       (strcmp(kernelName,"coulomb")==0){
+		kernel = &coulombKernel;
+		if (rank==0) printf("Set kernel to coulombKernel.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=0.0;
+		}
+
+	}else if (strcmp(kernelName,"yukawa")==0){
+		kernel = &yukawaKernel;
+		if (rank==0) printf("Set kernel to yukawaKernel.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=0.0;
+		}
+
+	}else if (strcmp(kernelName,"coulomb_SS")==0){
+		kernel = &coulombKernel_SS;
+		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+		}
+
+
+	}else if (strcmp(kernelName,"yukawa_SS")==0){
+		kernel = &yukawaKernel_SS;
+		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+		}
+
+	}else{
+		if (rank==0) printf("kernelName = %s.\n", kernelName);
+		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+		return 1;
+	}
+
+
 
 #ifdef OPENACC_ENABLED
     #pragma acc set device_num(rank) device_type(acc_device_nvidia)

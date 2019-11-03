@@ -12,6 +12,7 @@
 #include "tree.h"
 #include "structAllocations.h"
 #include "interaction-masks.h"
+#include "kernels/kernels.h"
 
 #include "treedriver.h"
 
@@ -117,8 +118,21 @@ void treedriver(struct particles *sources, struct particles *targets,
         
 
         time1 = MPI_Wtime();
-        fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
-                                          tree_array);
+
+        if       ( (kernel==&coulombKernel) || (kernel==&yukawaKernel) ){
+			if (rank==0) printf("Calling fill_in_cluster_data.\n");
+
+        	fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
+        	                                          tree_array);
+		}else if ( (kernel==&coulombKernel_SS) || (kernel==&yukawaKernel_SS) ){
+			if (rank==0) printf("Calling fill_in_cluster_data_SS.\n");
+			fill_in_cluster_data_SS(   clusters, sources, troot, interpolationOrder,
+			        	                                          tree_array);
+			printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
+		}else{
+			if (rank==0) printf("Not sure how to fill cluster data... aborting.\n");
+			return ;
+		}
 
         ////// For now, just fill in cluster data for Coulomb and Yukawa Lagrange.  Need to handle Hermite and SS separately.
 

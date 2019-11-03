@@ -97,32 +97,7 @@ int main(int argc, char **argv)
     kernelName = argv[8];
     
 
-// Set up kernel
-    double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
-    			double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-				double kappa);
 
-    if       (strcmp(kernelName,"coulomb")==0){
-    	kernel = &coulombKernel;
-    	if (rank==0) printf("Set kernel to coulombKernel.\n");
-
-    }else if (strcmp(kernelName,"yukawa")==0){
-        kernel = &yukawaKernel;
-        if (rank==0) printf("Set kernel to yukawaKernel.\n");
-
-	}else if (strcmp(kernelName,"coulomb_SS")==0){
-        kernel = &coulombKernel_SS;
-        if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
-
-    }else if (strcmp(kernelName,"yukawa_SS")==0){
-        kernel = &yukawaKernel_SS;
-        if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
-
-    }else{
-    	if (rank==0) printf("kernelName = %s.\n", kernelName);
-    	if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
-    	return 1;
-    }
 
     numparsTloc = (int)floor((double)numparsT/(double)numProcs);
     maxparsTloc = numparsTloc + (numparsT - (int)floor((double)numparsT/(double)numProcs) * numProcs);
@@ -234,14 +209,53 @@ int main(int argc, char **argv)
     MPI_File_close(&fpmpi);
 
     dpeng = 0.0;
-    for (i = 0; i < maxparsTloc; i++) {
-		denergy[i] = 0.0;
-	}
+//    for (i = 0; i < maxparsTloc; i++) {
+//		denergy[i] = 0.0;
+//	}
  
 #ifdef OPENACC_ENABLED
     #pragma acc set device_num(rank) device_type(acc_device_nvidia)
     #pragma acc init device_type(acc_device_nvidia)
 #endif
+
+    // Set up kernel
+	double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
+				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+				double kappa);
+
+	if       (strcmp(kernelName,"coulomb")==0){
+		kernel = &coulombKernel;
+		if (rank==0) printf("Set kernel to coulombKernel.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 0.0;
+		}
+
+	}else if (strcmp(kernelName,"yukawa")==0){
+		kernel = &yukawaKernel;
+		if (rank==0) printf("Set kernel to yukawaKernel.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 0.0;
+		}
+
+	}else if (strcmp(kernelName,"coulomb_SS")==0){
+		kernel = &coulombKernel_SS;
+		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 2.0*M_PI*kappa*kappa*qT[i];
+		}
+
+	}else if (strcmp(kernelName,"yukawa_SS")==0){
+		kernel = &yukawaKernel_SS;
+		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 4.0*M_PI*qT[i]/kappa/kappa;
+		}
+
+	}else{
+		if (rank==0) printf("kernelName = %s.\n", kernelName);
+		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+		return 1;
+	}
 
     /* Interact with self */
     time1 = MPI_Wtime();
