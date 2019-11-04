@@ -65,6 +65,9 @@ void treedriver(struct particles *sources, struct particles *targets,
     struct particles *clusters = NULL;
     clusters = malloc(sizeof(struct particles));
 
+    int max_batch_approx=0;
+	int max_batch_direct=0;
+
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
@@ -310,6 +313,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         int total_batch_direct = 0;
         int total_batch_approx = 0;
          
+
 
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -561,14 +565,15 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         // Compute interaction lists based on LET
+
         if (numProcs > 1) {
         time1 = MPI_Wtime();
 
-        int max_batch_approx = maxval_int(sizeof_batch_approx, batches->num);
-        int max_batch_direct = maxval_int(sizeof_batch_direct, batches->num);
+        max_batch_approx = maxval_int(sizeof_batch_approx, batches->num);
+        max_batch_direct = maxval_int(sizeof_batch_direct, batches->num);
         
-        make_vector(tree_inter_list, batches->num * max_batch_approx);
-        make_vector(direct_inter_list, batches->num * max_batch_direct);
+        if (max_batch_approx>0) make_vector(tree_inter_list, batches->num * max_batch_approx);
+        if (max_batch_direct>0) make_vector(direct_inter_list, batches->num * max_batch_direct);
         pc_make_interaction_list(let_tree_array, batches, tree_inter_list, direct_inter_list,
                                  max_batch_approx, max_batch_direct);
 
@@ -652,8 +657,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     free_vector(local_direct_inter_list);
 
     if (numProcs>1){
-        free_vector(tree_inter_list);
-        free_vector(direct_inter_list);
+    	if (max_batch_approx>0) free_vector(tree_inter_list);
+    	if (max_batch_direct>0) free_vector(direct_inter_list);
     }
 
     // free clusters

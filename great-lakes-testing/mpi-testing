@@ -10,9 +10,9 @@ KAPPA=0.5
 
 COMPAREDIRECT=1
 
-for N in 10000 
+for N in 2500 
 do
-    for NP in 1
+    for NP in 4
     do
         for KERNEL in coulomb yukawa coulomb_SS yukawa_SS
         #for KERNEL in yukawa_SS coulomb_SS

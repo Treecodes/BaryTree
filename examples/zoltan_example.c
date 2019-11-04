@@ -70,17 +70,17 @@ int main(int argc, char **argv)
     tree_type = atoi(argv[8]);
     run_direct_comparison = atoi(argv[9]);
 
-    printf("Read in command line args...\n");
+//    printf("Read in command line args...\n");
 //    mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE $COMPAREDIRECT
 
     int rc, rank, numProcs;
-    printf("Initializing MPI.\n");
+//    printf("Initializing MPI.\n");
     MPI_Init(&argc, &argv);
-    printf("Initialized MPI.\n");
+//    printf("Initialized MPI.\n");
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    printf("Set rank.\n");
+//    printf("Set rank.\n");
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-    printf("Set numProcs.\n");
+//    printf("Set numProcs.\n");
 
     if (rank == 0) fprintf(stderr,"Beginning BaryTree with %d ranks.\n", numProcs);
 
@@ -259,6 +259,7 @@ int main(int argc, char **argv)
 		if (rank==0) printf("Set kernel to coulombKernel.\n");
 		for (int i=0; i<targets->num; i++){
 			potential[i]=0.0;
+			potential_direct[i]=0.0;
 		}
 
 	}else if (strcmp(kernelName,"yukawa")==0){
@@ -267,6 +268,7 @@ int main(int argc, char **argv)
 		if (rank==0) printf("Set kernel to yukawaKernel.\n");
 		for (int i=0; i<targets->num; i++){
 			potential[i]=0.0;
+			potential_direct[i]=0.0;
 		}
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
@@ -275,6 +277,7 @@ int main(int argc, char **argv)
 		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
 		for (int i=0; i<targets->num; i++){
 			potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+			potential_direct[i]=2.0*M_PI*kappa*kappa*targets->q[i];
 		}
 
 
@@ -284,6 +287,7 @@ int main(int argc, char **argv)
 		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
 		for (int i=0; i<targets->num; i++){
 			potential[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+			potential_direct[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
 		}
 
 	}else{
