@@ -1,41 +1,30 @@
+#!/bin/bash
+
+
 TREETYPE=1
-
-SFLAG=1
-PFLAG=0
-DFLAG=0
-
-
-
-DS_CSV=/Users/nathanvaughn/Desktop/randomPoints/directSum_cpu_Coulomb.csv 
-
-
-KAPPA=0.0
-POTENTIALTYPE=0
-
-
-ORDER=4
 THETA=0.8
-BATCHSIZE=1000
-MAXPARNODE=1000
+ORDER=7
+CLUSTERSIZE=100
+BATCHSIZE=100
+KAPPA=0.5
 
-NUMDEVICES=0
-NUMTHREADS=1
-export OMP_NUM_THREADS=$NUMTHREADS
+COMPAREDIRECT=1
 
-OUTFILE=/Users/nathanvaughn/Desktop/randomPoints/cpu_Coulomb.csv 
-for N in 64000
+for N in 10000 
 do
-	echo N=$N
-	SOURCES=/Users/nathanvaughn/Desktop/randomPoints/S$N.bin    
-	TARGETS=/Users/nathanvaughn/Desktop/randomPoints/T$N.bin
-	NUMSOURCES=$N
-	NUMTARGETS=$N
-	DIRECTSUM=/Users/nathanvaughn/Desktop/randomPoints/ex_st_coulomb_$N.bin
-	for np in 2
-	do
-			#mpirun -np $np direct-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $DS_CSV $N $N $KAPPA $POTENTIALTYPE $NUMDEVICES $NUMTHREADS
-			mpirun -np $np tree-distributed-cpu $SOURCES $TARGETS $DIRECTSUM $OUTFILE $N $N $THETA $ORDER \
-							 					$TREETYPE $MAXPARNODE $KAPPA $POTENTIALTYPE $PFLAG $SFLAG $DFLAG $BATCHSIZE \
-							 					$NUMDEVICES $NUMTHREADS
-	done 
-done
+    for NP in 1
+    do
+        for KERNEL in coulomb #yukawa coulomb_SS yukawa_SS
+        #for KERNEL in yukawa_SS coulomb_SS
+        do
+            echo $NP
+            echo $KERNEL
+            SOURCES=/Users/nathanvaughn/Desktop/randomPoints/S${N}_${NX}x_${NY}y_${NZ}z.bin
+            TARGETS=/Users/nathanvaughn/Desktop/randomPoints/T${N}_${NX}x_${NY}y_${NZ}z.bin
+            OFFSETS=/Users/nathanvaughn/Desktop/randomPoints/offsets${N}_${NX}x_${NY}y_${NZ}z.bin
+            DIRECT=/Users/nathanvaughn/Desktop/randomPoints/SS_KI_direct_gpu_${N}.bin
+            OUTPUT=/Users/nathanvaughn/Desktop/randomPoints/SS_KI_tree_gpu_${N}.csv
+            /usr/local/bin/mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE $COMPAREDIRECT 
+            done
+        done   
+done    

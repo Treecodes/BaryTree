@@ -3,10 +3,13 @@
 #include <stdio.h>
 #include <mpi.h>
 #include <zoltan.h>
+#include <time.h>
 
 #include "../src/treedriver.h"
 #include "../src/particles.h"
 #include "../src/tools.h"
+#include "../src/kernels/kernels.h"
+
 
 const unsigned m = 1664525u;
 const unsigned c = 1013904223u;
@@ -53,24 +56,31 @@ static int ztn_obj_size(void *data, int num_gid_entries, int num_lid_entries,
 int main(int argc, char **argv)
 {
     //run parameters
-    int N, pot_type, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison;
+    int N, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison;
     double kappa, theta; 
+    char *kernelName = NULL;
 
     N = atoi(argv[1]);
     order = atoi(argv[2]);
     theta = atof(argv[3]);
     max_per_leaf = atoi(argv[4]);
     max_per_batch = atoi(argv[5]);
-    pot_type = atoi(argv[6]);
+    kernelName = argv[6];
     kappa = atof(argv[7]);
     tree_type = atoi(argv[8]);
     run_direct_comparison = atoi(argv[9]);
 
+    printf("Read in command line args...\n");
+//    mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE $COMPAREDIRECT
 
     int rc, rank, numProcs;
+    printf("Initializing MPI.\n");
     MPI_Init(&argc, &argv);
+    printf("Initialized MPI.\n");
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    printf("Set rank.\n");
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+    printf("Set numProcs.\n");
 
     if (rank == 0) fprintf(stderr,"Beginning BaryTree with %d ranks.\n", numProcs);
 
@@ -97,11 +107,13 @@ int main(int argc, char **argv)
     double time1, time2;
 
 
+    printf("Initializing Zoltan.\n");
     if (Zoltan_Initialize(argc, argv, &ver) != ZOLTAN_OK) {
         printf("Zoltan failed to initialize. Exiting.\n");
         MPI_Finalize();
         exit(0);
     }
+    printf("Initialized Zoltan.\n");
 
     time1 = MPI_Wtime();
 
@@ -232,6 +244,56 @@ int main(int argc, char **argv)
     targets->order = particleOrder;
     
 
+    // Set up kernel
+	double (*directKernel)( double targetX, double targetY, double targetZ, double targetQ,
+					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+					double kappa);
+	double (*approxKernel)( double targetX, double targetY, double targetZ, double targetQ,
+					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+					double kappa);
+
+	printf("Kernel Name: %s\n",kernelName);
+	if       (strcmp(kernelName,"coulomb")==0){
+		directKernel = &coulombKernel;
+		approxKernel = &coulombKernel;
+		if (rank==0) printf("Set kernel to coulombKernel.\n");
+		for (int i=0; i<targets->num; i++){
+			potential[i]=0.0;
+		}
+
+	}else if (strcmp(kernelName,"yukawa")==0){
+		directKernel = &yukawaKernel;
+		approxKernel = &yukawaKernel;
+		if (rank==0) printf("Set kernel to yukawaKernel.\n");
+		for (int i=0; i<targets->num; i++){
+			potential[i]=0.0;
+		}
+
+	}else if (strcmp(kernelName,"coulomb_SS")==0){
+		directKernel = &coulombKernel_SS_direct;
+		approxKernel = &coulombKernel_SS_approx;
+		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+		for (int i=0; i<targets->num; i++){
+			potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+		}
+
+
+	}else if (strcmp(kernelName,"yukawa_SS")==0){
+		directKernel = &yukawaKernel_SS_direct;
+		approxKernel = &yukawaKernel_SS_approx;
+		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+		for (int i=0; i<targets->num; i++){
+			potential[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+		}
+
+	}else{
+		if (rank==0) printf("kernelName = %s.\n", kernelName);
+		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+		return 1;
+	}
+
+
+
 #ifdef OPENACC_ENABLED
     #pragma acc set device_num(rank) device_type(acc_device_nvidia)
     #pragma acc init device_type(acc_device_nvidia)
@@ -247,14 +309,14 @@ int main(int argc, char **argv)
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
         treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
-			       pot_type, kappa, tree_type, potential_direct, &potential_engy_direct, time_tree);
+			       kappa,  (*directKernel), (*approxKernel), tree_type, potential_direct, &potential_engy_direct, time_tree);
         time_direct = MPI_Wtime() - time1;
     }
     
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
 	treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
-			   pot_type, kappa, tree_type, potential, &potential_engy, time_tree);
+			   kappa,  (*directKernel), (*approxKernel), tree_type, potential, &potential_engy, time_tree);
 
     if (rank == 0) fprintf(stderr,"Treedriver has finished.\n");
     

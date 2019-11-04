@@ -33,26 +33,20 @@ void treedriverWrapper(int numTargets, int numSources,
 	if       (strcmp(kernelName,"coulomb")==0){
 		directKernel = &coulombKernel;
 		approxKernel = &coulombKernel;
-//		if (rank==0) printf("Set kernel to coulombKernel.\n");
 
 	}else if (strcmp(kernelName,"yukawa")==0){
 		directKernel = &yukawaKernel;
 		approxKernel = &yukawaKernel;
-//		if (rank==0) printf("Set kernel to yukawaKernel.\n");
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
 		directKernel = &coulombKernel_SS_direct;
 		approxKernel = &coulombKernel_SS_approx;
-//		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
 
 	}else if (strcmp(kernelName,"yukawa_SS")==0){
 		directKernel = &yukawaKernel_SS_direct;
 		approxKernel = &yukawaKernel_SS_approx;
-//		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
 
 	}else{
-//		if (rank==0) printf("kernelName = %s.\n", kernelName);
-//		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
 		return;
 	}
 
