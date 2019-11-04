@@ -22,24 +22,32 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *outputArray, char *kernelName, double kappa,
 		int order, double theta, int maxparnode, int batch_size) {
 
-	double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
+	// Set up kernels
+	double (*directKernel)( double targetX, double targetY, double targetZ, double targetQ,
+					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+					double kappa);
+	double (*approxKernel)( double targetX, double targetY, double targetZ, double targetQ,
 					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
 					double kappa);
 
 	if       (strcmp(kernelName,"coulomb")==0){
-		kernel = &coulombKernel;
+		directKernel = &coulombKernel;
+		approxKernel = &coulombKernel;
 //		if (rank==0) printf("Set kernel to coulombKernel.\n");
 
 	}else if (strcmp(kernelName,"yukawa")==0){
-		kernel = &yukawaKernel;
+		directKernel = &yukawaKernel;
+		approxKernel = &yukawaKernel;
 //		if (rank==0) printf("Set kernel to yukawaKernel.\n");
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		kernel = &coulombKernel_SS;
+		directKernel = &coulombKernel_SS_direct;
+		approxKernel = &coulombKernel_SS_approx;
 //		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
 
 	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		kernel = &yukawaKernel_SS;
+		directKernel = &yukawaKernel_SS_direct;
+		approxKernel = &yukawaKernel_SS_approx;
 //		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
 
 	}else{
@@ -80,7 +88,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	// Call the treedriver
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
-			   kappa, (*kernel), tree_type,
+			   kappa, (*directKernel), (*approxKernel), tree_type,
 			   outputArray, &tpeng, time_tree);
 
 	free(sources);

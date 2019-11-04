@@ -14,12 +14,12 @@ NZ=1
 
 for N in 10000 
 do
-	for NX in 1 
+	for NX in 1
 	do
 		for NY in 1
 		do
-            #for KERNEL in coulomb yukawa coulomb_SS yukawa_SS
-            for KERNEL in coulomb_SS #yukawa_SS
+            for KERNEL in coulomb yukawa coulomb_SS yukawa_SS
+            #for KERNEL in yukawa_SS coulomb_SS
 			do
 				NP=$(($NX * $NY * $NZ))
 				#echo $NP

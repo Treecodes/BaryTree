@@ -238,14 +238,14 @@ int main(int argc, char **argv)
 		}
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		kernel = &coulombKernel_SS;
+		kernel = &coulombKernel_SS_direct;
 		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
 		for (i = 0; i < maxparsTloc; i++) {
 			denergy[i] = 2.0*M_PI*kappa*kappa*qT[i];
 		}
 
 	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		kernel = &yukawaKernel_SS;
+		kernel = &yukawaKernel_SS_direct;
 		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
 		for (i = 0; i < maxparsTloc; i++) {
 			denergy[i] = 4.0*M_PI*qT[i]/kappa/kappa;

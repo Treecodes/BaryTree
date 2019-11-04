@@ -50,6 +50,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         double *yC = clusters->y;
         double *zC = clusters->z;
         double *qC = clusters->q;
+        double *wC = clusters->w;
 
         int totalNumberSourcePoints = sources->num;
         int interpolationPointsPerDimension = (interpolationOrder+1);
@@ -58,11 +59,11 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 #ifdef OPENACC_ENABLED
         #pragma acc data copyin(tt[0:interpolationPointsPerDimension], \
         xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], wS[0:totalNumberSourcePoints]) \
-        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints] )
+        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints], wC[0:totalNumberInterpolationPoints] )
         {
 #endif
             for (int i = 0; i < tree_numnodes; i++) {
-            	pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC);
+            	pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
             }
 #ifdef OPENACC_ENABLED
             #pragma acc wait
@@ -75,7 +76,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 
 void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpolationOrder,
         double *xS, double *yS, double *zS, double *qS, double *wS,
-        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
+        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
 {
     int interpolationPointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
     int sourcePointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
@@ -86,8 +87,9 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 
     double weights[(interpolationOrder+1)];
     double dj[(interpolationOrder+1)];
-    double *modifiedF;
+    double *modifiedF, *modifiedF2;
     make_vector(modifiedF,sourcePointsInCluster);
+    make_vector(modifiedF2,sourcePointsInCluster);
 
     double nodeX[(interpolationOrder+1)], nodeY[(interpolationOrder+1)], nodeZ[(interpolationOrder+1)];
 
@@ -120,6 +122,8 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 #endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
         modifiedF[j] = qS[startingIndexInSourcesArray+j] * wS[startingIndexInSourcesArray+j];
+//        modifiedF[j] = qS[startingIndexInSourcesArray+j];
+//        modifiedF2[j] = wS[startingIndexInSourcesArray+j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;
@@ -194,11 +198,12 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
         if (exactIndZ[i]==-1) denominator *= sumZ;
 
         modifiedF[i] /= denominator;
+//        modifiedF2[i] /= denominator;
 
     }
 
     // Compute moments for each interpolation point
-    double numerator, xn, yn, zn, temp;
+    double numerator, xn, yn, zn, temp, temp2;
     int k1, k2, k3, kk;
     double w1,w2,w3;
 
@@ -229,6 +234,7 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 
         // Increment cluster Q array
         temp = 0.0;
+        temp2 = 0.0;
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent
 #endif
@@ -260,8 +266,12 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
             }
 
             temp += numerator * modifiedF[i];
+//            temp2 += numerator*modifiedF2[i];
+//            temp2 += modifiedF2[i];
         }
         clusterQ[startingIndexInClustersArray + j] += temp;
+//        clusterW[startingIndexInClustersArray + j] += temp2;
+//        clusterW[startingIndexInClustersArray + j] = 1.0;
     }
 #ifdef OPENACC_ENABLED
     }
@@ -289,7 +299,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
 								  int numSources, int numTargets, int numClusters,
                                   int batch_approx_offset, int batch_direct_offset,
-								  double (*kernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+								  double (*directKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+								  double (*approxKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
 								  double kappa)
 {
         int i, j;
@@ -396,7 +407,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 //                        dyt = yi - yC[clusterStart + jj];
 //                        dzt = zi - zC[clusterStart + jj];
 //                        tempPotential += qC[clusterStart + jj] / sqrt(dxt*dxt + dyt*dyt + dzt*dzt);
-                        tempPotential += kernel(xi, yi, zi, qi, xC[clusterStart + jj], yC[clusterStart + jj], zC[clusterStart + jj], qC[clusterStart + jj], wC[clusterStart + jj], kappa);
+                        tempPotential += approxKernel(xi, yi, zi, qi, xC[clusterStart + jj], yC[clusterStart + jj], zC[clusterStart + jj], qC[clusterStart + jj], wC[clusterStart + jj], kappa);
 
                     }
 #ifdef OPENACC_ENABLED
@@ -430,7 +441,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 //                        ty = yS[jj] - yT[ii];
 //                        tz = zS[jj] - zT[ii];
 //                        r = sqrt(tx*tx + ty*ty + tz*tz);
-                        d_peng += kernel(xT[ii], yT[ii], zT[ii], qT[ii], xS[jj], yS[jj], zS[jj], qS[jj], wS[jj], kappa);
+                        d_peng += directKernel(xT[ii], yT[ii], zT[ii], qT[ii], xS[jj], yS[jj], zS[jj], qS[jj], wS[jj], kappa);
 
 //                        if (r > DBL_MIN) {
 //                            d_peng += qS[jj] * wS[jj] / r;
