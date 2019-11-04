@@ -47,17 +47,11 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_COMPILE_OPTIONS
                                          -acc
                                          -ta=tesla:ccall,cc60$<$<CONFIG:Debug>:,time>
-                                         -Minfo
-                                         -lnvToolsExt)
+                                         -Minfo)
 set_property(TARGET OpenACC_C        PROPERTY
                                          INTERFACE_LINK_LIBRARIES
                                          -acc
-                                         -ta=tesla:ccall,cc60
-                                         -lnvToolsExt)
-
-target_link_directories(OpenACC_C INTERFACE /sw/ascent/cuda/10.1.105/lib64)
-#find_package(CUDA)
-#message(" its here ${CUDA_nvToolsExt_LIBRARY}")
+                                         -ta=tesla:ccall,cc60)
 
 if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
     message("GPU build requires PGI compilers! Turning GPU build off.")
