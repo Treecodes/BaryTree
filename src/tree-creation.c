@@ -99,8 +99,6 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
     (*p)->level = level;
 
 
-    if (maxlevel < level) maxlevel = level;
-
     (*p)->num_children = 0;
     for (i = 0; i < 8; i++)
         (*p)->child[i] = NULL;
@@ -157,10 +155,6 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
     } else {
    
         {     
-            if (level < minlevel) minlevel = level;
-            if (minpars > (*p)->numpar) minpars = (*p)->numpar;
-            if (maxpars < (*p)->numpar) maxpars = (*p)->numpar;
-        
             /* increment number of leaves */
             numleaves++;
         }

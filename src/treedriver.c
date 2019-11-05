@@ -53,10 +53,6 @@ void treedriver(struct particles *sources, struct particles *targets,
     
     level = 0;
     numleaves = 0;
-    minlevel = INT_MAX;
-    minpars = INT_MAX;
-    maxlevel = 0;
-    maxpars = 0;
     
     int *tree_inter_list, *local_tree_inter_list;
     int *direct_inter_list, *local_direct_inter_list;
@@ -174,10 +170,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         printf("                      torder: %d\n", torder);
         printf("                       theta: %f\n", theta);
         printf("                  maxparnode: %d\n", maxparnode);
-        printf("               tree maxlevel: %d\n", maxlevel);
-        printf("               tree minlevel: %d\n", minlevel);
-        printf("                tree maxpars: %d\n", maxpars);
-        printf("                tree minpars: %d\n", minpars);
         printf("            number of leaves: %d\n", numleaves);
         printf("             number of nodes: %d\n", numnodes);
         printf("           target batch size: %d\n", batch_size);

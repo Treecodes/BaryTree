@@ -25,10 +25,8 @@ double ***b1 = NULL;
 int *orderarr = NULL;
 
 int torder, torderlim, torderflat;
-int minlevel, maxlevel;
-int maxpars, minpars;
-int numleaves;
 
+int numleaves;
 int numnodes;
 
 double tarpos[3];
@@ -40,10 +38,6 @@ double ***a1 = NULL;
 
 /* variable used by kernel independent moment computation */
 double *tt, *ww;
-
-double *unscaledQuadratureWeights;
-
-
 
 
 void setup(struct particles *particles, int order, double theta,
@@ -194,8 +188,6 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
     (*p)->level = level;
 
 
-    if (maxlevel < level) maxlevel = level;
-
     (*p)->num_children = 0;
     for (i = 0; i < 8; i++)
         (*p)->child[i] = NULL;
@@ -242,10 +234,6 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
 
     } else {
 
-        if (level < minlevel) minlevel = level;
-        if (minpars > (*p)->numpar) minpars = (*p)->numpar;
-        if (maxpars < (*p)->numpar) maxpars = (*p)->numpar;
-        
         numleaves++;
     }
     printf("Exiting cp_create_tree_n0.\n");
