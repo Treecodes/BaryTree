@@ -9,7 +9,7 @@
 #include "array.h"
 #include "tools.h"
 #include "direct.h"
-
+#include "kernels/kernels.h"
 
 int main(int argc, char **argv)
 {
@@ -21,9 +21,10 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
+
+
     /* runtime parameters */
     int numparsS, numparsT;
-    int pot_type;
 
     /* arrays for coordinates, charges, energy of target particles */
     /* source particles */
@@ -53,7 +54,7 @@ int main(int argc, char **argv)
     double total_time_start, total_time_stop;
     
     /* input and output files */
-    char *sampin1, *sampin2, *sampout, *sampdatout;
+    char *sampin1, *sampin2, *sampout, *sampdatout, *kernelName;
     FILE *fp;
 
     //local variables
@@ -93,8 +94,11 @@ int main(int argc, char **argv)
     numparsS = atoi(argv[5]);
     numparsT = atoi(argv[6]);
     kappa = atof(argv[7]);
-    pot_type = atoi(argv[8]);
+    kernelName = argv[8];
     
+
+
+
     numparsTloc = (int)floor((double)numparsT/(double)numProcs);
     maxparsTloc = numparsTloc + (numparsT - (int)floor((double)numparsT/(double)numProcs) * numProcs);
 
@@ -205,14 +209,53 @@ int main(int argc, char **argv)
     MPI_File_close(&fpmpi);
 
     dpeng = 0.0;
-    for (i = 0; i < maxparsTloc; i++) {
-		denergy[i] = 0.0;
-	}
+//    for (i = 0; i < maxparsTloc; i++) {
+//		denergy[i] = 0.0;
+//	}
  
 #ifdef OPENACC_ENABLED
     #pragma acc set device_num(rank) device_type(acc_device_nvidia)
     #pragma acc init device_type(acc_device_nvidia)
 #endif
+
+    // Set up kernel
+	double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
+				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+				double kappa);
+
+	if       (strcmp(kernelName,"coulomb")==0){
+		kernel = &coulombKernel;
+		if (rank==0) printf("Set kernel to coulombKernel.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 0.0;
+		}
+
+	}else if (strcmp(kernelName,"yukawa")==0){
+		kernel = &yukawaKernel;
+		if (rank==0) printf("Set kernel to yukawaKernel.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 0.0;
+		}
+
+	}else if (strcmp(kernelName,"coulomb_SS")==0){
+		kernel = &coulombKernel_SS_direct;
+		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 2.0*M_PI*kappa*kappa*qT[i];
+		}
+
+	}else if (strcmp(kernelName,"yukawa_SS")==0){
+		kernel = &yukawaKernel_SS_direct;
+		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+		for (i = 0; i < maxparsTloc; i++) {
+			denergy[i] = 4.0*M_PI*qT[i]/kappa/kappa;
+		}
+
+	}else{
+		if (rank==0) printf("kernelName = %s.\n", kernelName);
+		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+		return 1;
+	}
 
     /* Interact with self */
     time1 = MPI_Wtime();
@@ -230,7 +273,7 @@ int main(int argc, char **argv)
 
 	if (numProcs == 1) { // one 1 proc, won't enter into the round robin below.  So just interact with self here.
 		direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-						denergy, &dpeng, pot_type, kappa);
+						denergy, &dpeng, kappa, (*kernel));
 	} else {
 
 		for (int procID = 1; procID < numProcs; procID++) {
@@ -247,9 +290,9 @@ int main(int argc, char **argv)
 
 				if (procID==1) { // in first iteration of loop, interact with self.
 					direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, pot_type, kappa);
+											denergy, &dpeng, kappa, (*kernel));
 				} else { // in subsequent iterations, interact with foreign
-					direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, pot_type, kappa);
+					direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa,(*kernel));
 					for (i=0;i<5*maxparsSloc;i++){
 							S_foreign2[i]=0.0;
 						}
@@ -258,7 +301,7 @@ int main(int argc, char **argv)
 				MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
 				MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
-				direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, pot_type, kappa);
+				direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa, (*kernel));
 				for (i=0;i<5*maxparsSloc;i++){
 						S_foreign1[i]=0.0;
 					}
@@ -274,10 +317,10 @@ int main(int argc, char **argv)
 
 		if ((numProcs-1)%2==1) { // in final loop, S_foreign1 was received but not yet computed with
 			direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, pot_type, kappa);
+											denergy, &dpeng, kappa, (*kernel));
 		} else { // S_foreign2 is the one that needs to be computed with
 			direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, pot_type, kappa);
+											denergy, &dpeng, kappa, (*kernel));
 		}
 	}
 
@@ -322,10 +365,10 @@ int main(int argc, char **argv)
     
     if (rank == 0) {
         fp = fopen(sampdatout, "a");
-        fprintf(fp, "%s, %s, %s, %d, %d, %f, %d, %d,"
+        fprintf(fp, "%s, %s, %s, %d, %d, %f, %s, %d,"
                 "%f, %f, %f, %e \n",
                 sampin1, sampin2, sampout, numparsS, numparsT,
-                kappa, pot_type, numProcs, time_direct_max, time_direct_min,
+                kappa, kernelName, numProcs, time_direct_max, time_direct_min,
                 time_direct_tot/(double)numProcs, dpengglob);
         fclose(fp);
     }

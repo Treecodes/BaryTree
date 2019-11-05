@@ -12,6 +12,7 @@
 #include "tree.h"
 #include "structAllocations.h"
 #include "interaction-masks.h"
+#include "kernels/kernels.h"
 
 #include "treedriver.h"
 
@@ -20,13 +21,15 @@
 
 void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
-                int pot_type, double kappa, int tree_type,
-                double *tEn, double *tpeng, double *time_tree)
+                double kappa,
+				double (*directKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+				double (*approxKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+				int tree_type,double *tEn, double *tpeng, double *time_tree)
 {
 
     double time_beg = MPI_Wtime();
 
-    int verbosity = 1;
+    int verbosity = 0;
 
     int rank=0, numProcs=1, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -61,6 +64,9 @@ void treedriver(struct particles *sources, struct particles *targets,
     numnodes = 0;
     struct particles *clusters = NULL;
     clusters = malloc(sizeof(struct particles));
+
+    int max_batch_approx=0;
+	int max_batch_direct=0;
 
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
@@ -117,21 +123,39 @@ void treedriver(struct particles *sources, struct particles *targets,
         
 
         time1 = MPI_Wtime();
-        if         ((pot_type == 0) || (pot_type==1)) {
-            fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
-                                  tree_array);
 
-        } else if  ((pot_type == 2) || (pot_type==3)) {
-//            fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder);
-            fill_in_cluster_data_SS(   clusters, sources, troot, interpolationOrder,
-                                              tree_array);
+        if       ( (directKernel==&coulombKernel) || (directKernel==&yukawaKernel) ){
+			if (rank==0) printf("Calling fill_in_cluster_data.\n");
 
-        } else if  ((pot_type == 4) || (pot_type==5)) {
-            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
+        	fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
+									  tree_array);
+		}else if ( (directKernel==&coulombKernel_SS_direct) || (directKernel==&yukawaKernel_SS_direct) ){
+			if (rank==0) printf("Calling fill_in_cluster_data_SS.\n");
+			fill_in_cluster_data_SS(   clusters, sources, troot, interpolationOrder,
+									  tree_array);
+			printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
+		}else{
+			if (rank==0) printf("Not sure how to fill cluster data... aborting.\n");
+			return ;
+		}
 
-        } else if  ((pot_type == 6) || (pot_type==7)) {
-            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
-        }
+        ////// For now, just fill in cluster data for Coulomb and Yukawa Lagrange.  Need to handle Hermite and SS separately.
+
+//        if         ((pot_type == 0) || (pot_type==1)) {
+//            fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
+//                                  tree_array);
+//
+//        } else if  ((pot_type == 2) || (pot_type==3)) {
+////            fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder);
+//            fill_in_cluster_data_SS(   clusters, sources, troot, interpolationOrder,
+//                                              tree_array);
+//
+//        } else if  ((pot_type == 4) || (pot_type==5)) {
+//            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
+//
+//        } else if  ((pot_type == 6) || (pot_type==7)) {
+//            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
+//        }
         time_tree[4] = MPI_Wtime() - time1; //time_fillclusters
     }
     
@@ -289,6 +313,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         int total_batch_direct = 0;
         int total_batch_approx = 0;
          
+
 
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -530,23 +555,25 @@ void treedriver(struct particles *sources, struct particles *targets,
                         local_tree_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
-                        clusters->x, clusters->y, clusters->z, clusters->q,
+                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
                         tpeng, tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
-                        tree_array->numnodes, tree_array->numnodes);
+                        tree_array->numnodes, tree_array->numnodes,
+						(*directKernel),(*approxKernel),kappa);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 
         // Compute interaction lists based on LET
+
         if (numProcs > 1) {
         time1 = MPI_Wtime();
 
-        int max_batch_approx = maxval_int(sizeof_batch_approx, batches->num);
-        int max_batch_direct = maxval_int(sizeof_batch_direct, batches->num);
+        max_batch_approx = maxval_int(sizeof_batch_approx, batches->num);
+        max_batch_direct = maxval_int(sizeof_batch_direct, batches->num);
         
-        make_vector(tree_inter_list, batches->num * max_batch_approx);
-        make_vector(direct_inter_list, batches->num * max_batch_direct);
+        if (max_batch_approx>0) make_vector(tree_inter_list, batches->num * max_batch_approx);
+        if (max_batch_direct>0) make_vector(direct_inter_list, batches->num * max_batch_direct);
         pc_make_interaction_list(let_tree_array, batches, tree_inter_list, direct_inter_list,
                                  max_batch_approx, max_batch_direct);
 
@@ -558,7 +585,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         // After filling LET, call interaction_list_treecode
         time1 = MPI_Wtime(); // start timer for tree evaluation
-        if (pot_type == 0) {
+//        if (pot_type == 0) {
             if (verbosity>0) printf("Entering particle-cluster, pot_type=0 (Coulomb).\n");
 //            pc_interaction_list_treecode(let_tree_array, let_clusters, batches,
 //                                         tree_inter_list, direct_inter_list, let_sources, targets,
@@ -567,53 +594,54 @@ void treedriver(struct particles *sources, struct particles *targets,
                                     tree_inter_list, direct_inter_list,
                                     let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                     targets->x, targets->y, targets->z, targets->q,
-                                    let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q,
+                                    let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q, let_clusters->w,
                                     tpeng, tEn, interpolationOrder,
                                     let_sources->num, targets->num, let_clusters->num,
-                                    max_batch_approx, max_batch_direct);
+                                    max_batch_approx, max_batch_direct,
+									(*directKernel),(*approxKernel), kappa);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");
 
-        } else if (pot_type == 1) {
-            if (verbosity>0) printf("Entering particle-cluster, pot_type=1 (Yukawa).  Need to modify to call on let_tree_array, let_clusters, etc. ????\n");
-            pc_interaction_list_treecode_yuk(let_tree_array, let_clusters, batches,
-                                             tree_inter_list, direct_inter_list, let_sources, targets,
-                                             tpeng, kappa, tEn);
-
-        } else if (pot_type == 2) {
-            if (verbosity>0) printf("Entering particle-cluster, pot_type=2 (Coulomb w/ singularity subtraction).\n");
-//            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
-//                                   kappa, tpeng, tEn);
-          pc_interaction_list_treecode_Coulomb_SS(let_tree_array, let_clusters, batches,
-                                                  tree_inter_list, direct_inter_list, let_sources, targets,
-                                                  tpeng, kappa, tEn);
-
-        } else if (pot_type == 3) {
-            if (verbosity>0) printf("Entering particle-cluster, pot_type=3 (Yukawa w/ singularity subtraction).\n");
-//            pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
-//                               kappa, tpeng, tEn);
-            pc_interaction_list_treecode_yuk_SS(let_tree_array, let_clusters, batches,
-                                             tree_inter_list, direct_inter_list, let_sources, targets,
-                                             tpeng, kappa, tEn);
-
-        } else if (pot_type == 4) {
-            if (verbosity>0) printf("Entering particle-cluster, pot_type=4 (Coulomb Hermite).\n");
-            pc_interaction_list_treecode_hermite_coulomb(let_tree_array, clusters, batches,
-                                                    tree_inter_list, direct_inter_list, sources, targets,
-                                                    tpeng, tEn);
-
-        }else if (pot_type == 5) {
-            if (verbosity>0) printf("Entering particle-cluster, pot_type=4 (Yukawa Hermite).\n");
-            pc_interaction_list_treecode_hermite_yukawa(let_tree_array, clusters, batches,
-                                                    tree_inter_list, direct_inter_list, sources, targets,
-                                                    tpeng, kappa, tEn);
-
-        }else if (pot_type == 6) {
-            if (verbosity>0) printf("Entering particle-cluster, pot_type=6 (Coulomb Hermite w/ singularity subtraction).\n");
-            pc_treecode_hermite_coulomb_SS(troot, batches, sources, targets, clusters,
-                                           kappa, tpeng, tEn);
-        }
+//        } else if (pot_type == 1) {
+//            if (verbosity>0) printf("Entering particle-cluster, pot_type=1 (Yukawa).  Need to modify to call on let_tree_array, let_clusters, etc. ????\n");
+//            pc_interaction_list_treecode_yuk(let_tree_array, let_clusters, batches,
+//                                             tree_inter_list, direct_inter_list, let_sources, targets,
+//                                             tpeng, kappa, tEn);
+//
+//        } else if (pot_type == 2) {
+//            if (verbosity>0) printf("Entering particle-cluster, pot_type=2 (Coulomb w/ singularity subtraction).\n");
+////            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
+////                                   kappa, tpeng, tEn);
+//          pc_interaction_list_treecode_Coulomb_SS(let_tree_array, let_clusters, batches,
+//                                                  tree_inter_list, direct_inter_list, let_sources, targets,
+//                                                  tpeng, kappa, tEn);
+//
+//        } else if (pot_type == 3) {
+//            if (verbosity>0) printf("Entering particle-cluster, pot_type=3 (Yukawa w/ singularity subtraction).\n");
+////            pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
+////                               kappa, tpeng, tEn);
+//            pc_interaction_list_treecode_yuk_SS(let_tree_array, let_clusters, batches,
+//                                             tree_inter_list, direct_inter_list, let_sources, targets,
+//                                             tpeng, kappa, tEn);
+//
+//        } else if (pot_type == 4) {
+//            if (verbosity>0) printf("Entering particle-cluster, pot_type=4 (Coulomb Hermite).\n");
+//            pc_interaction_list_treecode_hermite_coulomb(let_tree_array, clusters, batches,
+//                                                    tree_inter_list, direct_inter_list, sources, targets,
+//                                                    tpeng, tEn);
+//
+//        }else if (pot_type == 5) {
+//            if (verbosity>0) printf("Entering particle-cluster, pot_type=4 (Yukawa Hermite).\n");
+//            pc_interaction_list_treecode_hermite_yukawa(let_tree_array, clusters, batches,
+//                                                    tree_inter_list, direct_inter_list, sources, targets,
+//                                                    tpeng, kappa, tEn);
+//
+//        }else if (pot_type == 6) {
+//            if (verbosity>0) printf("Entering particle-cluster, pot_type=6 (Coulomb Hermite w/ singularity subtraction).\n");
+//            pc_treecode_hermite_coulomb_SS(troot, batches, sources, targets, clusters,
+//                                           kappa, tpeng, tEn);
+//        }
         }
         
         reorder_energies(batches->reorder, targets->num, tEn);
@@ -629,8 +657,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     free_vector(local_direct_inter_list);
 
     if (numProcs>1){
-        free_vector(tree_inter_list);
-        free_vector(direct_inter_list);
+    	if (max_batch_approx>0) free_vector(tree_inter_list);
+    	if (max_batch_direct>0) free_vector(direct_inter_list);
     }
 
     // free clusters

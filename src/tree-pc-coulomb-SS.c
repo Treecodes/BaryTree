@@ -18,6 +18,7 @@
 
 void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sources, struct tnode *troot, int order, struct tnode_array * tree_array){
 
+	printf("Entering fill_in_cluster_data_SS\n");
 	int tree_numnodes = tree_array->numnodes;
     int pointsPerCluster = (order+1)*(order+1)*(order+1);
     int numInterpPoints = tree_numnodes * pointsPerCluster;
@@ -175,6 +176,7 @@ void pc_comp_ms_modifiedF_SS(struct tnode_array * tree_array, int idx,
 #endif
     for (j = 0; j < pointsInNode; j++) {
         modifiedF[j] = qS[startingIndexInSources+j] * wS[startingIndexInSources+j];
+//        modifiedF[j] = qS[startingIndexInSources+j];
         modifiedF2[j] = wS[startingIndexInSources+j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;

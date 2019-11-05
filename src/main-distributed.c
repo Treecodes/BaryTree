@@ -9,6 +9,7 @@
 #include "tools.h"
 #include "particles.h"
 #include "sort.h"
+#include "kernels/kernels.h"
 
 
 int main(int argc, char **argv)
@@ -21,7 +22,7 @@ int main(int argc, char **argv)
 
     /* runtime parameters */
     int numparsS, numparsT, order;
-    int maxparnode, batch_size, pot_type;
+    int maxparnode, batch_size;
     double theta, kappa;
 
     struct particles *sources = NULL;
@@ -46,6 +47,7 @@ int main(int argc, char **argv)
     char *offset1 = NULL;
     char *offset2 = NULL;
     char *sampout = NULL;
+    char *kernelName = NULL;
     FILE *fp;
 
     double buf[5];
@@ -106,9 +108,14 @@ int main(int argc, char **argv)
     order = atoi(argv[10]);
     maxparnode = atoi(argv[11]);
     batch_size = atoi(argv[12]);
-    pot_type = atoi(argv[13]);
     kappa = atof(argv[14]);
     
+    kernelName = argv[13];
+
+
+
+
+
     int numparsSloc, numparsTloc, local_sources_offset, local_targets_offset;
     
     if ((mpi_err = MPI_File_open(MPI_COMM_WORLD, offset1,
@@ -154,6 +161,9 @@ int main(int argc, char **argv)
     
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
+
+    make_vector(tenergy, numparsTloc);
+	make_vector(denergy, numparsTloc);
 
     sources->num = numparsSloc;
     make_vector(sources->x, numparsSloc);
@@ -206,13 +216,7 @@ int main(int argc, char **argv)
     }
     MPI_File_close(&fpmpi);
 
-    make_vector(tenergy, numparsTloc);
-    make_vector(denergy, numparsTloc);
 
-    for (int i=0; i<numparsTloc; i++){
-    	tenergy[i]=0.0;
-    	denergy[i]=0.0;
-    }
 
     // reading in file containing direct sum results.
     MPI_File_open(MPI_COMM_SELF, sampin3, MPI_MODE_RDONLY, MPI_INFO_NULL, &fpmpi);
@@ -220,6 +224,61 @@ int main(int argc, char **argv)
     MPI_File_seek(fpmpi, (MPI_Offset)((1 + local_targets_offset) * sizeof(double)), MPI_SEEK_SET);
     MPI_File_read(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
     MPI_File_close(&fpmpi);
+
+
+    // Set up kernel
+    double (*directKernel)( double targetX, double targetY, double targetZ, double targetQ,
+    				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+    				double kappa);
+    double (*approxKernel)( double targetX, double targetY, double targetZ, double targetQ,
+    				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+    				double kappa);
+
+
+
+
+
+
+	if       (strcmp(kernelName,"coulomb")==0){
+		directKernel = &coulombKernel;
+		approxKernel = &coulombKernel;
+		if (rank==0) printf("Set kernel to coulombKernel.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=0.0;
+		}
+
+	}else if (strcmp(kernelName,"yukawa")==0){
+		directKernel = &yukawaKernel;
+		approxKernel = &yukawaKernel;
+		if (rank==0) printf("Set kernel to yukawaKernel.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=0.0;
+		}
+
+	}else if (strcmp(kernelName,"coulomb_SS")==0){
+		directKernel = &coulombKernel_SS_direct;
+		approxKernel = &coulombKernel_SS_approx;
+		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+		}
+
+
+	}else if (strcmp(kernelName,"yukawa_SS")==0){
+		directKernel = &yukawaKernel_SS_direct;
+		approxKernel = &yukawaKernel_SS_approx;
+		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+		for (int i=0; i<numparsTloc; i++){
+			tenergy[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+		}
+
+	}else{
+		if (rank==0) printf("kernelName = %s.\n", kernelName);
+		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+		return 1;
+	}
+
+
 
 #ifdef OPENACC_ENABLED
     #pragma acc set device_num(rank) device_type(acc_device_nvidia)
@@ -235,7 +294,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               pot_type, kappa, 1, tenergy, &tpeng, time_tree);
+               kappa, (*directKernel), (*approxKernel), 1, tenergy, &tpeng, time_tree);
                
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];
@@ -368,12 +427,13 @@ int main(int argc, char **argv)
     }
     
     if (rank == 0) {
+//    	printf("Opening sampout...\n");
         fp = fopen(sampout, "a");
-        fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%d,%f,%d,"
+        fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%f,%s,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
             sampin1, sampin2, sampin3, numparsS, numparsT, theta, order,
-            maxparnode, batch_size, kappa, pot_type, numProcs, //1 ends
+            maxparnode, batch_size, kappa, kernelName, numProcs, //1 ends
             time_run_glob[0][0],  time_run_glob[1][0],
             time_run_glob[2][0]/numProcs,
             time_run_glob[0][1],  time_run_glob[1][1],
