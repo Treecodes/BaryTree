@@ -94,7 +94,7 @@ void cp_comp_direct_yuk(double *EnP, int ibeg, int iend,
 /* used by particle-cluster */
 void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
-                       int level);
+                       int level, int *numnodes, int *numleaves);
 
 int pc_set_tree_index(struct tnode *p, int index);
 

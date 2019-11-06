@@ -19,7 +19,7 @@
 
 void pc_create_tree_n0(struct tnode **p, struct particles *sources,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
-                       int level)
+                       int level, int *numnodes, int *numleaves)
 {
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
@@ -51,7 +51,7 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
 
 
     /* increment number of nodes */
-    numnodes++;
+    (*numnodes)++;
 
     /* set node fields: number of particles, exist_ms, and xyz bounds */
     (*p)->numpar = iend - ibeg + 1;
@@ -147,7 +147,8 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
 
                 pc_create_tree_n0(paddress,
                                   sources, ind[i][0], ind[i][1],
-                                  maxparnode, lxyzmm, loclev);
+                                  maxparnode, lxyzmm, loclev,
+                                  numnodes, numleaves);
 
             }
         }
@@ -156,7 +157,7 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
    
         {     
             /* increment number of leaves */
-            numleaves++;
+            (*numleaves)++;
         }
     }
 
@@ -175,8 +176,6 @@ int pc_set_tree_index(struct tnode *p, int index)
 
         return current_index;
 }
-
-
 
 
 

@@ -15,7 +15,7 @@
 
 
 void remote_interaction_lists(const struct tnode_array *tree_array, struct batch *batches,
-					int *approx_list_unpacked,int *approx_list_packed, int *direct_list, int numnodes,
+					int *approx_list_unpacked,int *approx_list_packed, int *direct_list,
                     int *num_batch_approx, int *num_batch_direct)
 {
     /* local variables */
@@ -51,9 +51,9 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
     tree_num_children = tree_array->num_children;
     tree_children = tree_array->children;
 
-    for (int i = 0; i < numnodes; i++) approx_list_unpacked[i] = -1;
-    for (int i = 0; i < numnodes; i++) approx_list_packed[i] = -1;
-   	for (int i = 0; i < numnodes; i++) direct_list[i] = -1;
+    for (int i = 0; i < tree_numnodes; i++) approx_list_unpacked[i] = -1;
+    for (int i = 0; i < tree_numnodes; i++) approx_list_packed[i] = -1;
+   	for (int i = 0; i < tree_numnodes; i++) direct_list[i] = -1;
 
 
     int **temp_tree_inter_list, **temp_direct_inter_list;
@@ -119,7 +119,7 @@ void remote_interaction_lists(const struct tnode_array *tree_array, struct batch
 
 
     int approx_counter = 0;
-    for (int i = 0; i < numnodes; i++) {
+    for (int i = 0; i < tree_numnodes; i++) {
         if (approx_list_unpacked[i] > -1) {
             approx_list_packed[approx_counter] = i;
             approx_counter++;

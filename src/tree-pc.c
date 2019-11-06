@@ -19,24 +19,26 @@
 
 
 
-void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot, int interpolationOrder, struct tnode_array * tree_array){
-
-	int tree_numnodes = tree_array->numnodes;
+void fill_in_cluster_data(struct particles *clusters, struct particles *sources, struct tnode *troot,
+                          int interpolationOrder, struct tnode_array * tree_array)
+{
+    int tree_numnodes = tree_array->numnodes;
     int interpolationPointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
     int totalNumberInterpolationPoints = tree_numnodes * interpolationPointsPerCluster;
+
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
     make_vector(clusters->z, totalNumberInterpolationPoints);
     make_vector(clusters->q, totalNumberInterpolationPoints);
     make_vector(clusters->w, totalNumberInterpolationPoints);  // will be used in singularity subtraction
-    clusters->num=totalNumberInterpolationPoints;
+    clusters->num = totalNumberInterpolationPoints;
 
     for (int i = 0; i < totalNumberInterpolationPoints; i++) {
-        clusters->x[i]=0.0;
-        clusters->y[i]=0.0;
-        clusters->z[i]=0.0;
-        clusters->q[i]=0.0;
-        clusters->w[i]=1.0;
+        clusters->x[i] = 0.0;
+        clusters->y[i] = 0.0;
+        clusters->z[i] = 0.0;
+        clusters->q[i] = 0.0;
+        clusters->w[i] = 1.0;
     }
 
 
@@ -63,7 +65,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
         {
 #endif
             for (int i = 0; i < tree_numnodes; i++) {
-            	pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+                pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
             }
 #ifdef OPENACC_ENABLED
             #pragma acc wait
@@ -293,20 +295,20 @@ void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpol
 
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
-								  double *xS, double *yS, double *zS, double *qS, double *wS,
-								  double *xT, double *yT, double *zT, double *qT,
-								  double *xC, double *yC, double *zC, double *qC, double *wC,
+                                  double *xS, double *yS, double *zS, double *qS, double *wS,
+                                  double *xT, double *yT, double *zT, double *qT,
+                                  double *xC, double *yC, double *zC, double *qC, double *wC,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
-								  int numSources, int numTargets, int numClusters,
+                                  int numSources, int numTargets, int numClusters,
                                   int batch_approx_offset, int batch_direct_offset,
-								  double (*directKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
-								  double (*approxKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
-								  double kappa)
+                                  double (*directKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+                                  double (*approxKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+                                  double kappa)
 {
         int i, j;
-        int rank; int numProcs;	int ierr;
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+        int rank; int numProcs; int ierr;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
         int tree_numnodes = tree_array->numnodes;
 
@@ -317,8 +319,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
 
             double *potentialDueToDirect, *potentialDueToApprox;
-            make_vector(potentialDueToDirect,numTargets);
-            make_vector(potentialDueToApprox,numTargets);
+            make_vector(potentialDueToDirect, numTargets);
+            make_vector(potentialDueToApprox, numTargets);
 
             for (i = 0; i < numTargets; i++) {
                 potentialDueToApprox[i] = 0.0;
@@ -471,7 +473,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 //            if (potentialDueToDirect[k] != 0.0){
                 pointwisePotential[k] += potentialDueToDirect[k];
                 pointwisePotential[k] += potentialDueToApprox[k];
-//        	}
+//          }
          }
 
             free_vector(potentialDueToDirect);

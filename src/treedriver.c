@@ -22,9 +22,9 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
                 double kappa,
-				double (*directKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
-				double (*approxKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
-				int tree_type,double *tEn, double *tpeng, double *time_tree)
+                double (*directKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+                double (*approxKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+                int tree_type, double *tEn, double *tpeng, double *time_tree)
 {
 
     double time_beg = MPI_Wtime();
@@ -40,7 +40,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     /* local variables */
     struct tnode *troot = NULL;
-    int level;
     double xyzminmax[6];
     
     /* batch variables */
@@ -50,19 +49,17 @@ void treedriver(struct particles *sources, struct particles *targets,
     /* date and time */
     double time1;
     
-    
-    level = 0;
-    numleaves = 0;
-    
     int *tree_inter_list, *local_tree_inter_list;
     int *direct_inter_list, *local_direct_inter_list;
+
     struct tnode_array *tree_array = NULL;
-    numnodes = 0;
+    int numnodes = 0, numleaves = 0;
+
     struct particles *clusters = NULL;
     clusters = malloc(sizeof(struct particles));
 
-    int max_batch_approx=0;
-	int max_batch_direct=0;
+    int max_batch_approx = 0;
+    int max_batch_direct = 0;
 
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
@@ -83,32 +80,17 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
         setup(sources, interpolationOrder, theta, xyzminmax);
         pc_create_tree_n0(&troot, sources, 1, sources->num,
-                          maxparnode, xyzminmax, level);
+                          maxparnode, xyzminmax, 0, &numnodes, &numleaves);
         int final_index = pc_set_tree_index(troot, 0);
         time_tree[1] = MPI_Wtime() - time1; //time_treebuild
         
         
         time1 = MPI_Wtime();
+
         tree_array = malloc(sizeof(struct tnode_array));
-        tree_array->numnodes = numnodes;
-        make_vector(tree_array->ibeg, numnodes);
-        make_vector(tree_array->iend, numnodes);
-        make_vector(tree_array->numpar, numnodes);
-        make_vector(tree_array->x_mid, numnodes);
-        make_vector(tree_array->y_mid, numnodes);
-        make_vector(tree_array->z_mid, numnodes);
-        make_vector(tree_array->x_min, numnodes);
-        make_vector(tree_array->y_min, numnodes);
-        make_vector(tree_array->z_min, numnodes);
-        make_vector(tree_array->x_max, numnodes);
-        make_vector(tree_array->y_max, numnodes);
-        make_vector(tree_array->z_max, numnodes);
-        make_vector(tree_array->level, numnodes);
-        make_vector(tree_array->cluster_ind, numnodes);
-        make_vector(tree_array->radius, numnodes);
-        make_vector(tree_array->children, 8*numnodes);
-        make_vector(tree_array->num_children, numnodes);
+        allocate_tree_array(tree_array, numnodes);
         pc_create_tree_array(troot, tree_array);
+
         time_tree[2] = MPI_Wtime() - time1; //time_maketreearray
         
 
@@ -120,20 +102,19 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        if       ( (directKernel==&coulombKernel) || (directKernel==&yukawaKernel) ){
-			if (rank==0) printf("Calling fill_in_cluster_data.\n");
+        if        ((directKernel == &coulombKernel) || (directKernel == &yukawaKernel)) {
+            if (rank == 0) printf("Calling fill_in_cluster_data.\n");
+            fill_in_cluster_data(clusters, sources, troot, interpolationOrder, tree_array);
 
-        	fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
-									  tree_array);
-		}else if ( (directKernel==&coulombKernel_SS_direct) || (directKernel==&yukawaKernel_SS_direct) ){
-			if (rank==0) printf("Calling fill_in_cluster_data_SS.\n");
-			fill_in_cluster_data_SS(   clusters, sources, troot, interpolationOrder,
-									  tree_array);
-			printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
-		}else{
-			if (rank==0) printf("Not sure how to fill cluster data... aborting.\n");
-			return ;
-		}
+        } else if ((directKernel == &coulombKernel_SS_direct) || (directKernel == &yukawaKernel_SS_direct)) {
+            if (rank == 0) printf("Calling fill_in_cluster_data_SS.\n");
+            fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder, tree_array);
+            printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
+
+        } else {
+            if (rank==0) printf("Not sure how to fill cluster data... aborting.\n");
+            exit(1);
+        }
 
         ////// For now, just fill in cluster data for Coulomb and Yukawa Lagrange.  Need to handle Hermite and SS separately.
 
@@ -204,13 +185,13 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         struct tnode_array *let_tree_array = NULL;
 //      int let_tree_array_length=numnodes;
-        int let_tree_array_length=0;
+        int let_tree_array_length = 0;
         let_tree_array = malloc(sizeof(struct tnode_array));
 //      allocate_tree_array(let_tree_array,let_tree_array_length); // start by allocating let_tree_array with size numnodes
 
         struct particles *let_clusters = NULL;
-        let_clusters_length=numnodes*pointsPerCluster;
-        let_clusters_length=0; // previously let_clusters included the local.  Now it should not
+        let_clusters_length = numnodes*pointsPerCluster;
+        let_clusters_length = 0; // previously let_clusters included the local.  Now it should not
         let_clusters = malloc(sizeof(struct particles)); // let_clusters will hold all cluster data for LET
 //      allocate_cluster(let_clusters,let_clusters_length);
 
@@ -314,7 +295,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             // Allocate remote_tree_array
             struct tnode_array *remote_tree_array = NULL;
             remote_tree_array = malloc(sizeof(struct tnode_array));
-            allocate_tree_array(remote_tree_array, numNodesOnProc[getFrom]); // start by allocating let_tree_array with size numnodes
+            allocate_tree_array(remote_tree_array, numNodesOnProc[getFrom]);
 
             // Get remote_tree_array
             MPI_Barrier(MPI_COMM_WORLD);
@@ -377,7 +358,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
 
             remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
-                                     direct_list, numNodesOnProc[getFrom], sizeof_batch_approx, sizeof_batch_direct);
+                                     direct_list, sizeof_batch_approx, sizeof_batch_direct);
 
             //MPI_Barrier(MPI_COMM_WORLD);
 
@@ -540,7 +521,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //MAKE THIS BETTER!
         make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
         make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
-        pc_make_interaction_list(tree_array, batches, local_tree_inter_list,  local_direct_inter_list,
+        pc_make_interaction_list(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
         tree_array->numnodes, tree_array->numnodes);
 
         pc_interaction_list_treecode(tree_array, batches,
@@ -551,7 +532,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tpeng, tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         tree_array->numnodes, tree_array->numnodes,
-						(*directKernel),(*approxKernel),kappa);
+                        (*directKernel),(*approxKernel),kappa);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
@@ -564,8 +545,8 @@ void treedriver(struct particles *sources, struct particles *targets,
         max_batch_approx = maxval_int(sizeof_batch_approx, batches->num);
         max_batch_direct = maxval_int(sizeof_batch_direct, batches->num);
         
-        if (max_batch_approx>0) make_vector(tree_inter_list, batches->num * max_batch_approx);
-        if (max_batch_direct>0) make_vector(direct_inter_list, batches->num * max_batch_direct);
+        if (max_batch_approx > 0) make_vector(tree_inter_list, batches->num * max_batch_approx);
+        if (max_batch_direct > 0) make_vector(direct_inter_list, batches->num * max_batch_direct);
         pc_make_interaction_list(let_tree_array, batches, tree_inter_list, direct_inter_list,
                                  max_batch_approx, max_batch_direct);
 
@@ -590,7 +571,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                     tpeng, tEn, interpolationOrder,
                                     let_sources->num, targets->num, let_clusters->num,
                                     max_batch_approx, max_batch_direct,
-									(*directKernel),(*approxKernel), kappa);
+                                    (*directKernel),(*approxKernel), kappa);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");
@@ -648,9 +629,9 @@ void treedriver(struct particles *sources, struct particles *targets,
     free_vector(local_tree_inter_list);
     free_vector(local_direct_inter_list);
 
-    if (numProcs>1){
-    	if (max_batch_approx>0) free_vector(tree_inter_list);
-    	if (max_batch_direct>0) free_vector(direct_inter_list);
+    if (numProcs > 1) {
+        if (max_batch_approx > 0) free_vector(tree_inter_list);
+        if (max_batch_direct > 0) free_vector(direct_inter_list);
     }
 
     // free clusters
@@ -662,18 +643,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     free(clusters);
 
     // free tree_array
-    free_vector(tree_array->ibeg);
-    free_vector(tree_array->iend);
-    free_vector(tree_array->x_mid);
-    free_vector(tree_array->y_mid);
-    free_vector(tree_array->z_mid);
-    free_vector(tree_array->x_min);
-    free_vector(tree_array->y_min);
-    free_vector(tree_array->z_min);
-    free_vector(tree_array->x_max);
-    free_vector(tree_array->y_max);
-    free_vector(tree_array->z_max);
-    free(tree_array);
+    free_tree_array(tree_array);
 
     // free target batches
     free_vector(batches->reorder);
