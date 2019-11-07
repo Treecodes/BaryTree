@@ -2,8 +2,7 @@
 #define H_GLOBALVARS_H
 
 /* declaration of external global variables */
-extern double tarpos[3];
-extern double thetasq, tarposq;
+extern double thetasq;
 
 extern int *orderarr;
 extern double *tt, *ww;

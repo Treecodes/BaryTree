@@ -227,37 +227,19 @@ int main(int argc, char **argv)
 
 
     // Set up kernel
-    double (*directKernel)( double targetX, double targetY, double targetZ, double targetQ,
-    				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-    				double kappa);
-    double (*approxKernel)( double targetX, double targetY, double targetZ, double targetQ,
-    				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-    				double kappa);
-
-
-
-
-
-
 	if       (strcmp(kernelName,"coulomb")==0){
-		directKernel = &coulombKernel;
-		approxKernel = &coulombKernel;
 		if (rank==0) printf("Set kernel to coulombKernel.\n");
 		for (int i=0; i<numparsTloc; i++){
 			tenergy[i]=0.0;
 		}
 
 	}else if (strcmp(kernelName,"yukawa")==0){
-		directKernel = &yukawaKernel;
-		approxKernel = &yukawaKernel;
 		if (rank==0) printf("Set kernel to yukawaKernel.\n");
 		for (int i=0; i<numparsTloc; i++){
 			tenergy[i]=0.0;
 		}
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		directKernel = &coulombKernel_SS_direct;
-		approxKernel = &coulombKernel_SS_approx;
 		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
 		for (int i=0; i<numparsTloc; i++){
 			tenergy[i]=2.0*M_PI*kappa*kappa*targets->q[i];
@@ -265,8 +247,6 @@ int main(int argc, char **argv)
 
 
 	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		directKernel = &yukawaKernel_SS_direct;
-		approxKernel = &yukawaKernel_SS_approx;
 		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
 		for (int i=0; i<numparsTloc; i++){
 			tenergy[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
@@ -294,7 +274,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               kappa, (*directKernel), (*approxKernel), 1, tenergy, &tpeng, time_tree);
+               kernelName, kappa, 1, tenergy, &tpeng, time_tree);
                
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];

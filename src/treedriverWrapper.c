@@ -10,7 +10,6 @@
 
 #include "treedriver.h"
 #include "treedriverWrapper.h"
-#include "kernels/kernels.h"
 
 
 /* definition of primary treecode driver */
@@ -23,28 +22,13 @@ void treedriverWrapper(int numTargets, int numSources,
 		int order, double theta, int maxparnode, int batch_size) {
 
 	// Set up kernels
-	double (*directKernel)( double targetX, double targetY, double targetZ, double targetQ,
-					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-					double kappa);
-	double (*approxKernel)( double targetX, double targetY, double targetZ, double targetQ,
-					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-					double kappa);
-
 	if       (strcmp(kernelName,"coulomb")==0){
-		directKernel = &coulombKernel;
-		approxKernel = &coulombKernel;
 
 	}else if (strcmp(kernelName,"yukawa")==0){
-		directKernel = &yukawaKernel;
-		approxKernel = &yukawaKernel;
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		directKernel = &coulombKernel_SS_direct;
-		approxKernel = &coulombKernel_SS_approx;
 
 	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		directKernel = &yukawaKernel_SS_direct;
-		approxKernel = &yukawaKernel_SS_approx;
 
 	}else{
 		return;
@@ -82,7 +66,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	// Call the treedriver
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
-			   kappa, (*directKernel), (*approxKernel), tree_type,
+			   kernelName, kappa, tree_type,
 			   outputArray, &tpeng, time_tree);
 
 	free(sources);

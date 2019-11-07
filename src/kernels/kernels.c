@@ -3,124 +3,125 @@
 #include <float.h>
 
 
-double coulombKernel( double targetX, double targetY, double targetZ, double targetQ,
-                    double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-                    double kappa){
+#ifdef OPENACC_ENABLED
+#pragma acc routine seq
+#endif
+double coulombKernel(double targetX, double targetY, double targetZ, double targetQ,
+                     double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+                     double kappa)
+{
+    double dx = targetX-sourceX;
+    double dy = targetY-sourceY;
+    double dz = targetZ-sourceZ;
 
-    double dx, dy, dz, r;
+    double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-    dx = targetX-sourceX;
-    dy = targetY-sourceY;
-    dz = targetZ-sourceZ;
-
-    r = sqrt( (dx*dx) + (dy*dy) + (dz*dz));
-
-
-    if (r>DBL_MIN){
-        return sourceQ*sourceW/r;
-    }else{
+    if (r > DBL_MIN)
+        return sourceQ * sourceW / r;
+    else
         return 0.0;
-    }
 }
 
-double yukawaKernel( double targetX, double targetY, double targetZ, double targetQ,
+
+#ifdef OPENACC_ENABLED
+#pragma acc routine seq
+#endif
+double yukawaKernel(double targetX, double targetY, double targetZ, double targetQ,
                     double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-                    double kappa){
+                    double kappa)
+{
+    double dx = targetX - sourceX;
+    double dy = targetY - sourceY;
+    double dz = targetZ - sourceZ;
 
-    double dx, dy, dz, r;
+    double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-    dx = targetX-sourceX;
-    dy = targetY-sourceY;
-    dz = targetZ-sourceZ;
-
-    r = sqrt( (dx*dx) + (dy*dy) + (dz*dz));
-    if (r>DBL_MIN){
-        return sourceQ*sourceW*exp(-kappa*r)/r;
-    }else{
+    if (r > DBL_MIN)
+        return sourceQ * sourceW * exp(-kappa*r) / r;
+    else
         return 0.0;
-    }
 }
 
-double coulombKernel_SS_direct( double targetX, double targetY, double targetZ, double targetQ,
-                    double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-                    double kappa){
 
-    double dx, dy, dz, r, kappaSq;
+#ifdef OPENACC_ENABLED
+#pragma acc routine seq
+#endif
+double coulombKernel_SS_direct(double targetX, double targetY, double targetZ, double targetQ,
+                               double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+                               double kappa)
+{
+    double dx = targetX - sourceX;
+    double dy = targetY - sourceY;
+    double dz = targetZ - sourceZ;
 
-    dx = targetX-sourceX;
-    dy = targetY-sourceY;
-    dz = targetZ-sourceZ;
+    double r = sqrt(dx*dx + dy*dy + dz*dz);
+    double kappaSq = kappa*kappa;
 
-    r = sqrt( (dx*dx) + (dy*dy) + (dz*dz));
-    kappaSq = kappa*kappa;
-
-    if (r>DBL_MIN){
-        return (sourceQ - targetQ*exp(-r*r/kappaSq))*sourceW/r;
-    }else{
+    if (r > DBL_MIN)
+        return (sourceQ - targetQ * exp(-r*r/kappaSq)) * sourceW / r;
+    else
         return 0.0;
-    }
 }
 
-double coulombKernel_SS_approx( double targetX, double targetY, double targetZ, double targetQ,
-                    double clusterX, double clusterY, double clusterZ, double clusterQ, double clusterW,
-                    double kappa){
 
-    double dx, dy, dz, r, kappaSq;
+#ifdef OPENACC_ENABLED
+#pragma acc routine seq
+#endif
+double coulombKernel_SS_approx(double targetX, double targetY, double targetZ, double targetQ,
+                               double clusterX, double clusterY, double clusterZ, double clusterQ, double clusterW,
+                               double kappa)
+{
+    double dx = targetX - clusterX;
+    double dy = targetY - clusterY;
+    double dz = targetZ - clusterZ;
 
-    dx = targetX-clusterX;
-    dy = targetY-clusterY;
-    dz = targetZ-clusterZ;
+    double r = sqrt(dx*dx + dy*dy + dz*dz);
+    double kappaSq = kappa*kappa;
 
-    r = sqrt( (dx*dx) + (dy*dy) + (dz*dz));
-    kappaSq = kappa*kappa;
-
-    if (r>DBL_MIN){
-        return (clusterQ - targetQ*clusterW*exp(-r*r/kappaSq))/r;
-    }else{
+    if (r > DBL_MIN)
+        return (clusterQ - targetQ * clusterW * exp(-r*r/kappaSq)) / r;
+    else
         return 0.0;
-    }
 }
 
-double yukawaKernel_SS_direct( double targetX, double targetY, double targetZ, double targetQ,
-                    double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-                    double kappa){
 
-    double dx, dy, dz, r, G;
+#ifdef OPENACC_ENABLED
+#pragma acc routine seq
+#endif
+double yukawaKernel_SS_direct(double targetX, double targetY, double targetZ, double targetQ,
+                              double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+                              double kappa)
+{
+    double dx = targetX - sourceX;
+    double dy = targetY - sourceY;
+    double dz = targetZ - sourceZ;
 
-    dx = targetX-sourceX;
-    dy = targetY-sourceY;
-    dz = targetZ-sourceZ;
+    double r = sqrt(dx*dx + dy*dy + dz*dz);
+    double G = exp(-kappa*r) / r;
 
-    r = sqrt( (dx*dx) + (dy*dy) + (dz*dz));
-
-    G = exp(-kappa*r)/r;
-
-
-    if (r>DBL_MIN){
-        return (sourceQ-targetQ)*sourceW*G;
-    }else{
+    if (r > DBL_MIN)
+        return (sourceQ - targetQ) * sourceW * G;
+    else
         return 0.0;
-    }
 }
 
-double yukawaKernel_SS_approx( double targetX, double targetY, double targetZ, double targetQ,
-                    double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-                    double kappa){
 
-    double dx, dy, dz, r, G;
+#ifdef OPENACC_ENABLED
+#pragma acc routine seq
+#endif
+double yukawaKernel_SS_approx(double targetX, double targetY, double targetZ, double targetQ,
+                              double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
+                              double kappa)
+{
+    double dx = targetX - sourceX;
+    double dy = targetY - sourceY;
+    double dz = targetZ - sourceZ;
 
-    dx = targetX-sourceX;
-    dy = targetY-sourceY;
-    dz = targetZ-sourceZ;
+    double r = sqrt(dx*dx + dy*dy + dz*dz);
+    double G = exp(-kappa*r) / r;
 
-    r = sqrt( (dx*dx) + (dy*dy) + (dz*dz));
-
-    G = exp(-kappa*r)/r;
-
-
-    if (r>DBL_MIN){
-        return (sourceQ-targetQ*sourceW)*G;
-    }else{
+    if (r > DBL_MIN)
+        return (sourceQ - targetQ * sourceW) * G;
+    else
         return 0.0;
-    }
 }

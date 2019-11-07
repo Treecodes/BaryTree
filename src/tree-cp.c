@@ -17,9 +17,7 @@
 
 
 int *orderarr = NULL;
-
-double tarpos[3];
-double thetasq, tarposq;
+double thetasq;
 
 /* variable used by kernel independent moment computation */
 double *tt, *ww;

@@ -9,7 +9,6 @@
 #include "array.h"
 #include "tools.h"
 #include "direct.h"
-#include "kernels/kernels.h"
 
 int main(int argc, char **argv)
 {
@@ -219,33 +218,25 @@ int main(int argc, char **argv)
 #endif
 
     // Set up kernel
-	double (*kernel)( double targetX, double targetY, double targetZ, double targetQ,
-				double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-				double kappa);
-
 	if       (strcmp(kernelName,"coulomb")==0){
-		kernel = &coulombKernel;
 		if (rank==0) printf("Set kernel to coulombKernel.\n");
 		for (i = 0; i < maxparsTloc; i++) {
 			denergy[i] = 0.0;
 		}
 
 	}else if (strcmp(kernelName,"yukawa")==0){
-		kernel = &yukawaKernel;
 		if (rank==0) printf("Set kernel to yukawaKernel.\n");
 		for (i = 0; i < maxparsTloc; i++) {
 			denergy[i] = 0.0;
 		}
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		kernel = &coulombKernel_SS_direct;
 		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
 		for (i = 0; i < maxparsTloc; i++) {
 			denergy[i] = 2.0*M_PI*kappa*kappa*qT[i];
 		}
 
 	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		kernel = &yukawaKernel_SS_direct;
 		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
 		for (i = 0; i < maxparsTloc; i++) {
 			denergy[i] = 4.0*M_PI*qT[i]/kappa/kappa;
@@ -273,7 +264,7 @@ int main(int argc, char **argv)
 
 	if (numProcs == 1) { // one 1 proc, won't enter into the round robin below.  So just interact with self here.
 		direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-						denergy, &dpeng, kappa, (*kernel));
+						denergy, &dpeng, kappa, kernelName);
 	} else {
 
 		for (int procID = 1; procID < numProcs; procID++) {
@@ -290,9 +281,9 @@ int main(int argc, char **argv)
 
 				if (procID==1) { // in first iteration of loop, interact with self.
 					direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, kappa, (*kernel));
+											denergy, &dpeng, kappa, kernelName);
 				} else { // in subsequent iterations, interact with foreign
-					direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa,(*kernel));
+					direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa,kernelName);
 					for (i=0;i<5*maxparsSloc;i++){
 							S_foreign2[i]=0.0;
 						}
@@ -301,7 +292,7 @@ int main(int argc, char **argv)
 				MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
 				MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
-				direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa, (*kernel));
+				direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa, kernelName);
 				for (i=0;i<5*maxparsSloc;i++){
 						S_foreign1[i]=0.0;
 					}
@@ -317,10 +308,10 @@ int main(int argc, char **argv)
 
 		if ((numProcs-1)%2==1) { // in final loop, S_foreign1 was received but not yet computed with
 			direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, kappa, (*kernel));
+											denergy, &dpeng, kappa, kernelName);
 		} else { // S_foreign2 is the one that needs to be computed with
 			direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, kappa, (*kernel));
+											denergy, &dpeng, kappa, kernelName);
 		}
 	}
 

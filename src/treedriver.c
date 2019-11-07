@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <mpi.h>
 #include <limits.h>
 #include <omp.h>
@@ -12,7 +13,6 @@
 #include "tree.h"
 #include "structAllocations.h"
 #include "interaction-masks.h"
-#include "kernels/kernels.h"
 
 #include "treedriver.h"
 
@@ -21,9 +21,7 @@
 
 void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
-                double kappa,
-                double (*directKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
-                double (*approxKernel)(double,  double,  double,  double,  double,  double,  double,  double,  double, double),
+                char *kernelName, double kappa,
                 int tree_type, double *tEn, double *tpeng, double *time_tree)
 {
 
@@ -104,11 +102,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        if        ((directKernel == &coulombKernel) || (directKernel == &yukawaKernel)) {
+        if  ((strcmp(kernelName, "coulomb") == 0) || (strcmp(kernelName, "yukawa") == 0)) {
             if (rank == 0) printf("Calling fill_in_cluster_data.\n");
             fill_in_cluster_data(clusters, sources, troot, interpolationOrder, tree_array);
 
-        } else if ((directKernel == &coulombKernel_SS_direct) || (directKernel == &yukawaKernel_SS_direct)) {
+        } else if  ((strcmp(kernelName, "coulomb_SS") == 0) || (strcmp(kernelName, "yukawa_SS") == 0)) {
             if (rank == 0) printf("Calling fill_in_cluster_data_SS.\n");
             fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder, tree_array);
             printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
@@ -493,7 +491,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tpeng, tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         tree_array->numnodes, tree_array->numnodes,
-                        (*directKernel),(*approxKernel),kappa);
+                        kernelName, kappa);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
@@ -532,7 +530,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                     tpeng, tEn, interpolationOrder,
                                     let_sources->num, targets->num, let_clusters->num,
                                     max_batch_approx, max_batch_direct,
-                                    (*directKernel),(*approxKernel), kappa);
+                                    kernelName, kappa);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");

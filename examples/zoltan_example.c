@@ -8,7 +8,6 @@
 #include "../src/treedriver.h"
 #include "../src/particles.h"
 #include "../src/tools.h"
-#include "../src/kernels/kernels.h"
 
 
 const unsigned m = 1664525u;
@@ -225,7 +224,7 @@ int main(int argc, char **argv)
     potential = malloc(sizeof(double) * mySources.numMyPoints);
     potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
     particleOrder = malloc(sizeof(int) * mySources.numMyPoints);
-	for (int i = 0; i < mySources.numMyPoints; i++) particleOrder[i] = i;
+    for (int i = 0; i < mySources.numMyPoints; i++) particleOrder[i] = i;
 
     sources->num = mySources.numMyPoints;
     targets->num = mySources.numMyPoints;
@@ -245,56 +244,41 @@ int main(int argc, char **argv)
     
 
     // Set up kernel
-	double (*directKernel)( double targetX, double targetY, double targetZ, double targetQ,
-					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-					double kappa);
-	double (*approxKernel)( double targetX, double targetY, double targetZ, double targetQ,
-					double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-					double kappa);
+    printf("Kernel Name: %s\n",kernelName);
+    if       (strcmp(kernelName,"coulomb")==0){
+        if (rank==0) printf("Set kernel to coulombKernel.\n");
+        for (int i=0; i<targets->num; i++){
+            potential[i]=0.0;
+            potential_direct[i]=0.0;
+        }
 
-	printf("Kernel Name: %s\n",kernelName);
-	if       (strcmp(kernelName,"coulomb")==0){
-		directKernel = &coulombKernel;
-		approxKernel = &coulombKernel;
-		if (rank==0) printf("Set kernel to coulombKernel.\n");
-		for (int i=0; i<targets->num; i++){
-			potential[i]=0.0;
-			potential_direct[i]=0.0;
-		}
+    }else if (strcmp(kernelName,"yukawa")==0){
+        if (rank==0) printf("Set kernel to yukawaKernel.\n");
+        for (int i=0; i<targets->num; i++){
+            potential[i]=0.0;
+            potential_direct[i]=0.0;
+        }
 
-	}else if (strcmp(kernelName,"yukawa")==0){
-		directKernel = &yukawaKernel;
-		approxKernel = &yukawaKernel;
-		if (rank==0) printf("Set kernel to yukawaKernel.\n");
-		for (int i=0; i<targets->num; i++){
-			potential[i]=0.0;
-			potential_direct[i]=0.0;
-		}
-
-	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		directKernel = &coulombKernel_SS_direct;
-		approxKernel = &coulombKernel_SS_approx;
-		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
-		for (int i=0; i<targets->num; i++){
-			potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
-			potential_direct[i]=2.0*M_PI*kappa*kappa*targets->q[i];
-		}
+    }else if (strcmp(kernelName,"coulomb_SS")==0){
+        if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
+        for (int i=0; i<targets->num; i++){
+            potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+            potential_direct[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+        }
 
 
-	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		directKernel = &yukawaKernel_SS_direct;
-		approxKernel = &yukawaKernel_SS_approx;
-		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
-		for (int i=0; i<targets->num; i++){
-			potential[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
-			potential_direct[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
-		}
+    }else if (strcmp(kernelName,"yukawa_SS")==0){
+        if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
+        for (int i=0; i<targets->num; i++){
+            potential[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+            potential_direct[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+        }
 
-	}else{
-		if (rank==0) printf("kernelName = %s.\n", kernelName);
-		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
-		return 1;
-	}
+    }else{
+        if (rank==0) printf("kernelName = %s.\n", kernelName);
+        if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+        return 1;
+    }
 
 
 
@@ -313,14 +297,14 @@ int main(int argc, char **argv)
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
         treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
-			       kappa,  (*directKernel), (*approxKernel), tree_type, potential_direct, &potential_engy_direct, time_tree);
+                   kernelName, kappa, tree_type, potential_direct, &potential_engy_direct, time_tree);
         time_direct = MPI_Wtime() - time1;
     }
     
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
-	treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
-			   kappa,  (*directKernel), (*approxKernel), tree_type, potential, &potential_engy, time_tree);
+    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
+               kernelName, kappa, tree_type, potential, &potential_engy, time_tree);
 
     if (rank == 0) fprintf(stderr,"Treedriver has finished.\n");
     
