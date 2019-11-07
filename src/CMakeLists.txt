@@ -4,20 +4,20 @@ SET(SRCS_TREEDRIVER
     partition.c
     partition.h
     setup-interaction-lists.c
+    tree.h
     tree-creation.c
     tree-cp.c
-    tree.h
-    tree-cp-yuk.c
+#    tree-cp-yuk.c
     tree-pc.c
-    tree-pc-hermite.c
+#    tree-pc-hermite.c
     tree-pc-coulomb-SS.c
-    tree-pc-hermite-coulomb-SS.c
-    tree-pc-yuk.c
-    tree-pc-hermite-yuk.c
-    tree-pc-yuk-SS.c
-    tree-pc-dcf.c
-    tree-pc-hermite-dcf.c
-    tree-pc-tcf.c
+#    tree-pc-hermite-coulomb-SS.c
+#    tree-pc-yuk.c
+#    tree-pc-hermite-yuk.c
+#    tree-pc-yuk-SS.c
+#    tree-pc-dcf.c
+#    tree-pc-hermite-dcf.c
+#    tree-pc-tcf.c
     tree-batch.c
     xmalloc.c
     sort.c 

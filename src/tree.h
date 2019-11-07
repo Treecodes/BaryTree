@@ -40,20 +40,13 @@ void fill_in_cluster_data_hermite(struct particles *clusters, struct particles *
 void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 //void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
-void comp_tcoeff(double dx, double dy, double dz);
 
-
-/* used by cluster-particle and particle-cluster Yukawa */
-void setup_yuk(struct particles *particles, int order, double theta,
-               double *xyzminmax);
-
-void comp_tcoeff_yuk(double dx, double dy, double dz, double kappa);
 
 
 /* used by cluster-particle */
 void cp_create_tree_n0(struct tnode **p, struct particles *targets,
                        int ibeg, int iend, int maxparnode, double *xyzmm,
-                       int level);
+                       int level, int *numnodes, int * numleaves);
 
 
 
@@ -109,7 +102,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode *p, double *xS, double *yS, doubl
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ,
 		double * clusterMx,double * clusterMy,double * clusterMz,double * clusterMxy,double * clusterMyz,double * clusterMzx,double * clusterMxyz);
 
-void pc_comp_ms_modifiedF_SS(struct tnode_array * tree_array, int idx, double *xS, double *yS, double *zS, double *qS, double *wS,
+void pc_comp_ms_modifiedF_SS(struct tnode_array * tree_array, int idx, int interpolationOrder, double *xS, double *yS, double *zS, double *qS, double *wS,
 		double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
 
 //void pc_comp_ms_modifiedF_SS(struct tnode *p, double *xS, double *yS, double *zS, double *qS, double *wS,

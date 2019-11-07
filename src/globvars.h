@@ -2,13 +2,6 @@
 #define H_GLOBALVARS_H
 
 /* declaration of external global variables */
-extern int torder, torderlim, torderflat;
-extern double *cf, *cf1, *cf2, *cf3;
-extern double ***a1, ***b1;
-
-extern int numleaves;
-extern int numnodes;
-
 extern double tarpos[3];
 extern double thetasq, tarposq;
 

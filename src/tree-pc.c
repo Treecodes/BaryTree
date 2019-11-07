@@ -76,7 +76,7 @@ void fill_in_cluster_data(struct particles *clusters, struct particles *sources,
 }
 
 
-void pc_comp_ms_modifiedF(struct tnode_array * tree_array, int idx, int interpolationOrder,
+void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpolationOrder,
         double *xS, double *yS, double *zS, double *qS, double *wS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
 {

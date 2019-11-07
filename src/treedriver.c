@@ -95,8 +95,10 @@ void treedriver(struct particles *sources, struct particles *targets,
         
 
         time1 = MPI_Wtime();
+
         setup_batch(&batches, batch_lim, targets, batch_size);
         create_target_batch(batches, targets, 1, targets->num, batch_size, batch_lim);
+
         time_tree[3] = MPI_Wtime() - time1; //time_createbatch
         
 
@@ -112,7 +114,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
 
         } else {
-            if (rank==0) printf("Not sure how to fill cluster data... aborting.\n");
+            if (rank == 0) printf("Not sure how to fill cluster data... aborting.\n");
             exit(1);
         }
 
@@ -148,7 +150,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         printf("                       x_len: %e\n", troot->x_max - troot->x_min);
         printf("                       y_len: %e\n", troot->y_max - troot->y_min);
         printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
-        printf("                      torder: %d\n", torder);
+        printf("                      torder: %d\n", interpolationOrder);
         printf("                       theta: %f\n", theta);
         printf("                  maxparnode: %d\n", maxparnode);
         printf("            number of leaves: %d\n", numleaves);
@@ -176,62 +178,21 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
 
         int numNodesOnProc[numProcs];
-        MPI_Allgather(&numnodes, 1, MPI_INT,
-                numNodesOnProc, 1, MPI_INT,
-                MPI_COMM_WORLD);
+        MPI_Allgather(&numnodes, 1, MPI_INT, numNodesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
 
         int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
-        int let_sources_length, let_clusters_length;
 
         struct tnode_array *let_tree_array = NULL;
-//      int let_tree_array_length=numnodes;
-        int let_tree_array_length = 0;
         let_tree_array = malloc(sizeof(struct tnode_array));
-//      allocate_tree_array(let_tree_array,let_tree_array_length); // start by allocating let_tree_array with size numnodes
+        int let_tree_array_length = 0;
 
         struct particles *let_clusters = NULL;
-        let_clusters_length = numnodes*pointsPerCluster;
-        let_clusters_length = 0; // previously let_clusters included the local.  Now it should not
         let_clusters = malloc(sizeof(struct particles)); // let_clusters will hold all cluster data for LET
-//      allocate_cluster(let_clusters,let_clusters_length);
+        int let_clusters_length = 0; // previously let_clusters included the local.  Now it should not
 
         struct particles *let_sources = NULL;
         let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
-//      let_sources_length = troot->numpar;
-        let_sources_length = 0;  // previously let_sources included local.  Now it should not
-//      allocate_sources(let_sources,let_sources_length);
-
-
-        // Fill in local data into LETs
-//      for (int i=0; i<numnodes; i++) {
-//          let_tree_array->ibeg[i] = tree_array->ibeg[i];
-//          let_tree_array->iend[i] = tree_array->iend[i];
-//          let_tree_array->numpar[i] = tree_array->numpar[i];
-//          let_tree_array->x_mid[i] = tree_array->x_mid[i];
-//          let_tree_array->y_mid[i] = tree_array->y_mid[i];
-//          let_tree_array->z_mid[i] = tree_array->z_mid[i];
-//          let_tree_array->level[i] = tree_array->level[i];
-//          let_tree_array->cluster_ind[i] = tree_array->cluster_ind[i];
-//          let_tree_array->radius[i] = tree_array->radius[i];
-//      }
-//
-//      for (int i=0; i<numnodes*pointsPerCluster; i++) {
-//          // Fill in clusters
-//          let_clusters->x[i] = clusters->x[i];
-//          let_clusters->y[i] = clusters->y[i];
-//          let_clusters->z[i] = clusters->z[i];
-//          let_clusters->q[i] = clusters->q[i];
-//          let_clusters->w[i] = clusters->w[i];
-//      }
-//      for (int i=0; i<troot->numpar; i++) {
-//          // Fill in own sources
-//          let_sources->x[i] = sources->x[i];
-//          let_sources->y[i] = sources->y[i];
-//          let_sources->z[i] = sources->z[i];
-//          let_sources->q[i] = sources->q[i];
-//          let_sources->w[i] = sources->w[i];
-//      }
-
+        int let_sources_length = 0;  // previously let_sources included local.  Now it should not
 
 
         

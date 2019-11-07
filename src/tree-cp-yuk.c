@@ -16,60 +16,6 @@
 #include "tree.h"
 
 
-void setup_yuk(struct particles *particles, int order, double theta,
-               double *xyzminmax)
-{
-    /* local variables */
-    int i;
-    double t1;
-
-    /* changing values of our extern variables */
-    torder = order;
-    torderlim = torder + 1;
-    thetasq = theta * theta;
-    torderflat = torderlim * (torderlim + 1) * (torderlim + 2) / 6;
-
-    /* allocating global Taylor expansion variables */
-    make_vector(cf, torder+1);
-    make_vector(cf1, torderlim);
-    make_vector(cf2, torderlim);
-    make_vector(cf3, torderlim);
-
-    make_3array(a1, torderlim, torderlim, torderlim);
-    make_3array(b1, torderlim, torderlim, torderlim);
-
-
-    /* initializing arrays for Taylor sums and coefficients */
-    for (i = 0; i < torder + 1; i++)
-        cf[i] = i + 1.0;
-
-    for (i = 0; i < torderlim; i++) {
-        t1 = 1.0 / (i + 1.0);
-        cf1[i] = t1;
-        cf2[i] = 1.0 - (0.5 * t1);
-        cf3[i] = 1.0 - t1;
-    }
-
-    /* find bounds of Cartesian box enclosing the particles */
-    xyzminmax[0] = minval(particles->x, particles->num);
-    xyzminmax[1] = maxval(particles->x, particles->num);
-    xyzminmax[2] = minval(particles->y, particles->num);
-    xyzminmax[3] = maxval(particles->y, particles->num);
-    xyzminmax[4] = minval(particles->z, particles->num);
-    xyzminmax[5] = maxval(particles->z, particles->num);
-
-    make_vector(orderarr, particles->num);
-
-    for (i = 0; i < particles->num; i++)
-        orderarr[i] = i+1;
-
-    return;
-    
-} /* END of function setup_yuk */
-
-
-
-
 void cp_treecode_yuk(struct tnode *p, struct batch *batches,
                      struct particles *sources, struct particles *targets,
                      double kappa, double *tpeng, double *EnP,
