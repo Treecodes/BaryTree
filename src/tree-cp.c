@@ -34,6 +34,9 @@ void setup(struct particles *particles, int order, double theta,
     /* changing values of our extern variables */
     thetasq = theta * theta;
 
+    make_vector(tt, order+1);
+    make_vector(ww, order+1);
+
     /* initializing array for Chev points */
     for (int i = 0; i < order+1; i++)
         tt[i] = cos(i * M_PI / order);
