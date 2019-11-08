@@ -110,7 +110,7 @@ void coulombApproximationHermite( int number_of_targets_in_batch, int number_of_
             double dz = target_z[ii] - cluster_z[jj];
             double r  = sqrt( dx*dx + dy*dy + dz*dz);
 
-            double rinv  = 1 / sqrt(dx*dx + dy*dy + dz*dz);
+            double rinv  = 1 / r;
             double r3inv = rinv*rinv*rinv;
             double r5inv = r3inv*rinv*rinv;
             double r7inv = r5inv*rinv*rinv;
