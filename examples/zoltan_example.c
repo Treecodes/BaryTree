@@ -4,6 +4,7 @@
 #include <mpi.h>
 #include <zoltan.h>
 #include <time.h>
+#include <float.h>
 
 #include "../src/treedriver.h"
 #include "../src/particles.h"
@@ -249,38 +250,35 @@ int main(int argc, char **argv)
 
     // Set up kernel
 //    printf("Kernel Name: %s\n",kernelName);
-    if       (strcmp(kernelName,"coulomb")==0){
-        if (rank==0) printf("Set kernel to coulombKernel.\n");
+    if       (strcmp(singularityHandling,"skipping")==0){
+        printf("Zeroing out initial potential.\n");
         for (int i=0; i<targets->num; i++){
             potential[i]=0.0;
             potential_direct[i]=0.0;
         }
 
-    }else if (strcmp(kernelName,"yukawa")==0){
-        if (rank==0) printf("Set kernel to yukawaKernel.\n");
-        for (int i=0; i<targets->num; i++){
-            potential[i]=0.0;
-            potential_direct[i]=0.0;
+    }else if (strcmp(singularityHandling,"subtraction")==0){
+        if (strcmp(kernelName,"coulomb")==0){
+            for (int i=0; i<targets->num; i++){
+                potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+                potential_direct[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+            }
+        }else if (strcmp(kernelName,"yukawa")==0){
+            for (int i=0; i<targets->num; i++){
+                potential[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+                potential_direct[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+            }
+        }else{
+            if (rank==0) printf("singularityHandling = %s.\n", singularityHandling);
+            printf("Invalid option for singularityHandling. Aborting.\n");
+            return 1;
         }
 
-    }else if (strcmp(kernelName,"coulombSingularitySubtraction")==0){
-        if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
-        for (int i=0; i<targets->num; i++){
-            potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
-            potential_direct[i]=2.0*M_PI*kappa*kappa*targets->q[i];
-        }
 
-
-    }else if (strcmp(kernelName,"yukawaSingularitySubtraction")==0){
-        if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
-        for (int i=0; i<targets->num; i++){
-            potential[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
-            potential_direct[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
-        }
 
     }else{
         if (rank==0) printf("kernelName = %s.\n", kernelName);
-        if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
+        if (rank==0) printf("Invalid command line argument for kernelName or ... aborting.\n");
         return 1;
     }
 

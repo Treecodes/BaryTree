@@ -109,6 +109,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             if (rank == 0) printf("Calling fill_in_cluster_data.\n");
             Clusters_PC_SetupLagrange(clusters, sources, troot, interpolationOrder, tree_array, singularityHandling);
 
+            printf("Entries of clusters->q: %f\n", clusters->q[1000]);
         } else if (strcmp(approximationName, "hermite") == 0) {
             if (rank == 0) printf("Calling fill_in_cluster_data_hermite.\n");
             //Clusters_PC_SetupHermite(clusters, sources, troot, interpolationOrder, tree_array, singularityHandling);

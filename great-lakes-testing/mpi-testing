@@ -2,22 +2,22 @@
 
 
 TREETYPE=1
-THETA=0.8
+THETA=0.5
 ORDER=7
 CLUSTERSIZE=100
 BATCHSIZE=100
 KAPPA=0.5
 
-APPROXIMATIONNAME=Lagrange
+APPROXIMATIONNAME=lagrange
 COMPAREDIRECT=1
 
 for N in 2500 
 do
-    for NP in 4
+    for NP in 1
     do
-        for KERNEL in coulomb yukawa 
+        for KERNEL in coulomb #yukawa 
         do
-            for SINGULARITYHANDLING in skipping subtraction
+            for SINGULARITYHANDLING in skipping #subtraction
             do
                 echo $NP
                 echo $KERNEL

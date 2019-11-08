@@ -63,10 +63,13 @@ void Clusters_PC_SetupLagrange(struct particles *clusters, struct particles *sou
     }
 
     if (strcmp(singularityHandling, "skipping") == 0) {
+        printf("singularityHandling set to skipping.\n");
         for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->w[i] = 1.0;
 
     } else if (strcmp(singularityHandling, "subtraction") == 0) {
         for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->w[i] = 0.0;
+    } else{
+        exit(1);
     }
 
 
@@ -100,6 +103,8 @@ void Clusters_PC_SetupLagrange(struct particles *clusters, struct particles *sou
     } else if (strcmp(singularityHandling, "subtraction") == 0) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF_SS(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+    }else{
+        exit(1);
     }
 
 #ifdef OPENACC_ENABLED
