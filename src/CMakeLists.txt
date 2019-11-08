@@ -3,21 +3,10 @@ SET(SRCS_TREEDRIVER
     treedriver.c
     partition.c
     partition.h
-    setup-interaction-lists.c
     tree.h
     tree-creation.c
     tree-cp.c
-#    tree-cp-yuk.c
     tree-pc.c
-#    tree-pc-hermite.c
-    tree-pc-coulomb-SS.c
-#    tree-pc-hermite-coulomb-SS.c
-#    tree-pc-yuk.c
-#    tree-pc-hermite-yuk.c
-#    tree-pc-yuk-SS.c
-#    tree-pc-dcf.c
-#    tree-pc-hermite-dcf.c
-#    tree-pc-tcf.c
     tree-batch.c
     xmalloc.c
     sort.c 
@@ -28,8 +17,10 @@ SET(SRCS_TREEDRIVER
     array.h
     structAllocations.c
     structAllocations.h
-    interaction-masks.c
-    interaction-masks.h
+    interaction_lists.c
+    interaction_lists.h
+    clusters.c
+    clusters.h
     xmalloc.h
     tools.h
     particles.h

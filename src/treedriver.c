@@ -11,8 +11,11 @@
 #include "particles.h"
 #include "tools.h"
 #include "tree.h"
+
 #include "structAllocations.h"
-#include "interaction-masks.h"
+
+#include "interaction_lists.h"
+#include "clusters.h"
 
 #include "treedriver.h"
 
@@ -34,6 +37,9 @@ void treedriver(struct particles *sources, struct particles *targets,
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
+
+    char *singularityHandling = "skipping";
+    char *approximationName = "lagrange";
 
 
     /* local variables */
@@ -102,14 +108,13 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        if  ((strcmp(kernelName, "coulomb") == 0) || (strcmp(kernelName, "yukawa") == 0)) {
+        if (strcmp(approximationName, "lagrange") == 0) {
             if (rank == 0) printf("Calling fill_in_cluster_data.\n");
-            fill_in_cluster_data(clusters, sources, troot, interpolationOrder, tree_array);
+            Clusters_PC_SetupLagrange(clusters, sources, troot, interpolationOrder, tree_array, singularityHandling);
 
-        } else if  ((strcmp(kernelName, "coulomb_SS") == 0) || (strcmp(kernelName, "yukawa_SS") == 0)) {
-            if (rank == 0) printf("Calling fill_in_cluster_data_SS.\n");
-            fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder, tree_array);
-            printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
+        } else if (strcmp(approximationName, "hermite") == 0) {
+            if (rank == 0) printf("Calling fill_in_cluster_data_hermite.\n");
+            //Clusters_PC_SetupHermite(clusters, sources, troot, interpolationOrder, tree_array, singularityHandling);
 
         } else {
             if (rank == 0) printf("Not sure how to fill cluster data... aborting.\n");
@@ -316,8 +321,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_ibeg_list, numNodesOnProc[getFrom]);
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
 
-            remote_interaction_lists(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
-                                     direct_list, sizeof_batch_approx, sizeof_batch_direct);
+            Interaction_MakeListRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
+                                       direct_list, sizeof_batch_approx, sizeof_batch_direct);
 
             //MPI_Barrier(MPI_COMM_WORLD);
 
@@ -480,7 +485,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //MAKE THIS BETTER!
         make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
         make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
-        pc_make_interaction_list(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
+        Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
         tree_array->numnodes, tree_array->numnodes);
 
         pc_interaction_list_treecode(tree_array, batches,
@@ -506,8 +511,8 @@ void treedriver(struct particles *sources, struct particles *targets,
         
         if (max_batch_approx > 0) make_vector(tree_inter_list, batches->num * max_batch_approx);
         if (max_batch_direct > 0) make_vector(direct_inter_list, batches->num * max_batch_direct);
-        pc_make_interaction_list(let_tree_array, batches, tree_inter_list, direct_inter_list,
-                                 max_batch_approx, max_batch_direct);
+        Interaction_MakeList(let_tree_array, batches, tree_inter_list, direct_inter_list,
+                             max_batch_approx, max_batch_direct);
 
         time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
         time_tree[0] = MPI_Wtime() - time_beg; //time_setup
