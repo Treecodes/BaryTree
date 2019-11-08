@@ -13,16 +13,16 @@
 
 
 
-void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT,
-                int numparsS, int numparsT, double *denergy, double *dpeng, double kappa,
-                char *kernelName)
+void directSummation(double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
+                double *target_x, double *target_y, double *target_z, double *target_charge,
+                int number_of_sources, int number_of_targets, double *potential, double *total_potential, double kernel_parameter,
+                char *kernel_name)
 {
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin (xS[0:numparsS], yS[0:numparsS], zS[0:numparsS], \
-                             qS[0:numparsS], wS[0:numparsS], xT[0:numparsT], \
-                             yT[0:numparsT], zT[0:numparsT], qT[0:numparsT])
+    #pragma acc data copyin (source_x[0:number_of_sources], source_y[0:number_of_sources], source_z[0:number_of_sources], \
+                             source_charge[0:numparsS], source_weight[0:numparsS], source_x[0:number_of_targets], \
+                             source_y[0:number_of_targets], source_z[0:number_of_targets], source_charge[0:number_of_targets])
     {
 #endif
 
@@ -32,27 +32,24 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 /************* Coulomb *****************/
 /***************************************/
 
-    if (strcmp(kernelName, "coulomb") == 0) {
+    if (strcmp(kernel_name, "coulomb") == 0) {
 
 #ifdef OPENACC_ENABLED
         #pragma acc kernels
         {
         #pragma acc loop independent
 #endif
-        for (int i = 0; i < numparsT; i++) {
-            double xi = xT[i];
-            double yi = yT[i];
-            double zi = zT[i];
-            double qi = qT[i];
-            double teng = 0.0;
+        for (int i = 0; i < number_of_targets; i++) {
+
+            double temporary_potential = 0.0;
                 
 #ifdef OPENACC_ENABLED
             #pragma acc loop independent
 #endif
-            for (int j = 0; j < numparsS; j++)
-                teng += coulombKernel(xi, yi, zi, qi, xS[j], yS[j], zS[j], qS[j], wS[j], kappa);
+            for (int j = 0; j < number_of_sources; j++)
+                temporary_potential += coulombKernel(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
 
-            denergy[i] += teng;
+            potential[i] += temporary_potential;
         }
 #ifdef OPENACC_ENABLED
         } // end acc kernels
@@ -64,27 +61,24 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 /*************** Yukawa ****************/
 /***************************************/
 
-    } else if (strcmp(kernelName, "yukawa") == 0) {
+    } else if (strcmp(kernel_name, "yukawa") == 0) {
 
 #ifdef OPENACC_ENABLED
         #pragma acc kernels
         {
         #pragma acc loop independent
 #endif
-        for (int i = 0; i < numparsT; i++) {
-            double xi = xT[i];
-            double yi = yT[i];
-            double zi = zT[i];
-            double qi = qT[i];
-            double teng = 0.0;
+        for (int i = 0; i < number_of_targets; i++) {
+
+            double temporary_potential = 0.0;
                 
 #ifdef OPENACC_ENABLED
             #pragma acc loop independent
 #endif
-            for (int j = 0; j < numparsS; j++)
-                teng += yukawaKernel(xi, yi, zi, qi, xS[j], yS[j], zS[j], qS[j], wS[j], kappa);
+            for (int j = 0; j < number_of_sources; j++)
+                temporary_potential += yukawaKernel(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
 
-            denergy[i] += teng;
+            potential[i] += temporary_potential;
         }
 #ifdef OPENACC_ENABLED
         } // end acc kernels
@@ -96,27 +90,24 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 /********** Coulomb with SS ************/
 /***************************************/
 
-    } else if (strcmp(kernelName, "coulomb_SS") == 0) {
+    } else if (strcmp(kernel_name, "coulomb_SS") == 0) {
 
 #ifdef OPENACC_ENABLED
         #pragma acc kernels
         {
         #pragma acc loop independent
 #endif
-        for (int i = 0; i < numparsT; i++) {
-            double xi = xT[i];
-            double yi = yT[i];
-            double zi = zT[i];
-            double qi = qT[i];
-            double teng = 0.0;
+        for (int i = 0; i < number_of_targets; i++) {
+
+            double temporary_potential = 0.0;
                 
 #ifdef OPENACC_ENABLED
             #pragma acc loop independent
 #endif
-            for (int j = 0; j < numparsS; j++)
-                teng += coulombKernel_SS_direct(xi, yi, zi, qi, xS[j], yS[j], zS[j], qS[j], wS[j], kappa);
+            for (int j = 0; j < number_of_sources; j++)
+                temporary_potential += coulombKernel_SS_direct(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
 
-            denergy[i] += teng;
+            potential[i] += temporary_potential;
         }
 #ifdef OPENACC_ENABLED
         } // end acc kernels
@@ -128,27 +119,24 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
 /********** Yukawa with SS *************/
 /***************************************/
 
-    } else if (strcmp(kernelName, "yukawa_SS") == 0) {
+    } else if (strcmp(kernel_name, "yukawa_SS") == 0) {
 
 #ifdef OPENACC_ENABLED
         #pragma acc kernels
         {
         #pragma acc loop independent
 #endif
-        for (int i = 0; i < numparsT; i++) {
-            double xi = xT[i];
-            double yi = yT[i];
-            double zi = zT[i];
-            double qi = qT[i];
-            double teng = 0.0;
+        for (int i = 0; i < number_of_targets; i++) {
+
+            double temporary_potential = 0.0;
                 
 #ifdef OPENACC_ENABLED
             #pragma acc loop independent
 #endif
-            for (int j = 0; j < numparsS; j++)
-                teng += yukawaKernel_SS_direct(xi, yi, zi, qi, xS[j], yS[j], zS[j], qS[j], wS[j], kappa);
+            for (int j = 0; j < number_of_sources; j++)
+                temporary_potential += yukawaKernel_SS_direct(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
 
-            denergy[i] += teng;
+            potential[i] += temporary_potential;
         }
 #ifdef OPENACC_ENABLED
         } // end acc kernels
@@ -161,7 +149,7 @@ void direct_eng(double *xS, double *yS, double *zS, double *qS, double *wS,
     } // end acc data region
 #endif
 
-    *dpeng = sum(denergy, numparsT);
+    *total_potential = sum(potential, number_of_targets);
 
     return;
 }

@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
 
 	if (numProcs == 1) { // one 1 proc, won't enter into the round robin below.  So just interact with self here.
-		direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+		directSummation(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 						denergy, &dpeng, kappa, kernelName);
 	} else {
 
@@ -280,10 +280,10 @@ int main(int argc, char **argv)
 
 
 				if (procID==1) { // in first iteration of loop, interact with self.
-					direct_eng(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+					directSummation(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 											denergy, &dpeng, kappa, kernelName);
 				} else { // in subsequent iterations, interact with foreign
-					direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa,kernelName);
+					directSummation(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa,kernelName);
 					for (i=0;i<5*maxparsSloc;i++){
 							S_foreign2[i]=0.0;
 						}
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 				MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
 				MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
-				direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa, kernelName);
+				directSummation(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa, kernelName);
 				for (i=0;i<5*maxparsSloc;i++){
 						S_foreign1[i]=0.0;
 					}
@@ -307,10 +307,10 @@ int main(int argc, char **argv)
 		} // end round robin
 
 		if ((numProcs-1)%2==1) { // in final loop, S_foreign1 was received but not yet computed with
-			direct_eng(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+			directSummation(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 											denergy, &dpeng, kappa, kernelName);
 		} else { // S_foreign2 is the one that needs to be computed with
-			direct_eng(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
+			directSummation(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
 											denergy, &dpeng, kappa, kernelName);
 		}
 	}
