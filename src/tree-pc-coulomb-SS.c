@@ -20,7 +20,7 @@ void fill_in_cluster_data_SS(struct particles *clusters, struct particles *sourc
                              struct tnode *troot, int interpolationOrder, struct tnode_array *tree_array)
 {
 
-	printf("Entering fill_in_cluster_data_SS\n");
+//	printf("Entering fill_in_cluster_data_SS\n");
 	int tree_numnodes = tree_array->numnodes;
     int interpOrderLim = interpolationOrder + 1;
     int pointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;

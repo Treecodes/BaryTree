@@ -58,6 +58,7 @@ int main(int argc, char **argv)
     int N, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison;
     double kappa, theta; 
     char *kernelName = NULL;
+    char *approximationName = NULL;
 
     N = atoi(argv[1]);
     order = atoi(argv[2]);
@@ -66,8 +67,9 @@ int main(int argc, char **argv)
     max_per_batch = atoi(argv[5]);
     kernelName = argv[6];
     kappa = atof(argv[7]);
-    tree_type = atoi(argv[8]);
-    run_direct_comparison = atoi(argv[9]);
+    approximationName = argv[8];
+    tree_type = atoi(argv[9]);
+    run_direct_comparison = atoi(argv[10]);
 
 //    printf("Read in command line args...\n");
 //    mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE $COMPAREDIRECT
@@ -106,13 +108,13 @@ int main(int argc, char **argv)
     double time1, time2;
 
 
-    printf("Initializing Zoltan.\n");
+//    printf("Initializing Zoltan.\n");
     if (Zoltan_Initialize(argc, argv, &ver) != ZOLTAN_OK) {
         printf("Zoltan failed to initialize. Exiting.\n");
         MPI_Finalize();
         exit(0);
     }
-    printf("Initialized Zoltan.\n");
+//    printf("Initialized Zoltan.\n");
 
     time1 = MPI_Wtime();
 
@@ -244,7 +246,7 @@ int main(int argc, char **argv)
     
 
     // Set up kernel
-    printf("Kernel Name: %s\n",kernelName);
+//    printf("Kernel Name: %s\n",kernelName);
     if       (strcmp(kernelName,"coulomb")==0){
         if (rank==0) printf("Set kernel to coulombKernel.\n");
         for (int i=0; i<targets->num; i++){
@@ -259,7 +261,7 @@ int main(int argc, char **argv)
             potential_direct[i]=0.0;
         }
 
-    }else if (strcmp(kernelName,"coulomb_SS")==0){
+    }else if (strcmp(kernelName,"coulombSingularitySubtraction")==0){
         if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
         for (int i=0; i<targets->num; i++){
             potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
@@ -267,7 +269,7 @@ int main(int argc, char **argv)
         }
 
 
-    }else if (strcmp(kernelName,"yukawa_SS")==0){
+    }else if (strcmp(kernelName,"yukawaSingularitySubtraction")==0){
         if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
         for (int i=0; i<targets->num; i++){
             potential[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
@@ -297,14 +299,14 @@ int main(int argc, char **argv)
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
         treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
-                   kernelName, kappa, tree_type, potential_direct, &potential_engy_direct, time_tree);
+                   kernelName, kappa, approximationName, tree_type, potential_direct, &potential_engy_direct, time_tree);
         time_direct = MPI_Wtime() - time1;
     }
     
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
-               kernelName, kappa, tree_type, potential, &potential_engy, time_tree);
+               kernelName, kappa, approximationName, tree_type, potential, &potential_engy, time_tree);
 
     if (rank == 0) fprintf(stderr,"Treedriver has finished.\n");
     

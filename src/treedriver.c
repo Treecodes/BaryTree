@@ -22,6 +22,7 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
                 char *kernelName, double kappa,
+                char *approximationName,
                 int tree_type, double *tEn, double *tpeng, double *time_tree)
 {
 
@@ -103,13 +104,13 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
 
         if  ((strcmp(kernelName, "coulomb") == 0) || (strcmp(kernelName, "yukawa") == 0)) {
-            if (rank == 0) printf("Calling fill_in_cluster_data.\n");
+//            if (rank == 0) printf("Calling fill_in_cluster_data.\n");
             fill_in_cluster_data(clusters, sources, troot, interpolationOrder, tree_array);
 
-        } else if  ((strcmp(kernelName, "coulomb_SS") == 0) || (strcmp(kernelName, "yukawa_SS") == 0)) {
-            if (rank == 0) printf("Calling fill_in_cluster_data_SS.\n");
+        } else if  ((strcmp(kernelName, "coulombSingularitySubtraction") == 0) || (strcmp(kernelName, "yukawaSingularitySubtraction") == 0)) {
+//            if (rank == 0) printf("Calling fill_in_cluster_data_SS.\n");
             fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder, tree_array);
-            printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
+//            printf("First element of clusterQ and clusterW: %f, %f\n",clusters->q[0], clusters->w[0] );
 
         } else {
             if (rank == 0) printf("Not sure how to fill cluster data... aborting.\n");
@@ -491,7 +492,8 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tpeng, tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         tree_array->numnodes, tree_array->numnodes,
-                        kernelName, kappa);
+                        kernelName, kappa,
+                        approximationName);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
@@ -530,7 +532,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                     tpeng, tEn, interpolationOrder,
                                     let_sources->num, targets->num, let_clusters->num,
                                     max_batch_approx, max_batch_direct,
-                                    kernelName, kappa);
+                                    kernelName, kappa, approximationName);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");

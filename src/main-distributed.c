@@ -48,6 +48,7 @@ int main(int argc, char **argv)
     char *offset2 = NULL;
     char *sampout = NULL;
     char *kernelName = NULL;
+    char *approximationName = NULL;
     FILE *fp;
 
     double buf[5];
@@ -274,7 +275,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               kernelName, kappa, 1, tenergy, &tpeng, time_tree);
+               kernelName, kappa, approximationName, 1, tenergy, &tpeng, time_tree);
                
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];
