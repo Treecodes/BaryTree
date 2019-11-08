@@ -24,7 +24,8 @@
 
 void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
-                char *kernelName, double kappa,
+                char *kernelName, double kappa, char *singularityHandling,
+                char *approximationName,
                 int tree_type, double *tEn, double *tpeng, double *time_tree)
 {
 
@@ -37,10 +38,6 @@ void treedriver(struct particles *sources, struct particles *targets,
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
-
-    char *singularityHandling = "skipping";
-    char *approximationName = "lagrange";
-
 
     /* local variables */
     struct tnode *troot = NULL;
@@ -121,23 +118,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             exit(1);
         }
 
-        ////// For now, just fill in cluster data for Coulomb and Yukawa Lagrange.  Need to handle Hermite and SS separately.
-
-//        if         ((pot_type == 0) || (pot_type==1)) {
-//            fill_in_cluster_data(   clusters, sources, troot, interpolationOrder,
-//                                  tree_array);
-//
-//        } else if  ((pot_type == 2) || (pot_type==3)) {
-////            fill_in_cluster_data_SS(clusters, sources, troot, interpolationOrder);
-//            fill_in_cluster_data_SS(   clusters, sources, troot, interpolationOrder,
-//                                              tree_array);
-//
-//        } else if  ((pot_type == 4) || (pot_type==5)) {
-//            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
-//
-//        } else if  ((pot_type == 6) || (pot_type==7)) {
-//            fill_in_cluster_data_hermite(clusters, sources, troot, interpolationOrder);
-//        }
         time_tree[4] = MPI_Wtime() - time1; //time_fillclusters
     }
     
@@ -496,7 +476,8 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tpeng, tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         tree_array->numnodes, tree_array->numnodes,
-                        kernelName, kappa);
+                        kernelName, kappa, singularityHandling,
+                        approximationName);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
@@ -535,7 +516,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                     tpeng, tEn, interpolationOrder,
                                     let_sources->num, targets->num, let_clusters->num,
                                     max_batch_approx, max_batch_direct,
-                                    kernelName, kappa);
+                                    kernelName, kappa, singularityHandling, approximationName);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");

@@ -25,8 +25,16 @@ SET(SRCS_TREEDRIVER
     tools.h
     particles.h
     sort.h
-    kernels/kernels.h
-    kernels/kernels.c)
+#    kernels/kernels.h
+#    kernels/kernels.c
+    kernels/coulomb.h
+    kernels/coulomb.c
+    kernels/yukawa.h
+    kernels/yukawa.c
+    kernels/yukawaSingularitySubtraction.h
+    kernels/yukawaSingularitySubtraction.c
+    kernels/coulombSingularitySubtraction.h
+    kernels/coulombSingularitySubtraction.c)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED

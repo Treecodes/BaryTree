@@ -18,7 +18,7 @@
 void treedriverWrapper(int numTargets, int numSources,
 		double *targetX, double *targetY, double *targetZ, double *targetValue,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
-		double *outputArray, char *kernelName, double kappa,
+		double *outputArray, char *kernelName, double kappa, char *singularityHandling, char *approximationName,
 		int order, double theta, int maxparnode, int batch_size) {
 
 	// Set up kernels
@@ -66,7 +66,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	// Call the treedriver
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
-			   kernelName, kappa, tree_type,
+			   kernelName, kappa, singularityHandling, approximationName, tree_type,
 			   outputArray, &tpeng, time_tree);
 
 	free(sources);

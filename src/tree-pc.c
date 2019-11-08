@@ -16,6 +16,10 @@
 #include "tools.h"
 
 #include "kernels/kernels.h"
+#include "kernels/coulomb.h"
+#include "kernels/yukawa.h"
+#include "kernels/coulombSingularitySubtraction.h"
+#include "kernels/yukawaSingularitySubtraction.h"
 #include "tree.h"
 
 
@@ -23,13 +27,14 @@
 
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
-                                  double *xS, double *yS, double *zS, double *qS, double *wS,
-                                  double *xT, double *yT, double *zT, double *qT,
-                                  double *xC, double *yC, double *zC, double *qC, double *wC,
+                                  double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
+                                  double *target_x, double *target_y, double *target_z, double *target_charge,
+                                  double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_w,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
                                   int numSources, int numTargets, int numClusters,
                                   int batch_approx_offset, int batch_direct_offset,
-                                  char *kernelName, double kappa)
+                                  char *kernelName, double kernel_parameter, char *singularityHandling,
+                                  char *approximationName)
 {
         int rank, numProcs, ierr;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -74,7 +79,6 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
             int batchStart =  batch_ibeg - 1;
 
 
-
 /**********************************************************/
 /************** POTENTIAL FROM APPROX *********************/
 /**********************************************************/
@@ -86,42 +90,35 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 int streamID = j%3;
 
 
-
         /***********************************************/
         /***************** Coulomb *********************/
         /***********************************************/
 
                 if (strcmp(kernelName, "coulomb") == 0) {
+
+                    if (strcmp(approximationName, "Lagrange") == 0) {
+
+                        if (strcmp(singularityHandling, "skipping") == 0) {
                 
-#ifdef OPENACC_ENABLED
-                    #pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = 0; ii < numberOfTargets; ii++) {
-                        double tempPotential = 0.0;
-                        double xi = xT[ batchStart + ii];
-                        double yi = yT[ batchStart + ii];
-                        double zi = zT[ batchStart + ii];
-                        double qi = qT[ batchStart + ii];
+                            coulombApproximationLagrange(   numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                            target_x, target_y, target_z,
+                                                            cluster_x, cluster_y, cluster_charge, cluster_charge,
+                                                            potentialDueToApprox, streamID);
 
-                        for (int jj = 0; jj < numberOfInterpolationPoints; jj++) {
-                            tempPotential += coulombKernel(xi, yi, zi, qi,
-                                                           xC[clusterStart + jj], yC[clusterStart + jj],
-                                                           zC[clusterStart + jj], qC[clusterStart + jj],
-                                                           wC[clusterStart + jj], kappa);
+                        } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
+                            coulombSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                            target_x, target_y, target_z, target_charge,
+                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+                                                            kernel_parameter, potentialDueToApprox, streamID);
+                        } else {
+                            printf("Invalid choice of singularityHandling. Exiting. \n");
+                            return;
                         }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToApprox[batchStart + ii] += tempPotential;
+                    }else{
+                        printf("Invalid approximationName.  Was set to %s\n", approximationName);
+                        return;
                     }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
-
-
 
         /***********************************************/
         /***************** Yukawa **********************/
@@ -129,106 +126,67 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                 } else if (strcmp(kernelName, "yukawa") == 0) {
 
-#ifdef OPENACC_ENABLED
-                    #pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = 0; ii < numberOfTargets; ii++) {
-                        double tempPotential = 0.0;
-                        double xi = xT[ batchStart + ii];
-                        double yi = yT[ batchStart + ii];
-                        double zi = zT[ batchStart + ii];
-                        double qi = qT[ batchStart + ii];
+                    if (strcmp(approximationName, "Lagrange") == 0) {
 
-                        for (int jj = 0; jj < numberOfInterpolationPoints; jj++) {
-                            tempPotential += yukawaKernel(xi, yi, zi, qi,
-                                                          xC[clusterStart + jj], yC[clusterStart + jj],
-                                                          zC[clusterStart + jj], qC[clusterStart + jj],
-                                                          wC[clusterStart + jj], kappa);
+                        if (strcmp(singularityHandling, "skipping") == 0) {
 
+                            yukawaApproximationLagrange(numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                        target_x, target_y, target_z,
+                                                        cluster_x, cluster_y, cluster_charge, cluster_charge,
+                                                        kernel_parameter, potentialDueToApprox, streamID);
+
+                        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                            yukawaSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                                            target_x, target_y, target_z, target_charge,
+                                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+                                                                            kernel_parameter, potentialDueToApprox, streamID);
+                        } else {
+                            printf("Invalid choice of singularityHandling. Exiting. \n");
+                            return;
                         }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToApprox[batchStart + ii] += tempPotential;
+
+                    }else{
+                        printf("Invalid approximationName.\n");
+                        return;
                     }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
 
+//        /***********************************************/
+//        /***** Coulomb with Singularity Subtraction ****/
+//        /***********************************************/
+//
+//                } else if (strcmp(kernelName, "coulombSingularitySubtraction") == 0) {
+//
+//                    if (strcmp(approximationName, "Lagrange") == 0) {
+//                    coulombSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+//                                                                        target_x, target_y, target_z, target_charge,
+//                                                                        cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+//                                                                        kernel_parameter, potentialDueToApprox, streamID);
+//                    }else{
+//                        printf("Invalid approximationName.\n");
+//                        return;
+//                    }
+//
+//        /***********************************************/
+//        /***** Yukawa with Singularity Subtraction *****/
+//        /***********************************************/
+//
+//                } else if (strcmp(kernelName, "yukawaSingularitySubtraction") == 0) {
+//
+//                    if (strcmp(approximationName, "Lagrange") == 0) {
+//
+//                        yukawaSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+//                                                                            target_x, target_y, target_z, target_charge,
+//                                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+//                                                                            kernel_parameter, potentialDueToApprox, streamID);
+//                    }else{
+//                        printf("Invalid approximationName.\n");
+//                        return;
+//                    }
 
-
-        /***********************************************/
-        /************* Coulomb with SS *****************/
-        /***********************************************/
-
-                } else if (strcmp(kernelName, "coulomb_SS") == 0) {
-
-#ifdef OPENACC_ENABLED
-                    #pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = 0; ii < numberOfTargets; ii++) {
-                        double tempPotential = 0.0;
-                        double xi = xT[ batchStart + ii];
-                        double yi = yT[ batchStart + ii];
-                        double zi = zT[ batchStart + ii];
-                        double qi = qT[ batchStart + ii];
-
-                        for (int jj = 0; jj < numberOfInterpolationPoints; jj++) {
-                            tempPotential += coulombKernel_SS_approx(xi, yi, zi, qi,
-                                                          xC[clusterStart + jj], yC[clusterStart + jj],
-                                                          zC[clusterStart + jj], qC[clusterStart + jj],
-                                                          wC[clusterStart + jj], kappa);
-
-                        }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToApprox[batchStart + ii] += tempPotential;
-                    }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
-
-
-
-        /***********************************************/
-        /************** Yukawa with SS *****************/
-        /***********************************************/
-
-                } else if (strcmp(kernelName, "yukawa_SS") == 0) {
-
-#ifdef OPENACC_ENABLED
-                    #pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = 0; ii < numberOfTargets; ii++) {
-                        double tempPotential = 0.0;
-                        double xi = xT[ batchStart + ii];
-                        double yi = yT[ batchStart + ii];
-                        double zi = zT[ batchStart + ii];
-                        double qi = qT[ batchStart + ii];
-
-                        for (int jj = 0; jj < numberOfInterpolationPoints; jj++) {
-                            tempPotential += yukawaKernel_SS_approx(xi, yi, zi, qi,
-                                                          xC[clusterStart + jj], yC[clusterStart + jj],
-                                                          zC[clusterStart + jj], qC[clusterStart + jj],
-                                                          wC[clusterStart + jj], kappa);
-
-                        }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToApprox[batchStart + ii] += tempPotential;
-                    }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
-                } // end kernel selection
+                } else{
+                    printf("Invalid kernelName. Exiting.\n");
+                    return;
+                }
 
             } // end loop over cluster approximations
 
@@ -241,13 +199,10 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
             for (int j = 0; j < numberOfDirectSums; j++) {
 
                 int node_index = direct_inter_list[i * batch_direct_offset + j];
-
                 int source_start = ibegs[node_index]-1;
                 int source_end = iends[node_index];
-
+                int number_of_sources_in_cluster = source_end-source_start;
                 int streamID = j%3;
-
-
 
         /***********************************************/
         /***************** Coulomb *********************/
@@ -255,28 +210,23 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                 if (strcmp(kernelName, "coulomb") == 0) {
 
-#ifdef OPENACC_ENABLED
-                    # pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
-                        double d_peng = 0.0;
+                    if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        for (int jj = source_start; jj < source_end; jj++) {
-                            d_peng += coulombKernel(xT[ii], yT[ii], zT[ii], qT[ii],
-                                                    xS[jj], yS[jj], zS[jj], qS[jj], wS[jj], kappa);
-                        }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToDirect[ii] += d_peng;
+                        coulombDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                        target_x, target_y, target_z,
+                                        source_x, source_y, source_z, source_charge, source_weight,
+                                        potentialDueToDirect, streamID);
+
+                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+                        coulombSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                                        target_x, target_y, target_z, target_charge,
+                                                        source_x, source_y, source_z, source_charge, source_weight,
+                                                        kernel_parameter, potentialDueToDirect, streamID);
+                    }else {
+                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        return;
                     }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
-
-
 
         /***********************************************/
         /***************** Yukawa **********************/
@@ -284,85 +234,51 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                 } else if (strcmp(kernelName, "yukawa") == 0) {
 
-#ifdef OPENACC_ENABLED
-                    # pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
-                        double d_peng = 0.0;
+                    if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        for (int jj = source_start; jj < source_end; jj++) {
-                            d_peng += yukawaKernel(xT[ii], yT[ii], zT[ii], qT[ii],
-                                                   xS[jj], yS[jj], zS[jj], qS[jj], wS[jj], kappa);
-                        }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToDirect[ii] += d_peng;
+                        yukawaDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                        target_x, target_y, target_z,
+                                        source_x, source_y, source_z, source_charge, source_weight,
+                                        kernel_parameter, potentialDueToDirect, streamID);
+
+                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+                        yukawaSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                                        target_x, target_y, target_z, target_charge,
+                                                        source_x, source_y, source_z, source_charge, source_weight,
+                                                        kernel_parameter, potentialDueToDirect, streamID);
+
+                    }else {
+                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        return;
                     }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
-
-
 
         /***********************************************/
-        /************* Coulomb with SS *****************/
+        /***** Coulomb with Singularity Subtraction ****/
         /***********************************************/
 
-                } else if (strcmp(kernelName, "yukawa") == 0) {
+//                } else if (strcmp(kernelName, "coulombSingularitySubtraction") == 0) {
+//
+//                    coulombSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+//                                                        target_x, target_y, target_z, target_charge,
+//                                                        source_x, source_y, source_z, source_charge, source_weight,
+//                                                        kernel_parameter, potentialDueToDirect, streamID);
+//
+//        /***********************************************/
+//        /***** Yukawa with Singularity Subtraction *****/
+//        /***********************************************/
+//
+//                } else if (strcmp(kernelName, "yukawaSingularitySubtraction") == 0) {
+//
+//                    yukawaSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+//                                                        target_x, target_y, target_z, target_charge,
+//                                                        source_x, source_y, source_z, source_charge, source_weight,
+//                                                        kernel_parameter, potentialDueToDirect, streamID);
 
-#ifdef OPENACC_ENABLED
-                    # pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
-                        double d_peng = 0.0;
-
-                        for (int jj = source_start; jj < source_end; jj++) {
-                            d_peng += coulombKernel_SS_direct(xT[ii], yT[ii], zT[ii], qT[ii],
-                                                              xS[jj], yS[jj], zS[jj], qS[jj], wS[jj], kappa);
-                        }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToDirect[ii] += d_peng;
-                    }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
-
-
-
-        /***********************************************/
-        /************** Yukawa with SS *****************/
-        /***********************************************/
-
-                } else if (strcmp(kernelName, "yukawa") == 0) {
-
-#ifdef OPENACC_ENABLED
-                    # pragma acc kernels async(streamID)
-                    {
-                    #pragma acc loop independent
-#endif
-                    for (int ii = batchStart; ii < batchStart+numberOfTargets; ii++) {
-                        double d_peng = 0.0;
-
-                        for (int jj = source_start; jj < source_end; jj++) {
-                            d_peng += yukawaKernel_SS_direct(xT[ii], yT[ii], zT[ii], qT[ii],
-                                                             xS[jj], yS[jj], zS[jj], qS[jj], wS[jj], kappa);
-                        }
-#ifdef OPENACC_ENABLED
-                        #pragma acc atomic
-#endif
-                        potentialDueToDirect[ii] += d_peng;
-                    }
-#ifdef OPENACC_ENABLED
-                    } // end kernel
-#endif
-                } // end kernel selection
+                } else{
+                    printf("Invalid kernelName. Exiting.\n");
+                    return;
+                }
 
             } // end loop over number of leaves
 
@@ -376,8 +292,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         double totalDueToApprox = sum(potentialDueToApprox, numTargets);
         double totalDueToDirect = sum(potentialDueToDirect, numTargets);
 
-        printf("Total due to direct = %f\n", totalDueToDirect);
-        printf("Total due to approx = %f\n", totalDueToApprox);
+//        printf("Total due to direct = %f\n", totalDueToDirect);
+//        printf("Total due to approx = %f\n", totalDueToApprox);
 
         for (int k = 0; k < numTargets; k++) {
             pointwisePotential[k] += potentialDueToDirect[k];

@@ -8,18 +8,22 @@ CLUSTERSIZE=100
 BATCHSIZE=100
 KAPPA=0.5
 
+APPROXIMATIONNAME=Lagrange
 COMPAREDIRECT=1
 
 for N in 2500 
 do
     for NP in 4
     do
-        for KERNEL in coulomb yukawa coulomb_SS yukawa_SS
-        #for KERNEL in yukawa_SS coulomb_SS
+        for KERNEL in coulomb yukawa 
         do
-            echo $NP
-            echo $KERNEL
-            mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE $COMPAREDIRECT 
+            for SINGULARITYHANDLING in skipping subtraction
+            do
+                echo $NP
+                echo $KERNEL
+                echo $SINGULARITYHANDLING
+                mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $SINGULARITYHANDLING $APPROXIMATIONNAME $TREETYPE $COMPAREDIRECT 
+            done
         done
     done   
 done      

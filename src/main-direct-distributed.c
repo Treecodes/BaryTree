@@ -27,25 +27,25 @@ int main(int argc, char **argv)
 
     /* arrays for coordinates, charges, energy of target particles */
     /* source particles */
-    double *xS = NULL; 
-    double *yS = NULL;
-    double *zS = NULL;
-    double *qS = NULL;
-    double *wS = NULL;
+    double *source_x = NULL; 
+    double *source_y = NULL;
+    double *source_z = NULL;
+    double *source_charge = NULL;
+    double *source_weight = NULL;
 
     /* target particles */
-    double *xT = NULL;
-    double *yT = NULL;
-    double *zT = NULL;
-    double *qT = NULL;
+    double *target_x = NULL;
+    double *target_y = NULL;
+    double *target_z = NULL;
+    double *target_charge = NULL;
 
     /* exact energy */
-    double *denergy = NULL;
+    double *potential = NULL;
 
     /* for potential energy calculation */
-    double dpeng, dpengglob;
+    double total_potential_local, total_potential_global;
 
-    double kappa;
+    double kernel_parameter;
 
     // insert variables for date-time calculation?
     double time1, time2, time3, time4, time_direct, time_direct_tot, timeCommunicate, timeInteract;
@@ -58,8 +58,8 @@ int main(int argc, char **argv)
 
     //local variables
     int i;
-    int numparsTloc, maxparsTloc, globparsTloc;
-    int numparsSloc, maxparsSloc, globparsSloc;
+    int number_of_targets_local, maxparsTloc, location_in_global_target_array;
+    int number_of_sources_local, maxparsSloc, location_in_global_source_array;
     double buf[5];
     
     /* MPI Variables */
@@ -92,36 +92,36 @@ int main(int argc, char **argv)
     sampdatout = argv[4];
     numparsS = atoi(argv[5]);
     numparsT = atoi(argv[6]);
-    kappa = atof(argv[7]);
+    kernel_parameter = atof(argv[7]);
     kernelName = argv[8];
     
 
 
 
-    numparsTloc = (int)floor((double)numparsT/(double)numProcs);
-    maxparsTloc = numparsTloc + (numparsT - (int)floor((double)numparsT/(double)numProcs) * numProcs);
+    number_of_targets_local = (int)floor((double)numparsT/(double)numProcs);
+    maxparsTloc = number_of_targets_local + (numparsT - (int)floor((double)numparsT/(double)numProcs) * numProcs);
 
-	numparsSloc = (int)floor((double)numparsS/(double)numProcs);
-	maxparsSloc = numparsSloc + (numparsS - (int)floor((double)numparsS/(double)numProcs) * numProcs);
-    if (rank==0) printf("Num local T and local S: %i, %i.\n", numparsSloc, numparsTloc);
+	number_of_sources_local = (int)floor((double)numparsS/(double)numProcs);
+	maxparsSloc = number_of_sources_local + (numparsS - (int)floor((double)numparsS/(double)numProcs) * numProcs);
+    if (rank==0) printf("Num local T and local S: %i, %i.\n", number_of_sources_local, number_of_targets_local);
     
     if (rank == 0){
-    	numparsTloc = maxparsTloc;
-    	numparsSloc = maxparsSloc;
+    	number_of_targets_local = maxparsTloc;
+    	number_of_sources_local = maxparsSloc;
     }
 
-    globparsTloc = maxparsTloc + numparsTloc * (rank-1);
-    globparsSloc = maxparsSloc + numparsSloc * (rank-1);
+    location_in_global_target_array = maxparsTloc + number_of_targets_local * (rank-1);
+    location_in_global_source_array = maxparsSloc + number_of_sources_local * (rank-1);
 
     if (rank==0) printf("Max local T and local S: %i, %i.\n", maxparsTloc, maxparsSloc);
 
     double *S_local;
     make_vector(S_local, 5*maxparsSloc);
-    xS = &S_local[0*maxparsSloc];
-    yS = &S_local[1*maxparsSloc];
-    zS = &S_local[2*maxparsSloc];
-    qS = &S_local[3*maxparsSloc];
-    wS = &S_local[4*maxparsSloc];
+    source_x = &S_local[0*maxparsSloc];
+    source_y = &S_local[1*maxparsSloc];
+    source_z = &S_local[2*maxparsSloc];
+    source_charge = &S_local[3*maxparsSloc];
+    source_weight = &S_local[4*maxparsSloc];
 
 
     for (int i = 0; i < 5*maxparsSloc; i++) {
@@ -130,14 +130,14 @@ int main(int argc, char **argv)
 
 
     double *T_local;
-    make_vector(T_local, 4*numparsTloc);
-    xT = &T_local[0*numparsTloc];
-    yT = &T_local[1*numparsTloc];
-    zT = &T_local[2*numparsTloc];
-    qT = &T_local[3*numparsTloc];
+    make_vector(T_local, 4*number_of_targets_local);
+    target_x = &T_local[0*number_of_targets_local];
+    target_y = &T_local[1*number_of_targets_local];
+    target_z = &T_local[2*number_of_targets_local];
+    target_charge = &T_local[3*number_of_targets_local];
 
 
-    make_vector(denergy,numparsTloc);
+    make_vector(potential,number_of_targets_local);
 
     // Allocate and zero out receive buffers.
 	int sendTo, recvFrom;
@@ -177,14 +177,14 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    MPI_File_seek(fpmpi, (MPI_Offset)globparsSloc*5*sizeof(double), MPI_SEEK_SET);
-    for (i = 0; i < numparsSloc; i++) {
+    MPI_File_seek(fpmpi, (MPI_Offset)location_in_global_source_array*5*sizeof(double), MPI_SEEK_SET);
+    for (i = 0; i < number_of_sources_local; i++) {
         MPI_File_read(fpmpi, buf, 5, MPI_DOUBLE, &status);
-        xS[i] = buf[0];
-        yS[i] = buf[1];
-        zS[i] = buf[2];
-        qS[i] = buf[3];
-        wS[i] = buf[4];
+        source_x[i] = buf[0];
+        source_y[i] = buf[1];
+        source_z[i] = buf[2];
+        source_charge[i] = buf[3];
+        source_weight[i] = buf[4];
     }
     MPI_File_close(&fpmpi);
     
@@ -197,17 +197,17 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    MPI_File_seek(fpmpi, (MPI_Offset)globparsTloc*4*sizeof(double), MPI_SEEK_SET);
-    for (i = 0; i < numparsTloc; i++) {
+    MPI_File_seek(fpmpi, (MPI_Offset)location_in_global_target_array*4*sizeof(double), MPI_SEEK_SET);
+    for (i = 0; i < number_of_targets_local; i++) {
         MPI_File_read(fpmpi, buf, 4, MPI_DOUBLE, &status);
-        xT[i] = buf[0];
-        yT[i] = buf[1];
-        zT[i] = buf[2];
-        qT[i] = buf[3];
+        target_x[i] = buf[0];
+        target_y[i] = buf[1];
+        target_z[i] = buf[2];
+        target_charge[i] = buf[3];
     }
     MPI_File_close(&fpmpi);
 
-    dpeng = 0.0;
+    total_potential_local = 0.0;
 //    for (i = 0; i < maxparsTloc; i++) {
 //		denergy[i] = 0.0;
 //	}
@@ -221,25 +221,25 @@ int main(int argc, char **argv)
 	if       (strcmp(kernelName,"coulomb")==0){
 		if (rank==0) printf("Set kernel to coulombKernel.\n");
 		for (i = 0; i < maxparsTloc; i++) {
-			denergy[i] = 0.0;
+			potential[i] = 0.0;
 		}
 
 	}else if (strcmp(kernelName,"yukawa")==0){
 		if (rank==0) printf("Set kernel to yukawaKernel.\n");
 		for (i = 0; i < maxparsTloc; i++) {
-			denergy[i] = 0.0;
+			potential[i] = 0.0;
 		}
 
 	}else if (strcmp(kernelName,"coulomb_SS")==0){
 		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
 		for (i = 0; i < maxparsTloc; i++) {
-			denergy[i] = 2.0*M_PI*kappa*kappa*qT[i];
+			potential[i] = 2.0*M_PI*kernel_parameter*kernel_parameter*target_charge[i];
 		}
 
 	}else if (strcmp(kernelName,"yukawa_SS")==0){
 		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
 		for (i = 0; i < maxparsTloc; i++) {
-			denergy[i] = 4.0*M_PI*qT[i]/kappa/kappa;
+			potential[i] = 4.0*M_PI*target_charge[i]/kernel_parameter/kernel_parameter;
 		}
 
 	}else{
@@ -263,8 +263,8 @@ int main(int argc, char **argv)
 
 
 	if (numProcs == 1) { // one 1 proc, won't enter into the round robin below.  So just interact with self here.
-		directSummation(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-						denergy, &dpeng, kappa, kernelName);
+		directSummation(source_x, source_y, source_z, source_charge, source_weight, target_x, target_y, target_z, target_charge, maxparsSloc, number_of_targets_local,
+						potential, &total_potential_local, kernel_parameter, kernelName);
 	} else {
 
 		for (int procID = 1; procID < numProcs; procID++) {
@@ -280,10 +280,10 @@ int main(int argc, char **argv)
 
 
 				if (procID==1) { // in first iteration of loop, interact with self.
-					directSummation(xS, yS, zS, qS, wS, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, kappa, kernelName);
+					directSummation(source_x, source_y, source_z, source_charge, source_weight, target_x, target_y, target_z, target_charge, maxparsSloc, number_of_targets_local,
+											potential, &total_potential_local, kernel_parameter, kernelName);
 				} else { // in subsequent iterations, interact with foreign
-					directSummation(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa,kernelName);
+					directSummation(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, target_x, target_y, target_z, target_charge, maxparsSloc, number_of_targets_local, potential, &total_potential_local, kernel_parameter,kernelName);
 					for (i=0;i<5*maxparsSloc;i++){
 							S_foreign2[i]=0.0;
 						}
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 				MPI_Isend(S_local, 5*maxparsSloc, MPI_DOUBLE, sendTo, 1, MPI_COMM_WORLD, &request1s);
 				MPI_Irecv(S_foreign2, 5*maxparsSloc, MPI_DOUBLE, recvFrom, 1, MPI_COMM_WORLD, &request1r);
 
-				directSummation(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc, denergy, &dpeng, kappa, kernelName);
+				directSummation(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, target_x, target_y, target_z, target_charge, maxparsSloc, number_of_targets_local, potential, &total_potential_local, kernel_parameter, kernelName);
 				for (i=0;i<5*maxparsSloc;i++){
 						S_foreign1[i]=0.0;
 					}
@@ -307,11 +307,11 @@ int main(int argc, char **argv)
 		} // end round robin
 
 		if ((numProcs-1)%2==1) { // in final loop, S_foreign1 was received but not yet computed with
-			directSummation(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, kappa, kernelName);
+			directSummation(xS_foreign1, yS_foreign1, zS_foreign1, qS_foreign1, wS_foreign1, target_x, target_y, target_z, target_charge, maxparsSloc, number_of_targets_local,
+											potential, &total_potential_local, kernel_parameter, kernelName);
 		} else { // S_foreign2 is the one that needs to be computed with
-			directSummation(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, xT, yT, zT, qT, maxparsSloc, numparsTloc,
-											denergy, &dpeng, kappa, kernelName);
+			directSummation(xS_foreign2, yS_foreign2, zS_foreign2, qS_foreign2, wS_foreign2, target_x, target_y, target_z, target_charge, maxparsSloc, number_of_targets_local,
+											potential, &total_potential_local, kernel_parameter, kernelName);
 		}
 	}
 
@@ -324,7 +324,7 @@ int main(int argc, char **argv)
     MPI_Reduce(&time_direct, &time_direct_max, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_min, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(&time_direct, &time_direct_tot, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&dpeng, &dpengglob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&total_potential_local, &total_potential_global, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
 //        } // end OMP PARALLEL REGION
     total_time_stop = MPI_Wtime();
@@ -335,8 +335,8 @@ int main(int argc, char **argv)
         MPI_File_seek(fpmpi, (MPI_Offset)0, MPI_SEEK_SET);
         MPI_File_write(fpmpi, &time_direct_max, 1, MPI_DOUBLE, &status);
     }
-    MPI_File_seek(fpmpi, (MPI_Offset)(globparsTloc+1)*sizeof(double), MPI_SEEK_SET);
-    MPI_File_write(fpmpi, denergy, numparsTloc, MPI_DOUBLE, &status);
+    MPI_File_seek(fpmpi, (MPI_Offset)(location_in_global_target_array+1)*sizeof(double), MPI_SEEK_SET);
+    MPI_File_write(fpmpi, potential, number_of_targets_local, MPI_DOUBLE, &status);
     MPI_File_close(&fpmpi);
 
     if (rank == 0)
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
         /* Calculating value dpeng by summing all values in denergy */
         printf("		          Wallclock time (s): %f\n", total_time_stop-total_time_start);
         printf("		         Cumulative time (s): %f\n", (total_time_stop-total_time_start)*numProcs);
-        printf("             Direct potential energy:  %.15f\n\n\n", dpengglob);
+        printf("             Direct potential energy:  %.15f\n\n\n", total_potential_global);
     }
 
     
@@ -359,8 +359,8 @@ int main(int argc, char **argv)
         fprintf(fp, "%s, %s, %s, %d, %d, %f, %s, %d,"
                 "%f, %f, %f, %e \n",
                 sampin1, sampin2, sampout, numparsS, numparsT,
-                kappa, kernelName, numProcs, time_direct_max, time_direct_min,
-                time_direct_tot/(double)numProcs, dpengglob);
+                kernel_parameter, kernelName, numProcs, time_direct_max, time_direct_min,
+                time_direct_tot/(double)numProcs, total_potential_global);
         fclose(fp);
     }
 
@@ -370,7 +370,7 @@ int main(int argc, char **argv)
     free_vector(S_local);
 
 
-    free_vector(denergy);
+    free_vector(potential);
 
 	free_vector(S_foreign1);
 	free_vector(S_foreign2);
