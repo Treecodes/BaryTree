@@ -58,6 +58,7 @@ int main(int argc, char **argv)
     int N, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison;
     double kappa, theta; 
     char *kernelName = NULL;
+    char *singularityHandling = NULL;
     char *approximationName = NULL;
 
     N = atoi(argv[1]);
@@ -67,9 +68,10 @@ int main(int argc, char **argv)
     max_per_batch = atoi(argv[5]);
     kernelName = argv[6];
     kappa = atof(argv[7]);
-    approximationName = argv[8];
-    tree_type = atoi(argv[9]);
-    run_direct_comparison = atoi(argv[10]);
+    singularityHandling = argv[8];
+    approximationName = argv[9];
+    tree_type = atoi(argv[10]);
+    run_direct_comparison = atoi(argv[11]);
 
 //    printf("Read in command line args...\n");
 //    mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $TREETYPE $COMPAREDIRECT
@@ -299,14 +301,14 @@ int main(int argc, char **argv)
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
         treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
-                   kernelName, kappa, approximationName, tree_type, potential_direct, &potential_engy_direct, time_tree);
+                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential_direct, &potential_engy_direct, time_tree);
         time_direct = MPI_Wtime() - time1;
     }
     
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
-               kernelName, kappa, approximationName, tree_type, potential, &potential_engy, time_tree);
+               kernelName, kappa, singularityHandling, approximationName, tree_type, potential, &potential_engy, time_tree);
 
     if (rank == 0) fprintf(stderr,"Treedriver has finished.\n");
     

@@ -136,7 +136,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 								  double *totalPotential, double *pointwisePotential, int interpolationOrder,
 								  int numSources, int numTargets, int numClusters,
                                   int offset_approx, int offset_direct,
-								  char *kernelName, double kernel_parameter,
+								  char *kernelName, double kernel_parameter, char *singularityHandling,
 								  char *approximationName);
 
 void pc_interaction_list_treecode_yuk(struct tnode_array *tree_array, struct particles *clusters, struct batch *batches,

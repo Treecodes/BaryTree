@@ -296,13 +296,13 @@ void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpola
 
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
                                   int *tree_inter_list, int *direct_inter_list,
-                                  double *xS, double *yS, double *zS, double *qS, double *wS,
-                                  double *xT, double *yT, double *zT, double *qT,
-                                  double *xC, double *yC, double *zC, double *qC, double *wC,
+                                  double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
+                                  double *target_x, double *target_y, double *target_z, double *target_charge,
+                                  double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_w,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
                                   int numSources, int numTargets, int numClusters,
                                   int batch_approx_offset, int batch_direct_offset,
-                                  char *kernelName, double kernel_parameter,
+                                  char *kernelName, double kernel_parameter, char *singularityHandling,
                                   char *approximationName)
 {
         int rank, numProcs, ierr;
@@ -366,13 +366,26 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                 if (strcmp(kernelName, "coulomb") == 0) {
 
                     if (strcmp(approximationName, "Lagrange") == 0) {
+
+                        if (strcmp(singularityHandling, "skipping") == 0) {
                 
-                        coulombApproximationLagrange(   numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                        xT, yT, zT,
-                                                        xC, yC, zC, qC,
-                                                        potentialDueToApprox, streamID);
+                            coulombApproximationLagrange(   numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                            target_x, target_y, target_z,
+                                                            cluster_x, cluster_y, cluster_charge, cluster_charge,
+                                                            potentialDueToApprox, streamID);
+
+                        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+                            coulombSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                            target_x, target_y, target_z, target_charge,
+                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+                                                            kernel_parameter, potentialDueToApprox, streamID);
+                        } else {
+                            printf("Invalid choice of singularityHandling. Exiting. \n");
+                            return;
+                        }
                     }else{
-                        printf("Invalid approximationName.\n");
+                        printf("Invalid approximationName.  Was set to %s\n", approximationName);
                         return;
                     }
 
@@ -384,49 +397,65 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                     if (strcmp(approximationName, "Lagrange") == 0) {
 
-                        yukawaApproximationLagrange(   numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                    xT, yT, zT,
-                                                    xC, yC, zC, qC,
-                                                    kernel_parameter, potentialDueToApprox, streamID);
-                    }else{
-                        printf("Invalid approximationName.\n");
-                        return;
-                    }
+                        if (strcmp(singularityHandling, "skipping") == 0) {
 
-        /***********************************************/
-        /***** Coulomb with Singularity Subtraction ****/
-        /***********************************************/
+                            yukawaApproximationLagrange(numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                        target_x, target_y, target_z,
+                                                        cluster_x, cluster_y, cluster_charge, cluster_charge,
+                                                        kernel_parameter, potentialDueToApprox, streamID);
 
-                } else if (strcmp(kernelName, "coulombSingularitySubtraction") == 0) {
-
-                    if (strcmp(approximationName, "Lagrange") == 0) {
-                    coulombSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                                        xT, yT, zT, qT,
-                                                                        xC, yC, zC, qC, wC,
-                                                                        kernel_parameter, potentialDueToApprox, streamID);
-                    }else{
-                        printf("Invalid approximationName.\n");
-                        return;
-                    }
-
-        /***********************************************/
-        /***** Yukawa with Singularity Subtraction *****/
-        /***********************************************/
-
-                } else if (strcmp(kernelName, "yukawaSingularitySubtraction") == 0) {
-
-                    if (strcmp(approximationName, "Lagrange") == 0) {
-
-                        yukawaSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                                            xT, yT, zT, qT,
-                                                                            xC, yC, zC, qC, wC,
+                        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                            yukawaSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+                                                                            target_x, target_y, target_z, target_charge,
+                                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
                                                                             kernel_parameter, potentialDueToApprox, streamID);
+                        } else {
+                            printf("Invalid choice of singularityHandling. Exiting. \n");
+                            return;
+                        }
+
                     }else{
                         printf("Invalid approximationName.\n");
                         return;
                     }
 
-                } // end kernel selection
+//        /***********************************************/
+//        /***** Coulomb with Singularity Subtraction ****/
+//        /***********************************************/
+//
+//                } else if (strcmp(kernelName, "coulombSingularitySubtraction") == 0) {
+//
+//                    if (strcmp(approximationName, "Lagrange") == 0) {
+//                    coulombSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+//                                                                        target_x, target_y, target_z, target_charge,
+//                                                                        cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+//                                                                        kernel_parameter, potentialDueToApprox, streamID);
+//                    }else{
+//                        printf("Invalid approximationName.\n");
+//                        return;
+//                    }
+//
+//        /***********************************************/
+//        /***** Yukawa with Singularity Subtraction *****/
+//        /***********************************************/
+//
+//                } else if (strcmp(kernelName, "yukawaSingularitySubtraction") == 0) {
+//
+//                    if (strcmp(approximationName, "Lagrange") == 0) {
+//
+//                        yukawaSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
+//                                                                            target_x, target_y, target_z, target_charge,
+//                                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+//                                                                            kernel_parameter, potentialDueToApprox, streamID);
+//                    }else{
+//                        printf("Invalid approximationName.\n");
+//                        return;
+//                    }
+
+                } else{
+                    printf("Invalid kernelName. Exiting.\n");
+                    return;
+                }
 
             } // end loop over cluster approximations
 
@@ -450,10 +479,23 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                 if (strcmp(kernelName, "coulomb") == 0) {
 
-                    coulombDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                    xT, yT, zT,
-                                    xS, yS, zS, qS, wS,
-                                    potentialDueToDirect, streamID);
+                    if (strcmp(singularityHandling, "skipping") == 0) {
+
+                        coulombDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                        target_x, target_y, target_z,
+                                        source_x, source_y, source_z, source_charge, source_weight,
+                                        potentialDueToDirect, streamID);
+
+                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+                        coulombSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                                        target_x, target_y, target_z, target_charge,
+                                                        source_x, source_y, source_z, source_charge, source_weight,
+                                                        kernel_parameter, potentialDueToDirect, streamID);
+                    }else {
+                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        return;
+                    }
 
         /***********************************************/
         /***************** Yukawa **********************/
@@ -461,36 +503,51 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                 } else if (strcmp(kernelName, "yukawa") == 0) {
 
-                    yukawaDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                    xT, yT, zT,
-                                    xS, yS, zS, qS, wS,
-                                    kernel_parameter, potentialDueToDirect, streamID);
+                    if (strcmp(singularityHandling, "skipping") == 0) {
+
+                        yukawaDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                        target_x, target_y, target_z,
+                                        source_x, source_y, source_z, source_charge, source_weight,
+                                        kernel_parameter, potentialDueToDirect, streamID);
+
+                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+                        yukawaSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+                                                        target_x, target_y, target_z, target_charge,
+                                                        source_x, source_y, source_z, source_charge, source_weight,
+                                                        kernel_parameter, potentialDueToDirect, streamID);
+
+                    }else {
+                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        return;
+                    }
 
         /***********************************************/
         /***** Coulomb with Singularity Subtraction ****/
         /***********************************************/
 
-                } else if (strcmp(kernelName, "coulombSingularitySubtraction") == 0) {
+//                } else if (strcmp(kernelName, "coulombSingularitySubtraction") == 0) {
+//
+//                    coulombSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+//                                                        target_x, target_y, target_z, target_charge,
+//                                                        source_x, source_y, source_z, source_charge, source_weight,
+//                                                        kernel_parameter, potentialDueToDirect, streamID);
+//
+//        /***********************************************/
+//        /***** Yukawa with Singularity Subtraction *****/
+//        /***********************************************/
+//
+//                } else if (strcmp(kernelName, "yukawaSingularitySubtraction") == 0) {
+//
+//                    yukawaSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
+//                                                        target_x, target_y, target_z, target_charge,
+//                                                        source_x, source_y, source_z, source_charge, source_weight,
+//                                                        kernel_parameter, potentialDueToDirect, streamID);
 
-                    coulombSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                                        xT, yT, zT, qT,
-                                                        xS, yS, zS, qS, wS,
-                                                        kernel_parameter, potentialDueToDirect, streamID);
-
-        /***********************************************/
-        /***** Yukawa with Singularity Subtraction *****/
-        /***********************************************/
-
-                } else if (strcmp(kernelName, "yukawaSingularitySubtraction") == 0) {
-
-                    yukawaSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                                        xT, yT, zT, qT,
-                                                        xS, yS, zS, qS, wS,
-                                                        kernel_parameter, potentialDueToDirect, streamID);
-
-
-
-                } // end kernel selection
+                } else{
+                    printf("Invalid kernelName. Exiting.\n");
+                    return;
+                }
 
             } // end loop over number of leaves
 

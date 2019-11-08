@@ -48,6 +48,7 @@ int main(int argc, char **argv)
     char *offset2 = NULL;
     char *sampout = NULL;
     char *kernelName = NULL;
+    char *singularityHandling = NULL;
     char *approximationName = NULL;
     FILE *fp;
 
@@ -112,6 +113,7 @@ int main(int argc, char **argv)
     kappa = atof(argv[14]);
     
     kernelName = argv[13];
+    singularityHandling = argv[15];
 
 
 
@@ -275,7 +277,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               kernelName, kappa, approximationName, 1, tenergy, &tpeng, time_tree);
+               kernelName, kappa, singularityHandling, approximationName, 1, tenergy, &tpeng, time_tree);
                
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];

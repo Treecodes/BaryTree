@@ -21,7 +21,7 @@
 
 void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
-                char *kernelName, double kappa,
+                char *kernelName, double kappa, char *singularityHandling,
                 char *approximationName,
                 int tree_type, double *tEn, double *tpeng, double *time_tree)
 {
@@ -492,7 +492,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tpeng, tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         tree_array->numnodes, tree_array->numnodes,
-                        kernelName, kappa,
+                        kernelName, kappa, singularityHandling,
                         approximationName);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
@@ -532,7 +532,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                     tpeng, tEn, interpolationOrder,
                                     let_sources->num, targets->num, let_clusters->num,
                                     max_batch_approx, max_batch_direct,
-                                    kernelName, kappa, approximationName);
+                                    kernelName, kappa, singularityHandling, approximationName);
 
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");
