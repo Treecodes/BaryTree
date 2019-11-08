@@ -2,7 +2,7 @@
 
 
 TREETYPE=1
-THETA=0.5
+THETA=0.8
 ORDER=7
 CLUSTERSIZE=100
 BATCHSIZE=100
@@ -15,9 +15,9 @@ for N in 2500
 do
     for NP in 1
     do
-        for KERNEL in coulomb #yukawa 
+        for KERNEL in coulomb yukawa 
         do
-            for SINGULARITYHANDLING in skipping #subtraction
+            for SINGULARITYHANDLING in skipping subtraction
             do
                 echo $NP
                 echo $KERNEL

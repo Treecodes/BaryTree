@@ -29,7 +29,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                   int *tree_inter_list, int *direct_inter_list,
                                   double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
                                   double *target_x, double *target_y, double *target_z, double *target_charge,
-                                  double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_w,
+                                  double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
                                   int numSources, int numTargets, int numClusters,
                                   int batch_approx_offset, int batch_direct_offset,
@@ -103,14 +103,14 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 //                            printf("calling coulombApproximationLagrange.\n");
                             coulombApproximationLagrange(   numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
                                                             target_x, target_y, target_z,
-                                                            cluster_x, cluster_y, cluster_charge, cluster_charge,
+                                                            cluster_x, cluster_y, cluster_z, cluster_charge,
                                                             potentialDueToApprox, streamID);
 
                         } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
                             coulombSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
                                                             target_x, target_y, target_z, target_charge,
-                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+                                                            cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
                                                             kernel_parameter, potentialDueToApprox, streamID);
                         } else {
                             printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -133,13 +133,13 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                             yukawaApproximationLagrange(numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
                                                         target_x, target_y, target_z,
-                                                        cluster_x, cluster_y, cluster_charge, cluster_charge,
+                                                        cluster_x, cluster_y, cluster_z, cluster_charge,
                                                         kernel_parameter, potentialDueToApprox, streamID);
 
                         } else if (strcmp(singularityHandling, "subtraction") == 0) {
                             yukawaSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
                                                                             target_x, target_y, target_z, target_charge,
-                                                                            cluster_x, cluster_y, cluster_charge, cluster_charge, cluster_w,
+                                                                            cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
                                                                             kernel_parameter, potentialDueToApprox, streamID);
                         } else {
                             printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -226,7 +226,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                     exit(1);
                 }
 
-            } // end loop over number of leaves
+            } // end loop over number of direct interactions
 
         } // end loop over target batches
 #ifdef OPENACC_ENABLED

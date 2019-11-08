@@ -271,7 +271,7 @@ int main(int argc, char **argv)
         }else{
             if (rank==0) printf("singularityHandling = %s.\n", singularityHandling);
             printf("Invalid option for singularityHandling. Aborting.\n");
-            return 1;
+            exit(1);
         }
 
 
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
     }else{
         if (rank==0) printf("kernelName = %s.\n", kernelName);
         if (rank==0) printf("Invalid command line argument for kernelName or ... aborting.\n");
-        return 1;
+        exit(1);
     }
 
 
