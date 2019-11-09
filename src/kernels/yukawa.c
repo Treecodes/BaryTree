@@ -9,7 +9,7 @@ void yukawaDirect( int number_of_targets_in_batch, int number_of_source_points_i
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
@@ -47,7 +47,7 @@ void yukawaApproximationLagrange( int number_of_targets_in_batch, int number_of_
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
@@ -96,7 +96,7 @@ void yukawaApproximationHermite( int number_of_targets_in_batch, int number_of_i
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {

@@ -9,7 +9,7 @@ void coulombSingularitySubtractionDirect( int number_of_targets_in_batch, int nu
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
@@ -47,7 +47,7 @@ void coulombSingularitySubtractionApproximationLagrange( int number_of_targets_i
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
@@ -106,7 +106,7 @@ void coulombSingularitySubtractionApproximationHermite( int number_of_targets_in
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {

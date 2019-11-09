@@ -9,7 +9,7 @@ void yukawaSingularitySubtractionDirect( int number_of_targets_in_batch, int num
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
@@ -47,7 +47,7 @@ void yukawaSingularitySubtractionApproximationLagrange( int number_of_targets_in
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
@@ -106,7 +106,7 @@ void yukawaSingularitySubtractionApproximationHermite( int number_of_targets_in_
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id)
-    #pragma acc loop independent
+//    #pragma acc loop independent
     {
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {

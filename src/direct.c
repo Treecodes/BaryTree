@@ -21,7 +21,7 @@ void directSummation(double *source_x, double *source_y, double *source_z, doubl
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin (source_x[0:number_of_sources], source_y[0:number_of_sources], source_z[0:number_of_sources], \
-                             source_charge[0:numparsS], source_weight[0:numparsS], source_x[0:number_of_targets], \
+                             source_charge[0:number_of_sources], source_weight[0:number_of_sources], source_x[0:number_of_targets], \
                              source_y[0:number_of_targets], source_z[0:number_of_targets], source_charge[0:number_of_targets])
     {
 #endif

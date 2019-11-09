@@ -58,10 +58,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         int *clusterInd = tree_array->cluster_ind;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
-                            qS[0:numSources], wS[0:numSources], \
-                            xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
-                            xC[0:totalNumberOfInterpolationPoints], yC[0:totalNumberOfInterpolationPoints], zC[0:totalNumberOfInterpolationPoints], qC[0:totalNumberOfInterpolationPoints], \
+        #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \
+                            source_charge[0:numSources], source_weight[0:numSources], \
+                            target_x[0:numTargets], target_y[0:numTargets], target_z[0:numTargets], target_charge[0:numTargets], \
+                            cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], cluster_z[0:totalNumberOfInterpolationPoints], \
+                            cluster_charge[0:totalNumberOfInterpolationPoints], cluster_weight[0:totalNumberOfInterpolationPoints], \
                             tree_inter_list[0:batch_approx_offset*batches->num], \
                             direct_inter_list[0:batch_direct_offset*batches->num], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \

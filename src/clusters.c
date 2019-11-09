@@ -85,7 +85,7 @@ void Clusters_PC_SetupLagrange(struct particles *clusters, struct particles *sou
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(tt[0:interpolationPointsPerDimension], \
+    #pragma acc data copyin(tt[0:interpOrderLim], \
                             xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
                             zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
                             wS[0:totalNumberSourcePoints]) \
