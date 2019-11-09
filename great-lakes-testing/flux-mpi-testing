@@ -1,0 +1,32 @@
+#!/bin/bash
+
+
+TREETYPE=1
+THETA=0.7
+ORDER=5
+CLUSTERSIZE=1000
+BATCHSIZE=1000
+KAPPA=0.5
+
+APPROXIMATIONNAME=lagrange
+COMPAREDIRECT=0
+
+NP=1
+
+for N in 250000
+do
+    for APPROXIMATIONNAME in lagrange #hermite
+    do
+        for KERNEL in coulomb #yukawa 
+        do
+            for SINGULARITYHANDLING in skipping #subtraction
+            do
+                echo $NP
+                echo $KERNEL
+                echo $SINGULARITYHANDLING
+                mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $SINGULARITYHANDLING $APPROXIMATIONNAME $TREETYPE $COMPAREDIRECT 
+                mpirun -n ${NP} zoltan_example_gpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $SINGULARITYHANDLING $APPROXIMATIONNAME $TREETYPE $COMPAREDIRECT 
+            done
+        done
+    done   
+done      

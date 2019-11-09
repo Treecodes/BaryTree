@@ -58,9 +58,12 @@ void coulombApproximationLagrange(int number_of_targets_in_batch, int number_of_
 {
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id)
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,cluster_x,cluster_y,cluster_z,cluster_charge,potential)
     {
 #endif
+#ifdef OPENACC_ENABLED
+#pragma acc loop independent
+#endif	
     for (int i = 0; i < number_of_targets_in_batch; i++) {
 
         double temporary_potential = 0.0;
