@@ -115,7 +115,8 @@ void coulombApproximationHermite( int number_of_targets_in_batch, int number_of_
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,cluster_x,cluster_y,cluster_z,cluster_charge,potential)
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,cluster_x,cluster_y,cluster_z,cluster_charge,potential, \
+            cluster_delta_x,cluster_delta_y,cluster_delta_z,cluster_delta_xy,cluster_delta_yz,cluster_delta_xz,cluster_delta_xyz)
     {
 #endif
 #ifdef OPENACC_ENABLED

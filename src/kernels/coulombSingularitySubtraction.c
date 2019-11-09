@@ -115,7 +115,9 @@ void coulombSingularitySubtractionApproximationHermite( int number_of_targets_in
     double *cluster_weight_delta_xyz = &cluster_weight[7*total_number_interpolation_points];
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,cluster_x,cluster_y,cluster_z,cluster_charge,cluster_weight,potential)
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,cluster_x,cluster_y,cluster_z,cluster_charge,cluster_weight,potential, \
+            cluster_charge_delta_x,cluster_charge_delta_y,cluster_charge_delta_z,cluster_charge_delta_xy,cluster_charge_delta_yz,cluster_charge_delta_xz,cluster_charge_delta_xyz, \
+            cluster_weight_delta_x,cluster_weight_delta_y,cluster_weight_delta_z,cluster_weight_delta_xy,cluster_weight_delta_yz,cluster_weight_delta_xz,cluster_weight_delta_xyz)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -153,7 +155,6 @@ void coulombSingularitySubtractionApproximationHermite( int number_of_targets_in
                                 +      r3inv * ( cluster_charge_delta_x[jj]*dx +  cluster_charge_delta_y[jj]*dy +  cluster_charge_delta_z[jj]*dz )
                                 + 3 *  r5inv * ( cluster_charge_delta_xy[jj]*dx*dy +  cluster_charge_delta_yz[jj]*dy*dz +  cluster_charge_delta_xz[jj]*dx*dz )
                                 + 15 * r7inv *   cluster_charge_delta_xyz[jj]*dx*dy*dz
-
                                 - exp(-r_over_k_2)*(
                                        rinv  * ( cluster_weight[jj])
                                 +      r3inv * (1 + 2*r_over_k_2) * ( cluster_weight_delta_x[jj]*dx +  cluster_weight_delta_y[jj]*dy +  cluster_weight_delta_z[jj]*dz )

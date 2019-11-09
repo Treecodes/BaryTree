@@ -115,13 +115,16 @@ void yukawaSingularitySubtractionApproximationHermite( int number_of_targets_in_
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,cluster_x,cluster_y,cluster_z,cluster_charge,cluster_weight,potential)
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,cluster_x,cluster_y,cluster_z,cluster_charge,cluster_weight,potential, \
+            cluster_charge_delta_x,cluster_charge_delta_y,cluster_charge_delta_z,cluster_charge_delta_xy,cluster_charge_delta_yz,cluster_charge_delta_xz,cluster_charge_delta_xyz, \
+            cluster_weight_delta_x,cluster_weight_delta_y,cluster_weight_delta_z,cluster_weight_delta_xy,cluster_weight_delta_yz,cluster_weight_delta_xz,cluster_weight_delta_xyz)
     {
 #endif
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
+
         int ii=starting_index_of_target + i;
         double temporary_potential = 0.0;
 
@@ -142,28 +145,39 @@ void yukawaSingularitySubtractionApproximationHermite( int number_of_targets_in_
             double r3inv = rinv*rinv*rinv;
             double r5inv = r3inv*rinv*rinv;
             double r7inv = r5inv*rinv*rinv;
-            double kernel_parameter2=kernel_parameter*kernel_parameter;
-            double kernel_parameter3=kernel_parameter*kernel_parameter*kernel_parameter;
+//            double kernel_parameter2=kernel_parameter*kernel_parameter;
+//            double kernel_parameter3=kernel_parameter*kernel_parameter*kernel_parameter;
 
-            double charge_diff = cluster_charge[jj] - cluster_weight[ii];
-            double delta_x_diff = cluster_charge_delta_x[jj]-cluster_weight_delta_x[ii];
-            double delta_y_diff = cluster_charge_delta_y[jj]-cluster_weight_delta_y[ii];
-            double delta_z_diff = cluster_charge_delta_z[jj]-cluster_weight_delta_z[ii];
-            double delta_xy_diff = cluster_charge_delta_xy[jj]-cluster_weight_delta_xy[ii];
-            double delta_yz_diff = cluster_charge_delta_yz[jj]-cluster_weight_delta_yz[ii];
-            double delta_xz_diff = cluster_charge_delta_xz[jj]-cluster_weight_delta_xz[ii];
-            double delta_xyz_diff = cluster_charge_delta_xyz[jj]-cluster_weight_delta_xyz[ii];
+            double kr = kernel_parameter*r;
+            double k2r2 = kr*kr;
+            double k3r3 = k2r2*kr;
 
+            // Try to not use these local variable to help the compiler parallelize the j loop.
+//            double charge_diff = cluster_charge[jj] - cluster_weight[ii];
+//            double delta_x_diff = cluster_charge_delta_x[jj]-cluster_weight_delta_x[ii];
+//            double delta_y_diff = cluster_charge_delta_y[jj]-cluster_weight_delta_y[ii];
+//            double delta_z_diff = cluster_charge_delta_z[jj]-cluster_weight_delta_z[ii];
+//            double delta_xy_diff = cluster_charge_delta_xy[jj]-cluster_weight_delta_xy[ii];
+//            double delta_yz_diff = cluster_charge_delta_yz[jj]-cluster_weight_delta_yz[ii];
+//            double delta_xz_diff = cluster_charge_delta_xz[jj]-cluster_weight_delta_xz[ii];
+//            double delta_xyz_diff = cluster_charge_delta_xyz[jj]-cluster_weight_delta_xyz[ii];
+//
+//            if (r > DBL_MIN){
+//
+//                temporary_potential +=       exp(-kernel_parameter*r)*(
+//                                   rinv  * ( charge_diff)
+//                            +      r3inv * (1 + kernel_parameter*r) * ( delta_x_diff*dx +  delta_y_diff*dy +  delta_z_diff*dz )
+//                            +      r5inv * (3 + 3*kernel_parameter*r + kernel_parameter2*r2 ) * ( delta_xy_diff*dx*dy +  delta_yz_diff*dy*dz +  delta_xz_diff*dx*dz )
+//                            +      r7inv * (15 + 15*kernel_parameter*r + 6*kernel_parameter2*r2 + kernel_parameter3*r3) * delta_xyz_diff*dx*dy*dz);
+//
+//            }
             if (r > DBL_MIN){
 
                 temporary_potential +=       exp(-kernel_parameter*r)*(
-                                   rinv  * ( charge_diff)
-                            +      r3inv * (1 + kernel_parameter*r) * ( delta_x_diff*dx +  delta_y_diff*dy +  delta_z_diff*dz )
-                            +      r5inv * (3 + 3*kernel_parameter*r + kernel_parameter2*r2 ) * ( delta_xy_diff*dx*dy +  delta_yz_diff*dy*dz +  delta_xz_diff*dx*dz )
-                            +      r7inv * (15 + 15*kernel_parameter*r + 6*kernel_parameter2*r2 + kernel_parameter3*r3) * delta_xyz_diff*dx*dy*dz);
-
-
-
+                                   rinv  * ( cluster_charge[jj] - cluster_weight[ii] )
+                            +      r3inv * (1 + kr) * ( (cluster_charge_delta_x[jj]-cluster_weight_delta_x[ii])*dx +  (cluster_charge_delta_y[jj]-cluster_weight_delta_y[ii])*dy +  (cluster_charge_delta_z[jj]-cluster_weight_delta_z[ii])*dz )
+                            +      r5inv * (3 + 3*kr + k2r2 ) * ( (cluster_charge_delta_xy[jj]-cluster_weight_delta_xy[ii])*dx*dy +  (cluster_charge_delta_yz[jj]-cluster_weight_delta_yz[ii])*dy*dz +  (cluster_charge_delta_xz[jj]-cluster_weight_delta_xz[ii])*dx*dz )
+                            +      r7inv * (15 + 15*kr + 6*k2r2 + k3r3) * (cluster_charge_delta_xyz[jj]-cluster_weight_delta_xyz[ii])*dx*dy*dz);
 
             }
         } // end loop over interpolation points
