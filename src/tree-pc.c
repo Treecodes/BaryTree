@@ -41,6 +41,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
         int tree_numnodes = tree_array->numnodes;
+        int totalNumberOfInterpolationPoints = numClusters*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
 
         double *potentialDueToDirect, *potentialDueToApprox;
         make_vector(potentialDueToDirect, numTargets);
@@ -100,7 +101,6 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
                         if (strcmp(singularityHandling, "skipping") == 0) {
                 
-//                            printf("calling coulombApproximationLagrange.\n");
                             coulombApproximationLagrange(   numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
                                                             target_x, target_y, target_z,
                                                             cluster_x, cluster_y, cluster_z, cluster_charge,
@@ -116,6 +116,27 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                             printf("Invalid choice of singularityHandling. Exiting. \n");
                             exit(1);
                         }
+                    } else if (strcmp(approximationName, "hermite") == 0) {
+
+                        if (strcmp(singularityHandling, "skipping") == 0) {
+
+                            coulombApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
+                                                        clusterStart, totalNumberOfInterpolationPoints,
+                                                        target_x, target_y, target_z,
+                                                        cluster_x, cluster_y, cluster_z, cluster_charge,
+                                                        potentialDueToApprox, streamID);;
+
+                        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+                            printf("Not ready to do SS for Hermite yet...\n");
+                            exit(1);
+
+                        } else {
+                            printf("Invalid choice of singularityHandling. Exiting. \n");
+                            exit(1);
+                        }
+
+
                     }else{
                         printf("Invalid approximationName.  Was set to %s\n", approximationName);
                         exit(1);
@@ -145,6 +166,30 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                             printf("Invalid choice of singularityHandling. Exiting. \n");
                             exit(1);
                         }
+
+                    } else if (strcmp(approximationName, "hermite") == 0) {
+
+                        if (strcmp(singularityHandling, "skipping") == 0) {
+
+                            yukawaApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
+                                                        clusterStart, totalNumberOfInterpolationPoints,
+                                                        target_x, target_y, target_z,
+                                                        cluster_x, cluster_y, cluster_z, cluster_charge,
+                                                        kernel_parameter, potentialDueToApprox, streamID);
+
+                        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+                            yukawaSingularitySubtractionApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
+                                                        clusterStart, totalNumberOfInterpolationPoints,
+                                                        target_x, target_y, target_z, target_charge,
+                                                        cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
+                                                        kernel_parameter, potentialDueToApprox, streamID);
+
+                        } else {
+                            printf("Invalid choice of singularityHandling. Exiting. \n");
+                            exit(1);
+                        }
+
 
                     }else{
                         printf("Invalid approximationName.\n");
