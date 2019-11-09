@@ -62,7 +62,7 @@ void coulombApproximationLagrange(int number_of_targets_in_batch, int number_of_
     {
 #endif
 #ifdef OPENACC_ENABLED
-#pragma acc loop independent
+    #pragma acc loop independent
 #endif	
     for (int i = 0; i < number_of_targets_in_batch; i++) {
 
@@ -72,6 +72,9 @@ void coulombApproximationLagrange(int number_of_targets_in_batch, int number_of_
         double ty = target_y[starting_index_of_target + i];
         double tz = target_z[starting_index_of_target + i];
 
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temporary_potential)
+#endif
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
 
             double dx = tx - cluster_x[ starting_index_of_cluster + j];
@@ -112,14 +115,20 @@ void coulombApproximationHermite( int number_of_targets_in_batch, int number_of_
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels  async(gpu_async_stream_id)
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,cluster_x,cluster_y,cluster_z,cluster_charge,potential)
     {
+#endif
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
 
         int ii=starting_index_of_target + i;
         double temporary_potential = 0.0;
 
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temporary_potential)
+#endif
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
             int jj=starting_index_of_cluster + j;
             double dx = target_x[ii] - cluster_x[jj];
