@@ -106,14 +106,10 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
 
         if (strcmp(approximationName, "lagrange") == 0) {
-//            if (rank == 0) printf("Calling fill_in_cluster_data.\n");
-            Clusters_PC_SetupLagrange(clusters, sources, troot, interpolationOrder, tree_array, singularityHandling);
+            Clusters_PC_SetupLagrange(clusters, sources, interpolationOrder, tree_array, singularityHandling);
 
-            printf("Entries of clusters->q: %f\n", clusters->q[1000]);
         } else if (strcmp(approximationName, "hermite") == 0) {
-            if (rank == 0) printf("Calling fill_in_cluster_data_hermite. NOT SET UP YET\n");
-            exit(1);
-            //Clusters_PC_SetupHermite(clusters, sources, troot, interpolationOrder, tree_array, singularityHandling);
+            Clusters_PC_SetupHermite(clusters, sources, interpolationOrder, tree_array, singularityHandling);
 
         } else {
             if (rank == 0) printf("Not sure how to fill cluster data... aborting.\n");
@@ -361,7 +357,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                     numberOfRemoteDirect++;
                 }
                 
-                appendCounter+=1;
+                appendCounter++;
             }
             
             num_remote_approx_array[getFrom] = numberOfRemoteApprox;

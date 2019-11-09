@@ -8,7 +8,6 @@
 #include "treedriver.h"
 #include "tools.h"
 #include "particles.h"
-#include "sort.h"
 #include "kernels/kernels.h"
 
 

@@ -5,7 +5,6 @@
 #include "treedriver.h"
 #include "tools.h"
 #include "particles.h"
-#include "sort.h"
 #include "tnode.h"
 #include "batch.h"
 

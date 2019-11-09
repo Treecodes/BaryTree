@@ -9,7 +9,6 @@ SET(SRCS_TREEDRIVER
     tree-pc.c
     tree-batch.c
     xmalloc.c
-    sort.c 
     tnode.h
     batch.h
     globvars.h
@@ -24,9 +23,6 @@ SET(SRCS_TREEDRIVER
     xmalloc.h
     tools.h
     particles.h
-    sort.h
-#    kernels/kernels.h
-#    kernels/kernels.c
     kernels/coulomb.h
     kernels/coulomb.c
     kernels/yukawa.h

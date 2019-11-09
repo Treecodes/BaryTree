@@ -19,9 +19,6 @@ void cleanup(struct tnode *p);
 void setup(struct particles *particles, int order, double theta,
            double *xyzminmax);
 
-void addNodeToArray_hermite(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
-void addNodeToArray_hermite_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
-//void addNodeToArray_SS(struct tnode *p, struct particles *sources, struct particles *clusters, int order, int numInterpPoints, int pointsPerCluster);
 
 
 
@@ -57,21 +54,6 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                   int offset_approx, int offset_direct,
 								  char *kernelName, double kernel_parameter, char *singularityHandling,
 								  char *approximationName);
-
-
-/* used by particle-cluster Coulomb */
-
-void pc_treecode_hermite_coulomb_SS(struct tnode *p, struct batch *batches,
-                 struct particles *sources, struct particles *targets, struct particles *clusters,
-				 double kappa, double *tpeng, double *EnP);
-
-void compute_pc_hermite_SS(struct tnode *p,
-                int *batch_ind, double *batch_mid, double batch_rad,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *xT, double *yT, double *zT, double *qT, double kappaSq, double *EnP,
-				double * clusterX, double * clusterY, double * clusterZ, double * clusterQ,
-				double * clusterQx,double * clusterQy,double * clusterQz,double * clusterQxy,double * clusterQyz,double * clusterQxz,double * clusterQxyz,
-				double * clusterW, double * clusterWx,double * clusterWy,double * clusterWz,double * clusterWxy,double * clusterWyz,double * clusterWxz,double * clusterWxyz);
 
 
 
