@@ -31,17 +31,18 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                   double *target_x, double *target_y, double *target_z, double *target_charge,
                                   double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
-                                  int numSources, int numTargets, int numClusters,
+                                  int numSources, int numTargets, int totalNumberOfInterpolationPoints,
                                   int batch_approx_offset, int batch_direct_offset,
                                   char *kernelName, double kernel_parameter, char *singularityHandling,
                                   char *approximationName)
 {
+        printf("entered pc_interaction_list_treecode.\n");
         int rank, numProcs, ierr;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
         int tree_numnodes = tree_array->numnodes;
-        int totalNumberOfInterpolationPoints = numClusters*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+//        int totalNumberOfInterpolationPoints = numClusters*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
 
         double *potentialDueToDirect, *potentialDueToApprox;
         make_vector(potentialDueToDirect, numTargets);
@@ -60,7 +61,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
                             qS[0:numSources], wS[0:numSources], \
                             xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], qT[0:numTargets], \
-                            xC[0:numClusters], yC[0:numClusters], zC[0:numClusters], qC[0:numClusters], \
+                            xC[0:totalNumberOfInterpolationPoints], yC[0:totalNumberOfInterpolationPoints], zC[0:totalNumberOfInterpolationPoints], qC[0:totalNumberOfInterpolationPoints], \
                             tree_inter_list[0:batch_approx_offset*batches->num], \
                             direct_inter_list[0:batch_direct_offset*batches->num], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \
@@ -94,7 +95,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         /***********************************************/
         /***************** Coulomb *********************/
         /***********************************************/
-
+//                printf("Made it here.\n");
                 if (strcmp(kernelName, "coulomb") == 0) {
 
                     if (strcmp(approximationName, "lagrange") == 0) {
@@ -119,7 +120,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                     } else if (strcmp(approximationName, "hermite") == 0) {
 
                         if (strcmp(singularityHandling, "skipping") == 0) {
-
+//                            printf("Calling coulombApproximationHermite.\n");
+//                            printf("totalNumberOfInterpolationPoints = %d\n", totalNumberOfInterpolationPoints);
                             coulombApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
                                                         clusterStart, totalNumberOfInterpolationPoints,
                                                         target_x, target_y, target_z,

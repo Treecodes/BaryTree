@@ -110,7 +110,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         } else if (strcmp(approximationName, "hermite") == 0) {
             Clusters_PC_SetupHermite(clusters, sources, interpolationOrder, tree_array, singularityHandling);
-
+            printf("Completed Clusters_PC_SetupHermite.\n");
         } else {
             if (rank == 0) printf("Not sure how to fill cluster data... aborting.\n");
             exit(1);
@@ -465,7 +465,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
         Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
         tree_array->numnodes, tree_array->numnodes);
-
+        printf("Made interaction lists.\n");
         pc_interaction_list_treecode(tree_array, batches,
                         local_tree_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
@@ -476,7 +476,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tree_array->numnodes, tree_array->numnodes,
                         kernelName, kappa, singularityHandling,
                         approximationName);
-
+        printf("Completed pc_interaction_list_treecode.\n");
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 
