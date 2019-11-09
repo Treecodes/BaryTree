@@ -11,13 +11,15 @@ KAPPA=0.5
 APPROXIMATIONNAME=lagrange
 COMPAREDIRECT=1
 
+NP=4
+
 for N in 2500 
 do
-    for NP in 1
+    for APPROXIMATIONNAME in hermite #lagrange
     do
         for KERNEL in coulomb yukawa 
         do
-            for SINGULARITYHANDLING in skipping subtraction
+            for SINGULARITYHANDLING in skipping #subtraction
             do
                 echo $NP
                 echo $KERNEL
