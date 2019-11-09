@@ -8,14 +8,19 @@ void yukawaSingularitySubtractionDirect( int number_of_targets_in_batch, int num
                     double kernel_parameter, double *potential, int gpu_async_stream_id){
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id)
-//    #pragma acc loop independent
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,source_x,source_y,source_z,source_charge,source_weight,potential)
     {
+#endif
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
         int ii=starting_index_of_target + i;
         double temporary_potential = 0.0;
 
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temporary_potential)
+#endif
         for (int j = 0; j < number_of_source_points_in_cluster; j++) {
             int jj=starting_index_of_source + j;
             double dx = target_x[ ii] - source_x[ jj];
@@ -46,14 +51,19 @@ void yukawaSingularitySubtractionApproximationLagrange( int number_of_targets_in
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id)
-//    #pragma acc loop independent
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,cluster_x,cluster_y,cluster_z,cluster_charge,cluster_weight,potential)
     {
+#endif
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
         int ii=starting_index_of_target + i;
         double temporary_potential = 0.0;
 
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temporary_potential)
+#endif
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
             int jj=starting_index_of_cluster + j;
             double dx = target_x[ ii] - cluster_x[ jj];
@@ -105,15 +115,19 @@ void yukawaSingularitySubtractionApproximationHermite( int number_of_targets_in_
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id)
-//    #pragma acc loop independent
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,cluster_x,cluster_y,cluster_z,cluster_charge,cluster_weight,potential)
     {
 #endif
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
-
         int ii=starting_index_of_target + i;
         double temporary_potential = 0.0;
 
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temporary_potential)
+#endif
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
             int jj=starting_index_of_cluster + j;
             double dx = target_x[ii] - cluster_x[jj];

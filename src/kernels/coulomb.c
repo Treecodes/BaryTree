@@ -24,9 +24,9 @@ void coulombDirect(int number_of_targets_in_batch, int number_of_source_points_i
         double ty = target_y[starting_index_of_target + i];
         double tz = target_z[starting_index_of_target + i];
 
-        #ifdef OPENACC_ENABLED
-            #pragma acc loop independent reduction(+:temporary_potential)
-        #endif
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temporary_potential)
+#endif
         for (int j = 0; j < number_of_source_points_in_cluster; j++) {
 
             double dx = tx - source_x[starting_index_of_source + j];
