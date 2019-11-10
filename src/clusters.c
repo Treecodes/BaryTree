@@ -40,95 +40,9 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
 
 
 
-
-void Clusters_PC_SetupLagrange(struct particles *clusters, struct particles *sources,
-                               int interpolationOrder, struct tnode_array *tree_array,
-                               char *singularityHandling)
-{
-    int tree_numnodes = tree_array->numnodes;
-    int totalNumberSourcePoints = sources->num;
-        
-    int interpOrderLim = interpolationOrder + 1;
-    int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
-    
-    int totalNumberInterpolationPoints = tree_numnodes * interpolationPointsPerCluster;
-
-
-    clusters->num = totalNumberInterpolationPoints;
-    make_vector(clusters->x, totalNumberInterpolationPoints);
-    make_vector(clusters->y, totalNumberInterpolationPoints);
-    make_vector(clusters->z, totalNumberInterpolationPoints);
-    make_vector(clusters->q, totalNumberInterpolationPoints);
-    make_vector(clusters->w, totalNumberInterpolationPoints);  // will be used in singularity subtraction
-
-    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->x[i] = 0.0;
-    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->y[i] = 0.0;
-    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
-    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->q[i] = 0.0;
-
-
-    if (strcmp(singularityHandling, "skipping") == 0) {
-        for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->w[i] = 1.0;
-
-    } else if (strcmp(singularityHandling, "subtraction") == 0) {
-        for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->w[i] = 0.0;
-
-    } else {
-        exit(1);
-    }
-
-
-    double *xS = sources->x;
-    double *yS = sources->y;
-    double *zS = sources->z;
-    double *qS = sources->q;
-    double *wS = sources->w;
-
-    double *xC = clusters->x;
-    double *yC = clusters->y;
-    double *zC = clusters->z;
-    double *qC = clusters->q;
-    double *wC = clusters->w;
-
-
-#ifdef OPENACC_ENABLED
-    #pragma acc data copyin(tt[0:interpOrderLim], \
-                            xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
-                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
-                            wS[0:totalNumberSourcePoints]) \
-                       copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationPoints], \
-                            wC[0:totalNumberInterpolationPoints] )
-    {
-#endif
-
-    if (strcmp(singularityHandling, "skipping") == 0) {
-        for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
-
-    } else if (strcmp(singularityHandling, "subtraction") == 0) {
-        for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF_SS(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
-
-    } else {
-        exit(1);
-    }
-
-#ifdef OPENACC_ENABLED
-            #pragma acc wait
-    } // end ACC DATA REGION
-#endif
-
-    return;
-}
-
-
-
-
-
-void Clusters_PC_SetupHermite(struct particles *clusters, struct particles *sources,
-                              int interpolationOrder, struct tnode_array *tree_array,
-                              char *singularityHandling)
+void Clusters_PC_Setup(struct particles *clusters, struct particles *sources,
+                       int interpolationOrder, struct tnode_array *tree_array,
+                       char *approxName, char *singularityHandling)
 {
     int tree_numnodes = tree_array->numnodes;
     int totalNumberSourcePoints = sources->num;
@@ -137,29 +51,53 @@ void Clusters_PC_SetupHermite(struct particles *clusters, struct particles *sour
     int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
 
     int totalNumberInterpolationPoints = tree_numnodes * interpolationPointsPerCluster;
+    int totalNumberInterpolationCharges = totalNumberInterpolationPoints;
     int totalNumberInterpolationWeights = totalNumberInterpolationPoints; 
 
     clusters->num = totalNumberInterpolationPoints;
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
     make_vector(clusters->z, totalNumberInterpolationPoints);
-    make_vector(clusters->q, 8 * totalNumberInterpolationPoints);
+    
 
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->x[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->y[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
-    for (int i = 0; i < 8 * totalNumberInterpolationPoints; i++) clusters->q[i] = 0.0;
-
-
-    if (strcmp(singularityHandling, "skipping") == 0) {
+    
+    
+    if (strcmp(approxName, "lagrange") == 0) {
+        make_vector(clusters->q, totalNumberInterpolationCharges);
         make_vector(clusters->w, totalNumberInterpolationWeights);
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
+        for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
+        
+        if (strcmp(singularityHandling, "skipping") == 0) {
+            for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
 
-    } else if (strcmp(singularityHandling, "subtraction") == 0) {
-        totalNumberInterpolationWeights *= 8;
-        make_vector(clusters->w, totalNumberInterpolationWeights);
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
+        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+            for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
 
+        } else {
+            exit(1);
+        }
+        
+    } else if (strcmp(approxName, "hermite") == 0) {
+        totalNumberInterpolationCharges *= 8;
+        make_vector(clusters->q, totalNumberInterpolationCharges);
+        for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
+        
+        if (strcmp(singularityHandling, "skipping") == 0) {
+            make_vector(clusters->w, totalNumberInterpolationWeights);
+            for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
+
+        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+            totalNumberInterpolationWeights *= 8;
+            make_vector(clusters->w, totalNumberInterpolationWeights);
+            for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
+
+        } else {
+            exit(1);
+        }
+        
     } else {
         exit(1);
     }
@@ -184,17 +122,25 @@ void Clusters_PC_SetupHermite(struct particles *clusters, struct particles *sour
                             zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
                             wS[0:totalNumberSourcePoints]) \
                        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                            zC[0:totalNumberInterpolationPoints], wC[0:totalNumberInterpolationWeights], \
-                            qC[0:totalNumberInterpolationPoints*8])
+                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
+                            wC[0:totalNumberInterpolationWeights])
     {
 #endif
 
-    if (strcmp(singularityHandling, "skipping") == 0) {
+    if ((strcmp(approxName, "lagrange") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
+        for (int i = 0; i < tree_numnodes; i++)
+            pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+
+    } else if ((strcmp(approxName, "lagrange") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+        for (int i = 0; i < tree_numnodes; i++)
+            pc_comp_ms_modifiedF_SS(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+
+    } else if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF_hermite(tree_array, i, interpolationOrder, totalNumberInterpolationPoints,
                                          xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
-    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+    } else if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF_hermite_SS(tree_array, i, interpolationOrder, totalNumberInterpolationPoints,
                                             xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);

@@ -105,16 +105,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        if (strcmp(approximationName, "lagrange") == 0) {
-            Clusters_PC_SetupLagrange(clusters, sources, interpolationOrder, tree_array, singularityHandling);
-
-        } else if (strcmp(approximationName, "hermite") == 0) {
-            Clusters_PC_SetupHermite(clusters, sources, interpolationOrder, tree_array, singularityHandling);
-            printf("Completed Clusters_PC_SetupHermite.\n");
-        } else {
-            if (rank == 0) printf("Not sure how to fill cluster data... aborting.\n");
-            exit(1);
-        }
+        Clusters_PC_Setup(clusters, sources, interpolationOrder, tree_array,
+                          approximationName, singularityHandling);
 
         time_tree[4] = MPI_Wtime() - time1; //time_fillclusters
     }
@@ -228,7 +220,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         int total_batch_direct = 0;
         int total_batch_approx = 0;
          
-
 
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -519,45 +510,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             if (verbosity>0) printf("Exiting particle-cluster, pot_type=0 (Coulomb).\n");
 
-//        } else if (pot_type == 1) {
-//            if (verbosity>0) printf("Entering particle-cluster, pot_type=1 (Yukawa).  Need to modify to call on let_tree_array, let_clusters, etc. ????\n");
-//            pc_interaction_list_treecode_yuk(let_tree_array, let_clusters, batches,
-//                                             tree_inter_list, direct_inter_list, let_sources, targets,
-//                                             tpeng, kappa, tEn);
-//
-//        } else if (pot_type == 2) {
-//            if (verbosity>0) printf("Entering particle-cluster, pot_type=2 (Coulomb w/ singularity subtraction).\n");
-////            pc_treecode_coulomb_SS(troot, batches, sources, targets,clusters,
-////                                   kappa, tpeng, tEn);
-//          pc_interaction_list_treecode_Coulomb_SS(let_tree_array, let_clusters, batches,
-//                                                  tree_inter_list, direct_inter_list, let_sources, targets,
-//                                                  tpeng, kappa, tEn);
-//
-//        } else if (pot_type == 3) {
-//            if (verbosity>0) printf("Entering particle-cluster, pot_type=3 (Yukawa w/ singularity subtraction).\n");
-////            pc_treecode_yuk_SS(troot, batches, sources, targets,clusters,
-////                               kappa, tpeng, tEn);
-//            pc_interaction_list_treecode_yuk_SS(let_tree_array, let_clusters, batches,
-//                                             tree_inter_list, direct_inter_list, let_sources, targets,
-//                                             tpeng, kappa, tEn);
-//
-//        } else if (pot_type == 4) {
-//            if (verbosity>0) printf("Entering particle-cluster, pot_type=4 (Coulomb Hermite).\n");
-//            pc_interaction_list_treecode_hermite_coulomb(let_tree_array, clusters, batches,
-//                                                    tree_inter_list, direct_inter_list, sources, targets,
-//                                                    tpeng, tEn);
-//
-//        }else if (pot_type == 5) {
-//            if (verbosity>0) printf("Entering particle-cluster, pot_type=4 (Yukawa Hermite).\n");
-//            pc_interaction_list_treecode_hermite_yukawa(let_tree_array, clusters, batches,
-//                                                    tree_inter_list, direct_inter_list, sources, targets,
-//                                                    tpeng, kappa, tEn);
-//
-//        }else if (pot_type == 6) {
-//            if (verbosity>0) printf("Entering particle-cluster, pot_type=6 (Coulomb Hermite w/ singularity subtraction).\n");
-//            pc_treecode_hermite_coulomb_SS(troot, batches, sources, targets, clusters,
-//                                           kappa, tpeng, tEn);
-//        }
         }
         
         reorder_energies(batches->reorder, targets->num, tEn);
