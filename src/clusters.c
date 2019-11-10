@@ -261,7 +261,7 @@ void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpola
         double sz = zS[startingIndexInSourcesArray+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < (interpolationOrder+1); j++) {  // loop through the degree
 
@@ -317,7 +317,7 @@ void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpola
         // Increment cluster Q array
         double temp = 0.0;
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:temp)
 #endif
         for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
             double sx = xS[startingIndexInSourcesArray + i];
@@ -461,7 +461,7 @@ void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interp
         double sz = zS[startingIndexInSources+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
@@ -518,10 +518,10 @@ void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interp
         clusterZ[startingIndexInClusters + j] = cz;
 
         // Increment cluster Q array
-        double temp = 0.0;
-        double temp2 = 0.0;
+        double temp = 0.0, temp2 = 0.0;
+
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:temp) reduction(+:temp2)
 #endif
         for (int i = 0; i < pointsInNode; i++) {  // loop over source points
             double sx = xS[startingIndexInSources + i];
@@ -667,7 +667,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
         double sz = zS[startingIndexInSourcesArray + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
@@ -684,152 +684,154 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
             sumY += dj[j] / (dy*dy) + wy[j] / dy;
             sumZ += dj[j] / (dz*dz) + wz[j] / dz;
 
-            }
-
-            double denominator = 1.0;
-            if (exactIndX[i] == -1) denominator *= sumX;
-            if (exactIndY[i] == -1) denominator *= sumY;
-            if (exactIndZ[i] == -1) denominator *= sumZ;
-
-            modifiedF[i] /= denominator;
         }
+
+        double denominator = 1.0;
+        if (exactIndX[i] == -1) denominator *= sumX;
+        if (exactIndY[i] == -1) denominator *= sumY;
+        if (exactIndZ[i] == -1) denominator *= sumZ;
+
+        modifiedF[i] /= denominator;
+    }
 
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+    #pragma acc loop independent
 #endif
-        for (int j = 0; j < interpolationPointsPerCluster; j++) {
-            // compute k1, k2, k3 from j
-            int k1 = j % interpOrderLim;
-            int kk = (j-k1) / interpOrderLim;
-            int k2 = kk % interpOrderLim;
-            kk = kk - k2;
-            int k3 = kk / interpOrderLim;
+    for (int j = 0; j < interpolationPointsPerCluster; j++) {
+        // compute k1, k2, k3 from j
+        int k1 = j % interpOrderLim;
+        int kk = (j-k1) / interpOrderLim;
+        int k2 = kk % interpOrderLim;
+        kk = kk - k2;
+        int k3 = kk / interpOrderLim;
 
-            double cz = nodeZ[k3];
-            double cy = nodeY[k2];
-            double cx = nodeX[k1];
+        double cz = nodeZ[k3];
+        double cy = nodeY[k2];
+        double cx = nodeX[k1];
 
-            // Fill cluster X, Y, and Z arrays
-            int interpolationPointIndex = startingIndexInClustersArray + j;
-            clusterX[interpolationPointIndex] = cx;
-            clusterY[interpolationPointIndex] = cy;
-            clusterZ[interpolationPointIndex] = cz;
+        // Fill cluster X, Y, and Z arrays
+        int interpolationPointIndex = startingIndexInClustersArray + j;
+        clusterX[interpolationPointIndex] = cx;
+        clusterY[interpolationPointIndex] = cy;
+        clusterZ[interpolationPointIndex] = cz;
 
 
-            // Increment cluster Q array
-            double temp0 = 0.0, temp1 = 0.0, temp2 = 0.0, temp3 = 0.0;
-            double temp4 = 0.0, temp5 = 0.0, temp6 = 0.0, temp7 = 0.0;
+        // Increment cluster Q array
+        double temp0 = 0.0, temp1 = 0.0, temp2 = 0.0, temp3 = 0.0;
+        double temp4 = 0.0, temp5 = 0.0, temp6 = 0.0, temp7 = 0.0;
          
 #ifdef OPENACC_ENABLED
-            #pragma acc loop independent
+        #pragma acc loop independent reduction(+:temp0) reduction(+:temp1) reduction(+:temp2) \
+                                     reduction(+:temp3) reduction(+:temp4) reduction(+:temp5) \
+                                     reduction(+:temp6) reduction(+:temp7)
 #endif
-            for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
-            
-                int sourcePointIndex = startingIndexInSourcesArray + i;
-                double dx = xS[sourcePointIndex] - cx;
-                double dy = yS[sourcePointIndex] - cy;
-                double dz = zS[sourcePointIndex] - cz;
+        for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
+        
+            int sourcePointIndex = startingIndexInSourcesArray + i;
+            double dx = xS[sourcePointIndex] - cx;
+            double dy = yS[sourcePointIndex] - cy;
+            double dz = zS[sourcePointIndex] - cz;
 
-                double numerator0 = 1.0, numerator1 = 1.0, numerator2 = 1.0, numerator3 = 1.0;
-                double numerator4 = 1.0, numerator5 = 1.0, numerator6 = 1.0, numerator7 = 1.0;
+            double numerator0 = 1.0, numerator1 = 1.0, numerator2 = 1.0, numerator3 = 1.0;
+            double numerator4 = 1.0, numerator5 = 1.0, numerator6 = 1.0, numerator7 = 1.0;
 
-                double Ax = dj[k1] / (dx*dx) + wx[k1] / dx;
-                double Ay = dj[k2] / (dy*dy) + wy[k2] / dy;
-                double Az = dj[k3] / (dz*dz) + wz[k3] / dz;
-                double Bx = dj[k1] / dx;
-                double By = dj[k2] / dy;
-                double Bz = dj[k3] / dz;
+            double Ax = dj[k1] / (dx*dx) + wx[k1] / dx;
+            double Ay = dj[k2] / (dy*dy) + wy[k2] / dy;
+            double Az = dj[k3] / (dz*dz) + wz[k3] / dz;
+            double Bx = dj[k1] / dx;
+            double By = dj[k2] / dy;
+            double Bz = dj[k3] / dz;
 
 
-                if (exactIndX[i] == -1) {
-                    numerator0 *=  Ax;                     // Aaa
+            if (exactIndX[i] == -1) {
+                numerator0 *=  Ax;                     // Aaa
 
-                    numerator1 *=  Bx;                     // Baa
-                    numerator2 *=  Ax;                     // Aba
-                    numerator3 *=  Ax;                     // Aab
+                numerator1 *=  Bx;                     // Baa
+                numerator2 *=  Ax;                     // Aba
+                numerator3 *=  Ax;                     // Aab
 
-                    numerator4 *=  Bx;                     // Bba
-                    numerator5 *=  Ax;                     // Abb
-                    numerator6 *=  Bx;                     // Bab
+                numerator4 *=  Bx;                     // Bba
+                numerator5 *=  Ax;                     // Abb
+                numerator6 *=  Bx;                     // Bab
 
-                    numerator7 *=  Bx;                     // Bbb
+                numerator7 *=  Bx;                     // Bbb
 
+            } else {
+                if (exactIndX[i] != k1) {
+                    numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                    numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
                 } else {
-                    if (exactIndX[i] != k1) {
-                        numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                        numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    } else {
-                        numerator1 *= 0; numerator4 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    }
+                    numerator1 *= 0; numerator4 *= 0; numerator6 *= 0; numerator7 *= 0;
                 }
+            }
 
-                if (exactIndY[i] == -1) {
-                    numerator0 *=  Ay;                    // aAa
+            if (exactIndY[i] == -1) {
+                numerator0 *=  Ay;                    // aAa
 
-                    numerator1 *=  Ay;                     // bAa
-                    numerator2 *=  By;                     // aBa
-                    numerator3 *=  Ay;                     // aAb
+                numerator1 *=  Ay;                     // bAa
+                numerator2 *=  By;                     // aBa
+                numerator3 *=  Ay;                     // aAb
 
-                    numerator4 *=  By;                     // bBa
-                    numerator5 *=  By;                     // aBb
-                    numerator6 *=  Ay;                     // bAb
+                numerator4 *=  By;                     // bBa
+                numerator5 *=  By;                     // aBb
+                numerator6 *=  Ay;                     // bAb
 
-                    numerator7 *=  By;                     // bBb
+                numerator7 *=  By;                     // bBb
 
-                } else {
-                    if (exactIndY[i] != k2) {
-                        numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                        numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    }  else {
-                        numerator2 *= 0; numerator4 *= 0; numerator5 *= 0; numerator7 *= 0;
-                    }
-
+            } else {
+                if (exactIndY[i] != k2) {
+                    numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                    numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                }  else {
+                    numerator2 *= 0; numerator4 *= 0; numerator5 *= 0; numerator7 *= 0;
                 }
-
-                if (exactIndZ[i] == -1) {
-                    numerator0 *=  Az;                    // aaA
-
-                    numerator1 *=  Az;                    // baA
-                    numerator2 *=  Az;                    // abA
-                    numerator3 *=  Bz;                    // aaB
-
-                    numerator4 *=  Az;                    // bbA
-                    numerator5 *=  Bz;                    // abB
-                    numerator6 *=  Bz;                    // baB
-                    
-                    numerator7 *=  Bz;                    // bbB
-
-                } else {
-                    if (exactIndZ[i] != k3) {
-                        numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                        numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    } else {
-                        numerator3 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    }
-                }
-
-                temp0 += numerator0 * modifiedF[i];
-                temp1 += numerator1 * modifiedF[i];
-                temp2 += numerator2 * modifiedF[i];
-                temp3 += numerator3 * modifiedF[i];
-                temp4 += numerator4 * modifiedF[i];
-                temp5 += numerator5 * modifiedF[i];
-                temp6 += numerator6 * modifiedF[i];
-                temp7 += numerator7 * modifiedF[i];
 
             }
 
-            clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += temp0;
-            clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += temp1;
-            clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += temp2;
-            clusterQ[3 * totalNumberInterpolationPoints + interpolationPointIndex] += temp3;
-            clusterQ[4 * totalNumberInterpolationPoints + interpolationPointIndex] += temp4;
-            clusterQ[5 * totalNumberInterpolationPoints + interpolationPointIndex] += temp5;
-            clusterQ[6 * totalNumberInterpolationPoints + interpolationPointIndex] += temp6;
-            clusterQ[7 * totalNumberInterpolationPoints + interpolationPointIndex] += temp7;
+            if (exactIndZ[i] == -1) {
+                numerator0 *=  Az;                    // aaA
+
+                numerator1 *=  Az;                    // baA
+                numerator2 *=  Az;                    // abA
+                numerator3 *=  Bz;                    // aaB
+
+                numerator4 *=  Az;                    // bbA
+                numerator5 *=  Bz;                    // abB
+                numerator6 *=  Bz;                    // baB
+                
+                numerator7 *=  Bz;                    // bbB
+
+            } else {
+                if (exactIndZ[i] != k3) {
+                    numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                    numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                } else {
+                    numerator3 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                }
+            }
+
+            temp0 += numerator0 * modifiedF[i];
+            temp1 += numerator1 * modifiedF[i];
+            temp2 += numerator2 * modifiedF[i];
+            temp3 += numerator3 * modifiedF[i];
+            temp4 += numerator4 * modifiedF[i];
+            temp5 += numerator5 * modifiedF[i];
+            temp6 += numerator6 * modifiedF[i];
+            temp7 += numerator7 * modifiedF[i];
 
         }
+
+        clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += temp0;
+        clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += temp1;
+        clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += temp2;
+        clusterQ[3 * totalNumberInterpolationPoints + interpolationPointIndex] += temp3;
+        clusterQ[4 * totalNumberInterpolationPoints + interpolationPointIndex] += temp4;
+        clusterQ[5 * totalNumberInterpolationPoints + interpolationPointIndex] += temp5;
+        clusterQ[6 * totalNumberInterpolationPoints + interpolationPointIndex] += temp6;
+        clusterQ[7 * totalNumberInterpolationPoints + interpolationPointIndex] += temp7;
+
+    }
 
 #ifdef OPENACC_ENABLED
     } // end acc kernels region
@@ -942,7 +944,7 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
         double sz = zS[startingIndexInSourcesArray + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
@@ -959,174 +961,179 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
             sumY += dj[j] / (dy*dy) + wy[j] / dy;
             sumZ += dj[j] / (dz*dz) + wz[j] / dz;
 
-            }
-
-            double denominator = 1.0;
-            if (exactIndX[i] == -1) denominator *= sumX;
-            if (exactIndY[i] == -1) denominator *= sumY;
-            if (exactIndZ[i] == -1) denominator *= sumZ;
-
-            modifiedF[i] /= denominator;
-            modifiedF2[i] /= denominator;
         }
+
+        double denominator = 1.0;
+        if (exactIndX[i] == -1) denominator *= sumX;
+        if (exactIndY[i] == -1) denominator *= sumY;
+        if (exactIndZ[i] == -1) denominator *= sumZ;
+
+        modifiedF[i] /= denominator;
+        modifiedF2[i] /= denominator;
+    } 
 
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+    #pragma acc loop independent
 #endif
-        for (int j = 0; j < interpolationPointsPerCluster; j++) {
-            // compute k1, k2, k3 from j
-            int k1 = j % interpOrderLim;
-            int kk = (j-k1) / interpOrderLim;
-            int k2 = kk % interpOrderLim;
-            kk = kk - k2;
-            int k3 = kk / interpOrderLim;
+    for (int j = 0; j < interpolationPointsPerCluster; j++) {
+        // compute k1, k2, k3 from j
+        int k1 = j % interpOrderLim;
+        int kk = (j-k1) / interpOrderLim;
+        int k2 = kk % interpOrderLim;
+        kk = kk - k2;
+        int k3 = kk / interpOrderLim;
 
-            double cz = nodeZ[k3];
-            double cy = nodeY[k2];
-            double cx = nodeX[k1];
+        double cz = nodeZ[k3];
+        double cy = nodeY[k2];
+        double cx = nodeX[k1];
 
-            // Fill cluster X, Y, and Z arrays
-            int interpolationPointIndex = startingIndexInClustersArray + j;
-            clusterX[interpolationPointIndex] = cx;
-            clusterY[interpolationPointIndex] = cy;
-            clusterZ[interpolationPointIndex] = cz;
+        // Fill cluster X, Y, and Z arrays
+        int interpolationPointIndex = startingIndexInClustersArray + j;
+        clusterX[interpolationPointIndex] = cx;
+        clusterY[interpolationPointIndex] = cy;
+        clusterZ[interpolationPointIndex] = cz;
 
 
-            // Increment cluster Q array
-            double tempq0 = 0.0, tempq1 = 0.0, tempq2 = 0.0, tempq3 = 0.0;
-            double tempq4 = 0.0, tempq5 = 0.0, tempq6 = 0.0, tempq7 = 0.0;
+        // Increment cluster Q array
+        double tempq0 = 0.0, tempq1 = 0.0, tempq2 = 0.0, tempq3 = 0.0;
+        double tempq4 = 0.0, tempq5 = 0.0, tempq6 = 0.0, tempq7 = 0.0;
 
-            double tempw0 = 0.0, tempw1 = 0.0, tempw2 = 0.0, tempw3 = 0.0;
-            double tempw4 = 0.0, tempw5 = 0.0, tempw6 = 0.0, tempw7 = 0.0;
+        double tempw0 = 0.0, tempw1 = 0.0, tempw2 = 0.0, tempw3 = 0.0;
+        double tempw4 = 0.0, tempw5 = 0.0, tempw6 = 0.0, tempw7 = 0.0;
          
 #ifdef OPENACC_ENABLED
-            #pragma acc loop independent
+        #pragma acc loop independent reduction(+:tempq0) reduction(+:tempq1) reduction(+:tempq2) \
+                                     reduction(+:tempq3) reduction(+:tempq4) reduction(+:tempq5) \
+                                     reduction(+:tempq6) reduction(+:tempq7) \
+                                     reduction(+:tempw0) reduction(+:tempw1) reduction(+:tempw2) \
+                                     reduction(+:tempw3) reduction(+:tempw4) reduction(+:tempw5) \
+                                     reduction(+:tempw6) reduction(+:tempw7)
 #endif
-            for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
-            
-                int sourcePointIndex = startingIndexInSourcesArray + i;
-                double dx = xS[sourcePointIndex] - cx;
-                double dy = yS[sourcePointIndex] - cy;
-                double dz = zS[sourcePointIndex] - cz;
+        for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
+         
+             int sourcePointIndex = startingIndexInSourcesArray + i;
+             double dx = xS[sourcePointIndex] - cx;
+             double dy = yS[sourcePointIndex] - cy;
+             double dz = zS[sourcePointIndex] - cz;
 
-                double numerator0 = 1.0, numerator1 = 1.0, numerator2 = 1.0, numerator3 = 1.0;
-                double numerator4 = 1.0, numerator5 = 1.0, numerator6 = 1.0, numerator7 = 1.0;
+             double numerator0 = 1.0, numerator1 = 1.0, numerator2 = 1.0, numerator3 = 1.0;
+             double numerator4 = 1.0, numerator5 = 1.0, numerator6 = 1.0, numerator7 = 1.0;
 
-                double Ax = dj[k1] / (dx*dx) + wx[k1] / dx;
-                double Ay = dj[k2] / (dy*dy) + wy[k2] / dy;
-                double Az = dj[k3] / (dz*dz) + wz[k3] / dz;
-                double Bx = dj[k1] / dx;
-                double By = dj[k2] / dy;
-                double Bz = dj[k3] / dz;
+             double Ax = dj[k1] / (dx*dx) + wx[k1] / dx;
+             double Ay = dj[k2] / (dy*dy) + wy[k2] / dy;
+             double Az = dj[k3] / (dz*dz) + wz[k3] / dz;
+             double Bx = dj[k1] / dx;
+             double By = dj[k2] / dy;
+             double Bz = dj[k3] / dz;
 
 
-                if (exactIndX[i] == -1) {
-                    numerator0 *=  Ax;                     // Aaa
+             if (exactIndX[i] == -1) {
+                 numerator0 *=  Ax;                     // Aaa
 
-                    numerator1 *=  Bx;                     // Baa
-                    numerator2 *=  Ax;                     // Aba
-                    numerator3 *=  Ax;                     // Aab
+                 numerator1 *=  Bx;                     // Baa
+                 numerator2 *=  Ax;                     // Aba
+                 numerator3 *=  Ax;                     // Aab
 
-                    numerator4 *=  Bx;                     // Bba
-                    numerator5 *=  Ax;                     // Abb
-                    numerator6 *=  Bx;                     // Bab
+                 numerator4 *=  Bx;                     // Bba
+                 numerator5 *=  Ax;                     // Abb
+                 numerator6 *=  Bx;                     // Bab
 
-                    numerator7 *=  Bx;                     // Bbb
+                 numerator7 *=  Bx;                     // Bbb
 
-                } else {
-                    if (exactIndX[i] != k1) {
-                        numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                        numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    } else {
-                        numerator1 *= 0; numerator4 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    }
-                }
+             } else {
+                 if (exactIndX[i] != k1) {
+                     numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                     numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                 } else {
+                     numerator1 *= 0; numerator4 *= 0; numerator6 *= 0; numerator7 *= 0;
+                 }
+             }
 
-                if (exactIndY[i] == -1) {
-                    numerator0 *=  Ay;                    // aAa
+             if (exactIndY[i] == -1) {
+                 numerator0 *=  Ay;                    // aAa
 
-                    numerator1 *=  Ay;                     // bAa
-                    numerator2 *=  By;                     // aBa
-                    numerator3 *=  Ay;                     // aAb
+                 numerator1 *=  Ay;                     // bAa
+                 numerator2 *=  By;                     // aBa
+                 numerator3 *=  Ay;                     // aAb
 
-                    numerator4 *=  By;                     // bBa
-                    numerator5 *=  By;                     // aBb
-                    numerator6 *=  Ay;                     // bAb
+                 numerator4 *=  By;                     // bBa
+                 numerator5 *=  By;                     // aBb
+                 numerator6 *=  Ay;                     // bAb
 
-                    numerator7 *=  By;                     // bBb
+                 numerator7 *=  By;                     // bBb
 
-                } else {
-                    if (exactIndY[i] != k2) {
-                        numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                        numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    }  else {
-                        numerator2 *= 0; numerator4 *= 0; numerator5 *= 0; numerator7 *= 0;
-                    }
+             } else {
+                 if (exactIndY[i] != k2) {
+                     numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                     numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                 }  else {
+                     numerator2 *= 0; numerator4 *= 0; numerator5 *= 0; numerator7 *= 0;
+                 }
 
-                }
+             }
 
-                if (exactIndZ[i] == -1) {
-                    numerator0 *=  Az;                    // aaA
+             if (exactIndZ[i] == -1) {
+                 numerator0 *=  Az;                    // aaA
 
-                    numerator1 *=  Az;                    // baA
-                    numerator2 *=  Az;                    // abA
-                    numerator3 *=  Bz;                    // aaB
+                 numerator1 *=  Az;                    // baA
+                 numerator2 *=  Az;                    // abA
+                 numerator3 *=  Bz;                    // aaB
 
-                    numerator4 *=  Az;                    // bbA
-                    numerator5 *=  Bz;                    // abB
-                    numerator6 *=  Bz;                    // baB
-                    
-                    numerator7 *=  Bz;                    // bbB
+                 numerator4 *=  Az;                    // bbA
+                 numerator5 *=  Bz;                    // abB
+                 numerator6 *=  Bz;                    // baB
+                 
+                 numerator7 *=  Bz;                    // bbB
 
-                } else {
-                    if (exactIndZ[i] != k3) {
-                        numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                        numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    } else {
-                        numerator3 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                    }
-                }
+             } else {
+                 if (exactIndZ[i] != k3) {
+                     numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                     numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                 } else {
+                     numerator3 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                 }
+             }
 
-                tempq0 += numerator0 * modifiedF[i];
-                tempq1 += numerator1 * modifiedF[i];
-                tempq2 += numerator2 * modifiedF[i];
-                tempq3 += numerator3 * modifiedF[i];
-                tempq4 += numerator4 * modifiedF[i];
-                tempq5 += numerator5 * modifiedF[i];
-                tempq6 += numerator6 * modifiedF[i];
-                tempq7 += numerator7 * modifiedF[i];
+             tempq0 += numerator0 * modifiedF[i];
+             tempq1 += numerator1 * modifiedF[i];
+             tempq2 += numerator2 * modifiedF[i];
+             tempq3 += numerator3 * modifiedF[i];
+             tempq4 += numerator4 * modifiedF[i];
+             tempq5 += numerator5 * modifiedF[i];
+             tempq6 += numerator6 * modifiedF[i];
+             tempq7 += numerator7 * modifiedF[i];
 
-                tempw0 += numerator0 * modifiedF2[i];
-                tempw1 += numerator1 * modifiedF2[i];
-                tempw2 += numerator2 * modifiedF2[i];
-                tempw3 += numerator3 * modifiedF2[i];
-                tempw4 += numerator4 * modifiedF2[i];
-                tempw5 += numerator5 * modifiedF2[i];
-                tempw6 += numerator6 * modifiedF2[i];
-                tempw7 += numerator7 * modifiedF2[i];
+             tempw0 += numerator0 * modifiedF2[i];
+             tempw1 += numerator1 * modifiedF2[i];
+             tempw2 += numerator2 * modifiedF2[i];
+             tempw3 += numerator3 * modifiedF2[i];
+             tempw4 += numerator4 * modifiedF2[i];
+             tempw5 += numerator5 * modifiedF2[i];
+             tempw6 += numerator6 * modifiedF2[i];
+             tempw7 += numerator7 * modifiedF2[i];
 
-            }
+         }
 
-            clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq0;
-            clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq1;
-            clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq2;
-            clusterQ[3 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq3;
-            clusterQ[4 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq4;
-            clusterQ[5 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq5;
-            clusterQ[6 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq6;
-            clusterQ[7 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq7;
+         clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq0;
+         clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq1;
+         clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq2;
+         clusterQ[3 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq3;
+         clusterQ[4 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq4;
+         clusterQ[5 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq5;
+         clusterQ[6 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq6;
+         clusterQ[7 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq7;
 
-            clusterW[0 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw0;
-            clusterW[1 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw1;
-            clusterW[2 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw2;
-            clusterW[3 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw3;
-            clusterW[4 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw4;
-            clusterW[5 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw5;
-            clusterW[6 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw6;
-            clusterW[7 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw7;
+         clusterW[0 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw0;
+         clusterW[1 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw1;
+         clusterW[2 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw2;
+         clusterW[3 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw3;
+         clusterW[4 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw4;
+         clusterW[5 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw5;
+         clusterW[6 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw6;
+         clusterW[7 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw7;
 
-        }
+    }
 
 #ifdef OPENACC_ENABLED
     } // end acc kernels region
