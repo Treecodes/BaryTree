@@ -96,6 +96,7 @@ void coulombSingularitySubtractionApproximationHermite( int number_of_targets_in
                     double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
                     double kernel_parameter, double *potential, int gpu_async_stream_id){
 
+    double kernel_parameter2 = kernel_parameter * kernel_parameter;
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
     double *cluster_charge_delta_x =   &cluster_charge[1*total_number_interpolation_points];
@@ -125,17 +126,22 @@ void coulombSingularitySubtractionApproximationHermite( int number_of_targets_in
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
 
-        int ii=starting_index_of_target + i;
+        int ii = starting_index_of_target + i;
+        double tx = target_x[ii];
+        double ty = target_y[ii];
+        double tz = target_z[ii];
+        double tcharge = target_charge[ii];
+
         double temporary_potential = 0.0;
 
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
-            int jj=starting_index_of_cluster + j;
-            double dx = target_x[ii] - cluster_x[jj];
-            double dy = target_y[ii] - cluster_y[jj];
-            double dz = target_z[ii] - cluster_z[jj];
+            int jj = starting_index_of_cluster + j;
+            double dx = tx - cluster_x[jj];
+            double dy = ty - cluster_y[jj];
+            double dz = tz - cluster_z[jj];
             double r  = sqrt( dx*dx + dy*dy + dz*dz);
 
             double r2 = r*r;
@@ -143,23 +149,27 @@ void coulombSingularitySubtractionApproximationHermite( int number_of_targets_in
             double r3inv = rinv*rinv*rinv;
             double r5inv = r3inv*rinv*rinv;
             double r7inv = r5inv*rinv*rinv;
-            double kernel_parameter2=kernel_parameter*kernel_parameter;
 
-            double r_over_k_2 = r2/kernel_parameter2;
+            double r_over_k_2 = r2 / kernel_parameter2;
             double r_over_k_4 = r_over_k_2*r_over_k_2;
             double r_over_k_6 = r_over_k_4*r_over_k_2;
 
-            if (r > DBL_MIN){
+            if (r > DBL_MIN) {
 
                 temporary_potential +=  rinv  * ( cluster_charge[jj])
-                                +      r3inv * ( cluster_charge_delta_x[jj]*dx +  cluster_charge_delta_y[jj]*dy +  cluster_charge_delta_z[jj]*dz )
-                                + 3 *  r5inv * ( cluster_charge_delta_xy[jj]*dx*dy +  cluster_charge_delta_yz[jj]*dy*dz +  cluster_charge_delta_xz[jj]*dx*dz )
-                                + 15 * r7inv *   cluster_charge_delta_xyz[jj]*dx*dy*dz
-                                - exp(-r_over_k_2)*(
-                                       rinv  * ( cluster_weight[jj])
-                                +      r3inv * (1 + 2*r_over_k_2) * ( cluster_weight_delta_x[jj]*dx +  cluster_weight_delta_y[jj]*dy +  cluster_weight_delta_z[jj]*dz )
-                                +      r5inv * (3 + 4*r_over_k_2 + 4*r_over_k_4 ) * ( cluster_weight_delta_xy[jj]*dx*dy +  cluster_weight_delta_yz[jj]*dy*dz +  cluster_weight_delta_xz[jj]*dx*dz )
-                                +      r7inv * (15 + 18*r_over_k_2 + 12*r_over_k_4 + 8*r_over_k_6) * cluster_weight_delta_xyz[jj]*dx*dy*dz);
+                                 +      r3inv * ( cluster_charge_delta_x[jj]*dx + cluster_charge_delta_y[jj]*dy
+                                                + cluster_charge_delta_z[jj]*dz )
+                                 + 3  * r5inv * ( cluster_charge_delta_xy[jj]*dx*dy + cluster_charge_delta_yz[jj]*dy*dz
+                                                + cluster_charge_delta_xz[jj]*dx*dz )
+                                 + 15 * r7inv *   cluster_charge_delta_xyz[jj]*dx*dy*dz
+                             - exp(-r_over_k_2) * (
+                                        rinv  * ( cluster_weight[jj])
+                                 +      r3inv * (1 + 2*r_over_k_2) * ( cluster_weight_delta_x[jj]*dx + cluster_weight_delta_y[jj]*dy
+                                                                     + cluster_weight_delta_z[jj]*dz )
+                                 +      r5inv * (3 + 4*r_over_k_2 + 4*r_over_k_4 ) * ( cluster_weight_delta_xy[jj]*dx*dy
+                                                 + cluster_weight_delta_yz[jj]*dy*dz + cluster_weight_delta_xz[jj]*dx*dz )
+                                 +      r7inv * (15 + 18*r_over_k_2 + 12*r_over_k_4 + 8*r_over_k_6)
+                                              * cluster_weight_delta_xyz[jj]*dx*dy*dz);
 
             }
         } // end loop over interpolation points
