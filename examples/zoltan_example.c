@@ -249,12 +249,29 @@ int main(int argc, char **argv)
     sources->w = mySources.w;
     sources->order = particleOrder;
  
-    targets->x = mySources.x;
-    targets->y = mySources.y;
-    targets->z = mySources.z;
-    targets->q = mySources.q;
-    targets->order = particleOrder;
+//    targets->x = mySources.x;
+//    targets->y = mySources.y;
+//    targets->z = mySources.z;
+//    targets->q = mySources.q;
+//    targets->order = particleOrder;
     
+    MPI_Barrier(MPI_COMM_WORLD);
+    targets->x = malloc(targets->num*sizeof(double));
+    targets->y = malloc(targets->num*sizeof(double));
+    targets->z = malloc(targets->num*sizeof(double));
+    targets->q = malloc(targets->num*sizeof(double));
+    targets->order = malloc(targets->num*sizeof(double));
+    printf("Beginning memcpy()\n");
+    memcpy(targets->x, mySources.x, sizeof(mySources.x));
+    memcpy(targets->y, mySources.y, sizeof(mySources.y));
+    memcpy(targets->z, mySources.z, sizeof(mySources.z));
+    memcpy(targets->q, mySources.q, sizeof(mySources.q));
+    memcpy(targets->order, particleOrder, sizeof(particleOrder));
+    printf("Ending memcpy()\n");
+
+    double *target_quadrature_weights;
+    target_quadrature_weights = malloc(sizeof(double) * targets->num);
+    for (int i = 0; i < mySources.numMyPoints; i++) target_quadrature_weights[i] = mySources.w[i];
 
     // Set up kernel
 //    printf("Kernel Name: %s\n",kernelName);
@@ -431,8 +448,8 @@ int main(int argc, char **argv)
             if (fabs(potential_direct[j]) >= relinferr)
                 relinferr = fabs(potential_direct[j]);
 
-            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * sources->w[j];
-            reln2err = reln2err + pow(potential_direct[j], 2.0) * sources->w[j];
+            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * target_quadrature_weights[j];
+            reln2err = reln2err + pow(potential_direct[j], 2.0) * target_quadrature_weights[j];
         }
 
         MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);

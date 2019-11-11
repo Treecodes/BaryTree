@@ -59,12 +59,16 @@ void treedriverWrapper(int numTargets, int numSources,
 	}else if (strcmp(singularityHandling,"subtraction")==0){
 
 	    if (strcmp(kernelName,"coulomb")==0){
+	        printf("Initializing for coulomb singularity subtraction.\n");
 	        for (int i=0; i<numTargets; i++){
-	            outputArray[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+                outputArray[i]=0.0;
+//                outputArray[i]=2.0*M_PI*kappa*kappa*targets->q[i];
 	        }
         } else if (strcmp(kernelName,"yukawa")==0){
+            printf("Initializing for yukawa singularity subtraction.\n");
             for (int i=0; i<numTargets; i++){
-                outputArray[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+                outputArray[i]=0.0;
+//                outputArray[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
             }
 	    } else{
 	        printf("Not sure how to initialize outputArray.  What is the kernel?\n");

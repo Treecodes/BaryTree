@@ -108,7 +108,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         Clusters_PC_Setup(clusters, sources, interpolationOrder, tree_array,
                           approximationName, singularityHandling);
 
-        printf("First clusterQ = %f\n", clusters->q[0]);
+//        printf("First clusterQ = %f\n", clusters->q[0]);
 //        for (int k=0;k<2000;k++){
 //            printf("%i-th clusterQ = %f\n", k,clusters->q[k]);
 //        }

@@ -36,8 +36,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                   char *kernelName, double kernel_parameter, char *singularityHandling,
                                   char *approximationName)
 {
-        printf("entered pc_interaction_list_treecode.\n");
-        printf("First source weight = %f\n", source_weight[0]);
+//        printf("entered pc_interaction_list_treecode.\n");
+//        printf("First source weight = %f\n", source_weight[0]);
         int rank, numProcs, ierr;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
@@ -295,9 +295,9 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         double totalDueToApprox = sum(potentialDueToApprox, numTargets);
         double totalDueToDirect = sum(potentialDueToDirect, numTargets);
 
-        printf("Total due to initialization = %3.2e\n", totalDueToInitialization);
-        printf("Total due to direct interactions = %3.2e\n", totalDueToDirect);
-        printf("Total due to approx interactions = %3.2e\n", totalDueToApprox);
+//        printf("Total due to initialization = %3.2e\n", totalDueToInitialization);
+//        printf("Total due to direct interactions = %3.2e\n", totalDueToDirect);
+//        printf("Total due to approx interactions = %3.2e\n", totalDueToApprox);
 
         for (int k = 0; k < numTargets; k++) {
 //            printf("%f\n", potentialDueToDirect[k]);

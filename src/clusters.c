@@ -115,7 +115,7 @@ void Clusters_PC_Setup(struct particles *clusters, struct particles *sources,
     double *qC = clusters->q;
     double *wC = clusters->w;
 
-    printf("First source weight in clusters routine = %f\n", wS[0]);
+//    printf("First source weight in clusters routine = %f\n", wS[0]);
 
 
 #ifdef OPENACC_ENABLED
