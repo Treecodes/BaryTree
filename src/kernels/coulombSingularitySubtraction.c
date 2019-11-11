@@ -162,7 +162,7 @@ void coulombSingularitySubtractionApproximationHermite( int number_of_targets_in
                                  + 3  * r5inv * ( cluster_charge_delta_xy[jj]*dx*dy + cluster_charge_delta_yz[jj]*dy*dz
                                                 + cluster_charge_delta_xz[jj]*dx*dz )
                                  + 15 * r7inv *   cluster_charge_delta_xyz[jj]*dx*dy*dz
-                             - exp(-r_over_k_2) * (
+                             - tcharge * exp(-r_over_k_2) * (
                                         rinv  * ( cluster_weight[jj])
                                  +      r3inv * (1 + 2*r_over_k_2) * ( cluster_weight_delta_x[jj]*dx + cluster_weight_delta_y[jj]*dy
                                                                      + cluster_weight_delta_z[jj]*dz )

@@ -21,18 +21,18 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *outputArray, char *kernelName, double kappa, char *singularityHandling, char *approximationName,
 		int order, double theta, int maxparnode, int batch_size) {
 
-	// Set up kernels
-	if       (strcmp(kernelName,"coulomb")==0){
-
-	}else if (strcmp(kernelName,"yukawa")==0){
-
-	}else if (strcmp(kernelName,"coulomb_SS")==0){
-
-	}else if (strcmp(kernelName,"yukawa_SS")==0){
-
-	}else{
-		return;
-	}
+//	// Set up kernels
+//	if       (strcmp(kernelName,"coulomb")==0){
+//
+//	}else if (strcmp(kernelName,"yukawa")==0){
+//
+//	}else if (strcmp(kernelName,"coulomb_SS")==0){
+//
+//	}else if (strcmp(kernelName,"yukawa_SS")==0){
+//
+//	}else{
+//		return;
+//	}
 
 
 	int particleOrder[numTargets];

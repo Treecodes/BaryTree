@@ -114,6 +114,8 @@ int main(int argc, char **argv)
     kernelName = argv[13];
     singularityHandling = argv[15];
 
+    printf("singularityHandling = %s\n", singularityHandling);
+
 
 
 

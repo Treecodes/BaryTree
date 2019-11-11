@@ -2,28 +2,32 @@
 
 
 TREETYPE=1
-THETA=0.8
-ORDER=3
-CLUSTERSIZE=100
-BATCHSIZE=100
-KAPPA=0.5
+THETA=0.7
+ORDER=8
+CLUSTERSIZE=1000
+BATCHSIZE=1000
+KAPPA=0.05
 
 APPROXIMATIONNAME=lagrange
 COMPAREDIRECT=1
 
 NP=1
-
-for N in 2500 
+N=20000
+for ORDER in 2 4 6 
 do
-    for APPROXIMATIONNAME in hermite #lagrange
+    for APPROXIMATIONNAME in lagrange #hermite
     do
-        for KERNEL in coulomb yukawa 
+        for KERNEL in yukawa #coulomb 
         do
-            for SINGULARITYHANDLING in skipping #subtraction
+            for SINGULARITYHANDLING in subtraction #skipping 
             do
-                echo $NP
+                echo
+                echo 
+                #echo $NP
                 echo $KERNEL
                 echo $SINGULARITYHANDLING
+                echo $APPROXIMATIONNAME
+                echo
                 mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $SINGULARITYHANDLING $APPROXIMATIONNAME $TREETYPE $COMPAREDIRECT 
             done
         done

@@ -78,6 +78,10 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
             int numberOfClusterApproximations = batches->index[i][2];
             int numberOfDirectSums = batches->index[i][3];
 
+//            printf("Batch number %d\n", i);
+//            printf("Number of direct interactions: %d\n",numberOfDirectSums);
+//            printf("Number of approximate interactions: %d\n\n",numberOfClusterApproximations);
+
             int numberOfTargets = batch_iend - batch_ibeg + 1;
             int batchStart =  batch_ibeg - 1;
 
@@ -184,7 +188,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                                         kernel_parameter, potentialDueToApprox, streamID);
 
                         } else if (strcmp(singularityHandling, "subtraction") == 0) {
-
+//                            printf("Calling yukawaSingularitySubtractionApproximationHermite\n");
                             yukawaSingularitySubtractionApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
                                                         clusterStart, totalNumberOfInterpolationPoints,
                                                         target_x, target_y, target_z, target_charge,
@@ -261,7 +265,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
                                         kernel_parameter, potentialDueToDirect, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
-
+//                        printf("Calling yukawaSingularitySubtractionDirect\n");
                         yukawaSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
                                                         target_x, target_y, target_z, target_charge,
                                                         source_x, source_y, source_z, source_charge, source_weight,
@@ -286,13 +290,17 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         } // end acc data region
 
 
+        double totalDueToInitialization = sum(pointwisePotential, numTargets);
         double totalDueToApprox = sum(potentialDueToApprox, numTargets);
         double totalDueToDirect = sum(potentialDueToDirect, numTargets);
 
-        printf("Total due to direct = %f\n", totalDueToDirect);
-        printf("Total due to approx = %f\n", totalDueToApprox);
+        printf("Total due to initialization = %3.2e\n", totalDueToInitialization);
+        printf("Total due to direct interactions = %3.2e\n", totalDueToDirect);
+        printf("Total due to approx interactions = %3.2e\n", totalDueToApprox);
 
         for (int k = 0; k < numTargets; k++) {
+//            printf("%f\n", potentialDueToDirect[k]);
+//            printf("potentialDueToDirect=%f\n", potentialDueToDirect[k]);
             pointwisePotential[k] += potentialDueToDirect[k];
             pointwisePotential[k] += potentialDueToApprox[k];
          }
@@ -300,7 +308,14 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         free_vector(potentialDueToDirect);
         free_vector(potentialDueToApprox);
 
-        *totalPotential = sum(pointwisePotential, numTargets);
+//        *totalPotential = sum(pointwisePotential, numTargets);
+        double tempTotalPotential=0.0;
+        tempTotalPotential=0.0;
+        for (int k = 0; k < numTargets; k++) {
+            tempTotalPotential += pointwisePotential[k]*source_weight[k];
+         }
+//        *totalPotential = sum(pointwisePotential, numTargets);
+        *totalPotential=tempTotalPotential;
 
         return;
 

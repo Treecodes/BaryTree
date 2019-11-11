@@ -36,11 +36,13 @@ void yukawaSingularitySubtractionDirect( int number_of_targets_in_batch, int num
             if (r > DBL_MIN) {
                 temporary_potential += ( source_charge[jj] - tcharge) * source_weight[jj] * exp(-kernel_parameter*r) / r;
             }
+//            printf("temporary_potential = %f\n", temporary_potential);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
         potential[ii] += temporary_potential;
+//        printf("potential[ii] = %f\n", potential[ii]);
     }
 #ifdef OPENACC_ENABLED
     } // end kernel
