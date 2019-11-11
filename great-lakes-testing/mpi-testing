@@ -15,11 +15,11 @@ NP=1
 N=10000
 for ORDER in 2 4 6 
 do
-    for APPROXIMATIONNAME in lagrange #hermite
+    for APPROXIMATIONNAME in hermite #lagrange #hermite
     do
-        for KERNEL in coulomb #yukawa #coulomb 
+        for KERNEL in yukawa #coulomb 
         do
-            for SINGULARITYHANDLING in skipping #subtraction 
+            for SINGULARITYHANDLING in subtraction #skipping #subtraction 
             do
                 echo
                 echo 

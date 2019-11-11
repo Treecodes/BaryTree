@@ -164,14 +164,14 @@ void yukawaSingularitySubtractionApproximationHermite( int number_of_targets_in_
             double k2r2 = kr * kr;
             double k3r3 = k2r2 * kr;
 
-            double charge_diff = cluster_charge[jj] - cluster_weight[jj];
-            double delta_x_diff = cluster_charge_delta_x[jj] - cluster_weight_delta_x[jj];
-            double delta_y_diff = cluster_charge_delta_y[jj] - cluster_weight_delta_y[jj];
-            double delta_z_diff = cluster_charge_delta_z[jj] - cluster_weight_delta_z[jj];
-            double delta_xy_diff = cluster_charge_delta_xy[jj] - cluster_weight_delta_xy[jj];
-            double delta_yz_diff = cluster_charge_delta_yz[jj] - cluster_weight_delta_yz[jj];
-            double delta_xz_diff = cluster_charge_delta_xz[jj] - cluster_weight_delta_xz[jj];
-            double delta_xyz_diff = cluster_charge_delta_xyz[jj] - cluster_weight_delta_xyz[jj];
+            double charge_diff = cluster_charge[jj] - cluster_weight[jj]*tcharge;
+            double delta_x_diff = cluster_charge_delta_x[jj] - cluster_weight_delta_x[jj]*tcharge;
+            double delta_y_diff = cluster_charge_delta_y[jj] - cluster_weight_delta_y[jj]*tcharge;
+            double delta_z_diff = cluster_charge_delta_z[jj] - cluster_weight_delta_z[jj]*tcharge;
+            double delta_xy_diff = cluster_charge_delta_xy[jj] - cluster_weight_delta_xy[jj]*tcharge;
+            double delta_yz_diff = cluster_charge_delta_yz[jj] - cluster_weight_delta_yz[jj]*tcharge;
+            double delta_xz_diff = cluster_charge_delta_xz[jj] - cluster_weight_delta_xz[jj]*tcharge;
+            double delta_xyz_diff = cluster_charge_delta_xyz[jj] - cluster_weight_delta_xyz[jj]*tcharge;
 
             if (r > DBL_MIN) {
 
