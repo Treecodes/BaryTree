@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <math.h>
 #include <mpi.h>
 #include <limits.h>
-#include<string.h>
+#include <string.h>
 
 #include "array.h"
 #include "particles.h"
@@ -20,19 +21,6 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
 		double *outputArray, char *kernelName, double kappa, char *singularityHandling, char *approximationName,
 		int order, double theta, int maxparnode, int batch_size) {
-
-//	// Set up kernels
-//	if       (strcmp(kernelName,"coulomb")==0){
-//
-//	}else if (strcmp(kernelName,"yukawa")==0){
-//
-//	}else if (strcmp(kernelName,"coulomb_SS")==0){
-//
-//	}else if (strcmp(kernelName,"yukawa_SS")==0){
-//
-//	}else{
-//		return;
-//	}
 
 
 	int particleOrder[numTargets];
@@ -62,6 +50,31 @@ void treedriverWrapper(int numTargets, int numSources,
 	double time_tree[9];
 	int tree_type = 1;   // particle cluster
 	double tpeng = 0;
+
+	// Initialize the potential
+	if (strcmp(singularityHandling,"skipping")==0){
+	    for (int i=0; i<numTargets; i++){
+            outputArray[i]=0.0;
+        }
+	}else if (strcmp(singularityHandling,"subtraction")==0){
+
+	    if (strcmp(kernelName,"coulomb")==0){
+	        for (int i=0; i<numTargets; i++){
+	            outputArray[i]=2.0*M_PI*kappa*kappa*targets->q[i];
+	        }
+        } else if (strcmp(kernelName,"yukawa")==0){
+            for (int i=0; i<numTargets; i++){
+                outputArray[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
+            }
+	    } else{
+	        printf("Not sure how to initialize outputArray.  What is the kernel?\n");
+	        exit(1);
+	    }
+	} else {
+	    printf("Not sure how to initialize outputArray.  How is singularity being handled?\n");
+        exit(1);
+	}
+
 
 	// Call the treedriver
 	treedriver(sources, targets,

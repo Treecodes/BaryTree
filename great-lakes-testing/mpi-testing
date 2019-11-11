@@ -2,11 +2,11 @@
 
 
 TREETYPE=1
-THETA=0.7
+THETA=0.6
 ORDER=8
-CLUSTERSIZE=1000
-BATCHSIZE=1000
-KAPPA=0.05
+CLUSTERSIZE=100
+BATCHSIZE=100
+KAPPA=0.5
 
 APPROXIMATIONNAME=lagrange
 COMPAREDIRECT=1
@@ -17,9 +17,9 @@ for ORDER in 2 4 6
 do
     for APPROXIMATIONNAME in lagrange #hermite
     do
-        for KERNEL in yukawa #coulomb 
+        for KERNEL in coulomb #yukawa #coulomb 
         do
-            for SINGULARITYHANDLING in subtraction #skipping 
+            for SINGULARITYHANDLING in skipping #subtraction 
             do
                 echo
                 echo 

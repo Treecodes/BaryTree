@@ -108,6 +108,10 @@ void treedriver(struct particles *sources, struct particles *targets,
         Clusters_PC_Setup(clusters, sources, interpolationOrder, tree_array,
                           approximationName, singularityHandling);
 
+        printf("First clusterQ = %f\n", clusters->q[0]);
+//        for (int k=0;k<2000;k++){
+//            printf("%i-th clusterQ = %f\n", k,clusters->q[k]);
+//        }
         time_tree[4] = MPI_Wtime() - time1; //time_fillclusters
     }
     
@@ -456,7 +460,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
         Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
         tree_array->numnodes, tree_array->numnodes);
-        printf("Made interaction lists.\n");
+//        printf("Made interaction lists.\n");
         pc_interaction_list_treecode(tree_array, batches,
                         local_tree_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
@@ -467,7 +471,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tree_array->numnodes, tree_array->numnodes,
                         kernelName, kappa, singularityHandling,
                         approximationName);
-        printf("Completed pc_interaction_list_treecode.\n");
+//        printf("Completed pc_interaction_list_treecode.\n");
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 

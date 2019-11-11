@@ -115,6 +115,8 @@ void Clusters_PC_Setup(struct particles *clusters, struct particles *sources,
     double *qC = clusters->q;
     double *wC = clusters->w;
 
+    printf("First source weight in clusters routine = %f\n", wS[0]);
+
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(tt[0:interpOrderLim], ww[0:interpOrderLim], \
@@ -181,9 +183,9 @@ void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpola
     double weights[interpOrderLim], dj[interpOrderLim];
     double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
     
-    double *modifiedF, *modifiedF2;
+    double *modifiedF; //, *modifiedF2;
     make_vector(modifiedF, sourcePointsInCluster);
-    make_vector(modifiedF2, sourcePointsInCluster);
+//    make_vector(modifiedF2, sourcePointsInCluster);
 
     int *exactIndX, *exactIndY, *exactIndZ;
     make_vector(exactIndX, sourcePointsInCluster);
