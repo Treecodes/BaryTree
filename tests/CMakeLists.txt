@@ -10,10 +10,12 @@ if(BUILD_TESTS AND ENABLE_GPU_BUILD)
    install(TARGETS tests_gpu DESTINATION bin)
 endif()
 
-set(UNIT_TEST tests_cpu)
-add_custom_command(
-     TARGET ${UNIT_TEST}
-     COMMENT "Running tests"
-     POST_BUILD 
-     COMMAND ${UNIT_TEST}
-)
+if(BUILD_TESTS AND ENABLE_CPU_BUILD)
+    set(UNIT_TEST tests_cpu)
+    add_custom_command(
+         TARGET ${UNIT_TEST}
+         COMMENT "Running tests"
+         POST_BUILD 
+         COMMAND ${UNIT_TEST}
+    )
+endif()
