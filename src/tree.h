@@ -64,18 +64,9 @@ void setup_batch(struct batch **batches, double *batch_lim,
 void create_target_batch(struct batch *batches, struct particles *particles,
                      int ibeg, int iend, int maxparnode, double *xyzmm);
 
-void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
-                    double xl, double yl, double zl, double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *batch_reorder);
-
 void create_source_batch(struct batch *batches, struct particles *particles,
                      int ibeg, int iend, int maxparnode, double *xyzmm);
 
-void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
-                    double xl, double yl, double zl, double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *batch_reorder);
-
-void reorder_energies(int *batch_reorder, int numpars, double *tEn);
+void reorder_targets_and_potential(struct particles *targets, double *tEn,
+                     int *reorder, int numpars);
 #endif /* H_TREEFUNCTIONS_H */

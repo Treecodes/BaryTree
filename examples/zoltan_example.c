@@ -150,7 +150,6 @@ int main(int argc, char **argv)
         mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
     }
 
-    printf("\n\n\nx,y,z [0] = %f,%f,%f\n\n\n",mySources.x[0],mySources.y[0],mySources.z[0] );
 
     zz = Zoltan_Create(MPI_COMM_WORLD);
 
@@ -249,25 +248,18 @@ int main(int argc, char **argv)
     sources->w = mySources.w;
     sources->order = particleOrder;
  
-//    targets->x = mySources.x;
-//    targets->y = mySources.y;
-//    targets->z = mySources.z;
-//    targets->q = mySources.q;
-//    targets->order = particleOrder;
-    
-    MPI_Barrier(MPI_COMM_WORLD);
+
     targets->x = malloc(targets->num*sizeof(double));
     targets->y = malloc(targets->num*sizeof(double));
     targets->z = malloc(targets->num*sizeof(double));
     targets->q = malloc(targets->num*sizeof(double));
-    targets->order = malloc(targets->num*sizeof(double));
-    printf("Beginning memcpy()\n");
-    memcpy(targets->x, mySources.x, sizeof(mySources.x));
-    memcpy(targets->y, mySources.y, sizeof(mySources.y));
-    memcpy(targets->z, mySources.z, sizeof(mySources.z));
-    memcpy(targets->q, mySources.q, sizeof(mySources.q));
-    memcpy(targets->order, particleOrder, sizeof(particleOrder));
-    printf("Ending memcpy()\n");
+    targets->order = malloc(targets->num*sizeof(int));
+    memcpy(targets->x, mySources.x, targets->num * sizeof(double));
+    memcpy(targets->y, mySources.y, targets->num * sizeof(double));
+    memcpy(targets->z, mySources.z, targets->num * sizeof(double));
+    memcpy(targets->q, mySources.q, targets->num * sizeof(double));
+    memcpy(targets->order, particleOrder, targets->num * sizeof(int));
+
 
     double *target_quadrature_weights;
     target_quadrature_weights = malloc(sizeof(double) * targets->num);
@@ -324,17 +316,17 @@ int main(int argc, char **argv)
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
         treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
-                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential_direct, &potential_engy_direct, time_tree);
+                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential_direct,
+                   &potential_engy_direct, time_tree);
         time_direct = MPI_Wtime() - time1;
     }
-    
+
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
-               kernelName, kappa, singularityHandling, approximationName, tree_type, potential, &potential_engy, time_tree);
+               kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
+               &potential_engy, time_tree);
 
-    if (rank == 0) fprintf(stderr,"Treedriver has finished.\n");
-    
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];
     
@@ -448,8 +440,8 @@ int main(int argc, char **argv)
             if (fabs(potential_direct[j]) >= relinferr)
                 relinferr = fabs(potential_direct[j]);
 
-            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * target_quadrature_weights[j];
-            reln2err = reln2err + pow(potential_direct[j], 2.0) * target_quadrature_weights[j];
+            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * fabs(target_quadrature_weights[j]);
+            reln2err = reln2err + pow(potential_direct[j], 2.0) * fabs(target_quadrature_weights[j]);
         }
 
         MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -458,17 +450,13 @@ int main(int argc, char **argv)
         MPI_Reduce(&inferr, &glob_inf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     
         if (rank == 0) {
-            glob_reln2_err = sqrt(glob_n2_err / glob_reln2_err);
-            glob_n2_err = sqrt(glob_n2_err);
+            glob_reln2_err = sqrt(fabs(glob_n2_err / glob_reln2_err));
+            glob_n2_err = sqrt(fabs(glob_n2_err));
             glob_relinf_err = glob_inf_err / glob_relinf_err;
             printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);
             printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
         }
     }
-
-    //for (int i = 0; i < mySources.numMyPoints; i++) {
-    //    fprintf(stderr,"Rank %d, particle %d: %f, %f, %f, %d\n", rank, i, mySources.x[i], mySources.y[i], mySources.z[i], mySources.myGlobalIDs[i]);
-    //}
 
 
     /******************************************************************
@@ -490,10 +478,17 @@ int main(int argc, char **argv)
     free(mySources.w);
     free(mySources.myGlobalIDs);
     free(particleOrder);
+    free(sources);
+
+    free(targets->x);
+    free(targets->y);
+    free(targets->z);
+    free(targets->q);
+    free(targets->order);
+    free(targets);
+
     free(potential);
     free(potential_direct);
-    free(sources);
-    free(targets);
 
     MPI_Finalize();
 
@@ -517,8 +512,8 @@ static void get_object_list(void *data, int sizeGID, int sizeLID,
     *ierr = ZOLTAN_OK;
 
   /* In this example, return the IDs of our objects, but no weights.
- *    * Zoltan will assume equally weighted objects.
- *       */
+   * Zoltan will assume equally weighted objects.
+   */
 
     for (i = 0; i < mesh->numMyPoints; i++) {
         globalID[i] = mesh->myGlobalIDs[i];

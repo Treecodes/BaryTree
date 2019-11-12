@@ -516,7 +516,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         }
         
-        reorder_energies(batches->reorder, targets->num, tEn);
+        reorder_targets_and_potential(targets, tEn, batches->reorder, targets->num);
     }
     time_tree[7] = MPI_Wtime()-time1; // end time for tree evaluation
 

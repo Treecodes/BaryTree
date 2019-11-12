@@ -18,6 +18,18 @@
 
 
 
+void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
+                    double xl, double yl, double zl, double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid, int ind[8][2],
+                    int *batch_reorder);
+
+void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
+                    double xl, double yl, double zl, double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid, int ind[8][2],
+                    int *batch_reorder);
+
+
+
 void setup_batch(struct batch **batches, double *batch_lim,
                  struct particles *particles, int batch_size)
 {
@@ -463,21 +475,37 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, d
 
 
 
-void reorder_energies(int *batch_reorder, int numpars, double *tEn)
+void reorder_targets_and_potential(struct particles *targets, double *tEn,
+                     int *reorder, int numpars)
 {
-    int i;
     double *temp_energy;
-    
     make_vector(temp_energy, numpars);
-    
-    for (i = 0; i < numpars; i++) {
-        temp_energy[i] = tEn[i];
-    }
-    
-    for (i = 0; i < numpars; i++) {
-        tEn[batch_reorder[i]-1] = temp_energy[i];
-    }
-    
+    for (int i = 0; i < numpars; i++) temp_energy[i] = tEn[i];
+    for (int i = 0; i < numpars; i++) tEn[reorder[i]-1] = temp_energy[i];
     free_vector(temp_energy);
+
+    double *temp_x;
+    make_vector(temp_x, numpars);
+    for (int i = 0; i < numpars; i++) temp_x[i] = targets->x[i];
+    for (int i = 0; i < numpars; i++) targets->x[reorder[i]-1] = temp_x[i];
+    free_vector(temp_x);
+
+    double *temp_y;
+    make_vector(temp_y, numpars);
+    for (int i = 0; i < numpars; i++) temp_y[i] = targets->y[i];
+    for (int i = 0; i < numpars; i++) targets->y[reorder[i]-1] = temp_y[i];
+    free_vector(temp_y);
+
+    double *temp_z;
+    make_vector(temp_z, numpars);
+    for (int i = 0; i < numpars; i++) temp_z[i] = targets->z[i];
+    for (int i = 0; i < numpars; i++) targets->z[reorder[i]-1] = temp_z[i];
+    free_vector(temp_z);
+
+    double *temp_q;
+    make_vector(temp_q, numpars);
+    for (int i = 0; i < numpars; i++) temp_q[i] = targets->q[i];
+    for (int i = 0; i < numpars; i++) targets->q[reorder[i]-1] = temp_q[i];
+    free_vector(temp_q);
 
 }
