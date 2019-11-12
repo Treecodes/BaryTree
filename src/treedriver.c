@@ -133,7 +133,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         printf("            number of leaves: %d\n", numleaves);
         printf("             number of nodes: %d\n", numnodes);
         printf("           target batch size: %d\n", batch_size);
-        printf("           number of batches: %d\n\n", batches->num);
+        printf("           number of batches: %d\n\n", batches->numnodes);
     }
 
 
@@ -210,12 +210,12 @@ void treedriver(struct particles *sources, struct particles *targets,
         int *sizeof_batch_approx, *sizeof_batch_direct;
         int *offset_batch_approx, *offset_batch_direct;
 
-        make_vector(sizeof_batch_approx, batches->num);
-        make_vector(sizeof_batch_direct, batches->num);
-        make_vector(offset_batch_approx, batches->num);
-        make_vector(offset_batch_direct, batches->num);
+        make_vector(sizeof_batch_approx, batches->numnodes);
+        make_vector(sizeof_batch_direct, batches->numnodes);
+        make_vector(offset_batch_approx, batches->numnodes);
+        make_vector(offset_batch_direct, batches->numnodes);
 
-        int loopsize = batches->num;
+        int loopsize = batches->numnodes;
         for (int i = 0; i < loopsize; i++) sizeof_batch_approx[i] = 0;
         for (int i = 0; i < loopsize; i++) sizeof_batch_direct[i] = 0;
         for (int i = 0; i < loopsize; i++) offset_batch_approx[i] = 0;
@@ -456,8 +456,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         // Local particles
 //MAKE THIS BETTER!
-        make_vector(local_tree_inter_list, batches->num * tree_array->numnodes);
-        make_vector(local_direct_inter_list, batches->num * tree_array->numnodes);
+        make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
+        make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
         Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
         tree_array->numnodes, tree_array->numnodes);
 //        printf("Made interaction lists.\n");
@@ -480,11 +480,11 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (numProcs > 1) {
         time1 = MPI_Wtime();
 
-        max_batch_approx = maxval_int(sizeof_batch_approx, batches->num);
-        max_batch_direct = maxval_int(sizeof_batch_direct, batches->num);
+        max_batch_approx = maxval_int(sizeof_batch_approx, batches->numnodes);
+        max_batch_direct = maxval_int(sizeof_batch_direct, batches->numnodes);
         
-        if (max_batch_approx > 0) make_vector(tree_inter_list, batches->num * max_batch_approx);
-        if (max_batch_direct > 0) make_vector(direct_inter_list, batches->num * max_batch_direct);
+        if (max_batch_approx > 0) make_vector(tree_inter_list, batches->numnodes * max_batch_approx);
+        if (max_batch_direct > 0) make_vector(direct_inter_list, batches->numnodes * max_batch_direct);
         Interaction_MakeList(let_tree_array, batches, tree_inter_list, direct_inter_list,
                              max_batch_approx, max_batch_direct);
 
@@ -546,8 +546,14 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     // free target batches
     free_vector(batches->reorder);
-    free_matrix(batches->index);
-    free_matrix(batches->center);
+    free_vector(batches->iend);
+    free_vector(batches->ibeg);
+    free_vector(batches->numpar);
+    free_vector(batches->numApprox);
+    free_vector(batches->numDirect);
+    free_vector(batches->x_mid);
+    free_vector(batches->y_mid);
+    free_vector(batches->z_mid);
     free_vector(batches->radius);
     free(batches);
     

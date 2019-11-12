@@ -62,7 +62,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
         #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \
                             source_charge[0:numSources], source_weight[0:numSources], \
                             target_x[0:numTargets], target_y[0:numTargets], target_z[0:numTargets], target_charge[0:numTargets], \
-                            cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], cluster_z[0:totalNumberOfInterpolationPoints], \
+                            cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], \
+                            cluster_z[0:totalNumberOfInterpolationPoints], \
                             cluster_charge[0:totalNumberOfInterpolationPoints], cluster_weight[0:totalNumberOfInterpolationPoints], \
                             tree_inter_list[0:batch_approx_offset*batches->num], \
                             direct_inter_list[0:batch_direct_offset*batches->num], \
@@ -73,11 +74,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
         int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
 
-        for (int i = 0; i < batches->num; i++) {
-            int batch_ibeg = batches->index[i][0];
-            int batch_iend = batches->index[i][1];
-            int numberOfClusterApproximations = batches->index[i][2];
-            int numberOfDirectSums = batches->index[i][3];
+        for (int i = 0; i < batches->numnodes; i++) {
+            int batch_ibeg = batches->ibeg[i];
+            int batch_iend = batches->iend[i];
+            int numberOfClusterApproximations = batches->numApprox[i];
+            int numberOfDirectSums = batches->numDirect[i];
 
 //            printf("Batch number %d\n", i);
 //            printf("Number of direct interactions: %d\n",numberOfDirectSums);

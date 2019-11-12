@@ -46,13 +46,24 @@ void setup_batch(struct batch **batches, double *batch_lim,
     batch_lim[5] = maxval(particles->z, particles->num);
     
     (*batches) = malloc(sizeof(struct batch));
-    (*batches)->num = 0;
+    (*batches)->numnodes = 0;
     
     max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
 
     make_vector((*batches)->reorder, particles->num);
-    make_matrix((*batches)->index, max_batch_num, 4);
-    make_matrix((*batches)->center, max_batch_num, 3);
+
+    //make_matrix((*batches)->index, max_batch_num, 4);
+    make_vector((*batches)->ibeg, max_batch_num);
+    make_vector((*batches)->iend, max_batch_num);
+    make_vector((*batches)->numpar, max_batch_num);
+    make_vector((*batches)->numApprox, max_batch_num);
+    make_vector((*batches)->numDirect, max_batch_num);
+
+    //make_matrix((*batches)->center, max_batch_num, 3);
+    make_vector((*batches)->x_mid, max_batch_num);
+    make_vector((*batches)->y_mid, max_batch_num);
+    make_vector((*batches)->z_mid, max_batch_num);
+
     make_vector((*batches)->radius, max_batch_num);
 
     for (i = 0; i < particles->num; i++)
@@ -183,7 +194,7 @@ void create_target_batch(struct batch *batches, struct particles *particles,
 
     } else {
 
-        batches->num += 1;
+        batches->numnodes += 1;
 //    	printf("Rank %i Increasing batch number to %i.\n",rank, batches->num);
         
 //    	if (batches->num==1){
@@ -195,14 +206,17 @@ void create_target_batch(struct batch *batches, struct particles *particles,
 //    		printf("radius %f\n", radius);
 //
 //    	}
-        batches->index[batches->num-1][0] = ibeg;
-        batches->index[batches->num-1][1] = iend;
+        batches->ibeg[batches->numnodes-1] = ibeg;
+        batches->iend[batches->numnodes-1] = iend;
+        batches->numpar[batches->numnodes-1] = iend-ibeg+1;
+        batches->numApprox[batches->numnodes-1] = 0;
+        batches->numDirect[batches->numnodes-1] = 0;
         
-        batches->center[batches->num-1][0] = x_mid;
-        batches->center[batches->num-1][1] = y_mid;
-        batches->center[batches->num-1][2] = z_mid;
+        batches->x_mid[batches->numnodes-1] = x_mid;
+        batches->y_mid[batches->numnodes-1] = y_mid;
+        batches->z_mid[batches->numnodes-1] = z_mid;
         
-        batches->radius[batches->num-1] = radius;
+        batches->radius[batches->numnodes-1] = radius;
 //    	printf("Finished filling in batch details.\n");
     }
 
@@ -306,16 +320,19 @@ void create_source_batch(struct batch *batches, struct particles *particles,
 
     } else {
     
-        batches->num += 1;
+        batches->numnodes += 1;
+
+        batches->ibeg[batches->numnodes-1] = ibeg;
+        batches->iend[batches->numnodes-1] = iend;
+        batches->numpar[batches->numnodes-1] = iend-ibeg+1;
+        batches->numApprox[batches->numnodes-1] = 0;
+        batches->numDirect[batches->numnodes-1] = 0;
         
-        batches->index[batches->num-1][0] = ibeg;
-        batches->index[batches->num-1][1] = iend;
+        batches->x_mid[batches->numnodes-1] = x_mid;
+        batches->y_mid[batches->numnodes-1] = y_mid;
+        batches->z_mid[batches->numnodes-1] = z_mid;
         
-        batches->center[batches->num-1][0] = x_mid;
-        batches->center[batches->num-1][1] = y_mid;
-        batches->center[batches->num-1][2] = z_mid;
-        
-        batches->radius[batches->num-1] = radius;
+        batches->radius[batches->numnodes-1] = radius;
     }
 
     return;
