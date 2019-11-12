@@ -261,7 +261,11 @@ static char * test_treecode_on_100_particles() {
     int order=2;
     double theta=0.7;
 
-    //////////// Lagrange /////////
+    /***********************************************/
+    /******************* Test 1 ********************/
+    /***********************************************/
+    /********** lagrange-coulomb-skipping **********/
+    /***********************************************/
     approximationName="lagrange";
     for (int i=0; i<targets->num; i++){
         potential[i]=0.0;
@@ -280,8 +284,7 @@ static char * test_treecode_on_100_particles() {
             double r = abs(j-i)*sqrt(3);
             trueValue += j/(r);
         }
-//        printf("potential at %i:, %f\n", i, potential[i]);
-//        printf("trueValue at %i:, %f\n\n", i, trueValue);
+
         mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-3);
     }
 
@@ -289,6 +292,12 @@ static char * test_treecode_on_100_particles() {
     for (int i=0; i<targets->num; i++){
         potential[i]=0.0;
     }
+
+    /***********************************************/
+    /******************* Test 2 ********************/
+    /***********************************************/
+    /********* lagrange-coulomb-subtraction ********/
+    /***********************************************/
     singularityHandling="subtraction";
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
@@ -305,14 +314,14 @@ static char * test_treecode_on_100_particles() {
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
         }
 
-//        printf("potential at %i:, %f\n", i, potential[i]);
-//        printf("trueValue at %i:, %f\n", i, trueValue);
-//        printf("Absolute error: %f\n", fabs( (potential[i] - trueValue) ) );
-//        printf("Relative error at %i:: %f\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
-//        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
     }
 
+    /***********************************************/
+    /******************* Test 3 ********************/
+    /***********************************************/
+    /*********** lagrange-yukawa-skipping **********/
+    /***********************************************/
     kernelName="yukawa";
     singularityHandling="skipping";
 
@@ -334,11 +343,14 @@ static char * test_treecode_on_100_particles() {
             trueValue += j*exp(-kappa*r)/(r);
         }
 
-//        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 8e-3);
     }
 
-
+    /***********************************************/
+    /******************* Test 4 ********************/
+    /***********************************************/
+    /********* lagrange-yukawa-subtraction *********/
+    /***********************************************/
     for (int i=0; i<targets->num; i++){
         potential[i]=0.0;
     }
@@ -357,19 +369,16 @@ static char * test_treecode_on_100_particles() {
             double r = fabs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
-//        printf("potential at %i:, %1.2e\n", i, potential[i]);
-//        printf("trueValue at %i:, %1.2e\n", i, trueValue);
-//        printf("Absolute error at %i: %f\n\n", i, fabs( (potential[i] - trueValue) ) );
-//        printf("Relative error at %i: %f\n\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
-
         // measure absolute error for this example, since true values are very close to zero.
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-2);
 
     }
 
-
-    //////// Hermite ////////
-
+    /***********************************************/
+    /******************* Test 5 ********************/
+    /***********************************************/
+    /********* hermite-coulomb-skipping ************/
+    /***********************************************/
     approximationName="hermite";
     kernelName="coulomb";
     singularityHandling="skipping";
@@ -390,13 +399,16 @@ static char * test_treecode_on_100_particles() {
             double r = abs(j-i)*sqrt(3);
             trueValue += j/(r);
         }
-//        printf("potential at %i:, %f\n", i, potential[i]);
-//        printf("trueValue at %i:, %f\n\n", i, trueValue);
+
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-4);
     }
 
 
-
+    /***********************************************/
+    /******************* Test 6 ********************/
+    /***********************************************/
+    /******** hermite-coulomb-subtraction **********/
+    /***********************************************/
     approximationName="hermite";
     kernelName="coulomb";
     singularityHandling="subtraction";
@@ -418,14 +430,14 @@ static char * test_treecode_on_100_particles() {
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
         }
 
-//        printf("potential at %i:, %f\n", i, potential[i]);
-//        printf("trueValue at %i:, %f\n", i, trueValue);
-//        printf("Absolute error: %f\n", fabs( (potential[i] - trueValue) ) );
-//        printf("Relative error at %i:: %f\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
-//        mu_assert("TEST FAILED: Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
     }
 
+    /***********************************************/
+    /******************* Test 7 ********************/
+    /***********************************************/
+    /********** hermite-yukawa-skipping ************/
+    /***********************************************/
     approximationName="hermite";
     kernelName="yukawa";
     singularityHandling="skipping";
@@ -447,11 +459,14 @@ static char * test_treecode_on_100_particles() {
             trueValue += j*exp(-kappa*r)/(r);
         }
 
-//        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 5e-4);
     }
 
-
+    /***********************************************/
+    /******************* Test 8 ********************/
+    /***********************************************/
+    /********* hermite-yukawa-subtraction **********/
+    /***********************************************/
     approximationName="hermite";
     kernelName="yukawa";
     singularityHandling="subtraction";
@@ -472,17 +487,10 @@ static char * test_treecode_on_100_particles() {
             double r = fabs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
-//        printf("potential at %i:, %1.2e\n", i, potential[i]);
-//        printf("trueValue at %i:, %1.2e\n", i, trueValue);
-//        printf("Absolute error at %i: %f\n\n", i, fabs( (potential[i] - trueValue) ) );
-//        printf("Relative error at %i: %f\n\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
-
         // measure absolute error for this example, since true values are very close to zero.
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-3);
 
     }
-
-
 
     free(sources->x);
     free(sources->y);
@@ -503,9 +511,9 @@ static char * test_treecode_on_100_particles() {
     return 0;
 }
 
+
+// Run all the tests
 static char * all_tests() {
-    mu_run_test(test_foo);
-    mu_run_test(test_bar);
     mu_run_test(test_direct_sum_on_10_particles);
     mu_run_test(test_treecode_on_100_particles);
 return 0;
@@ -519,13 +527,19 @@ int main(int argc, char **argv) {
 
 
     char *result = all_tests();
+    printf("Tests run: %d\n", tests_run);
     if (result != 0) {
+        printf("=====================\n" \
+               "| SOME TESTS FAILED |\n" \
+               "=====================\n");
         printf("%s\n", result);
     }
     else {
-        printf("ALL TESTS PASSED\n");
+        printf("====================\n" \
+               "| ALL TESTS PASSED |\n" \
+               "====================\n");
     }
-        printf("Tests run: %d\n", tests_run);
+
 
 
     MPI_Finalize();
