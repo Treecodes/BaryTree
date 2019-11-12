@@ -255,13 +255,17 @@ static char * test_treecode_on_100_particles() {
 
     kernelName="coulomb";
     singularityHandling="skipping";
-    approximationName="lagrange";
     int tree_type=1;
     double kappa=0.5;
 
     int order=2;
     double theta=0.7;
 
+    //////////// Lagrange /////////
+    approximationName="lagrange";
+    for (int i=0; i<targets->num; i++){
+        potential[i]=0.0;
+    }
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
                    &potential_engy, time_tree);
@@ -278,7 +282,7 @@ static char * test_treecode_on_100_particles() {
         }
 //        printf("potential at %i:, %f\n", i, potential[i]);
 //        printf("trueValue at %i:, %f\n\n", i, trueValue);
-        mu_assert("Treecode potential not correct for coulomb kernel with skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-3);
+        mu_assert("Treecode potential not correct for: lagrange-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-3);
     }
 
 
@@ -306,7 +310,7 @@ static char * test_treecode_on_100_particles() {
 //        printf("Absolute error: %f\n", fabs( (potential[i] - trueValue) ) );
 //        printf("Relative error at %i:: %f\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
 //        mu_assert("Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
-        mu_assert("Treecode potential not correct for coulomb kernel with subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
+        mu_assert("Treecode potential not correct for: lagrange-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
     }
 
     kernelName="yukawa";
@@ -331,7 +335,7 @@ static char * test_treecode_on_100_particles() {
         }
 
 //        mu_assert("Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
-        mu_assert("Treecode potential not correct for yukawa kernel with skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 8e-3);
+        mu_assert("Treecode potential not correct for: lagrange-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 8e-3);
     }
 
 
@@ -359,7 +363,122 @@ static char * test_treecode_on_100_particles() {
 //        printf("Relative error at %i: %f\n\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
 
         // measure absolute error for this example, since true values are very close to zero.
-        mu_assert("Treecode potential not correct for yukawa kernel with subtraction", fabs(potential[i] - trueValue) < 2e-2);
+        mu_assert("Treecode potential not correct for: lagrange-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-2);
+
+    }
+
+
+    //////// Hermite ////////
+
+    approximationName="hermite";
+    kernelName="coulomb";
+    singularityHandling="skipping";
+    for (int i=0; i<targets->num; i++){
+        potential[i]=0.0;
+    }
+    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
+                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
+                   &potential_engy, time_tree);
+
+    for (int i=0; i<targets->num; i++){
+        double trueValue=0.0;
+        for (int j=0; j<i; j++){
+            double r = abs(j-i)*sqrt(3);
+            trueValue += j/(r);
+        }
+        for (int j=i+1; j<targets->num; j++){
+            double r = abs(j-i)*sqrt(3);
+            trueValue += j/(r);
+        }
+//        printf("potential at %i:, %f\n", i, potential[i]);
+//        printf("trueValue at %i:, %f\n\n", i, trueValue);
+        mu_assert("Treecode potential not correct for: hermite-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-4);
+    }
+
+
+
+    approximationName="hermite";
+    kernelName="coulomb";
+    singularityHandling="subtraction";
+    for (int i=0; i<targets->num; i++){
+        potential[i]=0.0;
+    }
+    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
+                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
+                   &potential_engy, time_tree);
+
+    for (int i=0; i<targets->num; i++){
+        double trueValue=0.0;
+        for (int j=0; j<i; j++){
+            double r = abs(j-i)*sqrt(3);
+            trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
+        }
+        for (int j=i+1; j<targets->num; j++){
+            double r = abs(j-i)*sqrt(3);
+            trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
+        }
+
+//        printf("potential at %i:, %f\n", i, potential[i]);
+//        printf("trueValue at %i:, %f\n", i, trueValue);
+//        printf("Absolute error: %f\n", fabs( (potential[i] - trueValue) ) );
+//        printf("Relative error at %i:: %f\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
+//        mu_assert("Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
+        mu_assert("Treecode potential not correct for: hermite-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
+    }
+
+    approximationName="hermite";
+    kernelName="yukawa";
+    singularityHandling="skipping";
+    for (int i=0; i<targets->num; i++){
+        potential[i]=0.0;
+    }
+    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
+                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
+                   &potential_engy, time_tree);
+
+    for (int i=0; i<targets->num; i++){
+        double trueValue=0.0;
+        for (int j=0; j<i; j++){
+            double r = abs(j-i)*sqrt(3);
+            trueValue += j*exp(-kappa*r)/(r);
+        }
+        for (int j=i+1; j<targets->num; j++){
+            double r = abs(j-i)*sqrt(3);
+            trueValue += j*exp(-kappa*r)/(r);
+        }
+
+//        mu_assert("Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("Treecode potential not correct for: hermite-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 5e-4);
+    }
+
+
+    approximationName="hermite";
+    kernelName="yukawa";
+    singularityHandling="subtraction";
+    for (int i=0; i<targets->num; i++){
+        potential[i]=0.0;
+    }
+    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
+                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
+                   &potential_engy, time_tree);
+
+    for (int i=0; i<targets->num; i++){
+        double trueValue=0.0;
+        for (int j=0; j<i; j++){
+            double r = fabs(j-i)*sqrt(3);
+            trueValue += (j - i)*exp(-kappa*r)/(r);
+        }
+        for (int j=i+1; j<sources->num; j++){
+            double r = fabs(j-i)*sqrt(3);
+            trueValue += (j - i)*exp(-kappa*r)/(r);
+        }
+//        printf("potential at %i:, %1.2e\n", i, potential[i]);
+//        printf("trueValue at %i:, %1.2e\n", i, trueValue);
+//        printf("Absolute error at %i: %f\n\n", i, fabs( (potential[i] - trueValue) ) );
+//        printf("Relative error at %i: %f\n\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
+
+        // measure absolute error for this example, since true values are very close to zero.
+        mu_assert("Treecode potential not correct for: hermite-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-3);
 
     }
 
