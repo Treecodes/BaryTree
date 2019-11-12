@@ -22,6 +22,7 @@ option(BUILD_TREECODE "build treecode computation executables"                 O
 option(BUILD_DIRECT "build direct computation executables"                     ON)
 option(BUILD_EXAMPLES "build examples with Zoltan"                             ON)
 option(BUILD_TESTS "build tests"                                               ON)
+option(RUN_TESTS_ON_BUILD "run tests on build"                                 ON)
 
 option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
 option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
