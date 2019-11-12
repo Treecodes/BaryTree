@@ -9,3 +9,11 @@ if(BUILD_TESTS AND ENABLE_GPU_BUILD)
    target_link_libraries(tests_gpu PRIVATE treelib-gpu zoltan)
    install(TARGETS tests_gpu DESTINATION bin)
 endif()
+
+set(UNIT_TEST tests_cpu)
+add_custom_command(
+     TARGET ${UNIT_TEST}
+     COMMENT "Running tests"
+     POST_BUILD 
+     COMMAND ${UNIT_TEST}
+)

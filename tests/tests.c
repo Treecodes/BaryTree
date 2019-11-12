@@ -19,12 +19,12 @@ int foo = 7;
 int bar = 5;
 
 static char * test_foo() {
-    mu_assert("error, foo != 7", foo == 7);
+    mu_assert("TEST FAILED: error, foo != 7", foo == 7);
     return 0;
 }
 
 static char * test_bar() {
-    mu_assert("error, bar != 5", bar == 5);
+    mu_assert("TEST FAILED: error, bar != 5", bar == 5);
     return 0;
 }
 
@@ -104,7 +104,7 @@ static char * test_direct_sum_on_10_particles() {
             trueValue += j/(r);
         }
 
-        mu_assert("Direct sum potential not correct for coulomb kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
     }
 
 
@@ -127,7 +127,7 @@ static char * test_direct_sum_on_10_particles() {
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
         }
 
-        mu_assert("Direct sum potential not correct for coulomb kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
     }
 
     kernelName="yukawa";
@@ -151,7 +151,7 @@ static char * test_direct_sum_on_10_particles() {
             trueValue += j*exp(-kappa*r)/(r);
         }
 
-        mu_assert("Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
     }
 
 
@@ -174,7 +174,7 @@ static char * test_direct_sum_on_10_particles() {
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
 
-        mu_assert("Direct sum potential not correct for yukawa kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
     }
 
 
@@ -282,7 +282,7 @@ static char * test_treecode_on_100_particles() {
         }
 //        printf("potential at %i:, %f\n", i, potential[i]);
 //        printf("trueValue at %i:, %f\n\n", i, trueValue);
-        mu_assert("Treecode potential not correct for: lagrange-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-3);
+        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-3);
     }
 
 
@@ -309,8 +309,8 @@ static char * test_treecode_on_100_particles() {
 //        printf("trueValue at %i:, %f\n", i, trueValue);
 //        printf("Absolute error: %f\n", fabs( (potential[i] - trueValue) ) );
 //        printf("Relative error at %i:: %f\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
-//        mu_assert("Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
-        mu_assert("Treecode potential not correct for: lagrange-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
+//        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
     }
 
     kernelName="yukawa";
@@ -334,8 +334,8 @@ static char * test_treecode_on_100_particles() {
             trueValue += j*exp(-kappa*r)/(r);
         }
 
-//        mu_assert("Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
-        mu_assert("Treecode potential not correct for: lagrange-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 8e-3);
+//        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 8e-3);
     }
 
 
@@ -363,7 +363,7 @@ static char * test_treecode_on_100_particles() {
 //        printf("Relative error at %i: %f\n\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
 
         // measure absolute error for this example, since true values are very close to zero.
-        mu_assert("Treecode potential not correct for: lagrange-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-2);
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-2);
 
     }
 
@@ -392,7 +392,7 @@ static char * test_treecode_on_100_particles() {
         }
 //        printf("potential at %i:, %f\n", i, potential[i]);
 //        printf("trueValue at %i:, %f\n\n", i, trueValue);
-        mu_assert("Treecode potential not correct for: hermite-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-4);
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-4);
     }
 
 
@@ -422,8 +422,8 @@ static char * test_treecode_on_100_particles() {
 //        printf("trueValue at %i:, %f\n", i, trueValue);
 //        printf("Absolute error: %f\n", fabs( (potential[i] - trueValue) ) );
 //        printf("Relative error at %i:: %f\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
-//        mu_assert("Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
-        mu_assert("Treecode potential not correct for: hermite-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
+//        mu_assert("TEST FAILED: Treecode potential not correct for coulomb kernel with subtraction", (abs(potential[i] - trueValue)/abs(trueValue)) < 1e-100);
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
     }
 
     approximationName="hermite";
@@ -447,8 +447,8 @@ static char * test_treecode_on_100_particles() {
             trueValue += j*exp(-kappa*r)/(r);
         }
 
-//        mu_assert("Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
-        mu_assert("Treecode potential not correct for: hermite-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 5e-4);
+//        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 5e-4);
     }
 
 
@@ -478,7 +478,7 @@ static char * test_treecode_on_100_particles() {
 //        printf("Relative error at %i: %f\n\n", i, fabs( (potential[i] - trueValue)/trueValue ) );
 
         // measure absolute error for this example, since true values are very close to zero.
-        mu_assert("Treecode potential not correct for: hermite-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-3);
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-3);
 
     }
 
