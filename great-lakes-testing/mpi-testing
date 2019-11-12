@@ -13,13 +13,13 @@ COMPAREDIRECT=1
 
 NP=1
 N=10000
-for ORDER in 2 4 6 
+for ORDER in 4 
 do
-    for APPROXIMATIONNAME in hermite #lagrange #hermite
+    for APPROXIMATIONNAME in hermite lagrange #hermite
     do
-        for KERNEL in yukawa #coulomb 
+        for KERNEL in coulomb yukawa #coulomb 
         do
-            for SINGULARITYHANDLING in subtraction #skipping #subtraction 
+            for SINGULARITYHANDLING in subtraction skipping #subtraction 
             do
                 echo
                 echo 

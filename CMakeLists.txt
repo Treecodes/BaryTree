@@ -21,6 +21,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 option(BUILD_TREECODE "build treecode computation executables"                 ON) 
 option(BUILD_DIRECT "build direct computation executables"                     ON)
 option(BUILD_EXAMPLES "build examples with Zoltan"                             ON)
+option(BUILD_TESTS "build tests"                                               ON)
 
 option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
 option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
@@ -60,3 +61,4 @@ endif()
 
 add_subdirectory(src)
 add_subdirectory(examples)
+add_subdirectory(tests)
