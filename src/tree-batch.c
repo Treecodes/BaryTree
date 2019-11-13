@@ -208,9 +208,9 @@ void create_target_batch(struct batch *batches, struct particles *particles,
 //    	}
         batches->ibeg[batches->numnodes-1] = ibeg;
         batches->iend[batches->numnodes-1] = iend;
-        batches->numpar[batches->numnodes-1] = iend-ibeg+1;
-        batches->numApprox[batches->numnodes-1] = 0;
-        batches->numDirect[batches->numnodes-1] = 0;
+//        batches->numpar[batches->numnodes-1] = iend-ibeg+1;
+//        batches->numApprox[batches->numnodes-1] = 0;
+//        batches->numDirect[batches->numnodes-1] = 0;
         
         batches->x_mid[batches->numnodes-1] = x_mid;
         batches->y_mid[batches->numnodes-1] = y_mid;
@@ -324,9 +324,9 @@ void create_source_batch(struct batch *batches, struct particles *particles,
 
         batches->ibeg[batches->numnodes-1] = ibeg;
         batches->iend[batches->numnodes-1] = iend;
-        batches->numpar[batches->numnodes-1] = iend-ibeg+1;
-        batches->numApprox[batches->numnodes-1] = 0;
-        batches->numDirect[batches->numnodes-1] = 0;
+ //       batches->numpar[batches->numnodes-1] = iend-ibeg+1;
+ //       batches->numApprox[batches->numnodes-1] = 0;
+ //       batches->numDirect[batches->numnodes-1] = 0;
         
         batches->x_mid[batches->numnodes-1] = x_mid;
         batches->y_mid[batches->numnodes-1] = y_mid;
