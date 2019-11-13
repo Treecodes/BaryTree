@@ -11,7 +11,6 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
-#include "batch.h"
 #include "particles.h"
 #include "tools.h"
 
@@ -25,7 +24,7 @@
 
 
 
-void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
+void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_array *batches,
                                   int *tree_inter_list, int *direct_inter_list,
                                   double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
                                   double *target_x, double *target_y, double *target_z, double *target_charge,

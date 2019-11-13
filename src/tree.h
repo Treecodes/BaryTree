@@ -2,7 +2,6 @@
 #define H_TREEFUNCTIONS_H
 
 #include "tnode.h"
-#include "batch.h"
 #include "particles.h"
 
 
@@ -44,7 +43,7 @@ void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
 
 
 
-void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *batches,
+void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_array *batches,
 								  int *tree_inter_list, int *direct_inter_list,
 								  double *xS, double *yS, double *zS, double *qS, double *wS,
 								  double *xT, double *yT, double *zT, double *qT,
@@ -58,13 +57,13 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct batch *
 
 
 /* batch functions */
-void setup_batch(struct batch **batches, double *batch_lim,
+void setup_batch(struct tnode_array **batches, double *batch_lim,
                  struct particles *particles, int batch_size);
 
-void create_target_batch(struct batch *batches, struct particles *particles,
+void create_target_batch(struct tnode_array *batches, struct particles *particles,
                      int ibeg, int iend, int maxparnode, double *xyzmm);
 
-void create_source_batch(struct batch *batches, struct particles *particles,
+void create_source_batch(struct tnode_array *batches, struct particles *particles,
                      int ibeg, int iend, int maxparnode, double *xyzmm);
 
 void reorder_targets_and_potential(struct particles *targets, double *tEn,

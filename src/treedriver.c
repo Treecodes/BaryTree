@@ -7,7 +7,6 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
-#include "batch.h"
 #include "particles.h"
 #include "tools.h"
 #include "tree.h"
@@ -44,7 +43,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     double xyzminmax[6];
     
     /* batch variables */
-    struct batch *batches = NULL;
+    struct tnode_array *batches = NULL;
     double batch_lim[6];
     
     /* date and time */

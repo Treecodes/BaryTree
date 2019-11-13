@@ -10,7 +10,6 @@ SET(SRCS_TREEDRIVER
     tree-batch.c
     xmalloc.c
     tnode.h
-    batch.h
     globvars.h
     treedriver.h
     array.h

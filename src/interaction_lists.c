@@ -10,7 +10,6 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
-#include "batch.h"
 #include "particles.h"
 #include "tools.h"
 
@@ -22,7 +21,7 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
                 const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
 
                 int *batch_num_direct, int *batch_num_approx,
-                double batch_x_mid, double batch_y_mid, double batch_z_mid, double batch_radius,
+                double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
                 int *batch_tree_list, int *batch_direct_list);
 
@@ -32,7 +31,7 @@ void pc_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
                 const int *tree_num_children, const int *tree_children,     
 
                 int *batch_num_direct, int *batch_num_approx,
-                double batch_x_mid, double batch_y_mid, double batch_z_mid, double batch_radius,
+                double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
                 int **batch_tree_list, int **batch_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
@@ -40,7 +39,7 @@ void pc_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
 
 
 
-void Interaction_MakeList(const struct tnode_array *tree_array, struct batch *batches,
+void Interaction_MakeList(const struct tnode_array *tree_array, struct tnode_array *batches,
                           int *tree_inter_list, int *direct_inter_list, int approx_offset,
                           int direct_offset)
 {
@@ -55,9 +54,9 @@ void Interaction_MakeList(const struct tnode_array *tree_array, struct batch *ba
 
     batch_numnodes = batches->numnodes;
     batch_numpar = batches->numpar;
-    batch_x_mid = tree_array->x_mid;
-    batch_y_mid = tree_array->y_mid;
-    batch_z_mid = tree_array->z_mid;
+    batch_x_mid = batches->x_mid;
+    batch_y_mid = batches->y_mid;
+    batch_z_mid = batches->z_mid;
     batch_radius = batches->radius;
 
     batch_num_direct = batches->numDirect;
@@ -82,7 +81,7 @@ void Interaction_MakeList(const struct tnode_array *tree_array, struct batch *ba
                 tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
 
                 &(batch_num_direct[i]), &(batch_num_approx[i]),
-                batch_x_mid[i], batch_y_mid[i], batch_z_mid[i], batch_radius[i],
+                batch_radius[i], batch_x_mid[i], batch_y_mid[i], batch_z_mid[i],
 
                 &(tree_inter_list[i*approx_offset]), &(direct_inter_list[i*direct_offset]));
 
@@ -92,7 +91,7 @@ void Interaction_MakeList(const struct tnode_array *tree_array, struct batch *ba
 
 
 
-void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct batch *batches,
+void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
                                 int *approx_list_unpacked,int *approx_list_packed, int *direct_list,
                                 int *num_batch_approx, int *num_batch_direct)
 {
@@ -115,9 +114,9 @@ void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct bat
 
     batch_numnodes = batches->numnodes;
     batch_numpar = batches->numpar;
-    batch_x_mid = tree_array->x_mid;
-    batch_y_mid = tree_array->y_mid;
-    batch_z_mid = tree_array->z_mid;
+    batch_x_mid = batches->x_mid;
+    batch_y_mid = batches->y_mid;
+    batch_z_mid = batches->z_mid;
     batch_radius = batches->radius;
 
     batch_num_direct = batches->numDirect;
@@ -178,7 +177,7 @@ void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct bat
                 tree_num_children, tree_children,     
 
                 &(batch_num_direct[i]), &(batch_num_approx[i]),
-                batch_x_mid[i], batch_y_mid[i], batch_z_mid[i], batch_radius[i],
+                batch_radius[i], batch_x_mid[i], batch_y_mid[i], batch_z_mid[i],
 
                 &(temp_tree_inter_list[i]), &(temp_direct_inter_list[i]),
                 &(sizeof_tree_inter_list[i]), &(sizeof_direct_inter_list[i]),
@@ -239,7 +238,7 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
                 const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
 
                 int *batch_num_direct, int *batch_num_approx,
-                double batch_x_mid, double batch_y_mid, double batch_z_mid, double batch_radius,
+                double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
                 int *batch_tree_list, int *batch_direct_list)
 {
@@ -307,7 +306,7 @@ void pc_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
                 const int *tree_num_children, const int *tree_children,     
 
                 int *batch_num_direct, int *batch_num_approx,
-                double batch_x_mid, double batch_y_mid, double batch_z_mid, double batch_radius, 
+                double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
                 int **batch_tree_list, int **batch_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
@@ -358,7 +357,7 @@ void pc_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
                            tree_num_children, tree_children,     
 
                            batch_num_direct, batch_num_approx,
-                           batch_x_mid, batch_y_mid, batch_z_mid, batch_radius,
+                           batch_radius, batch_x_mid, batch_y_mid, batch_z_mid,
 
                            batch_tree_list, batch_direct_list,
                            sizeof_tree_list, sizeof_direct_list,

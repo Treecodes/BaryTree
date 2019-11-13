@@ -9,7 +9,6 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
-#include "batch.h"
 #include "particles.h"
 #include "tools.h"
 
@@ -30,7 +29,7 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, d
 
 
 
-void setup_batch(struct batch **batches, double *batch_lim,
+void setup_batch(struct tnode_array **batches, double *batch_lim,
                  struct particles *particles, int batch_size)
 {
     /* local variables */
@@ -45,7 +44,7 @@ void setup_batch(struct batch **batches, double *batch_lim,
     batch_lim[4] = minval(particles->z, particles->num);
     batch_lim[5] = maxval(particles->z, particles->num);
     
-    (*batches) = malloc(sizeof(struct batch));
+    (*batches) = malloc(sizeof(struct tnode_array));
     (*batches)->numnodes = 0;
     
     max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
@@ -76,7 +75,7 @@ void setup_batch(struct batch **batches, double *batch_lim,
 
 
 
-void create_target_batch(struct batch *batches, struct particles *particles,
+void create_target_batch(struct tnode_array *batches, struct particles *particles,
                          int ibeg, int iend, int maxparnode, double *xyzmm)
 {
 	int rank; int numProcs;	int ierr;
@@ -227,7 +226,7 @@ void create_target_batch(struct batch *batches, struct particles *particles,
 
 
 
-void create_source_batch(struct batch *batches, struct particles *particles,
+void create_source_batch(struct tnode_array *batches, struct particles *particles,
                          int ibeg, int iend, int maxparnode, double *xyzmm)
 {
     /*local variables*/

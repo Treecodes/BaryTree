@@ -10,7 +10,6 @@
 #include "array.h"
 #include "globvars.h"
 #include "tnode.h"
-#include "batch.h"
 #include "particles.h"
 #include "tools.h"
 
