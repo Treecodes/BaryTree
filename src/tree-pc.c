@@ -57,13 +57,23 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
         int *iends = tree_array->iend;
         int *clusterInd = tree_array->cluster_ind;
 
+        int numberOfClusterCharges = 0;
+        int numberOfClusterWeights = 0;
+        if (strcmp(approximationName, "lagrange") == 0) {
+            numberOfClusterCharges=totalNumberOfInterpolationPoints;
+            numberOfClusterWeights=totalNumberOfInterpolationPoints;
+        } else if (strcmp(approximationName, "hermite") == 0) {
+            numberOfClusterCharges = 8 * totalNumberOfInterpolationPoints;
+            numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
+        }
+
 #ifdef OPENACC_ENABLED
         #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \
                             source_charge[0:numSources], source_weight[0:numSources], \
                             target_x[0:numTargets], target_y[0:numTargets], target_z[0:numTargets], target_charge[0:numTargets], \
                             cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], \
                             cluster_z[0:totalNumberOfInterpolationPoints], \
-                            cluster_charge[0:totalNumberOfInterpolationPoints], cluster_weight[0:totalNumberOfInterpolationPoints], \
+                            cluster_charge[0:numberOfClusterCharges], cluster_weight[0:numberOfClusterWeights], \
                             tree_inter_list[0:batch_approx_offset*batches->num], \
                             direct_inter_list[0:batch_direct_offset*batches->num], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \
