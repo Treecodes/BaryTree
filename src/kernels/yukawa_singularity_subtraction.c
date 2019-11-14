@@ -119,6 +119,7 @@ void yukawaSingularitySubtractionApproximationHermite(int number_of_targets_in_b
     double kernel_parameter3 = kernel_parameter * kernel_parameter2;
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
+/*
     double *cluster_charge_delta_x   = &cluster_charge[1*total_number_interpolation_points];
     double *cluster_charge_delta_y   = &cluster_charge[2*total_number_interpolation_points];
     double *cluster_charge_delta_z   = &cluster_charge[3*total_number_interpolation_points];
@@ -134,12 +135,36 @@ void yukawaSingularitySubtractionApproximationHermite(int number_of_targets_in_b
     double *cluster_weight_delta_yz  = &cluster_weight[5*total_number_interpolation_points];
     double *cluster_weight_delta_xz  = &cluster_weight[6*total_number_interpolation_points];
     double *cluster_weight_delta_xyz = &cluster_weight[7*total_number_interpolation_points];
+*/
+
+    double *cluster_charge_          = &cluster_charge[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_x   = &cluster_charge[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_y   = &cluster_charge[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_z   = &cluster_charge[8*starting_index_of_cluster + 3*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xy  = &cluster_charge[8*starting_index_of_cluster + 4*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_yz  = &cluster_charge[8*starting_index_of_cluster + 5*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xz  = &cluster_charge[8*starting_index_of_cluster + 6*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xyz = &cluster_charge[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
+
+    double *cluster_weight_          = &cluster_weight[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
+    double *cluster_weight_delta_x   = &cluster_weight[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
+    double *cluster_weight_delta_y   = &cluster_weight[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];
+    double *cluster_weight_delta_z   = &cluster_weight[8*starting_index_of_cluster + 3*number_of_interpolation_points_in_cluster];
+    double *cluster_weight_delta_xy  = &cluster_weight[8*starting_index_of_cluster + 4*number_of_interpolation_points_in_cluster];
+    double *cluster_weight_delta_yz  = &cluster_weight[8*starting_index_of_cluster + 5*number_of_interpolation_points_in_cluster];
+    double *cluster_weight_delta_xz  = &cluster_weight[8*starting_index_of_cluster + 6*number_of_interpolation_points_in_cluster];
+    double *cluster_weight_delta_xyz = &cluster_weight[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(target_x,target_y,target_z,target_charge,cluster_x,cluster_y,cluster_z,cluster_charge,cluster_weight,potential, \
-            cluster_charge_delta_x,cluster_charge_delta_y,cluster_charge_delta_z,cluster_charge_delta_xy,cluster_charge_delta_yz,cluster_charge_delta_xz,cluster_charge_delta_xyz, \
-            cluster_weight_delta_x,cluster_weight_delta_y,cluster_weight_delta_z,cluster_weight_delta_xy,cluster_weight_delta_yz,cluster_weight_delta_xz,cluster_weight_delta_xyz)
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
+                        cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight, potential, \
+                        cluster_charge_, cluster_charge_delta_x, cluster_charge_delta_y, cluster_charge_delta_z, \
+                        cluster_charge_delta_xy, cluster_charge_delta_yz, cluster_charge_delta_xz, \
+                        cluster_charge_delta_xyz, \
+                        cluster_weight_, cluster_weight_delta_x, cluster_weight_delta_y, cluster_weight_delta_z, \
+                        cluster_weight_delta_xy, cluster_weight_delta_yz, cluster_weight_delta_xz, \
+                        cluster_weight_delta_xyz)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -178,14 +203,14 @@ void yukawaSingularitySubtractionApproximationHermite(int number_of_targets_in_b
             double k2r2 = kr * kr;
             double k3r3 = k2r2 * kr;
 
-            double charge_diff    = cluster_charge[jj]           - cluster_weight[jj]*tq;
-            double delta_x_diff   = cluster_charge_delta_x[jj]   - cluster_weight_delta_x[jj]*tq;
-            double delta_y_diff   = cluster_charge_delta_y[jj]   - cluster_weight_delta_y[jj]*tq;
-            double delta_z_diff   = cluster_charge_delta_z[jj]   - cluster_weight_delta_z[jj]*tq;
-            double delta_xy_diff  = cluster_charge_delta_xy[jj]  - cluster_weight_delta_xy[jj]*tq;
-            double delta_yz_diff  = cluster_charge_delta_yz[jj]  - cluster_weight_delta_yz[jj]*tq;
-            double delta_xz_diff  = cluster_charge_delta_xz[jj]  - cluster_weight_delta_xz[jj]*tq;
-            double delta_xyz_diff = cluster_charge_delta_xyz[jj] - cluster_weight_delta_xyz[jj]*tq;
+            double charge_diff    = cluster_charge_[j]          - cluster_weight_[j]          * tq;
+            double delta_x_diff   = cluster_charge_delta_x[j]   - cluster_weight_delta_x[j]   * tq;
+            double delta_y_diff   = cluster_charge_delta_y[j]   - cluster_weight_delta_y[j]   * tq;
+            double delta_z_diff   = cluster_charge_delta_z[j]   - cluster_weight_delta_z[j]   * tq;
+            double delta_xy_diff  = cluster_charge_delta_xy[j]  - cluster_weight_delta_xy[j]  * tq;
+            double delta_yz_diff  = cluster_charge_delta_yz[j]  - cluster_weight_delta_yz[j]  * tq;
+            double delta_xz_diff  = cluster_charge_delta_xz[j]  - cluster_weight_delta_xz[j]  * tq;
+            double delta_xyz_diff = cluster_charge_delta_xyz[j] - cluster_weight_delta_xyz[j] * tq;
 
             if (r > DBL_MIN) {
 

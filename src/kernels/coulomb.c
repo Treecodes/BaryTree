@@ -120,6 +120,7 @@ void coulombApproximationHermite(int number_of_targets_in_batch, int number_of_i
 #endif
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
+/*
     double *cluster_delta_x   = &cluster_charge[1*total_number_interpolation_points];
     double *cluster_delta_y   = &cluster_charge[2*total_number_interpolation_points];
     double *cluster_delta_z   = &cluster_charge[3*total_number_interpolation_points];
@@ -127,6 +128,16 @@ void coulombApproximationHermite(int number_of_targets_in_batch, int number_of_i
     double *cluster_delta_yz  = &cluster_charge[5*total_number_interpolation_points];
     double *cluster_delta_xz  = &cluster_charge[6*total_number_interpolation_points];
     double *cluster_delta_xyz = &cluster_charge[7*total_number_interpolation_points];
+*/
+    double *cluster_charge_          = &cluster_charge[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_x   = &cluster_charge[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_y   = &cluster_charge[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_z   = &cluster_charge[8*starting_index_of_cluster + 3*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xy  = &cluster_charge[8*starting_index_of_cluster + 4*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_yz  = &cluster_charge[8*starting_index_of_cluster + 5*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xz  = &cluster_charge[8*starting_index_of_cluster + 6*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xyz = &cluster_charge[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
+
 
 
 //#ifdef OPENACC_ENABLED
@@ -166,12 +177,12 @@ void coulombApproximationHermite(int number_of_targets_in_batch, int number_of_i
 
             if (r > DBL_MIN) {
 
-                temporary_potential +=  rinv  * (cluster_charge[jj])
-                                 +      r3inv * (cluster_delta_x[jj]*dx + cluster_delta_y[jj]*dy
-                                               + cluster_delta_z[jj]*dz)
-                                 +  3 * r5inv * (cluster_delta_xy[jj]*dx*dy + cluster_delta_yz[jj]*dy*dz
-                                               + cluster_delta_xz[jj]*dx*dz)
-                                 + 15 * r7inv *  cluster_delta_xyz[jj]*dx*dy*dz;
+                temporary_potential +=  rinv  * (cluster_charge_[j])
+                                 +      r3inv * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
+                                               + cluster_charge_delta_z[j]*dz)
+                                 +  3 * r5inv * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
+                                               + cluster_charge_delta_xz[j]*dx*dz)
+                                 + 15 * r7inv *  cluster_charge_delta_xyz[j]*dx*dy*dz;
 
             }
         } // end loop over interpolation points
