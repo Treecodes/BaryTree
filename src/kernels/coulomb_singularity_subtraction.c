@@ -13,7 +13,7 @@ void coulombSingularitySubtractionDirect(int number_of_targets_in_batch, int num
     double kernel_parameter2 = kernel_parameter * kernel_parameter;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge \
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
                         source_x, source_y, source_z, source_charge, source_weight, potential)
     {
 #endif
