@@ -7,10 +7,9 @@
 
 #include "array.h"
 #include "tools.h"
-
-#include "kernels/kernels.h"
 #include "direct.h"
 
+#include "kernels/kernels_direct.h"
 
 
 void directSummation(double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
@@ -105,7 +104,7 @@ void directSummation(double *source_x, double *source_y, double *source_z, doubl
             #pragma acc loop independent
 #endif
             for (int j = 0; j < number_of_sources; j++)
-                temporary_potential += coulombKernel_SS_direct(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
+                temporary_potential += coulombKernel_SS(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
 
             potential[i] += temporary_potential;
         }
@@ -134,7 +133,7 @@ void directSummation(double *source_x, double *source_y, double *source_z, doubl
             #pragma acc loop independent
 #endif
             for (int j = 0; j < number_of_sources; j++)
-                temporary_potential += yukawaKernel_SS_direct(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
+                temporary_potential += yukawaKernel_SS(target_x[i], target_y[i], target_z[i], target_charge[i], source_x[j], source_y[j], source_z[j], source_charge[j], source_weight[j], kernel_parameter);
 
             potential[i] += temporary_potential;
         }

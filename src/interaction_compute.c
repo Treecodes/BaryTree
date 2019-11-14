@@ -15,22 +15,21 @@
 #include "struct_nodes.h"
 #include "struct_particles.h"
 
-#include "kernels/kernels.h"
 #include "kernels/coulomb.h"
 #include "kernels/yukawa.h"
-#include "kernels/coulombSingularitySubtraction.h"
-#include "kernels/yukawaSingularitySubtraction.h"
+#include "kernels/coulomb_singularity_subtraction.h"
+#include "kernels/yukawa_singularity_subtraction.h"
 
 #include "interaction_compute.h"
 
 
-
-
 void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_array *batches,
                                   int *tree_inter_list, int *direct_inter_list,
-                                  double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
+                                  double *source_x, double *source_y, double *source_z,
+                                  double *source_charge, double *source_weight,
                                   double *target_x, double *target_y, double *target_z, double *target_charge,
-                                  double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
+                                  double *cluster_x, double *cluster_y, double *cluster_z,
+                                  double *cluster_charge, double *cluster_weight,
                                   double *totalPotential, double *pointwisePotential, int interpolationOrder,
                                   int numSources, int numTargets, int totalNumberOfInterpolationPoints,
                                   int batch_approx_offset, int batch_direct_offset,
@@ -69,7 +68,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \
                         source_charge[0:numSources], source_weight[0:numSources], \
-                        target_x[0:numTargets], target_y[0:numTargets], target_z[0:numTargets], target_charge[0:numTargets], \
+                        target_x[0:numTargets], target_y[0:numTargets], target_z[0:numTargets], \
+                        target_charge[0:numTargets], \
                         cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], \
                         cluster_z[0:totalNumberOfInterpolationPoints], \
                         cluster_charge[0:numberOfClusterCharges], cluster_weight[0:numberOfClusterWeights], \
@@ -99,7 +99,6 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
         for (int j = 0; j < numberOfClusterApproximations; j++) {
             int node_index = tree_inter_list[i * batch_approx_offset + j];
             int clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
-
             int streamID = j%3;
 
 
@@ -112,37 +111,44 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
             
-                        coulombApproximationLagrange(   numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                        target_x, target_y, target_z,
-                                                        cluster_x, cluster_y, cluster_z, cluster_charge,
-                                                        potentialDueToApprox, streamID);
+                        coulombApproximationLagrange(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart, clusterStart,
+                                target_x, target_y, target_z,
+                                cluster_x, cluster_y, cluster_z, cluster_charge,
+                                potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                        coulombSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                        target_x, target_y, target_z, target_charge,
-                                                        cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                                        kernel_parameter, potentialDueToApprox, streamID);
+                        coulombSingularitySubtractionApproximationLagrange(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart, clusterStart,
+                                target_x, target_y, target_z, target_charge,
+                                cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
+                                kernel_parameter, potentialDueToApprox, streamID);
+
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
                         exit(1);
                     }
+
                 } else if (strcmp(approximationName, "hermite") == 0) {
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
-                        coulombApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
-                                                    clusterStart, totalNumberOfInterpolationPoints,
-                                                    target_x, target_y, target_z,
-                                                    cluster_x, cluster_y, cluster_z, cluster_charge,
-                                                    potentialDueToApprox, streamID);;
+
+                        coulombApproximationHermite(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart,
+                                clusterStart, totalNumberOfInterpolationPoints,
+                                target_x, target_y, target_z,
+                                cluster_x, cluster_y, cluster_z, cluster_charge,
+                                potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                        coulombSingularitySubtractionApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
-                                                    clusterStart, totalNumberOfInterpolationPoints,
-                                                    target_x, target_y, target_z, target_charge,
-                                                    cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                                    kernel_parameter, potentialDueToApprox, streamID);
+                        coulombSingularitySubtractionApproximationHermite(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart,
+                                clusterStart, totalNumberOfInterpolationPoints,
+                                target_x, target_y, target_z, target_charge,
+                                cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
+                                kernel_parameter, potentialDueToApprox, streamID);
 
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -165,16 +171,20 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        yukawaApproximationLagrange(numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                    target_x, target_y, target_z,
-                                                    cluster_x, cluster_y, cluster_z, cluster_charge,
-                                                    kernel_parameter, potentialDueToApprox, streamID);
+                        yukawaApproximationLagrange(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart, clusterStart,
+                                target_x, target_y, target_z,
+                                cluster_x, cluster_y, cluster_z, cluster_charge,
+                                kernel_parameter, potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
-                        yukawaSingularitySubtractionApproximationLagrange(  numberOfTargets, numberOfInterpolationPoints, batchStart, clusterStart,
-                                                                        target_x, target_y, target_z, target_charge,
-                                                                        cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                                                        kernel_parameter, potentialDueToApprox, streamID);
+                        
+                        yukawaSingularitySubtractionApproximationLagrange(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart, clusterStart,
+                                target_x, target_y, target_z, target_charge,
+                                cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
+                                kernel_parameter, potentialDueToApprox, streamID);
+
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
                         exit(1);
@@ -184,31 +194,33 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        yukawaApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
-                                                    clusterStart, totalNumberOfInterpolationPoints,
-                                                    target_x, target_y, target_z,
-                                                    cluster_x, cluster_y, cluster_z, cluster_charge,
-                                                    kernel_parameter, potentialDueToApprox, streamID);
+                        yukawaApproximationHermite(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart,
+                                clusterStart, totalNumberOfInterpolationPoints,
+                                target_x, target_y, target_z,
+                                cluster_x, cluster_y, cluster_z, cluster_charge,
+                                kernel_parameter, potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
-                        yukawaSingularitySubtractionApproximationHermite(numberOfTargets, numberOfInterpolationPoints, batchStart,
-                                                    clusterStart, totalNumberOfInterpolationPoints,
-                                                    target_x, target_y, target_z, target_charge,
-                                                    cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                                    kernel_parameter, potentialDueToApprox, streamID);
+
+                        yukawaSingularitySubtractionApproximationHermite(numberOfTargets,
+                                numberOfInterpolationPoints, batchStart,
+                                clusterStart, totalNumberOfInterpolationPoints,
+                                target_x, target_y, target_z, target_charge,
+                                cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
+                                kernel_parameter, potentialDueToApprox, streamID);
 
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
                         exit(1);
                     }
 
-
-                }else{
+                } else {
                     printf("Invalid approximationName.\n");
                     exit(1);
                 }
 
-            } else{
+            } else {
                 printf("Invalid kernelName. Exiting.\n");
                 exit(1);
             }
@@ -224,7 +236,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
         for (int j = 0; j < numberOfDirectSums; j++) {
 
             int node_index = direct_inter_list[i * batch_direct_offset + j];
-            int source_start = ibegs[node_index]-1;
+            int source_start = ibegs[node_index] - 1;
             int source_end = iends[node_index];
             int number_of_sources_in_cluster = source_end-source_start;
             int streamID = j%3;
@@ -237,17 +249,20 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
 
                 if (strcmp(singularityHandling, "skipping") == 0) {
 
-                    coulombDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                    target_x, target_y, target_z,
-                                    source_x, source_y, source_z, source_charge, source_weight,
-                                    potentialDueToDirect, streamID);
+                    coulombDirect(numberOfTargets, number_of_sources_in_cluster,
+                            batchStart, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_charge, source_weight,
+                            potentialDueToDirect, streamID);
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                    coulombSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                                    target_x, target_y, target_z, target_charge,
-                                                    source_x, source_y, source_z, source_charge, source_weight,
-                                                    kernel_parameter, potentialDueToDirect, streamID);
+                    coulombSingularitySubtractionDirect(numberOfTargets, number_of_sources_in_cluster,
+                            batchStart, source_start,
+                            target_x, target_y, target_z, target_charge,
+                            source_x, source_y, source_z, source_charge, source_weight,
+                            kernel_parameter, potentialDueToDirect, streamID);
+
                 }else {
                     printf("Invalid choice of singularityHandling. Exiting. \n");
                     exit(1);
@@ -261,23 +276,26 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
 
                 if (strcmp(singularityHandling, "skipping") == 0) {
 
-                    yukawaDirect(  numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                    target_x, target_y, target_z,
-                                    source_x, source_y, source_z, source_charge, source_weight,
-                                    kernel_parameter, potentialDueToDirect, streamID);
+                    yukawaDirect(numberOfTargets, number_of_sources_in_cluster,
+                            batchStart, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_charge, source_weight,
+                            kernel_parameter, potentialDueToDirect, streamID);
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
-                    yukawaSingularitySubtractionDirect( numberOfTargets, number_of_sources_in_cluster, batchStart, source_start,
-                                                    target_x, target_y, target_z, target_charge,
-                                                    source_x, source_y, source_z, source_charge, source_weight,
-                                                    kernel_parameter, potentialDueToDirect, streamID);
 
-                }else {
+                    yukawaSingularitySubtractionDirect(numberOfTargets, number_of_sources_in_cluster,
+                            batchStart, source_start,
+                            target_x, target_y, target_z, target_charge,
+                            source_x, source_y, source_z, source_charge, source_weight,
+                            kernel_parameter, potentialDueToDirect, streamID);
+
+                } else {
                     printf("Invalid choice of singularityHandling. Exiting. \n");
                     exit(1);
                 }
 
-            } else{
+            } else {
                 printf("Invalid kernelName. Exiting.\n");
                 exit(1);
             }

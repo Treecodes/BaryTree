@@ -19,30 +19,15 @@ double yukawaKernel(double targetX, double targetY, double targetZ, double targe
 #ifdef OPENACC_ENABLED
 #pragma acc routine seq
 #endif
-double coulombKernel_SS_direct(double targetX, double targetY, double targetZ, double targetQ,
+double coulombKernel_SS(double targetX, double targetY, double targetZ, double targetQ,
                     double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
                     double kappa);
 
 #ifdef OPENACC_ENABLED
 #pragma acc routine seq
 #endif
-double coulombKernel_SS_approx(double targetX, double targetY, double targetZ, double targetQ,
+double yukawaKernel_SS(double targetX, double targetY, double targetZ, double targetQ,
                     double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
                     double kappa);
-
-#ifdef OPENACC_ENABLED
-#pragma acc routine seq
-#endif
-double yukawaKernel_SS_direct(double targetX, double targetY, double targetZ, double targetQ,
-                    double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-                    double kappa);
-
-#ifdef OPENACC_ENABLED
-#pragma acc routine seq
-#endif
-double yukawaKernel_SS_approx(double targetX, double targetY, double targetZ, double targetQ,
-                    double sourceX, double sourceY, double sourceZ, double sourceQ, double sourceW,
-                    double kappa);
-
 
 #endif /* H_KERNELS_H */

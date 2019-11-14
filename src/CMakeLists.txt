@@ -28,19 +28,23 @@ SET(SRCS_TREEDRIVER
     kernels/coulomb.h
     kernels/yukawa.c
     kernels/yukawa.h
-    kernels/yukawaSingularitySubtraction.c
-    kernels/yukawaSingularitySubtraction.h
-    kernels/coulombSingularitySubtraction.c
-    kernels/coulombSingularitySubtraction.h)
+    kernels/yukawa_singularity_subtraction.c
+    kernels/yukawa_singularity_subtraction.h
+    kernels/coulomb_singularity_subtraction.c
+    kernels/coulomb_singularity_subtraction.h)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED
-    main_direct array.h
-    direct.c direct.h
-    tools.c tools.h 
-    xmalloc.c xmalloc.h
-    kernels/kernels.h
-    kernels/kernels.c)
+    main_direct.c
+    array.h
+    tools.c
+    tools.h 
+    xmalloc.c
+    xmalloc.h
+    direct.c
+    direct.h
+    kernels/kernels_direct.h
+    kernels/kernels_direct.c)
 
 
 if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
