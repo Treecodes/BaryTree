@@ -8,6 +8,6 @@
 void Clusters_PC_Setup(struct clusters **clusters, struct particles *sources, int order,
                        struct tnode_array *tree_array, char *approxName, char *singularityHandling);
 
-void Clusters_Alloc(struct clusters *clusters, int length);
+void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, char *singularityHandling);
 
 #endif /* H_CLUSTERFUNCTIONS_H */

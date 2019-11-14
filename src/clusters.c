@@ -57,7 +57,6 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
     int totalNumberInterpolationCharges = totalNumberInterpolationPoints;
     int totalNumberInterpolationWeights = totalNumberInterpolationPoints; 
 
-    clusters->num = totalNumberInterpolationPoints;
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
     make_vector(clusters->z, totalNumberInterpolationPoints);
@@ -105,6 +104,9 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
         exit(1);
     }
 
+    clusters->num = totalNumberInterpolationPoints;
+    clusters->num_charges = totalNumberInterpolationCharges;
+    clusters->num_weights = totalNumberInterpolationWeights;
 
     double *xS = sources->x;
     double *yS = sources->y;
@@ -165,14 +167,23 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
 
 
-void Clusters_Alloc(struct clusters *clusters, int length) 
+void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, char *singularityHandling) 
 {
-    make_vector(clusters->x, length);
-    make_vector(clusters->y, length);
-    make_vector(clusters->z, length);
-    make_vector(clusters->q, length);
-    make_vector(clusters->w, length);
     clusters->num = length;
+    clusters->num_charges = length;
+    clusters->num_weights = length;
+
+    if (strcmp(approxName, "hermite") == 0)
+        clusters->num_charges *= 8;
+
+    if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
+        clusters->num_weights *= 8;
+
+    make_vector(clusters->x, clusters->num);
+    make_vector(clusters->y, clusters->num);
+    make_vector(clusters->z, clusters->num);
+    make_vector(clusters->q, clusters->num_charges);
+    make_vector(clusters->w, clusters->num_weights);
 
     return;
 }   /* END of function allocate_cluster */
@@ -842,17 +853,6 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
 
         }
 
-        /*
-        clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += temp0;
-        clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += temp1;
-        clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += temp2;
-        clusterQ[3 * totalNumberInterpolationPoints + interpolationPointIndex] += temp3;
-        clusterQ[4 * totalNumberInterpolationPoints + interpolationPointIndex] += temp4;
-        clusterQ[5 * totalNumberInterpolationPoints + interpolationPointIndex] += temp5;
-        clusterQ[6 * totalNumberInterpolationPoints + interpolationPointIndex] += temp6;
-        clusterQ[7 * totalNumberInterpolationPoints + interpolationPointIndex] += temp7;
-        */
-
         clusterQ[startingIndexInClusterChargesArray + 0 * interpolationPointsPerCluster + j] += temp0;
         clusterQ[startingIndexInClusterChargesArray + 1 * interpolationPointsPerCluster + j] += temp1;
         clusterQ[startingIndexInClusterChargesArray + 2 * interpolationPointsPerCluster + j] += temp2;
@@ -1148,26 +1148,6 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
              tempw7 += numerator7 * modifiedF2[i];
 
          }
-
-        /*
-         clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq0;
-         clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq1;
-         clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq2;
-         clusterQ[3 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq3;
-         clusterQ[4 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq4;
-         clusterQ[5 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq5;
-         clusterQ[6 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq6;
-         clusterQ[7 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq7;
-
-         clusterW[0 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw0;
-         clusterW[1 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw1;
-         clusterW[2 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw2;
-         clusterW[3 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw3;
-         clusterW[4 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw4;
-         clusterW[5 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw5;
-         clusterW[6 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw6;
-         clusterW[7 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw7;
-*/
 
          clusterQ[startingIndexInClusterChargesArray + 0 * interpolationPointsPerCluster + j] += tempq0;
          clusterQ[startingIndexInClusterChargesArray + 1 * interpolationPointsPerCluster + j] += tempq1;

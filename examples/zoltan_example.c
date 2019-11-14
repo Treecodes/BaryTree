@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 
 //    printf("Initializing Zoltan.\n");
     if (Zoltan_Initialize(argc, argv, &ver) != ZOLTAN_OK) {
-        printf("Zoltan failed to initialize. Exiting.\n");
+        if (rank == 0) printf("Zoltan failed to initialize. Exiting.\n");
         MPI_Finalize();
         exit(0);
     }
@@ -269,7 +269,6 @@ int main(int argc, char **argv)
     // Set up kernel
 //    printf("Kernel Name: %s\n",kernelName);
     if       (strcmp(singularityHandling,"skipping")==0){
-        printf("Zeroing out initial potential.\n");
         for (int i=0; i<targets->num; i++){
             potential[i]=0.0;
             potential_direct[i]=0.0;
