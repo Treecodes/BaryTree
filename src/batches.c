@@ -30,12 +30,9 @@ static void pc_partition_batch(double *x, double *y, double *z, double *q, doubl
 
 
 
-void Batches_Setup(struct tnode_array **batches, double *batch_lim,
+void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
                    struct particles *particles, int batch_size)
 {
-    /* local variables */
-    int i;
-    int max_batch_num;
     
     /* find bounds of Cartesian box enclosing the particles */
     batch_lim[0] = minval(particles->x, particles->num);
@@ -45,21 +42,22 @@ void Batches_Setup(struct tnode_array **batches, double *batch_lim,
     batch_lim[4] = minval(particles->z, particles->num);
     batch_lim[5] = maxval(particles->z, particles->num);
     
-    (*batches) = malloc(sizeof(struct tnode_array));
-    (*batches)->numnodes = 0;
-    
-    max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
+    *new_batches = malloc(sizeof(struct tnode_array));
+    struct tnode_array *batches = *new_batches;
 
-    make_vector((*batches)->ibeg, max_batch_num);
-    make_vector((*batches)->iend, max_batch_num);
-    make_vector((*batches)->numpar, max_batch_num);
-    make_vector((*batches)->numApprox, max_batch_num);
-    make_vector((*batches)->numDirect, max_batch_num);
+    batches->numnodes = 0;
+    int max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
 
-    make_vector((*batches)->x_mid, max_batch_num);
-    make_vector((*batches)->y_mid, max_batch_num);
-    make_vector((*batches)->z_mid, max_batch_num);
-    make_vector((*batches)->radius, max_batch_num);
+    make_vector(batches->ibeg, max_batch_num);
+    make_vector(batches->iend, max_batch_num);
+    make_vector(batches->numpar, max_batch_num);
+    make_vector(batches->numApprox, max_batch_num);
+    make_vector(batches->numDirect, max_batch_num);
+
+    make_vector(batches->x_mid, max_batch_num);
+    make_vector(batches->y_mid, max_batch_num);
+    make_vector(batches->z_mid, max_batch_num);
+    make_vector(batches->radius, max_batch_num);
 
     return;
     

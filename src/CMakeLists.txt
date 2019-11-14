@@ -1,40 +1,41 @@
 SET(SRCS_TREEDRIVER
     tools.c
+    tools.h
+    xmalloc.c
+    xmalloc.h
+    array.h
+    globvars.h
     treedriver.c
-    partition.c
-    partition.h
-    tree.h
+    treedriver.h
     tree.c
+    tree.h
     batches.c
     batches.h
-    xmalloc.c
-    struct_nodes.h
-    globvars.h
-    treedriver.h
-    array.h
-    structAllocations.c
-    structAllocations.h
+    clusters.c
+    clusters.h
+    particles.c
+    particles.h
     interaction_lists.c
     interaction_lists.h
     interaction_compute.c
     interaction_compute.h
-    clusters.c
-    clusters.h
-    xmalloc.h
-    tools.h
+    partition.c
+    partition.h
     struct_particles.h
-    kernels/coulomb.h
+    struct_clusters.h
+    struct_nodes.h
     kernels/coulomb.c
-    kernels/yukawa.h
+    kernels/coulomb.h
     kernels/yukawa.c
-    kernels/yukawaSingularitySubtraction.h
+    kernels/yukawa.h
     kernels/yukawaSingularitySubtraction.c
-    kernels/coulombSingularitySubtraction.h
-    kernels/coulombSingularitySubtraction.c)
+    kernels/yukawaSingularitySubtraction.h
+    kernels/coulombSingularitySubtraction.c
+    kernels/coulombSingularitySubtraction.h)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED
-    main-direct-distributed.c array.h
+    main_direct array.h
     direct.c direct.h
     tools.c tools.h 
     xmalloc.c xmalloc.h
@@ -46,7 +47,7 @@ if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT tree-distributed-cpu)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_sources(${TRGT}          PRIVATE 
-                                        main-distributed.c)
+                                        main.c)
     target_compile_features(${TRGT} PRIVATE
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE
@@ -62,7 +63,7 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
-                                      main-distributed.c)
+                                      main.c)
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
                                       MPI::MPI_C

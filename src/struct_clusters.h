@@ -1,41 +1,18 @@
-#ifndef H_TNODE_H
-#define H_TNODE_H
+#ifndef H_CLUSTERS_H
+#define H_CLUSTERS_H
 
-/* declaration of struct with tag tnode */
-struct clusters
+/* declaration of struct with tag particles */
+struct clusters 
 {
-    int numnodes;
-    
-    int *ibeg;
-    int *iend;
-    int *numpar;
-    
-    int *cluster_ind;
-    int *level;
-    
-    double *radius;
+        int num;
+        int num_weights;
+        int num_charges;
 
-    double *x_mid;
-    double *y_mid;
-    double *z_mid;
-
-    double *x_min;
-    double *y_min;
-    double *z_min;
-
-    double *x_max;
-    double *y_max;
-    double *z_max;
-
-    int *num_children;
-    int *children;
-
-
-
-    int *numApprox;
-    int *numDirect;
-    int *reorder;
+        double *x;
+        double *y;
+        double *z;
+        double *q;
+        double *w;  // quadrature weights.  Set equal to 1 if interacting with particles, not performing convolution integral.
 };
 
-
-#endif /* H_TNODE_H */
+#endif /* H_CLUSTERS_H */
