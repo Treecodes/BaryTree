@@ -55,7 +55,6 @@ struct tnode_array
 
     int *numApprox;
     int *numDirect;
-    int *reorder;
 };
 
 

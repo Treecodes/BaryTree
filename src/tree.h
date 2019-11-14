@@ -1,71 +1,40 @@
 #ifndef H_TREEFUNCTIONS_H
 #define H_TREEFUNCTIONS_H
 
-#include "tnode.h"
-#include "particles.h"
+#include "struct_nodes.h"
+#include "struct_particles.h"
 
 
 /* declaration of treecode support functions */
 
-
 /* used by cluster-particle and particle-cluster */
-void remove_node(struct tnode *p);
+void Tree_Free(struct tnode *p);
 
-void cleanup(struct tnode *p);
+void Tree_Setup(struct particles *particles1, struct particles *particles2,
+                int order, double theta, double *xyzminmax);
 
-
-/* used by cluster-particle and particle-cluster Coulomb */
-void setup(struct particles *particles, int order, double theta,
-           double *xyzminmax);
-
-
-
-
-/* used by cluster-particle */
-void cp_create_tree_n0(struct tnode **p, struct particles *targets,
-                       int ibeg, int iend, int maxparnode, double *xyzmm,
-                       int level, int *numnodes, int * numleaves);
-
-void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
-                 double *EnP);
-
+int Tree_SetIndex(struct tnode *p, int index);
 
 
 /* used by particle-cluster */
-void pc_create_tree_n0(struct tnode **p, struct particles *sources,
-                       int ibeg, int iend, int maxparnode, double *xyzmm,
-                       int level, int *numnodes, int *numleaves);
-
-int pc_set_tree_index(struct tnode *p, int index);
-
-void pc_create_tree_array(struct tnode *p, struct tnode_array *tree_array);
+void Tree_PC_Create(struct tnode **p, struct particles *sources,
+                    int ibeg, int iend, int maxparnode, double *xyzmm,
+                    int level, int *numnodes, int *numleaves);
 
 
+/* used by cluster-particle */
+void Tree_CP_Create(struct tnode **p, struct particles *targets,
+                    int ibeg, int iend, int maxparnode, double *xyzmm,
+                    int level, int *numnodes, int * numleaves);
 
 
-void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_array *batches,
-								  int *tree_inter_list, int *direct_inter_list,
-								  double *xS, double *yS, double *zS, double *qS, double *wS,
-								  double *xT, double *yT, double *zT, double *qT,
-								  double *xC, double *yC, double *zC, double *qC, double *wC,
-								  double *totalPotential, double *pointwisePotential, int interpolationOrder,
-								  int numSources, int numTargets, int numClusters,
-                                  int offset_approx, int offset_direct,
-								  char *kernelName, double kernel_parameter, char *singularityHandling,
-								  char *approximationName);
+/* used for tree arrays */
+void Tree_CreateArray(struct tnode *p, struct tnode_array *tree_array);
 
+void Tree_AllocArray(struct tnode_array **new_tree_array, int length);
 
+void Tree_ReallocArray(struct tnode_array *tree_array, int newlength);
 
-/* batch functions */
-void setup_batch(struct tnode_array **batches, double *batch_lim,
-                 struct particles *particles, int batch_size);
+void Tree_FreeArray(struct tnode_array *tree_array);
 
-void create_target_batch(struct tnode_array *batches, struct particles *particles,
-                     int ibeg, int iend, int maxparnode, double *xyzmm);
-
-void create_source_batch(struct tnode_array *batches, struct particles *particles,
-                     int ibeg, int iend, int maxparnode, double *xyzmm);
-
-void reorder_targets_and_potential(struct particles *targets, double *tEn,
-                     int *reorder, int numpars);
 #endif /* H_TREEFUNCTIONS_H */

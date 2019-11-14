@@ -1,51 +1,57 @@
 SET(SRCS_TREEDRIVER
     tools.c
-    treedriver.c
-    partition.c
-    partition.h
-    tree.h
-    tree-creation.c
-    tree-cp.c
-    tree-pc.c
-    tree-batch.c
+    tools.h
     xmalloc.c
-    tnode.h
-    globvars.h
-    treedriver.h
+    xmalloc.h
     array.h
-    structAllocations.c
-    structAllocations.h
-    interaction_lists.c
-    interaction_lists.h
+    globvars.h
+    treedriver.c
+    treedriver.h
+    tree.c
+    tree.h
+    batches.c
+    batches.h
     clusters.c
     clusters.h
-    xmalloc.h
-    tools.h
+    particles.c
     particles.h
-    kernels/coulomb.h
+    interaction_lists.c
+    interaction_lists.h
+    interaction_compute.c
+    interaction_compute.h
+    partition.c
+    partition.h
+    struct_particles.h
+    struct_clusters.h
+    struct_nodes.h
     kernels/coulomb.c
-    kernels/yukawa.h
+    kernels/coulomb.h
     kernels/yukawa.c
-    kernels/yukawaSingularitySubtraction.h
-    kernels/yukawaSingularitySubtraction.c
-    kernels/coulombSingularitySubtraction.h
-    kernels/coulombSingularitySubtraction.c)
+    kernels/yukawa.h
+    kernels/yukawa_singularity_subtraction.c
+    kernels/yukawa_singularity_subtraction.h
+    kernels/coulomb_singularity_subtraction.c
+    kernels/coulomb_singularity_subtraction.h)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED
-    main-direct-distributed.c array.h
-    direct.c direct.h
-    tools.c tools.h 
-    xmalloc.c xmalloc.h
-    kernels/kernels.h
-    kernels/kernels.c)
+    main_direct.c
+    array.h
+    tools.c
+    tools.h 
+    xmalloc.c
+    xmalloc.h
+    direct.c
+    direct.h
+    kernels/kernels_direct.h
+    kernels/kernels_direct.c)
 
 
 if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
     set(TRGT tree-distributed-cpu)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_sources(${TRGT}          PRIVATE 
-                                        main-distributed.c)
+                                        main.c)
     target_compile_features(${TRGT} PRIVATE
                                         c_std_99)
     target_link_libraries(${TRGT}   PRIVATE
@@ -61,7 +67,7 @@ if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
     add_executable(${TRGT} ${SRCS_TREEDRIVER})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
-                                      main-distributed.c)
+                                      main.c)
     target_link_libraries(${TRGT} PRIVATE
                                       OpenMP::OpenMP_C
                                       MPI::MPI_C

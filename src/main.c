@@ -5,10 +5,10 @@
 #include <string.h>
 
 #include "array.h"
-#include "treedriver.h"
 #include "tools.h"
-#include "particles.h"
-#include "kernels/kernels.h"
+#include "treedriver.h"
+
+#include "struct_particles.h"
 
 
 int main(int argc, char **argv)

@@ -10,7 +10,7 @@
 
 #include "minunit.h"
 #include "../src/treedriver.h"
-#include "../src/particles.h"
+#include "../src/struct_particles.h"
 
 
 int tests_run = 0;

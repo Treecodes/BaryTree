@@ -11,27 +11,28 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "tnode.h"
-#include "particles.h"
+#include "struct_nodes.h"
+#include "struct_particles.h"
+#include "struct_clusters.h"
 #include "tools.h"
 
 #include "clusters.h"
 
-void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpolationOrder,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
 
-void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
 
-void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int interpolationOrder,
                           int totalNumberInterpolationPoints,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ,
                           double *clusterQ, double *clusterW);
 
-void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
                           int totalNumberInterpolationPoints,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ,
@@ -39,10 +40,13 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
 
 
 
-void Clusters_PC_Setup(struct particles *clusters, struct particles *sources,
+void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources,
                        int interpolationOrder, struct tnode_array *tree_array,
                        char *approxName, char *singularityHandling)
 {
+    *new_clusters = malloc(sizeof(struct clusters));
+    struct clusters *clusters = *new_clusters;
+
     int tree_numnodes = tree_array->numnodes;
     int totalNumberSourcePoints = sources->num;
 
@@ -161,11 +165,24 @@ void Clusters_PC_Setup(struct particles *clusters, struct particles *sources,
 
 
 
+void Clusters_Alloc(struct clusters *clusters, int length) 
+{
+    make_vector(clusters->x, length);
+    make_vector(clusters->y, length);
+    make_vector(clusters->z, length);
+    make_vector(clusters->q, length);
+    make_vector(clusters->w, length);
+    clusters->num = length;
+
+    return;
+}   /* END of function allocate_cluster */
+
+
+
 
 /************************************/
 /***** LOCAL FUNCTIONS **************/
 /************************************/
-
 
 
 void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpolationOrder,

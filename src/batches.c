@@ -8,33 +8,31 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "tnode.h"
-#include "particles.h"
+#include "struct_nodes.h"
+#include "struct_particles.h"
 #include "tools.h"
 
 #include "partition.h"
-#include "tree.h"
+
+#include "batches.h"
 
 
 
-void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
+static void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *batch_reorder);
+                    int *reorder);
 
-void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
+static void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *batch_reorder);
+                    int *reorder);
 
 
 
-void setup_batch(struct tnode_array **batches, double *batch_lim,
-                 struct particles *particles, int batch_size)
+void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
+                   struct particles *particles, int batch_size)
 {
-    /* local variables */
-    int i;
-    int max_batch_num;
     
     /* find bounds of Cartesian box enclosing the particles */
     batch_lim[0] = minval(particles->x, particles->num);
@@ -44,29 +42,22 @@ void setup_batch(struct tnode_array **batches, double *batch_lim,
     batch_lim[4] = minval(particles->z, particles->num);
     batch_lim[5] = maxval(particles->z, particles->num);
     
-    (*batches) = malloc(sizeof(struct tnode_array));
-    (*batches)->numnodes = 0;
-    
-    max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
+    *new_batches = malloc(sizeof(struct tnode_array));
+    struct tnode_array *batches = *new_batches;
 
-    make_vector((*batches)->reorder, particles->num);
+    batches->numnodes = 0;
+    int max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
 
-    //make_matrix((*batches)->index, max_batch_num, 4);
-    make_vector((*batches)->ibeg, max_batch_num);
-    make_vector((*batches)->iend, max_batch_num);
-    make_vector((*batches)->numpar, max_batch_num);
-    make_vector((*batches)->numApprox, max_batch_num);
-    make_vector((*batches)->numDirect, max_batch_num);
+    make_vector(batches->ibeg, max_batch_num);
+    make_vector(batches->iend, max_batch_num);
+    make_vector(batches->numpar, max_batch_num);
+    make_vector(batches->numApprox, max_batch_num);
+    make_vector(batches->numDirect, max_batch_num);
 
-    //make_matrix((*batches)->center, max_batch_num, 3);
-    make_vector((*batches)->x_mid, max_batch_num);
-    make_vector((*batches)->y_mid, max_batch_num);
-    make_vector((*batches)->z_mid, max_batch_num);
-
-    make_vector((*batches)->radius, max_batch_num);
-
-    for (i = 0; i < particles->num; i++)
-        (*batches)->reorder[i] = i+1;
+    make_vector(batches->x_mid, max_batch_num);
+    make_vector(batches->y_mid, max_batch_num);
+    make_vector(batches->z_mid, max_batch_num);
+    make_vector(batches->radius, max_batch_num);
 
     return;
     
@@ -75,8 +66,8 @@ void setup_batch(struct tnode_array **batches, double *batch_lim,
 
 
 
-void create_target_batch(struct tnode_array *batches, struct particles *particles,
-                         int ibeg, int iend, int maxparnode, double *xyzmm)
+void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *particles,
+                                 int ibeg, int iend, int maxparnode, double *xyzmm)
 {
 	int rank; int numProcs;	int ierr;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -176,7 +167,7 @@ void create_target_batch(struct tnode_array *batches, struct particles *particle
 
         cp_partition_batch(particles->x, particles->y, particles->z, particles->q,
                            xyzmms, xl, yl, zl, lmax, &numposchild,
-                           x_mid, y_mid, z_mid, ind, batches->reorder);
+                           x_mid, y_mid, z_mid, ind, particles->order);
 
         for (i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
@@ -184,7 +175,7 @@ void create_target_batch(struct tnode_array *batches, struct particles *particle
                 for (j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
                 
-                create_target_batch(batches, particles, ind[i][0], ind[i][1],
+                Batches_CreateTargetBatches(batches, particles, ind[i][0], ind[i][1],
                                     maxparnode, lxyzmm);
 
 //                printf("Creating child %i.\n", i);
@@ -226,8 +217,8 @@ void create_target_batch(struct tnode_array *batches, struct particles *particle
 
 
 
-void create_source_batch(struct tnode_array *batches, struct particles *particles,
-                         int ibeg, int iend, int maxparnode, double *xyzmm)
+void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *particles,
+                                 int ibeg, int iend, int maxparnode, double *xyzmm)
 {
     /*local variables*/
     double x_min, x_max, y_min, y_max, z_min, z_max;
@@ -304,7 +295,7 @@ void create_source_batch(struct tnode_array *batches, struct particles *particle
 
         pc_partition_batch(particles->x, particles->y, particles->z, particles->q, particles->w,
                            xyzmms, xl, yl, zl, lmax, &numposchild,
-                           x_mid, y_mid, z_mid, ind, batches->reorder);
+                           x_mid, y_mid, z_mid, ind, particles->order);
 
         for (i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
@@ -312,8 +303,8 @@ void create_source_batch(struct tnode_array *batches, struct particles *particle
                 for (j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
                 
-                create_source_batch(batches, particles, ind[i][0], ind[i][1],
-                                    maxparnode, lxyzmm);
+                Batches_CreateSourceBatches(batches, particles, ind[i][0], ind[i][1],
+                                          maxparnode, lxyzmm);
             }
         }
 
@@ -340,11 +331,15 @@ void create_source_batch(struct tnode_array *batches, struct particles *particle
 
 
 
+/*********************************/
+/******* LOCAL FUNCTIONS *********/
+/*********************************/
 
-void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
+
+static void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *batch_reorder)
+                    int *reorder)
 {
 
     /* local variables */
@@ -355,7 +350,7 @@ void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmm
     critlen = lmax / sqrt(2.0);
 
     if (xl >= critlen) {
-        cp_partition(x, y, z, q, batch_reorder, ind[0][0], ind[0][1],
+        cp_partition(x, y, z, q, reorder, ind[0][0], ind[0][1],
                      x_mid, &temp_ind);
 
         ind[1][0] = temp_ind + 1;
@@ -372,7 +367,7 @@ void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmm
 
     if (yl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(y, x, z, q, batch_reorder, ind[i][0], ind[i][1],
+            cp_partition(y, x, z, q, reorder, ind[i][0], ind[i][1],
                          y_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -391,7 +386,7 @@ void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmm
 
     if (zl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            cp_partition(z, x, y, q, batch_reorder, ind[i][0], ind[i][1],
+            cp_partition(z, x, y, q, reorder, ind[i][0], ind[i][1],
                          z_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -416,10 +411,10 @@ void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmm
 
 
 
-void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
+static void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
                     double xl, double yl, double zl, double lmax, int *numposchild,
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *batch_reorder)
+                    int *reorder)
 {
 
     /* local variables */
@@ -430,7 +425,7 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, d
     critlen = lmax / sqrt(2.0);
 
     if (xl >= critlen) {
-        pc_partition(x, y, z, q, w, batch_reorder, ind[0][0], ind[0][1],
+        pc_partition(x, y, z, q, w, reorder, ind[0][0], ind[0][1],
                      x_mid, &temp_ind);
 
         ind[1][0] = temp_ind + 1;
@@ -447,7 +442,7 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, d
 
     if (yl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            pc_partition(y, x, z, q, w, batch_reorder, ind[i][0], ind[i][1],
+            pc_partition(y, x, z, q, w, reorder, ind[i][0], ind[i][1],
                          y_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -466,7 +461,7 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, d
 
     if (zl >= critlen) {
         for (i = 0; i < *numposchild; i++) {
-            pc_partition(z, x, y, q, w, batch_reorder, ind[i][0], ind[i][1],
+            pc_partition(z, x, y, q, w, reorder, ind[i][0], ind[i][1],
                          z_mid, &temp_ind);
             
             ind[*numposchild + i][0] = temp_ind + 1;
@@ -491,9 +486,10 @@ void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, d
 
 
 
-void reorder_targets_and_potential(struct particles *targets, double *tEn,
-                     int *reorder, int numpars)
+void reorder_targets_and_potential(struct particles *targets, double *tEn, int numpars)
 {
+    int *reorder = targets->order;
+
     double *temp_energy;
     make_vector(temp_energy, numpars);
     for (int i = 0; i < numpars; i++) temp_energy[i] = tEn[i];
