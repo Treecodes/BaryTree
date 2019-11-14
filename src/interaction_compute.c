@@ -41,6 +41,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     int tree_numnodes = tree_array->numnodes;
+    int batch_numnodes = batches->numnodes;
 
     double *potentialDueToDirect, *potentialDueToApprox;
     make_vector(potentialDueToDirect, numTargets);
@@ -73,8 +74,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
                         cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], \
                         cluster_z[0:totalNumberOfInterpolationPoints], \
                         cluster_charge[0:numberOfClusterCharges], cluster_weight[0:numberOfClusterWeights], \
-                        tree_inter_list[0:batch_approx_offset*batches->num], \
-                        direct_inter_list[0:batch_direct_offset*batches->num], \
+                        tree_inter_list[0:batch_approx_offset*batches_numnodes], \
+                        direct_inter_list[0:batch_direct_offset*batches_numnodes], \
                         ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \
                         copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
