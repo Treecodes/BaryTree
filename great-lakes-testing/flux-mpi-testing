@@ -9,7 +9,7 @@ BATCHSIZE=1000
 KAPPA=0.5
 
 APPROXIMATIONNAME=lagrange
-COMPAREDIRECT=0
+COMPAREDIRECT=1
 
 NP=1
 
@@ -19,9 +19,10 @@ do
     do
         for KERNEL in coulomb #yukawa 
         do
-            for SINGULARITYHANDLING in subtraction #skipping #subtraction
+            for SINGULARITYHANDLING in skipping #subtraction
             do
                 echo $NP
+                echo $APPROXIMATIONNAME
                 echo $KERNEL
                 echo $SINGULARITYHANDLING
                 mpirun -n ${NP} zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $SINGULARITYHANDLING $APPROXIMATIONNAME $TREETYPE $COMPAREDIRECT 

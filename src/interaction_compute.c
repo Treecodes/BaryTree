@@ -63,8 +63,11 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
         numberOfClusterWeights = totalNumberOfInterpolationPoints;
     } else if (strcmp(approximationName, "hermite") == 0) {
         numberOfClusterCharges = 8 * totalNumberOfInterpolationPoints;
-        numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
+        if (strcmp(singularityHandling, "subtraction") == 0) {
+            numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
+        }
     }
+    printf("Made it here.\n");
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \
@@ -80,6 +83,7 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
                         copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
     {
+        printf("Made it here2.\n");
 
     int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
 

@@ -15,19 +15,6 @@
 
 int tests_run = 0;
 
-int foo = 7;
-int bar = 5;
-
-static char * test_foo() {
-    mu_assert("TEST FAILED: error, foo != 7", foo == 7);
-    return 0;
-}
-
-static char * test_bar() {
-    mu_assert("TEST FAILED: error, bar != 5", bar == 5);
-    return 0;
-}
-
 static char * test_direct_sum_on_10_particles() {
 
     int N=10;
@@ -201,6 +188,7 @@ static char * test_direct_sum_on_10_particles() {
 
 static char * test_treecode_on_100_particles() {
 
+    int verbose=0;
     int N=100;
 
     struct particles *sources = NULL;
@@ -286,7 +274,10 @@ static char * test_treecode_on_100_particles() {
             trueValue += j/(r);
         }
 
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-3);
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("relative error = %1.8e\n\n", fabs(potential[i] - trueValue)/fabs(trueValue));
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-3);
     }
 
 
@@ -314,7 +305,9 @@ static char * test_treecode_on_100_particles() {
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
         }
-
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("relative error = %1.8e\n\n", fabs(potential[i] - trueValue)/fabs(trueValue));
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
     }
 
@@ -343,7 +336,9 @@ static char * test_treecode_on_100_particles() {
             double r = abs(j-i)*sqrt(3);
             trueValue += j*exp(-kappa*r)/(r);
         }
-
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("relative error = %1.8e\n\n", fabs(potential[i] - trueValue)/fabs(trueValue));
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 8e-3);
     }
 
@@ -371,6 +366,9 @@ static char * test_treecode_on_100_particles() {
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         // measure absolute error for this example, since true values are very close to zero.
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("absolute error = %1.8e\n\n", fabs(potential[i] - trueValue));
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-2);
 
     }
@@ -400,7 +398,9 @@ static char * test_treecode_on_100_particles() {
             double r = abs(j-i)*sqrt(3);
             trueValue += j/(r);
         }
-
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("relative error = %1.8e\n\n", fabs(potential[i] - trueValue)/fabs(trueValue));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 3e-4);
     }
 
@@ -430,7 +430,9 @@ static char * test_treecode_on_100_particles() {
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
         }
-
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("relative error = %1.8e\n\n", fabs(potential[i] - trueValue)/fabs(trueValue));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-subtraction", fabs(potential[i] - trueValue)/fabs(trueValue) < 2e-2);
     }
 
@@ -459,7 +461,9 @@ static char * test_treecode_on_100_particles() {
             double r = abs(j-i)*sqrt(3);
             trueValue += j*exp(-kappa*r)/(r);
         }
-
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("relative error = %1.8e\n\n", fabs(potential[i] - trueValue)/fabs(trueValue));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-skipping", fabs(potential[i] - trueValue)/fabs(trueValue) < 5e-4);
     }
 
@@ -489,6 +493,9 @@ static char * test_treecode_on_100_particles() {
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         // measure absolute error for this example, since true values are very close to zero.
+        if (verbose>0) printf("trueValue = %1.8e\n", trueValue);
+        if (verbose>0) printf("computedValue = %1.8e\n", potential[i]);
+        if (verbose>0) printf("absolute error = %1.8e\n\n", fabs(potential[i] - trueValue));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-subtraction", fabs(potential[i] - trueValue) < 2e-3);
 
     }
@@ -516,7 +523,7 @@ static char * test_treecode_on_100_particles() {
 static char * test_treecode_on_1_target_10000_sources() {
 
     int N=10000;
-    int verbose=0;
+    int verbose=1;
 
     struct particles *sources = NULL;
     struct particles *targets = NULL;
@@ -538,6 +545,7 @@ static char * test_treecode_on_1_target_10000_sources() {
     targets->q = malloc(targets->num*sizeof(double));
     targets->order = malloc(targets->num*sizeof(int));
 
+
     sources->num = N; // 10,000 sources
     sources->x = malloc(sources->num*sizeof(double));
     sources->y = malloc(sources->num*sizeof(double));
@@ -556,6 +564,7 @@ static char * test_treecode_on_1_target_10000_sources() {
         targets->order[i] = i;
         }
 
+    srand(1);
     for (int i=0; i<sources->num; i++){
         // 10,000 randomly distributed sources in the [-1,1] box
         sources->x[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
@@ -600,11 +609,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-coulomb-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-4);
     }
 
@@ -630,11 +640,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-coulomb-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-5);
     }
 
@@ -658,11 +669,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-yukawa-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-4);
     }
 
@@ -686,11 +698,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-yukawa-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 6e-6);
     }
 
@@ -709,16 +722,19 @@ static char * test_treecode_on_1_target_10000_sources() {
     treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential_direct,
                    &potential_engy_direct, time_tree);
+    if (verbose>0) printf("\nhermite-coulomb-skipping finished direct reference.\n");
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
                    &potential_engy, time_tree);
+    if (verbose>0) printf("\nhermite-coulomb-skipping finished treecode run.\n");
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-coulomb-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 3e-8);
     }
 
@@ -743,11 +759,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-coulomb-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-7);
     }
 
@@ -771,11 +788,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-yukawa-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: hermite-yukawa-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 4e-8);
     }
 
@@ -799,11 +817,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-yukawa-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: hermite-yukawa-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 3e-8);
     }
 
@@ -831,8 +850,11 @@ static char * test_treecode_on_1_target_10000_sources() {
 // Run all the tests
 static char * all_tests() {
     mu_run_test(test_direct_sum_on_10_particles);
+    printf("Completed test_direct_sum_on_10_particles().\n");
     mu_run_test(test_treecode_on_100_particles);
+    printf("Completed test_treecode_on_100_particles().\n");
     mu_run_test(test_treecode_on_1_target_10000_sources);
+    printf("Completed test_treecode_on_1_target_10000_sources().\n");
 return 0;
 }
 
