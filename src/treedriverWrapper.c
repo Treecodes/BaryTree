@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "array.h"
-#include "particles_struct.h"
+#include "struct_particles.h"
 #include "tools.h"
 #include "tree.h"
 

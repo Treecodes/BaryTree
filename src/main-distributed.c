@@ -7,7 +7,7 @@
 #include "array.h"
 #include "treedriver.h"
 #include "tools.h"
-#include "particles_struct.h"
+#include "struct_particles.h"
 #include "kernels/kernels.h"
 
 

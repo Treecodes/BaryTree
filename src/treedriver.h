@@ -1,7 +1,7 @@
 #ifndef H_TREEDRIVER_H
 #define H_TREEDRIVER_H
 
-#include "particles_struct.h"
+#include "struct_particles.h"
 
 /* declaration of primary treecode driver */
 

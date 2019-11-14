@@ -8,8 +8,8 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "nodes_struct.h"
-#include "particles_struct.h"
+#include "struct_nodes.h"
+#include "struct_particles.h"
 #include "tools.h"
 
 #include "partition.h"

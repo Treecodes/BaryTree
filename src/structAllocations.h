@@ -4,8 +4,8 @@
 #include "array.h"
 #include "treedriver.h"
 #include "tools.h"
-#include "particles_struct.h"
-#include "nodes_struct.h"
+#include "struct_particles.h"
+#include "struct_nodes.h"
 
 /*
  * declaration of struct allocation functions

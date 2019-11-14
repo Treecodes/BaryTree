@@ -6,14 +6,15 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "nodes_struct.h"
-#include "particles_struct.h"
+#include "struct_nodes.h"
+#include "struct_particles.h"
 #include "tools.h"
 #include "tree.h"
 
 #include "structAllocations.h"
 
 #include "interaction_lists.h"
+#include "interaction_compute.h"
 #include "clusters.h"
 #include "batches.h"
 
@@ -79,10 +80,10 @@ void treedriver(struct particles *sources, struct particles *targets,
     } else if (tree_type == 1) {
 
         time1 = MPI_Wtime();
-        setup(sources, targets, interpolationOrder, theta, xyzminmax);
-        pc_create_tree_n0(&troot, sources, 1, sources->num,
+        Tree_Setup(sources, targets, interpolationOrder, theta, xyzminmax);
+        Tree_PC_Create(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, 0, &numnodes, &numleaves);
-        int final_index = pc_set_tree_index(troot, 0);
+        Tree_PC_SetIndex(troot, 0);
         time_tree[1] = MPI_Wtime() - time1; //time_treebuild
         
         
@@ -90,7 +91,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         tree_array = malloc(sizeof(struct tnode_array));
         allocate_tree_array(tree_array, numnodes);
-        pc_create_tree_array(troot, tree_array);
+        Tree_PC_CreateArray(troot, tree_array);
 
         time_tree[2] = MPI_Wtime() - time1; //time_maketreearray
         
@@ -522,7 +523,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
     time1 = MPI_Wtime();
-    cleanup(troot);
+    Tree_Free(troot);
 
     // free interaction lists
     free_vector(local_tree_inter_list);

@@ -4,13 +4,11 @@ SET(SRCS_TREEDRIVER
     partition.c
     partition.h
     tree.h
-    tree-creation.c
-    tree-cp.c
-    tree-pc.c
+    tree.c
     batches.c
     batches.h
     xmalloc.c
-    nodes_struct.h
+    struct_nodes.h
     globvars.h
     treedriver.h
     array.h
@@ -18,11 +16,13 @@ SET(SRCS_TREEDRIVER
     structAllocations.h
     interaction_lists.c
     interaction_lists.h
+    interaction_compute.c
+    interaction_compute.h
     clusters.c
     clusters.h
     xmalloc.h
     tools.h
-    particles_struct.h
+    struct_particles.h
     kernels/coulomb.h
     kernels/coulomb.c
     kernels/yukawa.h

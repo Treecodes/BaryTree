@@ -1,8 +1,8 @@
 #ifndef H_BATCHFUNCTIONS_H
 #define H_BATCHFUNCTIONS_H
 
-#include "nodes_struct.h"
-#include "particles_struct.h"
+#include "struct_nodes.h"
+#include "struct_particles.h"
 
 void Batches_Setup(struct tnode_array **batches, double *batch_lim,
                    struct particles *particles, int batch_size);
