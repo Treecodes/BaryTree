@@ -134,6 +134,7 @@ int main(int argc, char **argv)
     unsigned t_hashed = (unsigned) t;
     t_hashed = m*t_hashed + c;
 //    srand(t_hashed ^ rank);
+    srand(1);
 
     for (int i = 0; i < N; ++i) {
         mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
@@ -320,6 +321,8 @@ int main(int argc, char **argv)
                    &potential_engy_direct, time_tree);
         time_direct = MPI_Wtime() - time1;
     }
+
+    MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
