@@ -9,8 +9,8 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "tnode.h"
-#include "particles.h"
+#include "nodes_struct.h"
+#include "particles_struct.h"
 #include "tools.h"
 
 #include "interaction_lists.h"
@@ -43,32 +43,23 @@ void Interaction_MakeList(const struct tnode_array *tree_array, struct tnode_arr
                           int *tree_inter_list, int *direct_inter_list, int approx_offset,
                           int direct_offset)
 {
-    int batch_numnodes;
-    const int *batch_numpar;
-    const double *batch_x_mid, *batch_y_mid, *batch_z_mid, *batch_radius;
-    int *batch_num_direct, *batch_num_approx;
-    
-    int tree_numnodes;
-    const int *tree_numpar, *tree_level;
-    const double *tree_x_mid, *tree_y_mid, *tree_z_mid, *tree_radius;
+    int batch_numnodes = batches->numnodes;
+    const int *batch_numpar = batches->numpar;
+    const double *batch_x_mid = batches->x_mid;
+    const double *batch_y_mid = batches->y_mid;
+    const double *batch_z_mid = batches->z_mid;
+    const double *batch_radius = batches->radius;
 
-    batch_numnodes = batches->numnodes;
-    batch_numpar = batches->numpar;
-    batch_x_mid = batches->x_mid;
-    batch_y_mid = batches->y_mid;
-    batch_z_mid = batches->z_mid;
-    batch_radius = batches->radius;
+    int *batch_num_direct = batches->numDirect;
+    int *batch_num_approx = batches->numApprox;
 
-    batch_num_direct = batches->numDirect;
-    batch_num_approx = batches->numApprox;
-
-    tree_numnodes = tree_array->numnodes;
-    tree_numpar = tree_array->numpar;
-    tree_level = tree_array->level;
-    tree_radius = tree_array->radius;
-    tree_x_mid = tree_array->x_mid;
-    tree_y_mid = tree_array->y_mid;
-    tree_z_mid = tree_array->z_mid;
+    int tree_numnodes = tree_array->numnodes;
+    const int *tree_numpar = tree_array->numpar;
+    const int *tree_level = tree_array->level;
+    const double *tree_radius = tree_array->radius;
+    const double *tree_x_mid = tree_array->x_mid;
+    const double *tree_y_mid = tree_array->y_mid;
+    const double *tree_z_mid = tree_array->z_mid;
 
     int sizeloop = batches->numnodes * approx_offset;
     for (int i = 0; i < sizeloop; i++) tree_inter_list[i] = -1;
@@ -95,43 +86,26 @@ void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct tno
                                 int *approx_list_unpacked,int *approx_list_packed, int *direct_list,
                                 int *num_batch_approx, int *num_batch_direct)
 {
-    /* local variables */
-    int rank, numProcs;
+    int batch_numnodes = batches->numnodes;
+    const int *batch_numpar = batches->numpar;
+    const double *batch_x_mid = batches->x_mid;
+    const double *batch_y_mid = batches->y_mid;
+    const double *batch_z_mid = batches->z_mid;
+    const double *batch_radius = batches->radius;
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+    int *batch_num_direct = batches->numDirect;
+    int *batch_num_approx = batches->numApprox;
 
+    int tree_numnodes = tree_array->numnodes;
+    const int *tree_numpar = tree_array->numpar;
+    const int *tree_level = tree_array->level;
+    const double *tree_radius = tree_array->radius;
+    const double *tree_x_mid = tree_array->x_mid;
+    const double *tree_y_mid = tree_array->y_mid;
+    const double *tree_z_mid = tree_array->z_mid;
 
-    int batch_numnodes;
-    const int *batch_numpar;
-    const double *batch_x_mid, *batch_y_mid, *batch_z_mid, *batch_radius;
-    int *batch_num_direct, *batch_num_approx;
-
-    int tree_numnodes;
-    const int *tree_numpar, *tree_level;
-    const double *tree_x_mid, *tree_y_mid, *tree_z_mid, *tree_radius;
-    const int *tree_num_children, *tree_children;
-
-    batch_numnodes = batches->numnodes;
-    batch_numpar = batches->numpar;
-    batch_x_mid = batches->x_mid;
-    batch_y_mid = batches->y_mid;
-    batch_z_mid = batches->z_mid;
-    batch_radius = batches->radius;
-
-    batch_num_direct = batches->numDirect;
-    batch_num_approx = batches->numApprox;
-
-    tree_numnodes = tree_array->numnodes;
-    tree_numpar = tree_array->numpar;
-    tree_level = tree_array->level;
-    tree_radius = tree_array->radius;
-    tree_x_mid = tree_array->x_mid;
-    tree_y_mid = tree_array->y_mid;
-    tree_z_mid = tree_array->z_mid;
-
-    tree_num_children = tree_array->num_children;
-    tree_children = tree_array->children;
+    const int *tree_num_children = tree_array->num_children;
+    const int *tree_children = tree_array->children;
 
 
     for (int i = 0; i < tree_numnodes; i++) approx_list_unpacked[i] = -1;
@@ -242,23 +216,18 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
 
                 int *batch_tree_list, int *batch_direct_list)
 {
-    /* local variables */
-    double tx, ty, tz, dist;
-    int j, current_level;
-    int tree_index_counter, direct_index_counter;
+    int tree_index_counter = 0;
+    int direct_index_counter = 0;
+    int current_level = 0;
     
-    tree_index_counter = 0;
-    direct_index_counter = 0;
-    current_level = 0;
-    
-    for (j = 0; j < tree_numnodes; j++) {
+    for (int j = 0; j < tree_numnodes; j++) {
         if (tree_level[j] <= current_level) {
             
             /* determine DIST for MAC test */
-            tx = batch_x_mid - tree_x_mid[j];
-            ty = batch_y_mid - tree_y_mid[j];
-            tz = batch_z_mid - tree_z_mid[j];
-            dist = sqrt(tx*tx + ty*ty + tz*tz);
+            double tx = batch_x_mid - tree_x_mid[j];
+            double ty = batch_y_mid - tree_y_mid[j];
+            double tz = batch_z_mid - tree_z_mid[j];
+            double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
             if (((tree_radius[j] + batch_radius) < dist * sqrt(thetasq))
                 && (tree_radius[j] > 0.00)) {

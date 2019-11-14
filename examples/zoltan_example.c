@@ -7,7 +7,7 @@
 #include <float.h>
 
 #include "../src/treedriver.h"
-#include "../src/particles.h"
+#include "../src/particles_struct.h"
 #include "../src/tools.h"
 
 

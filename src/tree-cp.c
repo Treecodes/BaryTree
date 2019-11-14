@@ -8,30 +8,23 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "tnode.h"
-#include "particles.h"
+#include "nodes_struct.h"
+#include "particles_struct.h"
 #include "tools.h"
 
 #include "partition.h"
 #include "tree.h"
 
 
-int *orderarr = NULL;
 double thetasq;
-
-/* variable used by kernel independent moment computation */
 double *tt, *ww;
 
 
-void setup(struct particles *particles, int order, double theta,
+void setup(struct particles *particles1, struct particles *particles2, int order, double theta,
            double *xyzminmax)
 {
-    /* local variables */
-    double t1, xx;
-
     /* changing values of our extern variables */
     thetasq = theta * theta;
-
     make_vector(tt, order+1);
     make_vector(ww, order+1);
 
@@ -43,21 +36,23 @@ void setup(struct particles *particles, int order, double theta,
     ww[order] = -ww[0];
 
     for (int i = 1; i < order; i++) {
-        xx = i * M_PI / order;
+        double xx = i * M_PI / order;
         ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
     }
 
     /* find bounds of Cartesian box enclosing the particles */
-    xyzminmax[0] = minval(particles->x, particles->num);
-    xyzminmax[1] = maxval(particles->x, particles->num);
-    xyzminmax[2] = minval(particles->y, particles->num);
-    xyzminmax[3] = maxval(particles->y, particles->num);
-    xyzminmax[4] = minval(particles->z, particles->num);
-    xyzminmax[5] = maxval(particles->z, particles->num);
+    xyzminmax[0] = minval(particles1->x, particles1->num);
+    xyzminmax[1] = maxval(particles1->x, particles1->num);
+    xyzminmax[2] = minval(particles1->y, particles1->num);
+    xyzminmax[3] = maxval(particles1->y, particles1->num);
+    xyzminmax[4] = minval(particles1->z, particles1->num);
+    xyzminmax[5] = maxval(particles1->z, particles1->num);
 
-    make_vector(orderarr, particles->num);
-    for (int i = 0; i < particles->num; i++)
-        orderarr[i] = i+1;
+    /* setting up ordering vectors */
+    make_vector(particles1->order, particles1->num);
+    make_vector(particles2->order, particles2->num);
+    for (int i = 0; i < particles1->num; i++) particles1->order[i] = i+1;
+    for (int i = 0; i < particles2->num; i++) particles2->order[i] = i+1;
 
     return;
     
@@ -171,7 +166,7 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
-        cp_partition_8(targets->x, targets->y, targets->z, targets->q,
+        cp_partition_8(targets->x, targets->y, targets->z, targets->q, targets->order,
                        xyzmms, xl, yl, zl, lmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
@@ -208,8 +203,6 @@ void cp_create_tree_n0(struct tnode **p, struct particles *targets,
  */
 void cleanup(struct tnode *p)
 {
-    free_vector(orderarr);
-
     remove_node(p);
     free(p);
 

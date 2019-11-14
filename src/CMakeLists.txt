@@ -7,9 +7,10 @@ SET(SRCS_TREEDRIVER
     tree-creation.c
     tree-cp.c
     tree-pc.c
-    tree-batch.c
+    batches.c
+    batches.h
     xmalloc.c
-    tnode.h
+    nodes_struct.h
     globvars.h
     treedriver.h
     array.h
@@ -21,7 +22,7 @@ SET(SRCS_TREEDRIVER
     clusters.h
     xmalloc.h
     tools.h
-    particles.h
+    particles_struct.h
     kernels/coulomb.h
     kernels/coulomb.c
     kernels/yukawa.h

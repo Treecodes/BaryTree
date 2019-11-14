@@ -6,8 +6,8 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "tnode.h"
-#include "particles.h"
+#include "nodes_struct.h"
+#include "particles_struct.h"
 #include "tools.h"
 #include "tree.h"
 
@@ -15,6 +15,7 @@
 
 #include "interaction_lists.h"
 #include "clusters.h"
+#include "batches.h"
 
 #include "treedriver.h"
 
@@ -78,7 +79,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     } else if (tree_type == 1) {
 
         time1 = MPI_Wtime();
-        setup(sources, interpolationOrder, theta, xyzminmax);
+        setup(sources, targets, interpolationOrder, theta, xyzminmax);
         pc_create_tree_n0(&troot, sources, 1, sources->num,
                           maxparnode, xyzminmax, 0, &numnodes, &numleaves);
         int final_index = pc_set_tree_index(troot, 0);
@@ -96,8 +97,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        setup_batch(&batches, batch_lim, targets, batch_size);
-        create_target_batch(batches, targets, 1, targets->num, batch_size, batch_lim);
+        Batches_Setup(&batches, batch_lim, targets, batch_size);
+        Batches_CreateTargetBatches(batches, targets, 1, targets->num, batch_size, batch_lim);
 
         time_tree[3] = MPI_Wtime() - time1; //time_createbatch
         
@@ -515,7 +516,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         }
         
-        reorder_targets_and_potential(targets, tEn, batches->reorder, targets->num);
+        reorder_targets_and_potential(targets, tEn, targets->num);
     }
     time_tree[7] = MPI_Wtime()-time1; // end time for tree evaluation
 
@@ -544,7 +545,6 @@ void treedriver(struct particles *sources, struct particles *targets,
     free_tree_array(tree_array);
 
     // free target batches
-    free_vector(batches->reorder);
     free_vector(batches->iend);
     free_vector(batches->ibeg);
     free_vector(batches->numpar);

@@ -9,8 +9,8 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "tnode.h"
-#include "particles.h"
+#include "nodes_struct.h"
+#include "particles_struct.h"
 #include "tools.h"
 
 #include "partition.h"
@@ -127,7 +127,7 @@ void pc_create_tree_n0(struct tnode **p, struct particles *sources,
         y_mid = (*p)->y_mid;
         z_mid = (*p)->z_mid;
 
-        pc_partition_8(sources->x, sources->y, sources->z, sources->q, sources->w,
+        pc_partition_8(sources->x, sources->y, sources->z, sources->q, sources->w, sources->order,
                        xyzmms, xl, yl, zl, lmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 

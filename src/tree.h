@@ -1,8 +1,8 @@
 #ifndef H_TREEFUNCTIONS_H
 #define H_TREEFUNCTIONS_H
 
-#include "tnode.h"
-#include "particles.h"
+#include "nodes_struct.h"
+#include "particles_struct.h"
 
 
 /* declaration of treecode support functions */
@@ -15,7 +15,7 @@ void cleanup(struct tnode *p);
 
 
 /* used by cluster-particle and particle-cluster Coulomb */
-void setup(struct particles *particles, int order, double theta,
+void setup(struct particles *particles1, struct particles *particles2, int order, double theta,
            double *xyzminmax);
 
 
@@ -54,18 +54,4 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
 								  char *kernelName, double kernel_parameter, char *singularityHandling,
 								  char *approximationName);
 
-
-
-/* batch functions */
-void setup_batch(struct tnode_array **batches, double *batch_lim,
-                 struct particles *particles, int batch_size);
-
-void create_target_batch(struct tnode_array *batches, struct particles *particles,
-                     int ibeg, int iend, int maxparnode, double *xyzmm);
-
-void create_source_batch(struct tnode_array *batches, struct particles *particles,
-                     int ibeg, int iend, int maxparnode, double *xyzmm);
-
-void reorder_targets_and_potential(struct particles *targets, double *tEn,
-                     int *reorder, int numpars);
 #endif /* H_TREEFUNCTIONS_H */

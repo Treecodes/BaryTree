@@ -10,8 +10,8 @@
 
 #include "array.h"
 #include "globvars.h"
-#include "tnode.h"
-#include "particles.h"
+#include "nodes_struct.h"
+#include "particles_struct.h"
 #include "tools.h"
 
 #include "kernels/kernels.h"

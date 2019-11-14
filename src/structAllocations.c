@@ -6,23 +6,10 @@
 
 #include "array.h"
 #include "tools.h"
-#include "particles.h"
-#include "tnode.h"
+#include "particles_struct.h"
+#include "nodes_struct.h"
 
 
-
-void reallocate_sources(struct particles *sources, int newlength){
-
-	sources->num = newlength;
-	realloc_vector(sources->x, newlength);
-	realloc_vector(sources->y, newlength);
-	realloc_vector(sources->z, newlength);
-	realloc_vector(sources->q, newlength);
-	realloc_vector(sources->w, newlength);
-
-	return;
-
-}  /* END of function reallocate_sources */
 
 void allocate_sources(struct particles *sources, int length)  {
 
@@ -49,18 +36,6 @@ void allocate_cluster(struct particles *clusters, int length)  {
     return;
 }   /* END of function allocate_cluster */
 
-
-void reallocate_cluster(struct particles *clusters, int newlength)  {
-
-	realloc_vector(clusters->x, newlength);
-	realloc_vector(clusters->y, newlength);
-	realloc_vector(clusters->z, newlength);
-	realloc_vector(clusters->q, newlength);
-	realloc_vector(clusters->w, newlength);  // will be used in singularity subtraction
-    clusters->num = newlength;
-
-    return;
-}   /* END of function reallocate_cluster */
 
 void allocate_tree_array(struct tnode_array *tree_array, int length)  {
 
