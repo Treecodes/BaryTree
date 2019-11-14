@@ -560,7 +560,7 @@ static char * test_treecode_on_1_target_10000_sources() {
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     int N=10000;
-    int verbose=1;
+    int verbose=0;
 
     struct particles *sources = NULL;
     struct particles *targets = NULL;
@@ -771,7 +771,7 @@ static char * test_treecode_on_1_target_10000_sources() {
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-skipping", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 3e-8);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 6e-8);
     }
 
 
@@ -830,7 +830,7 @@ static char * test_treecode_on_1_target_10000_sources() {
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-skipping", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 4e-8);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 9e-8);
     }
 
     /***********************************************/
