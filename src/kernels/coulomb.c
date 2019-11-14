@@ -120,15 +120,6 @@ void coulombApproximationHermite(int number_of_targets_in_batch, int number_of_i
 #endif
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
-/*
-    double *cluster_delta_x   = &cluster_charge[1*total_number_interpolation_points];
-    double *cluster_delta_y   = &cluster_charge[2*total_number_interpolation_points];
-    double *cluster_delta_z   = &cluster_charge[3*total_number_interpolation_points];
-    double *cluster_delta_xy  = &cluster_charge[4*total_number_interpolation_points];
-    double *cluster_delta_yz  = &cluster_charge[5*total_number_interpolation_points];
-    double *cluster_delta_xz  = &cluster_charge[6*total_number_interpolation_points];
-    double *cluster_delta_xyz = &cluster_charge[7*total_number_interpolation_points];
-*/
     double *cluster_charge_          = &cluster_charge[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
     double *cluster_charge_delta_x   = &cluster_charge[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
     double *cluster_charge_delta_y   = &cluster_charge[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];

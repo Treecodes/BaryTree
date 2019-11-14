@@ -122,23 +122,6 @@ void coulombSingularitySubtractionApproximationHermite(int number_of_targets_in_
     double kernel_parameter2 = kernel_parameter * kernel_parameter;
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
-/*
-    double *cluster_charge_delta_x   = &cluster_charge[1*total_number_interpolation_points];
-    double *cluster_charge_delta_y   = &cluster_charge[2*total_number_interpolation_points];
-    double *cluster_charge_delta_z   = &cluster_charge[3*total_number_interpolation_points];
-    double *cluster_charge_delta_xy  = &cluster_charge[4*total_number_interpolation_points];
-    double *cluster_charge_delta_yz  = &cluster_charge[5*total_number_interpolation_points];
-    double *cluster_charge_delta_xz  = &cluster_charge[6*total_number_interpolation_points];
-    double *cluster_charge_delta_xyz = &cluster_charge[7*total_number_interpolation_points];
-
-    double *cluster_weight_delta_x   = &cluster_weight[1*total_number_interpolation_points];
-    double *cluster_weight_delta_y   = &cluster_weight[2*total_number_interpolation_points];
-    double *cluster_weight_delta_z   = &cluster_weight[3*total_number_interpolation_points];
-    double *cluster_weight_delta_xy  = &cluster_weight[4*total_number_interpolation_points];
-    double *cluster_weight_delta_yz  = &cluster_weight[5*total_number_interpolation_points];
-    double *cluster_weight_delta_xz  = &cluster_weight[6*total_number_interpolation_points];
-    double *cluster_weight_delta_xyz = &cluster_weight[7*total_number_interpolation_points];
-*/
     double *cluster_charge_          = &cluster_charge[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
     double *cluster_charge_delta_x   = &cluster_charge[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
     double *cluster_charge_delta_y   = &cluster_charge[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];

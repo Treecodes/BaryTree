@@ -125,7 +125,7 @@ void yukawaApproximationHermite(int number_of_targets_in_batch, int number_of_in
     double *cluster_charge_delta_xyz = &cluster_charge[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
 
     double kernel_parameter2 = kernel_parameter * kernel_parameter;
-    double kernel_parameter3 = kernel_parameter * kernel_parameter * kernel_parameter;
+    double kernel_parameter3 = kernel_parameter * kernel_parameter2;
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
