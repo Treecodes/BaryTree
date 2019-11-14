@@ -15,20 +15,15 @@
 
 int tests_run = 0;
 
-int foo = 7;
-int bar = 5;
 
-static char * test_foo() {
-    mu_assert("TEST FAILED: error, foo != 7", foo == 7);
-    return 0;
-}
 
-static char * test_bar() {
-    mu_assert("TEST FAILED: error, bar != 5", bar == 5);
-    return 0;
-}
+static char * test_direct_sum_on_10_particles_per_rank() {
 
-static char * test_direct_sum_on_10_particles() {
+    int verbose=0;
+
+    int rank, numProcs;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     int N=10;
 
@@ -61,18 +56,35 @@ static char * test_direct_sum_on_10_particles() {
 
     for (int i=0; i<targets->num; i++){
 
-        targets->x[i]=1.0*i;
-        targets->y[i]=1.0*i;
-        targets->z[i]=1.0*i;
-        targets->q[i]=1.0*i;
-        targets->order[i] = i;
+        if (rank==0){
+            // rank 0 gets the positive x=y=z line
+            targets->x[i]=1.0*i;
+            targets->y[i]=1.0*i;
+            targets->z[i]=1.0*i;
+            targets->q[i]=1.0*i;
+            targets->order[i] = i;
 
-        sources->x[i]=1.0*i;
-        sources->y[i]=1.0*i;
-        sources->z[i]=1.0*i;
-        sources->q[i]=1.0*i;
-        sources->w[i]=1.0;
-        sources->order[i] = i;
+            sources->x[i]=1.0*i;
+            sources->y[i]=1.0*i;
+            sources->z[i]=1.0*i;
+            sources->q[i]=1.0*i;
+            sources->w[i]=1.0;
+            sources->order[i] = i;
+        } else if (rank==1){
+            // rank 1 gets the negative x=y=z line
+            targets->x[i]=1.0*(i+N);
+            targets->y[i]=1.0*(i+N);
+            targets->z[i]=1.0*(i+N);
+            targets->q[i]=1.0*(i+N);
+            targets->order[i] = i;
+
+            sources->x[i]=1.0*(i+N);
+            sources->y[i]=1.0*(i+N);
+            sources->z[i]=1.0*(i+N);
+            sources->q[i]=1.0*(i+N);
+            sources->w[i]=1.0;
+            sources->order[i] = i;
+        }
 
         potential[i]=0.0;
         }
@@ -93,19 +105,27 @@ static char * test_direct_sum_on_10_particles() {
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
                    &potential_engy, time_tree);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     for (int i=0; i<targets->num; i++){
+        int iloc = i+rank*targets->num;
         double trueValue=0.0;
-        for (int j=0; j<i; j++){
-            double r = abs(j-i)*sqrt(3);
+        for (int j=0; j<iloc; j++){
+            double r = fabs(j-iloc)*sqrt(3);
             trueValue += j/(r);
         }
-        for (int j=i+1; j<targets->num; j++){
-            double r = abs(j-i)*sqrt(3);
+        for (int j=iloc+1; j<2*targets->num; j++){
+            double r = fabs(j-iloc)*sqrt(3);
             trueValue += j/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        if (verbose>0) printf("Rank = %i\n", rank);
+        if (verbose>0) printf("True value = %1.7e\n", trueValue);
+        if (verbose>0) printf("Computed value = %1.7e\n\n", potential[i]);
+        mu_assert("TEST test_direct_sum_on_10_particles_per_rank FAILED: Direct sum potential not correct for coulomb kernel with skipping",
+                fabs(potential[i] - trueValue) < 1e-10);
     }
+
+
 
 
     for (int i=0; i<targets->num; i++){
@@ -117,19 +137,26 @@ static char * test_direct_sum_on_10_particles() {
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
                    &potential_engy, time_tree);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     for (int i=0; i<targets->num; i++){
+        int iloc = (i+rank*targets->num);
         double trueValue=0.0;
-        for (int j=0; j<i; j++){
-            double r = fabs(j-i)*sqrt(3);
-            trueValue += (j - i*exp(-r*r/kappa/kappa) )/(r);
+        for (int j=0; j<iloc; j++){
+            double r = fabs(j-iloc)*sqrt(3);
+            trueValue += (j - 1.0*iloc*exp(-r*r/kappa/kappa) )/(r);
         }
-        for (int j=i+1; j<targets->num; j++){
-            double r = fabs(j-i)*sqrt(3);
-            trueValue += (j - i*exp(-r*r/kappa/kappa) )/(r);
+        for (int j=iloc+1; j<2*targets->num; j++){
+            double r = fabs(j-iloc)*sqrt(3);
+            trueValue += (j - 1.0*iloc*exp(-r*r/kappa/kappa) )/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
+        if (verbose>0) printf("Rank = %i\n", rank);
+        if (verbose>0) printf("True value = %1.7e\n", trueValue);
+        if (verbose>0) printf("Computed value = %1.7e\n\n", potential[i]);
+        mu_assert("TEST test_direct_sum_on_10_particles_per_rank FAILED: Direct sum potential not correct for coulomb kernel with subtraction",
+                fabs(potential[i] - trueValue) < 1e-10);
     }
+
 
     kernelName="yukawa";
     singularityHandling="skipping";
@@ -141,18 +168,24 @@ static char * test_direct_sum_on_10_particles() {
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
                    &potential_engy, time_tree);
 
+    MPI_Barrier(MPI_COMM_WORLD);
     for (int i=0; i<targets->num; i++){
+        int iloc = i+rank*targets->num;
         double trueValue=0.0;
-        for (int j=0; j<i; j++){
-            double r = abs(j-i)*sqrt(3);
+        for (int j=0; j<iloc; j++){
+            double r = fabs(j-iloc)*sqrt(3);
             trueValue += j*exp(-kappa*r)/(r);
         }
-        for (int j=i+1; j<targets->num; j++){
-            double r = abs(j-i)*sqrt(3);
+        for (int j=iloc+1; j<2*targets->num; j++){
+            double r = fabs(j-iloc)*sqrt(3);
             trueValue += j*exp(-kappa*r)/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        if (verbose>0) printf("Rank = %i\n", rank);
+        if (verbose>0) printf("True value = %1.7e\n", trueValue);
+        if (verbose>0) printf("Computed value = %1.7e\n\n", potential[i]);
+        mu_assert("TEST test_direct_sum_on_10_particles_per_rank FAILED: Direct sum potential not correct for yukawa kernel with skipping",
+                fabs(potential[i] - trueValue) < 1e-10);
     }
 
 
@@ -164,22 +197,29 @@ static char * test_direct_sum_on_10_particles() {
                    kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
                    &potential_engy, time_tree);
 
+
+    MPI_Barrier(MPI_COMM_WORLD);
     for (int i=0; i<targets->num; i++){
+        int iloc = i+rank*targets->num;
         double trueValue=0.0;
-        for (int j=0; j<i; j++){
-            double r = abs(j-i)*sqrt(3);
-            trueValue += (j - i)*exp(-kappa*r)/(r);
+        for (int j=0; j<iloc; j++){
+            double r = fabs(j-iloc)*sqrt(3);
+            trueValue += (j - iloc)*exp(-kappa*r)/(r);
         }
-        for (int j=i+1; j<targets->num; j++){
-            double r = abs(j-i)*sqrt(3);
-            trueValue += (j - i)*exp(-kappa*r)/(r);
+        for (int j=iloc+1; j<2*targets->num; j++){
+            double r = fabs(j-iloc)*sqrt(3);
+            trueValue += (j - iloc)*exp(-kappa*r)/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
+        if (verbose>0) printf("Rank = %i\n", rank);
+        if (verbose>0) printf("True value = %1.7e\n", trueValue);
+        if (verbose>0) printf("Computed value = %1.7e\n\n", potential[i]);
+        mu_assert("TEST test_direct_sum_on_10_particles_per_rank FAILED: Direct sum potential not correct for yukawa kernel with subtraction",
+                fabs(potential[i] - trueValue) < 1e-10);
     }
 
 
-
+    MPI_Barrier(MPI_COMM_WORLD);
     free(sources->x);
     free(sources->y);
     free(sources->z);
@@ -515,8 +555,12 @@ static char * test_treecode_on_100_particles() {
 
 static char * test_treecode_on_1_target_10000_sources() {
 
+    int rank, numProcs;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
     int N=10000;
-    int verbose=0;
+    int verbose=1;
 
     struct particles *sources = NULL;
     struct particles *targets = NULL;
@@ -531,20 +575,22 @@ static char * test_treecode_on_1_target_10000_sources() {
     potential_direct = malloc(sizeof(double) * N);
     particleOrder = malloc(sizeof(int) * N);
 
-    targets->num = 1; //single target
+    targets->num = 1; //single target at origin
     targets->x = malloc(targets->num*sizeof(double));
     targets->y = malloc(targets->num*sizeof(double));
     targets->z = malloc(targets->num*sizeof(double));
     targets->q = malloc(targets->num*sizeof(double));
     targets->order = malloc(targets->num*sizeof(int));
 
-    sources->num = N; // 10,000 sources
+    sources->num = N; // 10,000 sources per rank
     sources->x = malloc(sources->num*sizeof(double));
     sources->y = malloc(sources->num*sizeof(double));
     sources->z = malloc(sources->num*sizeof(double));
     sources->q = malloc(sources->num*sizeof(double));
     sources->w = malloc(sources->num*sizeof(double));
     sources->order = malloc(sources->num*sizeof(int));
+
+
 
 
     for (int i=0; i<targets->num; i++){
@@ -556,8 +602,9 @@ static char * test_treecode_on_1_target_10000_sources() {
         targets->order[i] = i;
         }
 
+    srand(rank);
     for (int i=0; i<sources->num; i++){
-        // 10,000 randomly distributed sources in the [-1,1] box
+        // 10,000 randomly distributed sources in the [-1,1] box, seeded by rank
         sources->x[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
         sources->y[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
         sources->z[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
@@ -600,11 +647,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-coulomb-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-4);
     }
 
@@ -630,11 +678,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-coulomb-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-5);
     }
 
@@ -658,11 +707,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-yukawa-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-4);
     }
 
@@ -686,11 +736,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nlagrange-yukawa-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 6e-6);
     }
 
@@ -714,11 +765,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-coulomb-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 3e-8);
     }
 
@@ -743,11 +795,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-coulomb-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-7);
     }
 
@@ -771,11 +824,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-yukawa-skipping\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-skipping", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 4e-8);
     }
 
@@ -799,11 +853,12 @@ static char * test_treecode_on_1_target_10000_sources() {
                    &potential_engy, time_tree);
 
     for (int i=0; i<targets->num; i++){
+        if (verbose>0) printf("\nhermite-yukawa-subtraction\n");
         if (verbose>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbose>0) printf("approx: %1.8e\n", potential[i]);
         if (verbose>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbose>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
-        mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: Treecode potential not correct for: hermite-yukawa-subtraction", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 3e-8);
     }
 
@@ -830,31 +885,34 @@ static char * test_treecode_on_1_target_10000_sources() {
 
 // Run all the tests
 static char * all_tests() {
-    mu_run_test(test_direct_sum_on_10_particles);
-    mu_run_test(test_treecode_on_100_particles);
+    mu_run_test(test_direct_sum_on_10_particles_per_rank);
+//    mu_run_test(test_treecode_on_100_particles);
     mu_run_test(test_treecode_on_1_target_10000_sources);
 return 0;
 }
 
 int main(int argc, char **argv) {
-    int rc, rank, numProcs;
+    int rank, numProcs;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
 
+
     char *result = all_tests();
-    printf("Tests run: %d\n", tests_run);
-    if (result != 0) {
-        printf("============================\n" \
-               "| SOME SERIAL TESTS FAILED |\n" \
-               "============================\n");
-        printf("%s\n", result);
-    }
-    else {
-        printf("===========================\n" \
-               "| ALL SERIAL TESTS PASSED |\n" \
-               "===========================\n");
+    if (rank==0){
+        printf("Tests run: %d\n", tests_run);
+        if (result != 0) {
+            printf("=============================\n" \
+                   "| SOME PARALLEL TESTS FAILED |\n" \
+                   "=============================\n");
+            printf("%s\n", result);
+        }
+        else {
+            printf("============================\n" \
+                   "| ALL PARALLEL TESTS PASSED |\n" \
+                   "============================\n");
+        }
     }
 
 
