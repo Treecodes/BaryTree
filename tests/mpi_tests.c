@@ -885,9 +885,15 @@ static char * test_treecode_on_1_target_10000_sources() {
 
 // Run all the tests
 static char * all_tests() {
+    int rank, numProcs;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     mu_run_test(test_direct_sum_on_10_particles_per_rank);
+    if (rank==0) printf("Completed test_direct_sum_on_10_particles().\n");
 //    mu_run_test(test_treecode_on_100_particles);
     mu_run_test(test_treecode_on_1_target_10000_sources);
+    if (rank==0) printf("Completed test_treecode_on_1_target_10000_sources().\n");
+
 return 0;
 }
 

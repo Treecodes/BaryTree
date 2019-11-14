@@ -523,7 +523,7 @@ static char * test_treecode_on_100_particles() {
 static char * test_treecode_on_1_target_10000_sources() {
 
     int N=10000;
-    int verbose=1;
+    int verbose=0;
 
     struct particles *sources = NULL;
     struct particles *targets = NULL;

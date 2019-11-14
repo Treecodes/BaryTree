@@ -410,7 +410,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (let_clusters_length > 0) Clusters_Alloc(let_clusters, let_clusters_length,
                                                     approximationName, singularityHandling);
     
-//        printf("Made it here.\n");
         for (int procID = 1; procID < numProcs; ++procID) {
 
             int getFrom = (numProcs+rank-procID) % numProcs;
