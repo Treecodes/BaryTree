@@ -115,22 +115,24 @@ void yukawaApproximationHermite(int number_of_targets_in_batch, int number_of_in
 
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
-    double *cluster_delta_x   = &cluster_charge[1*total_number_interpolation_points];
-    double *cluster_delta_y   = &cluster_charge[2*total_number_interpolation_points];
-    double *cluster_delta_z   = &cluster_charge[3*total_number_interpolation_points];
-    double *cluster_delta_xy  = &cluster_charge[4*total_number_interpolation_points];
-    double *cluster_delta_yz  = &cluster_charge[5*total_number_interpolation_points];
-    double *cluster_delta_xz  = &cluster_charge[6*total_number_interpolation_points];
-    double *cluster_delta_xyz = &cluster_charge[7*total_number_interpolation_points];
+    double *cluster_charge_          = &cluster_charge[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_x   = &cluster_charge[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_y   = &cluster_charge[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_z   = &cluster_charge[8*starting_index_of_cluster + 3*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xy  = &cluster_charge[8*starting_index_of_cluster + 4*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_yz  = &cluster_charge[8*starting_index_of_cluster + 5*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xz  = &cluster_charge[8*starting_index_of_cluster + 6*number_of_interpolation_points_in_cluster];
+    double *cluster_charge_delta_xyz = &cluster_charge[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
 
     double kernel_parameter2 = kernel_parameter * kernel_parameter;
-    double kernel_parameter3 = kernel_parameter * kernel_parameter * kernel_parameter;
+    double kernel_parameter3 = kernel_parameter * kernel_parameter2;
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
                         cluster_x, cluster_y, cluster_z, cluster_charge, potential, \
-                        cluster_delta_x, cluster_delta_y, cluster_delta_z, cluster_delta_xy, \
-                        cluster_delta_yz, cluster_delta_xz, cluster_delta_xyz)
+                        cluster_charge_, cluster_charge_delta_x, cluster_charge_delta_y, cluster_charge_delta_z, \
+                        cluster_charge_delta_xy, cluster_charge_delta_yz, cluster_charge_delta_xz, \
+                        cluster_charge_delta_xyz)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -167,13 +169,15 @@ void yukawaApproximationHermite(int number_of_targets_in_batch, int number_of_in
             if (r > DBL_MIN) {
 
                 temporary_potential += exp(-kernel_parameter * r) 
-                         * (rinv * (cluster_charge[jj])
+                         * (rinv * (cluster_charge_[j])
                          + r3inv * (1 + kernel_parameter * r)
-                                 * (cluster_delta_x[jj]*dx + cluster_delta_y[jj]*dy + cluster_delta_z[jj]*dz)
+                                 * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
+                                  + cluster_charge_delta_z[j]*dz)
                          + r5inv * (3 + 3 * kernel_parameter * r + kernel_parameter2 * r2) 
-                                 * (cluster_delta_xy[jj]*dx*dy + cluster_delta_yz[jj]*dy*dz + cluster_delta_xz[jj]*dx*dz)
+                                 * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
+                                  + cluster_charge_delta_xz[j]*dx*dz)
                          + r7inv * (15 + 15 * kernel_parameter * r + 6 * kernel_parameter2 * r2 + kernel_parameter3 * r3)
-                                 * cluster_delta_xyz[jj]*dx*dy*dz);
+                                 * cluster_charge_delta_xyz[j]*dx*dy*dz);
 
 
 

@@ -599,8 +599,10 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster =  interpOrderLim * interpOrderLim * interpOrderLim;
     int sourcePointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
-    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInSourcesArray = tree_array->ibeg[idx] - 1;
+
+    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
+    int startingIndexInClusterChargesArray = idx * interpolationPointsPerCluster * 8;
 
 
     double dj[interpOrderLim], wx[interpOrderLim], wy[interpOrderLim], wz[interpOrderLim];
@@ -840,6 +842,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
 
         }
 
+        /*
         clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += temp0;
         clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += temp1;
         clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += temp2;
@@ -848,6 +851,16 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
         clusterQ[5 * totalNumberInterpolationPoints + interpolationPointIndex] += temp5;
         clusterQ[6 * totalNumberInterpolationPoints + interpolationPointIndex] += temp6;
         clusterQ[7 * totalNumberInterpolationPoints + interpolationPointIndex] += temp7;
+        */
+
+        clusterQ[startingIndexInClusterChargesArray + 0 * interpolationPointsPerCluster + j] += temp0;
+        clusterQ[startingIndexInClusterChargesArray + 1 * interpolationPointsPerCluster + j] += temp1;
+        clusterQ[startingIndexInClusterChargesArray + 2 * interpolationPointsPerCluster + j] += temp2;
+        clusterQ[startingIndexInClusterChargesArray + 3 * interpolationPointsPerCluster + j] += temp3;
+        clusterQ[startingIndexInClusterChargesArray + 4 * interpolationPointsPerCluster + j] += temp4;
+        clusterQ[startingIndexInClusterChargesArray + 5 * interpolationPointsPerCluster + j] += temp5;
+        clusterQ[startingIndexInClusterChargesArray + 6 * interpolationPointsPerCluster + j] += temp6;
+        clusterQ[startingIndexInClusterChargesArray + 7 * interpolationPointsPerCluster + j] += temp7;
 
     }
 
@@ -873,8 +886,11 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster =  interpOrderLim * interpOrderLim * interpOrderLim;
     int sourcePointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
-    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInSourcesArray = tree_array->ibeg[idx] - 1;
+
+    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
+    int startingIndexInClusterWeightsArray = idx * interpolationPointsPerCluster * 8;
+    int startingIndexInClusterChargesArray = idx * interpolationPointsPerCluster * 8;
 
 
     double dj[interpOrderLim], wx[interpOrderLim], wy[interpOrderLim], wz[interpOrderLim];
@@ -1133,6 +1149,7 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
 
          }
 
+        /*
          clusterQ[0 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq0;
          clusterQ[1 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq1;
          clusterQ[2 * totalNumberInterpolationPoints + interpolationPointIndex] += tempq2;
@@ -1150,7 +1167,25 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
          clusterW[5 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw5;
          clusterW[6 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw6;
          clusterW[7 * totalNumberInterpolationPoints + interpolationPointIndex] += tempw7;
+*/
 
+         clusterQ[startingIndexInClusterChargesArray + 0 * interpolationPointsPerCluster + j] += tempq0;
+         clusterQ[startingIndexInClusterChargesArray + 1 * interpolationPointsPerCluster + j] += tempq1;
+         clusterQ[startingIndexInClusterChargesArray + 2 * interpolationPointsPerCluster + j] += tempq2;
+         clusterQ[startingIndexInClusterChargesArray + 3 * interpolationPointsPerCluster + j] += tempq3;
+         clusterQ[startingIndexInClusterChargesArray + 4 * interpolationPointsPerCluster + j] += tempq4;
+         clusterQ[startingIndexInClusterChargesArray + 5 * interpolationPointsPerCluster + j] += tempq5;
+         clusterQ[startingIndexInClusterChargesArray + 6 * interpolationPointsPerCluster + j] += tempq6;
+         clusterQ[startingIndexInClusterChargesArray + 7 * interpolationPointsPerCluster + j] += tempq7;
+
+         clusterW[startingIndexInClusterWeightsArray + 0 * interpolationPointsPerCluster + j] += tempw0;
+         clusterW[startingIndexInClusterWeightsArray + 1 * interpolationPointsPerCluster + j] += tempw1;
+         clusterW[startingIndexInClusterWeightsArray + 2 * interpolationPointsPerCluster + j] += tempw2;
+         clusterW[startingIndexInClusterWeightsArray + 3 * interpolationPointsPerCluster + j] += tempw3;
+         clusterW[startingIndexInClusterWeightsArray + 4 * interpolationPointsPerCluster + j] += tempw4;
+         clusterW[startingIndexInClusterWeightsArray + 5 * interpolationPointsPerCluster + j] += tempw5;
+         clusterW[startingIndexInClusterWeightsArray + 6 * interpolationPointsPerCluster + j] += tempw6;
+         clusterW[startingIndexInClusterWeightsArray + 7 * interpolationPointsPerCluster + j] += tempw7;
     }
 
 #ifdef OPENACC_ENABLED
