@@ -110,11 +110,11 @@ static char * test_direct_sum_on_10_particles_per_rank() {
         int iloc = i+rank*targets->num;
         double trueValue=0.0;
         for (int j=0; j<iloc; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += j/(r);
         }
         for (int j=iloc+1; j<2*targets->num; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += j/(r);
         }
 
@@ -142,11 +142,11 @@ static char * test_direct_sum_on_10_particles_per_rank() {
         int iloc = (i+rank*targets->num);
         double trueValue=0.0;
         for (int j=0; j<iloc; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += (j - 1.0*iloc*exp(-r*r/kappa/kappa) )/(r);
         }
         for (int j=iloc+1; j<2*targets->num; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += (j - 1.0*iloc*exp(-r*r/kappa/kappa) )/(r);
         }
 
@@ -173,11 +173,11 @@ static char * test_direct_sum_on_10_particles_per_rank() {
         int iloc = i+rank*targets->num;
         double trueValue=0.0;
         for (int j=0; j<iloc; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += j*exp(-kappa*r)/(r);
         }
         for (int j=iloc+1; j<2*targets->num; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += j*exp(-kappa*r)/(r);
         }
 
@@ -203,11 +203,11 @@ static char * test_direct_sum_on_10_particles_per_rank() {
         int iloc = i+rank*targets->num;
         double trueValue=0.0;
         for (int j=0; j<iloc; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += (j - iloc)*exp(-kappa*r)/(r);
         }
         for (int j=iloc+1; j<2*targets->num; j++){
-            double r = fabs(j-iloc)*sqrt(3);
+            double r = abs(j-iloc)*sqrt(3);
             trueValue += (j - iloc)*exp(-kappa*r)/(r);
         }
 
@@ -403,11 +403,11 @@ static char * test_treecode_on_100_particles() {
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
         for (int j=0; j<i; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         for (int j=i+1; j<sources->num; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         // measure absolute error for this example, since true values are very close to zero.
@@ -521,11 +521,11 @@ static char * test_treecode_on_100_particles() {
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
         for (int j=0; j<i; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         for (int j=i+1; j<sources->num; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         // measure absolute error for this example, since true values are very close to zero.

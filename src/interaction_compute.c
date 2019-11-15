@@ -56,17 +56,14 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
     int *iends = tree_array->iend;
     int *clusterInd = tree_array->cluster_ind;
 
-    int numberOfClusterCharges = 0;
-    int numberOfClusterWeights = 0;
-    if (strcmp(approximationName, "lagrange") == 0) {
-        numberOfClusterCharges = totalNumberOfInterpolationPoints;
-        numberOfClusterWeights = totalNumberOfInterpolationPoints;
-    } else if (strcmp(approximationName, "hermite") == 0) {
+    int numberOfClusterCharges = totalNumberOfInterpolationPoints;
+    int numberOfClusterWeights = totalNumberOfInterpolationPoints;
+
+    if (strcmp(approximationName, "hermite") == 0)
         numberOfClusterCharges = 8 * totalNumberOfInterpolationPoints;
-        if (strcmp(singularityHandling, "subtraction") == 0) {
-            numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
-        }
-    }
+
+    if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
+        numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \

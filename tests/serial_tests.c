@@ -91,7 +91,7 @@ static char * test_direct_sum_on_10_particles() {
             trueValue += j/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with skipping", fabs(potential[i] - trueValue) < 1e-10);
     }
 
 
@@ -107,15 +107,15 @@ static char * test_direct_sum_on_10_particles() {
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
         for (int j=0; j<i; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa/kappa) )/(r);
         }
         for (int j=i+1; j<targets->num; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa/kappa) )/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for coulomb kernel with subtraction", fabs(potential[i] - trueValue) < 1e-10);
     }
 
     kernelName="yukawa";
@@ -139,7 +139,7 @@ static char * test_direct_sum_on_10_particles() {
             trueValue += j*exp(-kappa*r)/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with skipping", fabs(potential[i] - trueValue) < 1e-10);
     }
 
 
@@ -162,7 +162,7 @@ static char * test_direct_sum_on_10_particles() {
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
 
-        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with subtraction", abs(potential[i] - trueValue) < 1e-10);
+        mu_assert("TEST FAILED: Direct sum potential not correct for yukawa kernel with subtraction", fabs(potential[i] - trueValue) < 1e-10);
     }
 
 
@@ -358,11 +358,11 @@ static char * test_treecode_on_100_particles() {
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
         for (int j=0; j<i; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         for (int j=i+1; j<sources->num; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         // measure absolute error for this example, since true values are very close to zero.
@@ -485,11 +485,11 @@ static char * test_treecode_on_100_particles() {
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
         for (int j=0; j<i; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         for (int j=i+1; j<sources->num; j++){
-            double r = fabs(j-i)*sqrt(3);
+            double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
         }
         // measure absolute error for this example, since true values are very close to zero.
