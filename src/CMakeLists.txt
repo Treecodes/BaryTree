@@ -7,6 +7,8 @@ SET(SRCS_TREEDRIVER
     globvars.h
     treedriver.c
     treedriver.h
+    directdriver.c
+    directdriver.h
     tree.c
     tree.h
     batches.c

@@ -7,6 +7,7 @@
 #include <float.h>
 
 #include "../src/treedriver.h"
+#include "../src/directdriver.h"
 #include "../src/struct_particles.h"
 #include "../src/tools.h"
 
@@ -100,7 +101,6 @@ int main(int argc, char **argv)
 
     struct particles *sources = NULL;
     struct particles *targets = NULL;
-    int *particleOrder = NULL;
     double *potential = NULL, *potential_direct = NULL;
     double potential_engy = 0, potential_engy_glob = 0;
     double potential_engy_direct = 0, potential_engy_direct_glob = 0;
@@ -236,8 +236,6 @@ int main(int argc, char **argv)
     targets = malloc(sizeof(struct particles));
     potential = malloc(sizeof(double) * mySources.numMyPoints);
     potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
-    particleOrder = malloc(sizeof(int) * mySources.numMyPoints);
-    for (int i = 0; i < mySources.numMyPoints; i++) particleOrder[i] = i;
 
     sources->num = mySources.numMyPoints;
     targets->num = mySources.numMyPoints;
@@ -247,24 +245,17 @@ int main(int argc, char **argv)
     sources->z = mySources.z;
     sources->q = mySources.q;
     sources->w = mySources.w;
-    sources->order = particleOrder;
  
 
     targets->x = malloc(targets->num*sizeof(double));
     targets->y = malloc(targets->num*sizeof(double));
     targets->z = malloc(targets->num*sizeof(double));
     targets->q = malloc(targets->num*sizeof(double));
-    targets->order = malloc(targets->num*sizeof(int));
     memcpy(targets->x, mySources.x, targets->num * sizeof(double));
     memcpy(targets->y, mySources.y, targets->num * sizeof(double));
     memcpy(targets->z, mySources.z, targets->num * sizeof(double));
     memcpy(targets->q, mySources.q, targets->num * sizeof(double));
-    memcpy(targets->order, particleOrder, targets->num * sizeof(int));
 
-
-    double *target_quadrature_weights;
-    target_quadrature_weights = malloc(sizeof(double) * targets->num);
-    for (int i = 0; i < mySources.numMyPoints; i++) target_quadrature_weights[i] = mySources.w[i];
 
     // Set up kernel
 //    printf("Kernel Name: %s\n",kernelName);
@@ -315,11 +306,11 @@ int main(int argc, char **argv)
     if (run_direct_comparison == 1) {
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
-        treedriver(sources, targets, 0, 0.0, max_per_leaf, max_per_batch,
-                   kernelName, kappa, singularityHandling, approximationName, tree_type, potential_direct,
-                   &potential_engy_direct, time_tree);
+        directdriver(sources, targets, kernelName, kappa, singularityHandling,
+                     approximationName, potential_direct, &potential_engy_direct);
         time_direct = MPI_Wtime() - time1;
     }
+
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -442,8 +433,8 @@ int main(int argc, char **argv)
             if (fabs(potential_direct[j]) >= relinferr)
                 relinferr = fabs(potential_direct[j]);
 
-            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * fabs(target_quadrature_weights[j]);
-            reln2err = reln2err + pow(potential_direct[j], 2.0) * fabs(target_quadrature_weights[j]);
+            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * fabs(mySources.w[j]);
+            reln2err = reln2err + pow(potential_direct[j], 2.0) * fabs(mySources.w[j]);
         }
 
         MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -479,14 +470,12 @@ int main(int argc, char **argv)
     free(mySources.q);
     free(mySources.w);
     free(mySources.myGlobalIDs);
-    free(particleOrder);
     free(sources);
 
     free(targets->x);
     free(targets->y);
     free(targets->z);
     free(targets->q);
-    free(targets->order);
     free(targets);
 
     free(potential);
