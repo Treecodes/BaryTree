@@ -13,6 +13,4 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
 void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *particles,
                    int ibeg, int iend, int maxparnode, double *xyzmm);
 
-void reorder_targets_and_potential(struct particles *targets, double *tEn, int numpars);
-
 #endif

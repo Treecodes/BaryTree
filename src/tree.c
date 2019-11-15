@@ -43,19 +43,22 @@ void Tree_Setup(struct particles *particles1, struct particles *particles2,
         ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
     }
 
+    int particles1_num = particles1->num;
+    int particles2_num = particles2->num;
+
     /* find bounds of Cartesian box enclosing the particles */
-    xyzminmax[0] = minval(particles1->x, particles1->num);
-    xyzminmax[1] = maxval(particles1->x, particles1->num);
-    xyzminmax[2] = minval(particles1->y, particles1->num);
-    xyzminmax[3] = maxval(particles1->y, particles1->num);
-    xyzminmax[4] = minval(particles1->z, particles1->num);
-    xyzminmax[5] = maxval(particles1->z, particles1->num);
+    xyzminmax[0] = minval(particles1->x, particles1_num);
+    xyzminmax[1] = maxval(particles1->x, particles1_num);
+    xyzminmax[2] = minval(particles1->y, particles1_num);
+    xyzminmax[3] = maxval(particles1->y, particles1_num);
+    xyzminmax[4] = minval(particles1->z, particles1_num);
+    xyzminmax[5] = maxval(particles1->z, particles1_num);
 
     /* setting up ordering vectors */
-    make_vector(particles1->order, particles1->num);
-    make_vector(particles2->order, particles2->num);
-    for (int i = 0; i < particles1->num; i++) particles1->order[i] = i+1;
-    for (int i = 0; i < particles2->num; i++) particles2->order[i] = i+1;
+    make_vector(particles1->order, particles1_num);
+    make_vector(particles2->order, particles2_num);
+    for (int i = 0; i < particles1_num; i++) particles1->order[i] = i+1;
+    for (int i = 0; i < particles2_num; i++) particles2->order[i] = i+1;
 
     return;
     

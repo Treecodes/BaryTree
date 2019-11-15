@@ -372,12 +372,11 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(approx_weights_list_displacements, numNodesOnProc[getFrom]);
 
             // Use masks to get remote data
-            for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
+            for (int ii = 0; ii < numberOfRemoteApprox; ++ii) {
                 approx_list_displacements[ii] = approx_list_packed[ii] * pointsPerCluster;
-            for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
                 approx_charges_list_displacements[ii] = approx_list_packed[ii] * chargesPerCluster;
-            for (int ii = 0; ii < numberOfRemoteApprox; ++ii)
                 approx_weights_list_displacements[ii] = approx_list_packed[ii] * weightsPerCluster;
+            }
             
             MPI_Type_create_indexed_block(numberOfRemoteApprox, pointsPerCluster, approx_list_displacements,
                                           MPI_DOUBLE, &approx_type[getFrom]);
@@ -534,7 +533,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         }
         
-        reorder_targets_and_potential(targets, tEn, targets->num);
+        Particles_ReorderTargetsAndPotential(targets, tEn);
     }
     time_tree[7] = MPI_Wtime()-time1; // end time for tree evaluation
 

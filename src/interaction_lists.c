@@ -67,7 +67,7 @@ void Interaction_MakeList(const struct tnode_array *tree_array, struct tnode_arr
     sizeloop = batches->numnodes * direct_offset;
     for (int i = 0; i < sizeloop; i++) direct_inter_list[i] = -1;
     
-    for (int i = 0; i < batches->numnodes; i++)
+    for (int i = 0; i < batch_numnodes; i++)
         pc_compute_interaction_list(tree_numnodes, tree_level, tree_numpar,
                 tree_radius, tree_x_mid, tree_y_mid, tree_z_mid,
 
