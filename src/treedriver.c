@@ -2,7 +2,6 @@
 #include <string.h>
 #include <mpi.h>
 #include <limits.h>
-#include <omp.h>
 
 #include "array.h"
 #include "tools.h"

@@ -320,7 +320,19 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
     for (int k = 0; k < numTargets; k++) {
         pointwisePotential[k] += potentialDueToDirect[k];
         pointwisePotential[k] += potentialDueToApprox[k];
-     }
+    }
+
+    // adding in correction
+    if (strcmp(singularityHandling, "subtraction") == 0) {
+        if (strcmp(kernelName, "coulomb") == 0) {
+            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 2.0*M_PI*kernel_parameter*kernel_parameter*target_charge[k];
+
+        } else if (strcmp(kernelName, "yukawa") == 0) {
+            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 4.0*M_PI*target_charge[k]/kernel_parameter/kernel_parameter;
+
+        }
+    }
+    
 
     free_vector(potentialDueToDirect);
     free_vector(potentialDueToApprox);

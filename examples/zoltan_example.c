@@ -259,13 +259,14 @@ int main(int argc, char **argv)
 
     // Set up kernel
 //    printf("Kernel Name: %s\n",kernelName);
-    if       (strcmp(singularityHandling,"skipping")==0){
+//    if       (strcmp(singularityHandling,"skipping")==0){
         for (int i=0; i<targets->num; i++){
             potential[i]=0.0;
             potential_direct[i]=0.0;
         }
 
-    }else if (strcmp(singularityHandling,"subtraction")==0){
+ /*
+   }else if (strcmp(singularityHandling,"subtraction")==0){
         if (strcmp(kernelName,"coulomb")==0){
             for (int i=0; i<targets->num; i++){
                 potential[i]=2.0*M_PI*kappa*kappa*targets->q[i];
@@ -289,6 +290,7 @@ int main(int argc, char **argv)
         if (rank==0) printf("Invalid command line argument for kernelName or ... aborting.\n");
         exit(1);
     }
+*/
 
 
 

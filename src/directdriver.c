@@ -121,6 +121,16 @@ void directdriver(struct particles *sources, struct particles *targets,
 #endif
     } // end acc data region
 
+    // adding in correction
+    if (strcmp(singularityHandling, "subtraction") == 0) {
+        if (strcmp(kernelName, "coulomb") == 0) {
+            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 2.0*M_PI*kernel_parameter*kernel_parameter*target_q[k];
+
+        } else if (strcmp(kernelName, "yukawa") == 0) {
+            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 4.0*M_PI*target_q[k]/kernel_parameter/kernel_parameter;
+
+        }
+    }
 
     *totalPotential = sum(pointwisePotential, numTargets);
 
