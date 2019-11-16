@@ -217,3 +217,14 @@ void yukawaSingularitySubtractionApproximationHermite(int number_of_targets_in_b
 #endif
     return;
 }
+
+
+
+void yukawaSingularitySubtractionCorrection(double *potential, double *target_q,
+                                            int numTargets, double kernel_parameter)
+{
+    double param = 4.0 * M_PI / kernel_parameter / kernel_parameter;
+    for (int i = 0; i < numTargets; i++) potential[i] += param * target_q[i];
+
+    return;
+}

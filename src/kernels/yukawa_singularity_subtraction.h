@@ -4,21 +4,25 @@
  
 
 void yukawaSingularitySubtractionDirect(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
-                                        int starting_index_of_target, int starting_index_of_source,
-                                        double *target_x, double *target_y, double *target_z, double *target_charge,
-                                        double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
-                                        double kernel_parameter, double *potential, int gpu_async_stream_id);
+        int starting_index_of_target, int starting_index_of_source,
+        double *target_x, double *target_y, double *target_z, double *target_charge,
+        double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
+        double kernel_parameter, double *potential, int gpu_async_stream_id);
 
 void yukawaSingularitySubtractionApproximationLagrange(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
-                                        int starting_index_of_target, int starting_index_of_cluster,
-                                        double *target_x, double *target_y, double *target_z, double *target_charge, double *cluster_weight,
-                                        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
-                                        double kernel_parameter, double *potential, int gpu_async_stream_id);
+        int starting_index_of_target, int starting_index_of_cluster,
+        double *target_x, double *target_y, double *target_z, double *target_charge, double *cluster_weight,
+        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
+        double kernel_parameter, double *potential, int gpu_async_stream_id);
 
 void yukawaSingularitySubtractionApproximationHermite(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
-                    int starting_index_of_target, int starting_index_of_cluster, int total_number_interpolation_points,
-                    double *target_x, double *target_y, double *target_z, double *target_charge,
-                    double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
-                    double kernel_parameter, double *potential, int gpu_async_stream_id);
+        int starting_index_of_target, int starting_index_of_cluster, int total_number_interpolation_points,
+        double *target_x, double *target_y, double *target_z, double *target_charge,
+        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
+        double kernel_parameter, double *potential, int gpu_async_stream_id);
+
+void yukawaSingularitySubtractionCorrection(double *potential, double *target_q,
+        int numTargets, double kernel_parameter);
+
 
 #endif /* H_YUKAWASINGULARITYSUBTRACTION_H */

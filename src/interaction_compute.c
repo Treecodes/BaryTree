@@ -424,12 +424,10 @@ void Interaction_SubtractionPotentialCorrection(double *pointwisePotential, doub
 
     if (strcmp(singularityHandling, "subtraction") == 0) {
         if (strcmp(kernelName, "coulomb") == 0) {
-            double param = 2.0 * M_PI * kernel_parameter * kernel_parameter;
-            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += param * target_q[k];
+            coulombSingularitySubtractionCorrection(pointwisePotential, target_q, numTargets, kernel_parameter);
 
         } else if (strcmp(kernelName, "yukawa") == 0) {
-            double param = 4.0 * M_PI / kernel_parameter / kernel_parameter;
-            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += param * target_q[k];
+            yukawaSingularitySubtractionCorrection(pointwisePotential, target_q, numTargets, kernel_parameter);
 
         }
     }

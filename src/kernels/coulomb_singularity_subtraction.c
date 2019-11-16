@@ -218,3 +218,14 @@ void coulombSingularitySubtractionApproximationHermite(int number_of_targets_in_
     return;
 }
 
+
+
+
+void coulombSingularitySubtractionCorrection(double *potential, double *target_q,
+                                             int numTargets, double kernel_parameter)
+{
+    double param = 2.0 * M_PI * kernel_parameter * kernel_parameter;
+    for (int i = 0; i < numTargets; i++) potential[i] += param * target_q[i];
+
+    return;
+}
