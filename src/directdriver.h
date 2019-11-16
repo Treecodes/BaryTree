@@ -5,6 +5,6 @@
 
 void directdriver(struct particles *sources, struct particles *targets,
                   char *kernelName, double kappa, char *singularityHandling,
-                  char *approximationName, double *pointwisePotential, double *totalPotential);
+                  char *approximationName, double *pointwisePotential);
 
 #endif

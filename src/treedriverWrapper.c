@@ -84,7 +84,9 @@ void treedriverWrapper(int numTargets, int numSources,
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
 			   kernelName, kappa, singularityHandling, approximationName, tree_type,
-			   outputArray, &tpeng, time_tree);
+			   outputArray, time_tree);
+
+    tpeng = sum(outputArray, targets->num);
 
 	free(sources);
 	free(targets);

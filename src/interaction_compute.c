@@ -23,22 +23,19 @@
 #include "interaction_compute.h"
 
 
-void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_array *batches,
-                                  int *tree_inter_list, int *direct_inter_list,
-                                  double *source_x, double *source_y, double *source_z,
-                                  double *source_charge, double *source_weight,
-                                  double *target_x, double *target_y, double *target_z, double *target_charge,
-                                  double *cluster_x, double *cluster_y, double *cluster_z,
-                                  double *cluster_charge, double *cluster_weight,
-                                  double *totalPotential, double *pointwisePotential, int interpolationOrder,
-                                  int numSources, int numTargets, int totalNumberOfInterpolationPoints,
-                                  int batch_approx_offset, int batch_direct_offset,
-                                  char *kernelName, double kernel_parameter, char *singularityHandling,
-                                  char *approximationName)
+void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *batches,
+                            int *tree_inter_list, int *direct_inter_list,
+                            double *source_x, double *source_y, double *source_z,
+                            double *source_charge, double *source_weight,
+                            double *target_x, double *target_y, double *target_z, double *target_charge,
+                            double *cluster_x, double *cluster_y, double *cluster_z,
+                            double *cluster_charge, double *cluster_weight,
+                            double *pointwisePotential, int interpolationOrder,
+                            int numSources, int numTargets, int totalNumberOfInterpolationPoints,
+                            int batch_approx_offset, int batch_direct_offset,
+                            char *kernelName, double kernel_parameter, char *singularityHandling,
+                            char *approximationName)
 {
-    int rank, numProcs, ierr;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     int tree_numnodes = tree_array->numnodes;
     int batch_numnodes = batches->numnodes;
@@ -309,10 +306,8 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
     } // end acc data region
 
 
-    double totalDueToInitialization = sum(pointwisePotential, numTargets);
     double totalDueToApprox = sum(potentialDueToApprox, numTargets);
     double totalDueToDirect = sum(potentialDueToDirect, numTargets);
-
 //    printf("Total due to initialization = %3.2e\n", totalDueToInitialization);
 //    printf("Total due to direct interactions = %3.2e\n", totalDueToDirect);
 //    printf("Total due to approx interactions = %3.2e\n", totalDueToApprox);
@@ -322,23 +317,122 @@ void pc_interaction_list_treecode(struct tnode_array *tree_array, struct tnode_a
         pointwisePotential[k] += potentialDueToApprox[k];
     }
 
-    // adding in correction
-    if (strcmp(singularityHandling, "subtraction") == 0) {
-        if (strcmp(kernelName, "coulomb") == 0) {
-            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 2.0*M_PI*kernel_parameter*kernel_parameter*target_charge[k];
-
-        } else if (strcmp(kernelName, "yukawa") == 0) {
-            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 4.0*M_PI*target_charge[k]/kernel_parameter/kernel_parameter;
-
-        }
-    }
-    
 
     free_vector(potentialDueToDirect);
     free_vector(potentialDueToApprox);
 
-    *totalPotential = sum(pointwisePotential, numTargets);
-
     return;
 
 } /* END of function pc_treecode */
+
+
+
+
+void Interaction_Direct_Compute(double *source_x, double *source_y, double *source_z,
+                                double *source_q, double *source_w,
+                                double *target_x, double *target_y, double *target_z, double *target_q,
+                                double *pointwisePotential, int numSources, int numTargets,
+                                char *kernelName, double kernel_parameter, char *singularityHandling,
+                                char *approximationName)
+{
+
+
+#ifdef OPENACC_ENABLED
+    #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \
+                            source_q[0:numSources], source_w[0:numSources], \
+                            target_x[0:numTargets], target_y[0:numTargets], target_z[0:numTargets], \
+                            target_q[0:numTargets]), copy(pointwisePotential[0:numTargets])
+#endif
+    {
+
+
+/**********************************************************/
+/************** POTENTIAL FROM DIRECT *********************/
+/**********************************************************/
+
+
+    /***************************************/
+    /********* Coulomb *********************/
+    /***************************************/
+
+    if (strcmp(kernelName, "coulomb") == 0) {
+
+        if (strcmp(singularityHandling, "skipping") == 0) {
+
+            coulombDirect(numTargets, numSources, 0, 0,
+                    target_x, target_y, target_z,
+                    source_x, source_y, source_z, source_q, source_w,
+                    pointwisePotential, 0);
+
+        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+            coulombSingularitySubtractionDirect(numTargets, numSources, 0, 0,
+                    target_x, target_y, target_z, target_q,
+                    source_x, source_y, source_z, source_q, source_w,
+                    kernel_parameter, pointwisePotential, 0);
+
+        }else {
+            printf("Invalid choice of singularityHandling. Exiting. \n");
+            exit(1);
+        }
+
+    /***************************************/
+    /********* Yukawa **********************/
+    /***************************************/
+
+    } else if (strcmp(kernelName, "yukawa") == 0) {
+
+        if (strcmp(singularityHandling, "skipping") == 0) {
+
+            yukawaDirect(numTargets, numSources, 0, 0,
+                    target_x, target_y, target_z,
+                    source_x, source_y, source_z, source_q, source_w,
+                    kernel_parameter, pointwisePotential, 0);
+
+        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+
+            yukawaSingularitySubtractionDirect(numTargets, numSources, 0, 0,
+                    target_x, target_y, target_z, target_q,
+                    source_x, source_y, source_z, source_q, source_w,
+                    kernel_parameter, pointwisePotential, 0);
+
+        } else {
+            printf("Invalid choice of singularityHandling. Exiting. \n");
+            exit(1);
+        }
+
+
+    } else {
+        printf("Invalid kernelName. Exiting.\n");
+        exit(1);
+    }
+
+#ifdef OPENACC_ENABLED
+        #pragma acc wait
+#endif
+    } // end acc data region
+
+    return;
+}
+
+
+
+
+void Interaction_SubtractionPotentialCorrection(double *pointwisePotential, double *target_q, int numTargets,
+                                  char *kernelName, double kernel_parameter, char *singularityHandling)
+{
+
+    if (strcmp(singularityHandling, "subtraction") == 0) {
+        if (strcmp(kernelName, "coulomb") == 0) {
+            double param = 2.0 * M_PI * kernel_parameter * kernel_parameter;
+            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += param * target_q[k];
+
+        } else if (strcmp(kernelName, "yukawa") == 0) {
+            double param = 4.0 * M_PI / kernel_parameter / kernel_parameter;
+            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += param * target_q[k];
+
+        }
+    }
+
+    return;
+}

@@ -27,7 +27,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
                 char *kernelName, double kappa, char *singularityHandling,
                 char *approximationName,
-                int tree_type, double *tEn, double *tpeng, double *time_tree)
+                int tree_type, double *tEn, double *time_tree)
 {
 
     double time_beg = MPI_Wtime();
@@ -487,12 +487,12 @@ void treedriver(struct particles *sources, struct particles *targets,
         Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
                              tree_array->numnodes, tree_array->numnodes);
 //        printf("Made interaction lists.\n");
-        pc_interaction_list_treecode(tree_array, batches,
+        Interaction_PC_Compute(tree_array, batches,
                         local_tree_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
                         clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        tpeng, tEn, interpolationOrder,
+                        tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         tree_array->numnodes, tree_array->numnodes,
                         kernelName, kappa, singularityHandling,
@@ -520,18 +520,21 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
-            pc_interaction_list_treecode(let_tree_array, batches,
-                                    tree_inter_list, direct_inter_list,
-                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
-                                    targets->x, targets->y, targets->z, targets->q,
-                                    let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q, let_clusters->w,
-                                    tpeng, tEn, interpolationOrder,
-                                    let_sources->num, targets->num, let_clusters->num,
-                                    max_batch_approx, max_batch_direct,
-                                    kernelName, kappa, singularityHandling, approximationName);
+            Interaction_PC_Compute(let_tree_array, batches,
+                                   tree_inter_list, direct_inter_list,
+                                   let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
+                                   targets->x, targets->y, targets->z, targets->q,
+                                   let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q, let_clusters->w,
+                                   tEn, interpolationOrder,
+                                   let_sources->num, targets->num, let_clusters->num,
+                                   max_batch_approx, max_batch_direct,
+                                   kernelName, kappa, singularityHandling, approximationName);
 
         }
         
+        Interaction_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
+                                  kernelName, kappa, singularityHandling);
+
         Particles_ReorderTargetsAndPotential(targets, tEn);
     }
     time_tree[7] = MPI_Wtime()-time1; // end time for tree evaluation

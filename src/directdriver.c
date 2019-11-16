@@ -9,23 +9,16 @@
 #include <mpi.h>
 
 #include "array.h"
-#include "globvars.h"
 #include "tools.h"
-
-#include "struct_nodes.h"
 #include "struct_particles.h"
 
-#include "kernels/coulomb.h"
-#include "kernels/yukawa.h"
-#include "kernels/coulomb_singularity_subtraction.h"
-#include "kernels/yukawa_singularity_subtraction.h"
-
-#include "directdriver.h"
+#include "interaction_compute.h"
+#include "particles.h"
 
 
 void directdriver(struct particles *sources, struct particles *targets,
                   char *kernelName, double kernel_parameter, char *singularityHandling,
-                  char *approximationName, double *pointwisePotential, double *totalPotential)
+                  char *approximationName, double *pointwisePotential)
 {
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -45,94 +38,74 @@ void directdriver(struct particles *sources, struct particles *targets,
     double *target_z = targets->z;
     double *target_q = targets->q;
 
+    int numSourcesOnProc[numProcs];
+    MPI_Allgather(&numSources, 1, MPI_INT, numSourcesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
 
-#ifdef OPENACC_ENABLED
-    #pragma acc data copyin(source_x[0:numSources], source_y[0:numSources], source_z[0:numSources], \
-                            source_q[0:numSources], source_w[0:numSources], \
-                            target_x[0:numTargets], target_y[0:numTargets], target_z[0:numTargets], \
-                            target_q[0:numTargets]), copy(pointwisePotential[0:numTargets])
-#endif
-    {
-
-
-/**********************************************************/
-/************** POTENTIAL FROM DIRECT *********************/
-/**********************************************************/
+    MPI_Win win_sources_x, win_sources_y, win_sources_z, win_sources_q, win_sources_w;
+    MPI_Win_create(source_x, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
+    MPI_Win_create(source_y, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
+    MPI_Win_create(source_z, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
+    MPI_Win_create(source_q, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
+    MPI_Win_create(source_w, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
 
 
-    /***************************************/
-    /********* Coulomb *********************/
-    /***************************************/
+    for (int procID = 1; procID < numProcs; ++procID) {
 
-    if (strcmp(kernelName, "coulomb") == 0) {
+        int getFrom = (numProcs+rank-procID) % numProcs;
 
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        struct particles *remote_sources = malloc(sizeof(struct particles));
+        Particles_AllocSources(remote_sources, numSourcesOnProc[getFrom]);
 
-            coulombDirect(numTargets, numSources, 0, 0,
-                    target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
-                    pointwisePotential, 0);
+        MPI_Barrier(MPI_COMM_WORLD);
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_x);
+        MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_y);
+        MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_z);
+        MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_q);
+        MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_w);
 
-            coulombSingularitySubtractionDirect(numTargets, numSources, 0, 0,
-                    target_x, target_y, target_z, target_q,
-                    source_x, source_y, source_z, source_q, source_w,
-                    kernel_parameter, pointwisePotential, 0);
+        MPI_Get(remote_sources->x, numSourcesOnProc[getFrom], MPI_DOUBLE,
+                       getFrom, 0, numSourcesOnProc[getFrom], MPI_DOUBLE, win_sources_x);
+        MPI_Get(remote_sources->y, numSourcesOnProc[getFrom], MPI_DOUBLE,
+                       getFrom, 0, numSourcesOnProc[getFrom], MPI_DOUBLE, win_sources_y);
+        MPI_Get(remote_sources->z, numSourcesOnProc[getFrom], MPI_DOUBLE,
+                       getFrom, 0, numSourcesOnProc[getFrom], MPI_DOUBLE, win_sources_z);
+        MPI_Get(remote_sources->q, numSourcesOnProc[getFrom], MPI_DOUBLE,
+                       getFrom, 0, numSourcesOnProc[getFrom], MPI_DOUBLE, win_sources_q);
+        MPI_Get(remote_sources->w, numSourcesOnProc[getFrom], MPI_DOUBLE,
+                       getFrom, 0, numSourcesOnProc[getFrom], MPI_DOUBLE, win_sources_w);
 
-        }else {
-            printf("Invalid choice of singularityHandling. Exiting. \n");
-            exit(1);
-        }
+        MPI_Barrier(MPI_COMM_WORLD);
 
-    /***************************************/
-    /********* Yukawa **********************/
-    /***************************************/
+        MPI_Win_unlock(getFrom, win_sources_x);
+        MPI_Win_unlock(getFrom, win_sources_y);
+        MPI_Win_unlock(getFrom, win_sources_z);
+        MPI_Win_unlock(getFrom, win_sources_q);
+        MPI_Win_unlock(getFrom, win_sources_w);
 
-    } else if (strcmp(kernelName, "yukawa") == 0) {
+        MPI_Barrier(MPI_COMM_WORLD);
 
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        Interaction_Direct_Compute(remote_sources->x, remote_sources->y, remote_sources->z,
+                                   remote_sources->q, remote_sources->w,
+                                   target_x, target_y, target_z, target_q,
+                                   pointwisePotential, numSources, numTargets,
+                                   kernelName, kernel_parameter, singularityHandling,
+                                   approximationName);
 
-            yukawaDirect(numTargets, numSources, 0, 0,
-                    target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
-                    kernel_parameter, pointwisePotential, 0);
-
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
-
-            yukawaSingularitySubtractionDirect(numTargets, numSources, 0, 0,
-                    target_x, target_y, target_z, target_q,
-                    source_x, source_y, source_z, source_q, source_w,
-                    kernel_parameter, pointwisePotential, 0);
-
-        } else {
-            printf("Invalid choice of singularityHandling. Exiting. \n");
-            exit(1);
-        }
-
-
-    } else {
-        printf("Invalid kernelName. Exiting.\n");
-        exit(1);
+        Particles_FreeSources(remote_sources);
     }
 
-#ifdef OPENACC_ENABLED
-        #pragma acc wait
-#endif
-    } // end acc data region
+    //compute direct
+    Interaction_Direct_Compute(source_x, source_y, source_z, source_q, source_w,
+                               target_x, target_y, target_z, target_q,
+                               pointwisePotential, numSources, numTargets,
+                               kernelName, kernel_parameter, singularityHandling,
+                               approximationName);
 
-    // adding in correction
-    if (strcmp(singularityHandling, "subtraction") == 0) {
-        if (strcmp(kernelName, "coulomb") == 0) {
-            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 2.0*M_PI*kernel_parameter*kernel_parameter*target_q[k];
+    //add correction
+    Interaction_SubtractionPotentialCorrection(pointwisePotential, target_q, numTargets,
+                               kernelName, kernel_parameter, singularityHandling);
 
-        } else if (strcmp(kernelName, "yukawa") == 0) {
-            for (int k = 0; k < numTargets; k++) pointwisePotential[k] += 4.0*M_PI*target_q[k]/kernel_parameter/kernel_parameter;
-
-        }
-    }
-
-    *totalPotential = sum(pointwisePotential, numTargets);
 
     return;
 

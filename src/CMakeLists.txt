@@ -5,10 +5,10 @@ SET(SRCS_TREEDRIVER
     xmalloc.h
     array.h
     globvars.h
-    treedriver.c
-    treedriver.h
     directdriver.c
     directdriver.h
+    treedriver.c
+    treedriver.h
     tree.c
     tree.h
     batches.c

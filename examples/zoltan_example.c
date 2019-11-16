@@ -309,8 +309,9 @@ int main(int argc, char **argv)
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
         directdriver(sources, targets, kernelName, kappa, singularityHandling,
-                     approximationName, potential_direct, &potential_engy_direct);
+                     approximationName, potential_direct);
         time_direct = MPI_Wtime() - time1;
+        potential_engy_direct = sum(potential_direct, targets->num);
     }
 
 
@@ -319,11 +320,12 @@ int main(int argc, char **argv)
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
-               kernelName, kappa, singularityHandling, approximationName, tree_type, potential,
-               &potential_engy, time_tree);
-
+               kernelName, kappa, singularityHandling, approximationName, tree_type,
+               potential, time_tree);
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];
+
+    potential_engy = sum(potential, targets->num);
     
     MPI_Barrier(MPI_COMM_WORLD);
 

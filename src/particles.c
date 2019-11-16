@@ -25,6 +25,21 @@ void Particles_AllocSources(struct particles *sources, int length)
 
 
 
+void Particles_FreeSources(struct particles *sources) 
+{
+	free_vector(sources->x);
+	free_vector(sources->y);
+	free_vector(sources->z);
+	free_vector(sources->q);
+	free_vector(sources->w);
+
+    free(sources);
+
+    return;
+}
+
+
+
 void Particles_ReorderTargetsAndPotential(struct particles *targets, double *tEn)
 {
     int numpars = targets->num;

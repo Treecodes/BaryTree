@@ -167,7 +167,7 @@ int main(int argc, char **argv)
     targets = malloc(sizeof(struct particles));
 
     make_vector(tenergy, numparsTloc);
-	make_vector(denergy, numparsTloc);
+    make_vector(denergy, numparsTloc);
 
     sources->num = numparsSloc;
     make_vector(sources->x, numparsSloc);
@@ -231,37 +231,7 @@ int main(int argc, char **argv)
 
 
     // Set up kernel
-	if       (strcmp(kernelName,"coulomb")==0){
-		if (rank==0) printf("Set kernel to coulombKernel.\n");
-		for (int i=0; i<numparsTloc; i++){
-			tenergy[i]=0.0;
-		}
-
-	}else if (strcmp(kernelName,"yukawa")==0){
-		if (rank==0) printf("Set kernel to yukawaKernel.\n");
-		for (int i=0; i<numparsTloc; i++){
-			tenergy[i]=0.0;
-		}
-
-	}else if (strcmp(kernelName,"coulomb_SS")==0){
-		if (rank==0) printf("Set kernel to coulombKernel_SS.\n");
-		for (int i=0; i<numparsTloc; i++){
-			tenergy[i]=2.0*M_PI*kappa*kappa*targets->q[i];
-		}
-
-
-	}else if (strcmp(kernelName,"yukawa_SS")==0){
-		if (rank==0) printf("Set kernel to yukawaKernel_SS.\n");
-		for (int i=0; i<numparsTloc; i++){
-			tenergy[i]=4.0*M_PI*targets->q[i]/kappa/kappa;  // 4*pi*f_t/k**2
-		}
-
-	}else{
-		if (rank==0) printf("kernelName = %s.\n", kernelName);
-		if (rank==0) printf("Invalid command line argument for kernelName... aborting.\n");
-		return 1;
-	}
-
+    for (int i = 0; i < numparsTloc; i++) tenergy[i] = 0.0;
 
 
 #ifdef OPENACC_ENABLED
@@ -278,7 +248,9 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               kernelName, kappa, singularityHandling, approximationName, 1, tenergy, &tpeng, time_tree);
+               kernelName, kappa, singularityHandling, approximationName, 1, tenergy, time_tree);
+
+    tpeng = sum(tenergy, targets->num);
                
     time_run[1] = MPI_Wtime() - time1;
     time_run[2] = time_run[0] + time_run[1];
@@ -411,7 +383,7 @@ int main(int argc, char **argv)
     }
     
     if (rank == 0) {
-//    	printf("Opening sampout...\n");
+//      printf("Opening sampout...\n");
         fp = fopen(sampout, "a");
         fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%f,%s,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
