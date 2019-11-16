@@ -106,7 +106,7 @@ int main(int argc, char **argv)
     double potential_engy_direct = 0, potential_engy_direct_glob = 0;
 
     /* variables for date-time calculation */
-    double time_run[3], time_tree[9], time_direct;
+    double time_run[3], time_tree[9], time_direct_arr[3], time_direct;
     double time_run_glob[3][3], time_tree_glob[3][9], time_direct_glob[3];
     double time1, time2;
 
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
         directdriver(sources, targets, kernelName, kappa, singularityHandling,
-                     approximationName, potential_direct);
+                     approximationName, potential_direct, time_direct_arr);
         time_direct = MPI_Wtime() - time1;
         potential_engy_direct = sum(potential_direct, targets->num);
     }

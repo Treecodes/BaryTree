@@ -18,7 +18,7 @@
 
 void directdriver(struct particles *sources, struct particles *targets,
                   char *kernelName, double kernel_parameter, char *singularityHandling,
-                  char *approximationName, double *pointwisePotential)
+                  char *approximationName, double *pointwisePotential, double *time_direct)
 {
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
