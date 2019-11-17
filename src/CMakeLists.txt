@@ -28,12 +28,16 @@ SET(SRCS_TREEDRIVER
     struct_nodes.h
     kernels/coulomb.c
     kernels/coulomb.h
+    kernels/coulomb_singularity_subtraction.c
+    kernels/coulomb_singularity_subtraction.h
     kernels/yukawa.c
     kernels/yukawa.h
     kernels/yukawa_singularity_subtraction.c
     kernels/yukawa_singularity_subtraction.h
-    kernels/coulomb_singularity_subtraction.c
-    kernels/coulomb_singularity_subtraction.h)
+    kernels/dcf.c
+    kernels/dcf.h
+    kernels/tcf.c
+    kernels/tcf.h)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED
@@ -43,8 +47,6 @@ SET(SRCS_DIRECT_DISTRIBUTED
     tools.h 
     xmalloc.c
     xmalloc.h
-    direct.c
-    direct.h
     kernels/kernels_direct.h
     kernels/kernels_direct.c)
 
