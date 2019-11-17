@@ -132,7 +132,7 @@ void dcfApproximationHermite(int number_of_targets_in_batch, int number_of_inter
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
-                        cluster_x, cluster_y, cluster_z, cluster_charge, potential, \
+                        cluster_x, cluster_y, cluster_z, potential, \
                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                         cluster_q_dxyz)

@@ -40,14 +40,14 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
     int tree_numnodes = tree_array->numnodes;
     int batch_numnodes = batches->numnodes;
 
-    double *potentialDueToDirect, *potentialDueToApprox;
-    make_vector(potentialDueToDirect, numTargets);
-    make_vector(potentialDueToApprox, numTargets);
+//    double *potentialDueToDirect, *potentialDueToApprox;
+//    make_vector(potentialDueToDirect, numTargets);
+//    make_vector(potentialDueToApprox, numTargets);
 
-    for (int i = 0; i < numTargets; i++) {
-        potentialDueToApprox[i] = 0.0;
-        potentialDueToDirect[i] = 0.0;
-    }
+//    for (int i = 0; i < numTargets; i++) {
+//        potentialDueToApprox[i] = 0.0;
+//        potentialDueToDirect[i] = 0.0;
+//    }
 
     int *ibegs = tree_array->ibeg;
     int *iends = tree_array->iend;
@@ -73,7 +73,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                         tree_inter_list[0:batch_approx_offset*batch_numnodes], \
                         direct_inter_list[0:batch_direct_offset*batch_numnodes], \
                         ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \
-                        copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
+                        copy(pointwisePotential[0:numTargets])
+                        //copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
     {
 
@@ -112,7 +113,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                potentialDueToApprox, streamID);
+                                pointwisePotential, streamID);
+                                //potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
@@ -120,7 +122,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel_parameter, potentialDueToApprox, streamID);
+                                kernel_parameter, pointwisePotential, streamID);
+                                //kernel_parameter, potentialDueToApprox, streamID);
 
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -136,7 +139,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                potentialDueToApprox, streamID);
+                                pointwisePotential, streamID);
+                                //potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
@@ -145,7 +149,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel_parameter, potentialDueToApprox, streamID);
+                                kernel_parameter, pointwisePotential, streamID);
+                                //kernel_parameter, potentialDueToApprox, streamID);
 
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -172,7 +177,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                kernel_parameter, potentialDueToApprox, streamID);
+                                kernel_parameter, pointwisePotential, streamID);
+                                //kernel_parameter, potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
                         
@@ -180,7 +186,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel_parameter, potentialDueToApprox, streamID);
+                                kernel_parameter, pointwisePotential, streamID);
+                                //kernel_parameter, potentialDueToApprox, streamID);
 
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -196,7 +203,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                kernel_parameter, potentialDueToApprox, streamID);
+                                kernel_parameter, pointwisePotential, streamID);
+                                //kernel_parameter, potentialDueToApprox, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
@@ -205,7 +213,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel_parameter, potentialDueToApprox, streamID);
+                                kernel_parameter, pointwisePotential, streamID);
+                                //kernel_parameter, potentialDueToApprox, streamID);
 
                     } else {
                         printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -250,7 +259,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            potentialDueToDirect, streamID);
+                            pointwisePotential, streamID);
+                            //potentialDueToDirect, streamID);
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
@@ -258,7 +268,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel_parameter, potentialDueToDirect, streamID);
+                            kernel_parameter, pointwisePotential, streamID);
+                            //kernel_parameter, potentialDueToDirect, streamID);
 
                 }else {
                     printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -277,7 +288,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel_parameter, potentialDueToDirect, streamID);
+                            kernel_parameter, pointwisePotential, streamID);
+                            //kernel_parameter, potentialDueToDirect, streamID);
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
@@ -285,7 +297,8 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel_parameter, potentialDueToDirect, streamID);
+                            kernel_parameter, pointwisePotential, streamID);
+                            //kernel_parameter, potentialDueToDirect, streamID);
 
                 } else {
                     printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -306,20 +319,20 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
     } // end acc data region
 
 
-    double totalDueToApprox = sum(potentialDueToApprox, numTargets);
-    double totalDueToDirect = sum(potentialDueToDirect, numTargets);
+//    double totalDueToApprox = sum(potentialDueToApprox, numTargets);
+//    double totalDueToDirect = sum(potentialDueToDirect, numTargets);
 //    printf("Total due to initialization = %3.2e\n", totalDueToInitialization);
 //    printf("Total due to direct interactions = %3.2e\n", totalDueToDirect);
 //    printf("Total due to approx interactions = %3.2e\n", totalDueToApprox);
 
-    for (int k = 0; k < numTargets; k++) {
-        pointwisePotential[k] += potentialDueToDirect[k];
-        pointwisePotential[k] += potentialDueToApprox[k];
-    }
+//    for (int k = 0; k < numTargets; k++) {
+//        pointwisePotential[k] += potentialDueToDirect[k];
+//        pointwisePotential[k] += potentialDueToApprox[k];
+//    }
 
 
-    free_vector(potentialDueToDirect);
-    free_vector(potentialDueToApprox);
+//    free_vector(potentialDueToDirect);
+//    free_vector(potentialDueToApprox);
 
     return;
 
