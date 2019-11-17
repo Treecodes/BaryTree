@@ -9,9 +9,6 @@
 #include <mpi.h>
 
 #include "array.h"
-#include "globvars.h"
-#include "tools.h"
-
 #include "struct_nodes.h"
 #include "struct_particles.h"
 
