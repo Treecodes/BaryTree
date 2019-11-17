@@ -141,7 +141,7 @@ static char *test_direct_sum_on_10_particles_per_rank()
     MPI_Barrier(MPI_COMM_WORLD);
     for (int i=0; i<targets->num; i++){
         int iloc = (i+rank*targets->num);
-        double trueValue=0.0;
+        double trueValue=2.0 * M_PI * kappa * kappa * iloc;
         for (int j=0; j<iloc; j++){
             double r = abs(j-iloc)*sqrt(3);
             trueValue += (j - 1.0*iloc*exp(-r*r/kappa/kappa) )/(r);
@@ -201,7 +201,7 @@ static char *test_direct_sum_on_10_particles_per_rank()
     MPI_Barrier(MPI_COMM_WORLD);
     for (int i=0; i<targets->num; i++){
         int iloc = i+rank*targets->num;
-        double trueValue=0.0;
+        double trueValue=4.0 * M_PI / kappa / kappa * iloc;
         for (int j=0; j<iloc; j++){
             double r = abs(j-iloc)*sqrt(3);
             trueValue += (j - iloc)*exp(-kappa*r)/(r);
@@ -347,7 +347,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=2.0 * M_PI * kappa * kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
@@ -405,7 +405,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=4.0 * M_PI / kappa / kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
@@ -467,7 +467,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=2.0 * M_PI * kappa * kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
@@ -527,7 +527,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=4.0 * M_PI / kappa / kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);

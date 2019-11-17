@@ -105,7 +105,7 @@ static char * test_direct_sum_on_10_particles() {
                  potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=2.0 * M_PI * kappa * kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa/kappa) )/(r);
@@ -151,7 +151,7 @@ static char * test_direct_sum_on_10_particles() {
                  potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=4.0 * M_PI / kappa / kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
@@ -297,7 +297,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=2.0 * M_PI * kappa * kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
@@ -359,7 +359,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=4.0 * M_PI / kappa / kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
@@ -426,7 +426,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=2.0 * M_PI * kappa * kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i*exp(-r*r/kappa*kappa) )/(r);
@@ -489,7 +489,7 @@ static char * test_treecode_on_100_particles() {
                potential, time_tree);
 
     for (int i=0; i<targets->num; i++){
-        double trueValue=0.0;
+        double trueValue=4.0 * M_PI / kappa / kappa * i;
         for (int j=0; j<i; j++){
             double r = abs(j-i)*sqrt(3);
             trueValue += (j - i)*exp(-kappa*r)/(r);
