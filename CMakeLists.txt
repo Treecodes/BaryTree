@@ -22,7 +22,7 @@ option(BUILD_TREECODE "build treecode computation executables"                 O
 option(BUILD_DIRECT "build direct computation executables"                     ON)
 option(BUILD_EXAMPLES "build examples with Zoltan"                             ON)
 option(BUILD_TESTS "build tests"                                               ON)
-option(RUN_TESTS_ON_BUILD "run tests on build"                                 ON)
+option(RUN_TESTS_ON_BUILD "run tests on build"                                 OFF)
 
 option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
 option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
@@ -33,8 +33,11 @@ option(ENABLE_CPU_BUILD "build CPU version"                                    O
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 
-if(BUILD_EXAMPLES)
+if(BUILD_EXAMPLES OR BUILD_TESTS)
     find_package(Zoltan REQUIRED)
+    add_library(Zoltan_Interface INTERFACE)
+    target_link_libraries(Zoltan_Interface INTERFACE zoltan)
+    target_include_directories(Zoltan_Interface INTERFACE ${Zoltan_INCLUDE_DIRS})
 endif()
 
 #Some PGI versions seem to require a link flag for OpenMP
@@ -56,7 +59,7 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          -ta=tesla:ccall,cc60)
 
 if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
-    message("GPU build requires PGI compilers! Turning GPU build off.")
+    message(STATUS "GPU build requires PGI compilers! Turning GPU build off.")
     set(ENABLE_GPU_BUILD OFF)
 endif()
 

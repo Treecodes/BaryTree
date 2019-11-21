@@ -1,18 +1,18 @@
 if(BUILD_TESTS AND ENABLE_CPU_BUILD)
    add_executable(tests_cpu serial_tests.c)
-   target_link_libraries(tests_cpu PRIVATE treelib-cpu zoltan)
+   target_link_libraries(tests_cpu PRIVATE treelib-cpu Zoltan_Interface)
    install(TARGETS tests_cpu DESTINATION bin)
 endif()
 
 if(BUILD_TESTS AND ENABLE_CPU_BUILD)
    add_executable(tests_cpu_mpi mpi_tests.c)
-   target_link_libraries(tests_cpu_mpi PRIVATE treelib-cpu zoltan)
+   target_link_libraries(tests_cpu_mpi PRIVATE treelib-cpu Zoltan_Interface)
    install(TARGETS tests_cpu_mpi DESTINATION bin)
 endif()
 
 if(BUILD_TESTS AND ENABLE_GPU_BUILD)
    add_executable(tests_gpu serial_tests.c)
-   target_link_libraries(tests_gpu PRIVATE treelib-gpu zoltan)
+   target_link_libraries(tests_gpu PRIVATE treelib-gpu Zoltan_Interface)
    install(TARGETS tests_gpu DESTINATION bin)
 endif()
 
