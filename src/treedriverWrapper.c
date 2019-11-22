@@ -23,8 +23,8 @@ void treedriverWrapper(int numTargets, int numSources,
 		int order, double theta, int maxparnode, int batch_size) {
 
     int verbose=0;
-	int particleOrder[numTargets];
-	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
+//	int particleOrder[numTargets];
+//	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
 
 	// Assemble the arrays of data into the particle structs.
 	struct particles *sources = NULL;
@@ -37,7 +37,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	targets->y = targetY;
 	targets->z = targetZ;
 	targets->q = targetValue;
-	targets->order = particleOrder;
+//	targets->order = particleOrder;
 
 	sources->num = numSources;
 	sources->x = sourceX;
@@ -45,7 +45,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	sources->z = sourceZ;
 	sources->q = sourceValue;
 	sources->w = sourceWeight;
-	sources->order = particleOrder;
+//	sources->order = particleOrder;
 
 	double time_tree[9];
 	int tree_type = 1;   // particle cluster
