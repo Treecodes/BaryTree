@@ -64,6 +64,25 @@ void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
 } /* END of function setup */
 
 
+void Batches_Free(struct tnode_array *batches)
+{
+
+    free_vector(batches->iend);
+    free_vector(batches->ibeg);
+    free_vector(batches->numpar);
+    free_vector(batches->numApprox);
+    free_vector(batches->numDirect);
+    free_vector(batches->x_mid);
+    free_vector(batches->y_mid);
+    free_vector(batches->z_mid);
+    free_vector(batches->radius);
+    free(batches);
+
+    return;
+
+} /* END of function setup */
+
+
 
 
 void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *particles,

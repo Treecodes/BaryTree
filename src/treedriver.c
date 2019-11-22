@@ -540,6 +540,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (numProcs > 1) {
             Clusters_Free(let_clusters);
             Particles_FreeSources(let_sources);
+            Tree_FreeArray(let_tree_array);
         }
 
 
@@ -553,46 +554,30 @@ void treedriver(struct particles *sources, struct particles *targets,
         time_tree[8] = MPI_Wtime() - time1;
     }
 
-    //time_tree[7] = MPI_Wtime()-time1; // end time for tree evaluation
-
-
     time1 = MPI_Wtime();
 
+    // free tree
     Tree_Free(troot);
 
     // free interaction lists
     free_vector(local_tree_inter_list);
     free_vector(local_direct_inter_list);
 
+    // free remote interaction lists, if they were built
     if (numProcs > 1) {
         if (max_batch_approx > 0) free_vector(tree_inter_list);
         if (max_batch_direct > 0) free_vector(direct_inter_list);
     }
 
-    // free clusters
-//    free_vector(clusters->x);
-//    free_vector(clusters->y);
-//    free_vector(clusters->z);
-//    free_vector(clusters->q);
-//    free_vector(clusters->w);
-//    free(clusters);
-
+    // free clusters;
     Clusters_Free(clusters);
 
-
+    // free tree array
     Tree_FreeArray(tree_array);
 
     // free target batches
-    free_vector(batches->iend);
-    free_vector(batches->ibeg);
-    free_vector(batches->numpar);
-    free_vector(batches->numApprox);
-    free_vector(batches->numDirect);
-    free_vector(batches->x_mid);
-    free_vector(batches->y_mid);
-    free_vector(batches->z_mid);
-    free_vector(batches->radius);
-    free(batches);
+    Batches_Free(batches);
+
     
     time_tree[9] = MPI_Wtime() - time1; //time_cleanup
 
