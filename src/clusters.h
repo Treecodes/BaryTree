@@ -10,4 +10,7 @@ void Clusters_PC_Setup(struct clusters **clusters, struct particles *sources, in
 
 void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, char *singularityHandling);
 
+void Clusters_Free(struct clusters *clusters);
+
+
 #endif /* H_CLUSTERFUNCTIONS_H */

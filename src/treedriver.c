@@ -536,6 +536,12 @@ void treedriver(struct particles *sources, struct particles *targets,
             time_tree[7] = MPI_Wtime() - time1;
         }
 
+        // Free let clusters and sources, if they were used.
+        if (numProcs > 1) {
+            Clusters_Free(let_clusters);
+            Particles_FreeSources(let_sources);
+        }
+
 
         time1 = MPI_Wtime();
         
@@ -564,12 +570,15 @@ void treedriver(struct particles *sources, struct particles *targets,
     }
 
     // free clusters
-    free_vector(clusters->x);
-    free_vector(clusters->y);
-    free_vector(clusters->z);
-    free_vector(clusters->q);
-    free_vector(clusters->w);
-    free(clusters);
+//    free_vector(clusters->x);
+//    free_vector(clusters->y);
+//    free_vector(clusters->z);
+//    free_vector(clusters->q);
+//    free_vector(clusters->w);
+//    free(clusters);
+
+    Clusters_Free(clusters);
+
 
     Tree_FreeArray(tree_array);
 

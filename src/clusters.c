@@ -188,6 +188,19 @@ void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, cha
     return;
 }   /* END of function allocate_cluster */
 
+void Clusters_Free(struct clusters *clusters)
+{
+
+    free_vector(clusters->x);
+    free_vector(clusters->y);
+    free_vector(clusters->z);
+    free_vector(clusters->q);
+    free_vector(clusters->w);
+    free(clusters);
+
+    return;
+}   /* END of function Clusters_Free */
+
 
 
 
