@@ -555,6 +555,9 @@ void treedriver(struct particles *sources, struct particles *targets,
     }
 
     time1 = MPI_Wtime();
+    // free particle order arrays
+    free_vector(targets->order);
+    free_vector(sources->order);
 
     // free tree
     Tree_Free(troot);
