@@ -555,35 +555,27 @@ void treedriver(struct particles *sources, struct particles *targets,
     }
 
     time1 = MPI_Wtime();
-    // free particle order arrays
-    free_vector(targets->order);
-    free_vector(sources->order);
 
-    // free tree
-    Tree_Free(troot);
 
-    // free interaction lists
-    free_vector(local_tree_inter_list);
-    free_vector(local_direct_inter_list);
+    /***********************************************/
+    /***************** Cleanup *********************/
+    /***********************************************/
 
-    // free remote interaction lists, if they were built
-    if (numProcs > 1) {
+    free_vector(targets->order); // free particle order arrays
+    free_vector(sources->order); // free particle order arrays
+    Tree_Free(troot); // free tree
+    free_vector(local_tree_inter_list); // free interaction lists
+    free_vector(local_direct_inter_list); // free interaction lists
+    if (numProcs > 1) { // free remote interaction lists, if they were built
         if (max_batch_approx > 0) free_vector(tree_inter_list);
         if (max_batch_direct > 0) free_vector(direct_inter_list);
     }
+    Clusters_Free(clusters); // free local clusters
+    Tree_FreeArray(tree_array); // free tree array
+    Batches_Free(batches); // free target batches
 
-    // free clusters;
-    Clusters_Free(clusters);
-
-    // free tree array
-    Tree_FreeArray(tree_array);
-
-    // free target batches
-    Batches_Free(batches);
-
-    
     time_tree[9] = MPI_Wtime() - time1; //time_cleanup
-
+    
     MPI_Barrier(MPI_COMM_WORLD);
 
     return;
