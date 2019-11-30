@@ -58,8 +58,6 @@ static int ztn_obj_size(void *data, int num_gid_entries, int num_lid_entries,
 int main(int argc, char **argv)
 {
 
-    double timebeg = MPI_Wtime();
-
     //run parameters
     int N, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison;
     double kappa, theta; 
@@ -84,6 +82,8 @@ int main(int argc, char **argv)
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+    double timebeg = MPI_Wtime();
 
     if (rank == 0) fprintf(stderr,"Beginning BaryTree with %d ranks.\n", numProcs);
 

@@ -25,7 +25,7 @@ option(BUILD_TESTS "build tests"                                               O
 option(RUN_TESTS_ON_BUILD "run tests on build"                                 OFF)
 
 option(BUILD_TREE_LIBRARIES "build tree libraries for use with external codes" ON)
-option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         ON)
+option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         OFF)
 
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
 option(ENABLE_CPU_BUILD "build CPU version"                                    ON)
