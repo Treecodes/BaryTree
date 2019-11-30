@@ -428,8 +428,8 @@ int main(int argc, char **argv)
         }
     }
 
+    double glob_reln2_err, glob_relinf_err, glob_n2_err, glob_inf_err;
     if (run_direct_comparison == 1) {
-        double glob_reln2_err, glob_relinf_err, glob_n2_err, glob_inf_err;
         double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
         double temp;
 
@@ -457,6 +457,67 @@ int main(int argc, char **argv)
             printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);
             printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
         }
+    }
+
+
+    if (rank == 0) {
+        FILE *fp = fopen("out.csv", "a");
+        fprintf(fp, "%d,%d,%f,%d,%d,%s,%f,%s,%s,%d,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e\n",
+            N, order, theta, max_per_leaf, max_per_batch, kernelName, kappa,
+            singularityHandling, approximationName, numProcs, // 1 ends
+
+            time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
+            time_run_glob[2][0]/numProcs,
+
+            time_run_glob[0][1],  time_run_glob[1][1],  // min, max, avg directdriver
+            time_run_glob[2][1]/numProcs,
+
+            time_direct_glob[0][0], time_direct_glob[1][0],     // min, max, avg communicate
+            time_direct_glob[2][0]/numProcs,
+            time_direct_glob[0][1], time_direct_glob[1][1],     // min, max, avg compute local
+            time_direct_glob[2][1]/numProcs,
+            time_direct_glob[0][2], time_direct_glob[1][2],     // min, max, avg compute remote
+            time_direct_glob[2][2]/numProcs,
+            time_direct_glob[0][3], time_direct_glob[1][3],     // min, max, avg correct potential
+            time_direct_glob[2][3]/numProcs, // 2 ends
+
+            time_run_glob[0][2],  time_run_glob[1][2],  // min, max, avg treedriver
+            time_run_glob[2][2]/numProcs,
+
+            time_tree_glob[0][0], time_tree_glob[1][0],     // min, max, avg build local tree
+            time_tree_glob[2][0]/numProcs,
+            time_tree_glob[0][1], time_tree_glob[1][1],     // min, max, avg build local batches
+            time_tree_glob[2][1]/numProcs,
+            time_tree_glob[0][2], time_tree_glob[1][2],     // min, max, avg fill local clusters
+            time_tree_glob[2][2]/numProcs,
+            time_tree_glob[0][3], time_tree_glob[1][3],     // min, max, avg build LET
+            time_tree_glob[2][3]/numProcs,
+            time_tree_glob[0][4], time_tree_glob[1][4],     // min, max, avg build local lists
+            time_tree_glob[2][4]/numProcs, // 3 ends
+
+            time_tree_glob[0][5], time_tree_glob[1][5],     // min, max, avg compute local interations 
+            time_tree_glob[2][5]/numProcs,
+            time_tree_glob[0][6], time_tree_glob[1][6],     // min, max, avg build remote lists
+            time_tree_glob[2][6]/numProcs,
+            time_tree_glob[0][7], time_tree_glob[1][7],     // min, max, avg compute remote interactions
+            time_tree_glob[2][7]/numProcs,
+            time_tree_glob[0][8], time_tree_glob[1][8],     // min, max, avg correct potential
+            time_tree_glob[2][8]/numProcs,
+            time_tree_glob[0][9], time_tree_glob[1][9],     // min, max, avg cleanup
+            time_tree_glob[2][9]/numProcs,
+
+            time_run_glob[0][3],  time_run_glob[1][3],  // min, max, avg total time
+            time_run_glob[2][3]/numProcs, // 4 ends
+
+            potential_engy_direct_glob, potential_engy_glob,
+            fabs(potential_engy_direct_glob - potential_engy_glob),
+            fabs((potential_engy_direct_glob - potential_engy_glob) / potential_engy_direct_glob),
+            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err); // 5 ends
+        fclose(fp);
     }
 
 

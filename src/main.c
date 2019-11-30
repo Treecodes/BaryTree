@@ -393,28 +393,42 @@ int main(int argc, char **argv)
     }
     
     if (rank == 0) {
-//      printf("Opening sampout...\n");
         fp = fopen(sampout, "a");
         fprintf(fp, "%s,%s,%s,%d,%d,%f,%d,%d,%d,%f,%s,%d,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
             sampin1, sampin2, sampin3, numparsS, numparsT, theta, order,
-            maxparnode, batch_size, kappa, kernelName, numProcs, //1 ends
-            time_run_glob[0][0],  time_run_glob[1][0],
+            maxparnode, batch_size, kappa, kernelName, numProcs, // 1 ends
+            time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
             time_run_glob[2][0]/numProcs,
-            time_run_glob[0][1],  time_run_glob[1][1],
+            time_run_glob[0][1],  time_run_glob[1][1],  // min, max, avg treedriver
             time_run_glob[2][1]/numProcs,
-            time_tree_glob[0][0], time_tree_glob[1][0],
+            time_tree_glob[0][0], time_tree_glob[1][0],     // min, max, avg build local tree
             time_tree_glob[2][0]/numProcs,
-            time_tree_glob[0][7], time_tree_glob[1][7],
+            time_tree_glob[0][1], time_tree_glob[1][1],     // min, max, avg build local batches
+            time_tree_glob[2][1]/numProcs,
+            time_tree_glob[0][2], time_tree_glob[1][2],     // min, max, avg fill local clusters
+            time_tree_glob[2][2]/numProcs,
+            time_tree_glob[0][3], time_tree_glob[1][3],     // min, max, avg build LET
+            time_tree_glob[2][3]/numProcs,
+            time_tree_glob[0][4], time_tree_glob[1][4],     // min, max, avg build local lists
+            time_tree_glob[2][4]/numProcs, // 2 ends
+            time_tree_glob[0][5], time_tree_glob[1][5],     // min, max, avg compute local interations 
+            time_tree_glob[2][5]/numProcs,
+            time_tree_glob[0][6], time_tree_glob[1][6],     // min, max, avg build remote lists
+            time_tree_glob[2][6]/numProcs,
+            time_tree_glob[0][7], time_tree_glob[1][7],     // min, max, avg compute remote interactions
             time_tree_glob[2][7]/numProcs,
-            time_tree_glob[0][8], time_tree_glob[1][8],
+            time_tree_glob[0][8], time_tree_glob[1][8],     // min, max, avg correct potential
             time_tree_glob[2][8]/numProcs,
-            time_run_glob[0][2],  time_run_glob[1][2],
-            time_run_glob[2][2]/numProcs, //2 ends
+            time_tree_glob[0][9], time_tree_glob[1][9],     // min, max, avg cleanup
+            time_tree_glob[2][9]/numProcs,
+            time_run_glob[0][2],  time_run_glob[1][2],  // min, max, avg total time
+            time_run_glob[2][2]/numProcs, // 3 ends
             dpengglob, tpengglob, fabs(tpengglob-dpengglob),
             fabs((tpengglob-dpengglob)/dpengglob),
-            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err); //3 ends
+            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err); // 4 ends
         fclose(fp);
     }
     
