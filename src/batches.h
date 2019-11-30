@@ -7,6 +7,8 @@
 void Batches_Alloc(struct tnode_array **batches, double *batch_lim,
                    struct particles *particles, int batch_size);
 
+void Batches_Free(struct tnode_array *batches);
+
 void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *particles,
                    int ibeg, int iend, int maxparnode, double *xyzmm);
 
