@@ -132,20 +132,17 @@ int main(int argc, char **argv)
     t_hashed = m*t_hashed + c;
 //    srand(t_hashed ^ rank);
     srand(1);
+    for (int j = 0; j < rank+1; j++){
+        for (int i = 0; i < N; ++i) {
+            mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            double r = sqrt(mySources.x[i]*mySources.x[i] + mySources.y[i]*mySources.y[i] + mySources.z[i]*mySources.z[i]);
+            mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
 
-    for (int i = 0; i < N; ++i) {
-        mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        double r = sqrt(mySources.x[i]*mySources.x[i] + mySources.y[i]*mySources.y[i] + mySources.z[i]*mySources.z[i]);
-//        mySources.q[i] = exp(-10*r);
-        mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-//        mySources.q[i] = ((double)rand()/(double)(RAND_MAX));
-//        mySources.w[i] = 1.;
-//        mySources.w[i] = (i%5)*1.0;
-        mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-
-        mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+            mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+        }
     }
 
 
