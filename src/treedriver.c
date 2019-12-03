@@ -30,7 +30,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 int tree_type, double *tEn, double *time_tree)
 {
 
-    int verbosity = 0;
+    int verbosity = 1;
 
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -57,6 +57,10 @@ void treedriver(struct particles *sources, struct particles *targets,
     int max_batch_approx = 0;
     int max_batch_direct = 0;
 
+    int totalNumberDirect=0;
+    int totalNumberApprox=0;
+    int totalNumberInteractions=0;
+    int cumulativeNumberInteractions=0;
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
@@ -489,6 +493,12 @@ void treedriver(struct particles *sources, struct particles *targets,
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
 
+        if (verbosity>0){
+            for (int j = 0; j < batches->numnodes; j++){
+                totalNumberApprox += batches->numApprox[j];
+                totalNumberDirect += batches->numDirect[j];
+            }
+        }
         time1 = MPI_Wtime();
 
         Interaction_PC_Compute(tree_array, batches,
@@ -506,12 +516,20 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         // Compute interaction lists based on LET
-
         if (numProcs > 1) {
             time1 = MPI_Wtime();
 
             max_batch_approx = maxval_int(sizeof_batch_approx, batches->numnodes);
             max_batch_direct = maxval_int(sizeof_batch_direct, batches->numnodes);
+
+            // Count number of interactions
+
+            if (verbosity>0){
+                for (int j = 0; j < batches->numnodes; j++){
+                    totalNumberApprox += batches->numApprox[j];
+                    totalNumberDirect += batches->numDirect[j];
+                }
+            }
         
             if (max_batch_approx > 0) make_vector(tree_inter_list, batches->numnodes * max_batch_approx);
             if (max_batch_direct > 0) make_vector(direct_inter_list, batches->numnodes * max_batch_direct);
@@ -555,7 +573,21 @@ void treedriver(struct particles *sources, struct particles *targets,
     }
 
     time1 = MPI_Wtime();
-
+    if (verbosity > 0) {
+        totalNumberInteractions=totalNumberDirect+totalNumberApprox;
+        printf("Interaction information: \n");
+        printf("rank %d: number of direct batch-cluster interactions: %d\n", rank, totalNumberApprox);
+        printf("rank %d: number of approx batch-cluster interactions: %d\n", rank, totalNumberDirect);
+        printf("rank %d:  total number of batch-cluster interactions: %d\n\n", rank, totalNumberInteractions);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (verbosity > 0) {
+        MPI_Reduce(&totalNumberInteractions,&cumulativeNumberInteractions, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        if (rank==0){
+            printf("\nCumulative number of interactions accross all ranks: %d\n\n", cumulativeNumberInteractions);
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     /***********************************************/
     /***************** Cleanup *********************/

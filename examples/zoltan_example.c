@@ -24,6 +24,7 @@ typedef struct{
   double *z;
   double *q;
   double *w;
+  double *b;
 } MESH_DATA;
 
 typedef struct{
@@ -33,6 +34,7 @@ typedef struct{
   double z;
   double q;
   double w;
+  double b;
 } SINGLE_MESH_DATA;
 
 
@@ -125,6 +127,7 @@ int main(int argc, char **argv)
     mySources.z = malloc(N*sizeof(double));
     mySources.q = malloc(N*sizeof(double));
     mySources.w = malloc(N*sizeof(double));
+    mySources.b = malloc(N*sizeof(double)); // load balancing weights
     mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * N);
 
     time_t t = time(NULL);
@@ -142,6 +145,9 @@ int main(int argc, char **argv)
             mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
 
             mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+
+//            mySources.b[i] = exp(-1.5*r); // dummy weighting scheme
+            mySources.b[i] = 1.0; // dummy weighting scheme
         }
     }
 
@@ -154,7 +160,7 @@ int main(int argc, char **argv)
     Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
     Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
     Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
-    Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "0");
+    Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
     Zoltan_Set_Param(zz, "RETURN_LISTS", "ALL");
     Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE"); 
 
@@ -575,6 +581,7 @@ static void get_object_list(void *data, int sizeGID, int sizeLID,
     for (i = 0; i < mesh->numMyPoints; i++) {
         globalID[i] = mesh->myGlobalIDs[i];
         localID[i] = i;
+        obj_wgts[i] = mesh->b[i];
     }
 }
 
@@ -620,6 +627,7 @@ static void ztn_pack(void *data, int num_gid_entries, int num_lid_entries,
     mesh_single->z = mesh->z[(*local_id)];
     mesh_single->q = mesh->q[(*local_id)];
     mesh_single->w = mesh->w[(*local_id)];
+    mesh_single->b = mesh->b[(*local_id)];
     mesh_single->myGlobalID = mesh->myGlobalIDs[(*local_id)];
 
     mesh->myGlobalIDs[(*local_id)] = (ZOLTAN_ID_TYPE)(-1); // Mark local particle as exported
@@ -643,12 +651,14 @@ static void ztn_unpack(void *data, int num_gid_entries,
     mesh->z = (double *)realloc(mesh->z, sizeof(double) * mesh->numMyPoints);
     mesh->q = (double *)realloc(mesh->q, sizeof(double) * mesh->numMyPoints);
     mesh->w = (double *)realloc(mesh->w, sizeof(double) * mesh->numMyPoints);
+    mesh->b = (double *)realloc(mesh->b, sizeof(double) * mesh->numMyPoints);
 
     mesh->x[mesh->numMyPoints-1] = mesh_single->x;
     mesh->y[mesh->numMyPoints-1] = mesh_single->y;
     mesh->z[mesh->numMyPoints-1] = mesh_single->z;
     mesh->q[mesh->numMyPoints-1] = mesh_single->q;
     mesh->w[mesh->numMyPoints-1] = mesh_single->w;
+    mesh->b[mesh->numMyPoints-1] = mesh_single->b;
     mesh->myGlobalIDs[mesh->numMyPoints-1] = mesh_single->myGlobalID;
 
     return;
