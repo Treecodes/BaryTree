@@ -22,7 +22,7 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *outputArray, char *kernelName, double kappa, char *singularityHandling, char *approximationName,
 		int order, double theta, int maxparnode, int batch_size) {
 
-    int verbose=0;
+    int verbosity=0;
 //	int particleOrder[numTargets];
 //	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
 
@@ -59,12 +59,12 @@ void treedriverWrapper(int numTargets, int numSources,
 	}else if (strcmp(singularityHandling,"subtraction")==0){
 
 	    if (strcmp(kernelName,"coulomb")==0){
-	        if (verbose>0) printf("Initializing for coulomb singularity subtraction.\n");
+	        if (verbosity>0) printf("Initializing for coulomb singularity subtraction.\n");
 	        for (int i=0; i<numTargets; i++){
                 outputArray[i]=0.0;
 	        }
         } else if (strcmp(kernelName,"yukawa")==0){
-            if (verbose>0) printf("Initializing for yukawa singularity subtraction.\n");
+            if (verbosity>0) printf("Initializing for yukawa singularity subtraction.\n");
             for (int i=0; i<numTargets; i++){
                 outputArray[i]=0.0;
             }
@@ -82,7 +82,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
 			   kernelName, kappa, singularityHandling, approximationName, tree_type,
-			   outputArray, time_tree);
+			   outputArray, time_tree, verbosity);
 
 //    tpeng = sum(outputArray, targets->num); // this isn't being used, no need to sum the computed potential
 

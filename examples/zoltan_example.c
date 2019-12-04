@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 {
 
     //run parameters
-    int N, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison;
+    int N, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison, verbosity;
     double kappa, theta; 
     char *kernelName = NULL;
     char *singularityHandling = NULL;
@@ -78,6 +78,7 @@ int main(int argc, char **argv)
     approximationName = argv[9];
     tree_type = atoi(argv[10]);
     run_direct_comparison = atoi(argv[11]);
+    verbosity = atoi(argv[12]);
 
 
     int rc, rank, numProcs;
@@ -146,7 +147,9 @@ int main(int argc, char **argv)
 
             mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
 
-//            mySources.b[i] = exp(-1.5*r); // dummy weighting scheme
+//            mySources.b[i] = pow(2,-(3-r*r)); // trial weighting scheme
+//            mySources.b[i] = exp(-0.5*r); // trial weighting scheme
+//            mySources.b[i] = 1.0+1.0/4.0/r; // trial weighting scheme
             mySources.b[i] = 1.0; // dummy weighting scheme
         }
     }
@@ -288,7 +291,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree);
+               potential, time_tree, verbosity);
     time_run[2] = MPI_Wtime() - time1;
     potential_engy = sum(potential, targets->num);
     

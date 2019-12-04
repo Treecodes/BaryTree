@@ -20,6 +20,7 @@ int main(int argc, char **argv)
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     /* runtime parameters */
+    int verbosity=0;
     int numparsS, numparsT, order;
     int maxparnode, batch_size;
     double theta, kappa;
@@ -248,7 +249,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               kernelName, kappa, singularityHandling, approximationName, 1, tenergy, time_tree);
+               kernelName, kappa, singularityHandling, approximationName, 1, tenergy, time_tree, verbosity);
 
     tpeng = sum(tenergy, targets->num);
                

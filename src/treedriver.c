@@ -27,10 +27,11 @@ void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
                 char *kernelName, double kappa, char *singularityHandling,
                 char *approximationName,
-                int tree_type, double *tEn, double *time_tree)
+                int tree_type, double *tEn, double *time_tree,
+                int verbosity)
 {
 
-    int verbosity = 1;
+//    int verbosity = 0;
 
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
