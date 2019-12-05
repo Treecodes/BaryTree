@@ -301,9 +301,9 @@ int main(int argc, char **argv)
 
 
     /* Reducing values to root process */
-    MPI_Reduce(time_tree, &time_tree_glob[0], 10, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[1], 10, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[2], 10, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[0], 12, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[1], 12, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[2], 12, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
     MPI_Reduce(time_run, &time_run_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_run, &time_run_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -423,6 +423,17 @@ int main(int argc, char **argv)
                      time_tree_glob[0][9],          time_tree_glob[0][9] * min_percent,
                      time_tree_glob[1][9],          time_tree_glob[1][9] * max_percent);
         
+        if (numProcs > 1) {
+        printf("((        |....Total setup...........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) ))\n",
+                     time_tree_glob[2][10]/numProcs, time_tree_glob[2][10] * avg_percent,
+                     time_tree_glob[0][10],          time_tree_glob[0][10] * min_percent,
+                     time_tree_glob[1][10],          time_tree_glob[1][10] * max_percent);
+        printf("((        |....Total compute.........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) ))\n\n",
+                     time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent,
+                     time_tree_glob[0][11],          time_tree_glob[0][11] * min_percent,
+                     time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent);
+        }
+        
         printf("               Tree potential energy:  %f\n", potential_engy_glob);
 
         if (run_direct_comparison == 1) {
@@ -471,7 +482,7 @@ int main(int argc, char **argv)
         fprintf(fp, "%d,%d,%f,%d,%d,%s,%f,%s,%s,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
-                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
             N, order, theta, max_per_leaf, max_per_batch, kernelName, kappa,
             singularityHandling, approximationName, numProcs, // 1 ends
@@ -515,6 +526,11 @@ int main(int argc, char **argv)
             time_tree_glob[2][8]/numProcs,
             time_tree_glob[0][9], time_tree_glob[1][9],     // min, max, avg cleanup
             time_tree_glob[2][9]/numProcs,
+
+            time_tree_glob[0][10], time_tree_glob[1][10],   // min, max, avg total setup
+            time_tree_glob[2][10]/numProcs,
+            time_tree_glob[0][11], time_tree_glob[1][11],   // min, max, avg total cleanup
+            time_tree_glob[2][11]/numProcs,
 
             time_run_glob[0][3],  time_run_glob[1][3],  // min, max, avg total time
             time_run_glob[2][3]/numProcs, // 4 ends
