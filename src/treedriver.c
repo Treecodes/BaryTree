@@ -576,7 +576,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         time_tree[8] = MPI_Wtime() - time1;
     }
 
-    time1 = MPI_Wtime();
     if (verbosity > 0) {
         totalNumberInteractions=totalNumberDirect+totalNumberApprox;
         printf("Interaction information: \n");
@@ -603,6 +602,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     /***********************************************/
     /***************** Cleanup *********************/
     /***********************************************/
+    time1 = MPI_Wtime();
 
     free_vector(targets->order); // free particle order arrays
     free_vector(sources->order); // free particle order arrays

@@ -335,123 +335,128 @@ int main(int argc, char **argv)
 
         /* Printing direct and treecode time calculations: */
         printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
-        printf("                                       Avg                           Min                         Max\n");
-        printf("|    Total time......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %9.3e s    (100.00%%) \n",
-                     time_run_glob[2][3]/numProcs, time_run_glob[0][3], time_run_glob[1][3]);
+        printf("                                       Max                           Avg                          Max/Min\n");
+        printf("|    Total time......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
+                     time_run_glob[1][3], time_run_glob[2][3]/numProcs, time_run_glob[1][3]/time_run_glob[0][3]);
         printf("|    |\n");
-        printf("|    |....Pre-process................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Pre-process................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_run_glob[1][0],          time_run_glob[1][0] * max_percent,
                      time_run_glob[2][0]/numProcs, time_run_glob[2][0] * avg_percent,
-                     time_run_glob[0][0],          time_run_glob[0][0] * min_percent,
-                     time_run_glob[1][0],          time_run_glob[1][0] * max_percent);
+                     time_run_glob[1][0]/time_run_glob[0][0]);
 
         if (run_direct_comparison == 1) {
-        printf("|    |....Directdriver...............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Directdriver...............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_run_glob[1][1],          time_run_glob[1][1] * max_percent,
                      time_run_glob[2][1]/numProcs, time_run_glob[2][1] * avg_percent,
-                     time_run_glob[0][1],          time_run_glob[0][1] * min_percent,
-                     time_run_glob[1][1],          time_run_glob[1][1] * max_percent);
+                     time_run_glob[1][1]/time_run_glob[0][1]);
         }
-        printf("|    |....Treedriver.................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n\n\n",
+        printf("|    |....Treedriver.................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n\n",
+                     time_run_glob[1][2],          time_run_glob[1][2] * max_percent,
                      time_run_glob[2][2]/numProcs, time_run_glob[2][2] * avg_percent,
-                     time_run_glob[0][2],          time_run_glob[0][2] * min_percent,
-                     time_run_glob[1][2],          time_run_glob[1][2] * max_percent);
+                     time_run_glob[1][2]/time_run_glob[0][2]);
 
 
         if (run_direct_comparison == 1) {
-        printf("|    Directdriver....................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %9.3e s    (100.00%%) \n",
-                     time_run_glob[2][1]/numProcs, time_run_glob[0][1], time_run_glob[1][1]);
+        printf("|    Directdriver....................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
+                     time_run_glob[1][1], time_run_glob[2][1]/numProcs, time_run_glob[1][1]/time_run_glob[0][1]);
+
         printf("|    |\n");
 
         if (numProcs > 1) {
-        printf("|    |....Communicate................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
-                     time_direct_glob[2][0]/numProcs, time_direct_glob[3][0] * avg_percent_direct,
-                     time_direct_glob[0][0],          time_direct_glob[0][0] * min_percent_direct,
-                     time_direct_glob[1][0],          time_direct_glob[1][0] * max_percent_direct);
+        printf("|    |....Communicate................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_direct_glob[1][0],          time_direct_glob[1][0] * max_percent_direct,
+                     time_direct_glob[2][0]/numProcs, time_direct_glob[2][0] * avg_percent_direct,
+                     time_direct_glob[1][0]/time_direct_glob[0][0]);
         }
 
-        printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_direct_glob[1][2],          time_direct_glob[1][2] * max_percent_direct,
                      time_direct_glob[2][2]/numProcs, time_direct_glob[2][2] * avg_percent_direct,
-                     time_direct_glob[0][2],          time_direct_glob[0][2] * min_percent_direct,
-                     time_direct_glob[1][2],          time_direct_glob[1][2] * max_percent_direct);
+                     time_direct_glob[1][2]/time_direct_glob[0][2]);
 
         if (numProcs > 1) {
-        printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_direct_glob[1][1],          time_direct_glob[1][1] * max_percent_direct,
                      time_direct_glob[2][1]/numProcs, time_direct_glob[2][1] * avg_percent_direct,
-                     time_direct_glob[0][1],          time_direct_glob[0][1] * min_percent_direct,
-                     time_direct_glob[1][1],          time_direct_glob[1][1] * max_percent_direct);
+                     time_direct_glob[1][1]/time_direct_glob[0][1]);
         }
 
-        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n\n\n",
+        if (strcmp(singularityHandling, "subtraction") == 0) {
+        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n\n",
+                     time_direct_glob[1][3],          time_direct_glob[1][3] * max_percent_direct,
                      time_direct_glob[2][3]/numProcs, time_direct_glob[2][3] * avg_percent_direct,
-                     time_direct_glob[0][3],          time_direct_glob[0][3] * min_percent_direct,
-                     time_direct_glob[1][3],          time_direct_glob[1][3] * max_percent_direct);
+                     time_direct_glob[1][3]/time_direct_glob[0][3]);
+        } else {
+        printf("\n\n");
+        }
         }
 
 
-        printf("|    Treedriver......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %9.3e s    (100.00%%) \n",
-                     time_run_glob[2][2]/numProcs, time_run_glob[0][2], time_run_glob[1][2]);
+        printf("|    Treedriver......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
+                     time_run_glob[1][2], time_run_glob[2][2]/numProcs, time_run_glob[1][2]/time_run_glob[0][2]);
         printf("|    |\n");
-        printf("|    |....Build local tree...........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Build local tree...........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][0],          time_tree_glob[1][0] * max_percent_tree,
                      time_tree_glob[2][0]/numProcs, time_tree_glob[2][0] * avg_percent_tree,
-                     time_tree_glob[0][0],          time_tree_glob[0][0] * min_percent_tree,
-                     time_tree_glob[1][0],          time_tree_glob[1][0] * max_percent_tree);
-        printf("|    |....Build local batches........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+                     time_tree_glob[1][0]/time_tree_glob[0][0]);
+        printf("|    |....Build local batches........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][1],          time_tree_glob[1][1] * max_percent_tree,
                      time_tree_glob[2][1]/numProcs, time_tree_glob[2][1] * avg_percent_tree,
-                     time_tree_glob[0][1],          time_tree_glob[0][1] * min_percent_tree,
-                     time_tree_glob[1][1],          time_tree_glob[1][1] * max_percent_tree);
-        printf("|    |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+                     time_tree_glob[1][1]/time_tree_glob[0][1]);
+        printf("|    |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][2],          time_tree_glob[1][2] * max_percent_tree,
                      time_tree_glob[2][2]/numProcs, time_tree_glob[2][2] * avg_percent_tree,
-                     time_tree_glob[0][2],          time_tree_glob[0][2] * min_percent_tree,
-                     time_tree_glob[1][2],          time_tree_glob[1][2] * max_percent_tree);
+                     time_tree_glob[1][2]/time_tree_glob[0][2]);
 
         if (numProcs > 1) {
-        printf("|    |....Build LET..................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Build LET..................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][3],          time_tree_glob[1][3] * max_percent_tree,
                      time_tree_glob[2][3]/numProcs, time_tree_glob[2][3] * avg_percent_tree,
-                     time_tree_glob[0][3],          time_tree_glob[0][3] * min_percent_tree,
-                     time_tree_glob[1][3],          time_tree_glob[1][3] * max_percent_tree);
+                     time_tree_glob[1][3]/time_tree_glob[0][3]);
         }
 
-        printf("|    |....Build local lists..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Build local lists..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][4],          time_tree_glob[1][4] * max_percent_tree,
                      time_tree_glob[2][4]/numProcs, time_tree_glob[2][4] * avg_percent_tree,
-                     time_tree_glob[0][4],          time_tree_glob[0][4] * min_percent_tree,
-                     time_tree_glob[1][4],          time_tree_glob[1][4] * max_percent_tree);
-        printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+                     time_tree_glob[1][4]/time_tree_glob[0][4]);
+        printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][5],          time_tree_glob[1][5] * max_percent_tree,
                      time_tree_glob[2][5]/numProcs, time_tree_glob[2][5] * avg_percent_tree,
-                     time_tree_glob[0][5],          time_tree_glob[0][5] * min_percent_tree,
-                     time_tree_glob[1][5],          time_tree_glob[1][5] * max_percent_tree);
+                     time_tree_glob[1][5]/time_tree_glob[0][5]);
 
         if (numProcs > 1) {
-        printf("|    |....Build remote lists.........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Build remote lists.........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][6],          time_tree_glob[1][6] * max_percent_tree,
                      time_tree_glob[2][6]/numProcs, time_tree_glob[2][6] * avg_percent_tree,
-                     time_tree_glob[0][6],          time_tree_glob[0][6] * min_percent_tree,
-                     time_tree_glob[1][6],          time_tree_glob[1][6] * max_percent_tree);
-        printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+                     time_tree_glob[1][6]/time_tree_glob[0][6]);
+        printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][7],          time_tree_glob[1][7] * max_percent_tree,
                      time_tree_glob[2][7]/numProcs, time_tree_glob[2][7] * avg_percent_tree,
-                     time_tree_glob[0][7],          time_tree_glob[0][7] * min_percent_tree,
-                     time_tree_glob[1][7],          time_tree_glob[1][7] * max_percent_tree);
+                     time_tree_glob[1][7]/time_tree_glob[0][7]);
         }
 
-        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n",
+        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+                     time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree,
                      time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent_tree,
-                     time_tree_glob[0][8],          time_tree_glob[0][8] * min_percent_tree,
-                     time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree);
-        printf("|    |....Cleanup....................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) \n\n",
+                     time_tree_glob[1][8]/time_tree_glob[0][8]);
+        printf("|    |....Cleanup....................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n",
+                     time_tree_glob[1][9],          time_tree_glob[1][9] * max_percent_tree,
                      time_tree_glob[2][9]/numProcs, time_tree_glob[2][9] * avg_percent_tree,
-                     time_tree_glob[0][9],          time_tree_glob[0][9] * min_percent_tree,
-                     time_tree_glob[1][9],          time_tree_glob[1][9] * max_percent_tree);
+                     time_tree_glob[1][9]/time_tree_glob[0][9]);
         
         if (numProcs > 1) {
-        printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) ))\n",
+        printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
+                     time_tree_glob[1][10],          time_tree_glob[1][10] * max_percent_tree,
                      time_tree_glob[2][10]/numProcs, time_tree_glob[2][10] * avg_percent_tree,
-                     time_tree_glob[0][10],          time_tree_glob[0][10] * min_percent_tree,
-                     time_tree_glob[1][10],          time_tree_glob[1][10] * max_percent_tree);
-        printf("((   |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) ))\n",
+                     time_tree_glob[1][10]/time_tree_glob[0][10]);
+        printf("((   |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
+                     time_tree_glob[1][02],          time_tree_glob[1][02] * max_percent_tree,
                      time_tree_glob[2][02]/numProcs, time_tree_glob[2][02] * avg_percent_tree,
-                     time_tree_glob[0][02],          time_tree_glob[0][02] * min_percent_tree,
-                     time_tree_glob[1][02],          time_tree_glob[1][02] * max_percent_tree);
-        printf("((   |....Total compute..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %9.3e s    (%6.2f%%) ))\n\n\n",
+                     time_tree_glob[1][02]/time_tree_glob[0][02]);
+        printf("((   |....Total compute..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n\n\n",
+                     time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree,
                      time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent_tree,
-                     time_tree_glob[0][11],          time_tree_glob[0][11] * min_percent_tree,
-                     time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree);
+                     time_tree_glob[1][11]/time_tree_glob[0][11]);
         }
         
         printf("               Tree potential energy:  %f\n", potential_engy_glob);

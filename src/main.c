@@ -36,8 +36,8 @@ int main(int argc, char **argv)
     double dpengglob = 0, tpengglob = 0;
 
     /* variables for date-time calculation */
-    double time_run[3], time_tree[10], time_direct;
-    double time_run_glob[3][3], time_tree_glob[3][10];
+    double time_run[3], time_tree[12], time_direct;
+    double time_run_glob[3][3], time_tree_glob[3][12];
     double time1, time2;
 
     /* input and output files */
