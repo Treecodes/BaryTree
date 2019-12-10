@@ -202,6 +202,34 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_create(sources->q, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
         MPI_Win_create(sources->w, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
 
+
+        // START LOCAL COMPUTE BEFORE COMMUNICATION
+        make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
+        make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
+        Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
+                             tree_array->numnodes, tree_array->numnodes, interpolationOrder, sizeCheckFactor);
+
+
+
+        if (verbosity>0){
+            for (int j = 0; j < batches->numnodes; j++){
+                totalNumberApprox += batches->numApprox[j];
+                totalNumberDirect += batches->numDirect[j];
+            }
+        }
+
+        Interaction_PC_Compute(tree_array, batches,
+                        local_tree_inter_list, local_direct_inter_list,
+                        sources->x, sources->y, sources->z, sources->q, sources->w,
+                        targets->x, targets->y, targets->z, targets->q,
+                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
+                        tEn, interpolationOrder,
+                        sources->num, targets->num, clusters->num,
+                        tree_array->numnodes, tree_array->numnodes,
+                        kernelName, kappa, singularityHandling,
+                        approximationName);
+
+
         // Perform MPI round robin, filling LET with remote data
         int num_remote_approx_array[numProcs], new_sources_length_array[numProcs];
         int previous_let_clusters_length_array[numProcs], previous_let_sources_length_array[numProcs];
@@ -489,34 +517,34 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         // Local particles
 //MAKE THIS BETTER!
-        make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
-        make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
-        Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
-                             tree_array->numnodes, tree_array->numnodes, interpolationOrder, sizeCheckFactor);
-
-        time_tree[4] = MPI_Wtime() - time1; //time_constructlet
-
-
-        if (verbosity>0){
-            for (int j = 0; j < batches->numnodes; j++){
-                totalNumberApprox += batches->numApprox[j];
-                totalNumberDirect += batches->numDirect[j];
-            }
-        }
-        time1 = MPI_Wtime();
-
-        Interaction_PC_Compute(tree_array, batches,
-                        local_tree_inter_list, local_direct_inter_list,
-                        sources->x, sources->y, sources->z, sources->q, sources->w,
-                        targets->x, targets->y, targets->z, targets->q,
-                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        tEn, interpolationOrder,
-                        sources->num, targets->num, clusters->num,
-                        tree_array->numnodes, tree_array->numnodes,
-                        kernelName, kappa, singularityHandling,
-                        approximationName);
-
-        time_tree[5] = MPI_Wtime() - time1; //time_constructlet
+//        make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
+//        make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
+//        Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
+//                             tree_array->numnodes, tree_array->numnodes, interpolationOrder, sizeCheckFactor);
+//
+//        time_tree[4] = MPI_Wtime() - time1; //time_constructlet
+//
+//
+//        if (verbosity>0){
+//            for (int j = 0; j < batches->numnodes; j++){
+//                totalNumberApprox += batches->numApprox[j];
+//                totalNumberDirect += batches->numDirect[j];
+//            }
+//        }
+//        time1 = MPI_Wtime();
+//
+//        Interaction_PC_Compute(tree_array, batches,
+//                        local_tree_inter_list, local_direct_inter_list,
+//                        sources->x, sources->y, sources->z, sources->q, sources->w,
+//                        targets->x, targets->y, targets->z, targets->q,
+//                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
+//                        tEn, interpolationOrder,
+//                        sources->num, targets->num, clusters->num,
+//                        tree_array->numnodes, tree_array->numnodes,
+//                        kernelName, kappa, singularityHandling,
+//                        approximationName);
+//
+//        time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 
         // Compute interaction lists based on LET
