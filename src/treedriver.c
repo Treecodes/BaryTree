@@ -28,6 +28,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 char *kernelName, double kappa, char *singularityHandling,
                 char *approximationName,
                 int tree_type, double *tEn, double *time_tree,
+                double sizeCheckFactor,
                 int verbosity)
 {
 
@@ -297,7 +298,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
 
             Interaction_MakeListRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
-                                       direct_list, sizeof_batch_approx, sizeof_batch_direct);
+                                       direct_list, sizeof_batch_approx, sizeof_batch_direct, interpolationOrder, sizeCheckFactor);
 
             //MPI_Barrier(MPI_COMM_WORLD);
 
@@ -491,7 +492,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
         make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
         Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
-                             tree_array->numnodes, tree_array->numnodes);
+                             tree_array->numnodes, tree_array->numnodes, interpolationOrder, sizeCheckFactor);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
@@ -530,7 +531,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             if (max_batch_approx > 0) make_vector(tree_inter_list, batches->numnodes * max_batch_approx);
             if (max_batch_direct > 0) make_vector(direct_inter_list, batches->numnodes * max_batch_direct);
             Interaction_MakeList(let_tree_array, batches, tree_inter_list, direct_inter_list,
-                                 max_batch_approx, max_batch_direct);
+                                 max_batch_approx, max_batch_direct, interpolationOrder, sizeCheckFactor);
 
             // Count number of interactions
 

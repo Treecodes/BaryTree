@@ -23,6 +23,7 @@ void treedriverWrapper(int numTargets, int numSources,
 		int order, double theta, int maxparnode, int batch_size) {
 
     int verbosity=0;
+    double sizeCheckFactor=1.0;
 //	int particleOrder[numTargets];
 //	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
 
@@ -82,7 +83,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
 			   kernelName, kappa, singularityHandling, approximationName, tree_type,
-			   outputArray, time_tree, verbosity);
+			   outputArray, time_tree, sizeCheckFactor, verbosity);
 
 //    tpeng = sum(outputArray, targets->num); // this isn't being used, no need to sum the computed potential
 

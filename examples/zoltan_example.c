@@ -61,14 +61,14 @@ int main(int argc, char **argv)
 {
 
     //run parameters
-    int N, tree_type, order, max_per_leaf, max_per_batch, run_direct_comparison, verbosity;
-    double kappa, theta; 
+    int N, tree_type, interpolationOrder, max_per_leaf, max_per_batch, run_direct_comparison, verbosity;
+    double kappa, theta, sizeCheckFactor;
     char *kernelName = NULL;
     char *singularityHandling = NULL;
     char *approximationName = NULL;
 
     N = atoi(argv[1]);
-    order = atoi(argv[2]);
+    interpolationOrder = atoi(argv[2]);
     theta = atof(argv[3]);
     max_per_leaf = atoi(argv[4]);
     max_per_batch = atoi(argv[5]);
@@ -77,8 +77,9 @@ int main(int argc, char **argv)
     singularityHandling = argv[8];
     approximationName = argv[9];
     tree_type = atoi(argv[10]);
-    run_direct_comparison = atoi(argv[11]);
-    verbosity = atoi(argv[12]);
+    sizeCheckFactor=atof(argv[11]);
+    run_direct_comparison = atoi(argv[12]);
+    verbosity = atoi(argv[13]);
 
 
     int rc, rank, numProcs;
@@ -289,9 +290,9 @@ int main(int argc, char **argv)
 
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
-    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
+    treedriver(sources, targets, interpolationOrder, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, sizeCheckFactor, verbosity);
     time_run[2] = MPI_Wtime() - time1;
     potential_engy = sum(potential, targets->num);
     
@@ -509,7 +510,7 @@ int main(int argc, char **argv)
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
-            N, order, theta, max_per_leaf, max_per_batch, kernelName, kappa,
+            N, interpolationOrder, theta, max_per_leaf, max_per_batch, kernelName, kappa,
             singularityHandling, approximationName, numProcs, // 1 ends
 
             time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process

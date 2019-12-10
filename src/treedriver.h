@@ -8,7 +8,7 @@
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
                 char *kernel, double kappa, char *singularityHandling, char *approximationName,
-                int tree_type, double *tEn, double *timetree,
+                int tree_type, double *tEn, double *timetree, double sizeCheckFactor,
                 int verbosity);
 
 #endif /* H_TREEDRIVER_H */

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+
+TREETYPE=1
+THETA=0.8
+CLUSTERSIZE=500
+BATCHSIZE=500
+KAPPA=0.5
+
+APPROXIMATIONNAME=lagrange
+COMPAREDIRECT=0 
+VERBOSITY=0
+
+NP=$1
+
+for ORDER in 6 
+do
+    for VERBOSITY in 0 
+    do
+        for KERNEL in coulomb  
+        do
+            for SINGULARITYHANDLING in skipping #subtraction 
+            do
+                N=$((8400000/$NP)) 
+                echo
+                echo 
+                echo $NP
+                echo $N
+                echo $KERNEL
+                echo $SINGULARITYHANDLING
+                echo $APPROXIMATIONNAME
+                echo
+                mpirun -n $NP zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $SINGULARITYHANDLING $APPROXIMATIONNAME $TREETYPE $COMPAREDIRECT $VERBOSITY
+            done
+        done
+    done   
+done      

@@ -263,7 +263,7 @@ static char * test_treecode_on_100_particles() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
@@ -296,7 +296,7 @@ static char * test_treecode_on_100_particles() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=2.0 * M_PI * kappa * kappa * i;
@@ -328,7 +328,7 @@ static char * test_treecode_on_100_particles() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
@@ -358,7 +358,7 @@ static char * test_treecode_on_100_particles() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=4.0 * M_PI / kappa / kappa * i;
@@ -392,7 +392,7 @@ static char * test_treecode_on_100_particles() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
@@ -425,7 +425,7 @@ static char * test_treecode_on_100_particles() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=2.0 * M_PI * kappa * kappa * i;
@@ -457,7 +457,7 @@ static char * test_treecode_on_100_particles() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=0.0;
@@ -488,7 +488,7 @@ static char * test_treecode_on_100_particles() {
     }
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double trueValue=4.0 * M_PI / kappa / kappa * i;
@@ -615,7 +615,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-coulomb-skipping\n");
@@ -647,7 +647,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-coulomb-subtraction\n");
@@ -677,7 +677,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-yukawa-skipping\n");
@@ -707,7 +707,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-yukawa-subtraction\n");
@@ -738,7 +738,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
     if (verbosity>0) printf("\nhermite-coulomb-skipping finished treecode run.\n");
 
     for (int i=0; i<targets->num; i++){
@@ -770,7 +770,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nhermite-coulomb-subtraction\n");
@@ -800,7 +800,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nhermite-yukawa-skipping\n");
@@ -830,7 +830,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, verbosity);
+               potential, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nhermite-yukawa-subtraction\n");
@@ -961,15 +961,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);
@@ -1007,15 +1007,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);
@@ -1052,15 +1052,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);
@@ -1096,15 +1096,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);
@@ -1140,15 +1140,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);
@@ -1185,15 +1185,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);
@@ -1229,15 +1229,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);
@@ -1273,15 +1273,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential1, time_tree, verbosity);
+               potential1, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential2, time_tree, verbosity);
+               potential2, time_tree, 1.0, verbosity);
 
     treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential3, time_tree, verbosity);
+               potential3, time_tree, 1.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         double err1 = fabs(potential1[i] - potential_direct[i]);

@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     int verbosity=0;
     int numparsS, numparsT, order;
     int maxparnode, batch_size;
-    double theta, kappa;
+    double theta, kappa, sizeCheckFactor;
 
     struct particles *sources = NULL;
     struct particles *targets = NULL;
@@ -114,6 +114,8 @@ int main(int argc, char **argv)
     
     kernelName = argv[13];
     singularityHandling = argv[15];
+    sizeCheckFactor=atof(argv[16]);
+
 
     printf("singularityHandling = %s\n", singularityHandling);
 
@@ -249,7 +251,7 @@ int main(int argc, char **argv)
     time1 = MPI_Wtime();
     
     treedriver(sources, targets, order, theta, maxparnode, batch_size,
-               kernelName, kappa, singularityHandling, approximationName, 1, tenergy, time_tree, verbosity);
+               kernelName, kappa, singularityHandling, approximationName, 1, tenergy, time_tree, sizeCheckFactor, verbosity);
 
     tpeng = sum(tenergy, targets->num);
                
