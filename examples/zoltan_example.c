@@ -586,6 +586,7 @@ int main(int argc, char **argv)
     free(mySources.z);
     free(mySources.q);
     free(mySources.w);
+    free(mySources.b);
     free(mySources.myGlobalIDs);
     free(sources);
 
