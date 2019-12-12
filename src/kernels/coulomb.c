@@ -30,15 +30,23 @@ void coulombDirect(int number_of_targets_in_batch, int number_of_source_points_i
         #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_source_points_in_cluster; j++) {
+#ifdef OPENACC_ENABLED
+            #pragma acc cache(source_x[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster-1], \
+                              source_y[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster-1], \
+                              source_z[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster-1], \
+                              source_charge[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster-1], \
+                              source_weight[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster-1])
+#endif
+
 
             int jj = starting_index_of_source + j;
             double dx = tx - source_x[jj];
             double dy = ty - source_y[jj];
             double dz = tz - source_z[jj];
-            double r  = sqrt(dx*dx + dy*dy + dz*dz);
+            double r2  = dx*dx + dy*dy + dz*dz;
 
-            if (r > DBL_MIN) {
-                temporary_potential += source_charge[jj] * source_weight[jj] / r;
+            if (r2 > DBL_MIN) {
+                temporary_potential += source_charge[jj] * source_weight[jj] / sqrt(r2);
             }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
@@ -82,14 +90,21 @@ void coulombApproximationLagrange(int number_of_targets_in_batch, int number_of_
         #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
+#ifdef OPENACC_ENABLED
+            #pragma acc cache(cluster_x[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster-1], \
+                              cluster_y[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster-1], \
+                              cluster_z[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster-1], \
+                              cluster_charge[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster-1])
+#endif
 
-            double dx = tx - cluster_x[starting_index_of_cluster + j];
-            double dy = ty - cluster_y[starting_index_of_cluster + j];
-            double dz = tz - cluster_z[starting_index_of_cluster + j];
-            double r  = sqrt(dx*dx + dy*dy + dz*dz);
+            int jj = starting_index_of_cluster + j;
+            double dx = tx - cluster_x[jj];
+            double dy = ty - cluster_y[jj];
+            double dz = tz - cluster_z[jj];
+            double r2  = dx*dx + dy*dy + dz*dz;
 
-            if (r > DBL_MIN){
-                temporary_potential += cluster_charge[starting_index_of_cluster + j] / r;
+            if (r2 > DBL_MIN) {
+                temporary_potential += cluster_charge[starting_index_of_cluster + j] / sqrt(r2);
             }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
