@@ -71,7 +71,7 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
                     int ibeg, int iend, int maxparnode,
                     double *xyzmm, int level, int *numnodes, int *numleaves)
 {
-	printf("Entering cp_create_tree_n0.\n");
+    printf("Entering cp_create_tree_n0.\n");
     /*local variables*/
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
     int i, j, loclev, numposchild;
@@ -369,26 +369,25 @@ void Tree_AllocArray(struct tnode_array **new_tree_array, int length)  {
     (*new_tree_array) = malloc(sizeof(struct tnode_array));
     struct tnode_array *tree_array = *new_tree_array;
 
-	tree_array->numnodes = length;
-	make_vector(tree_array->ibeg, length);
-	make_vector(tree_array->iend, length);
-	make_vector(tree_array->numpar, length);
-	make_vector(tree_array->x_mid, length);
-	make_vector(tree_array->y_mid, length);
-	make_vector(tree_array->z_mid, length);
-	make_vector(tree_array->x_min, length);
-	make_vector(tree_array->y_min, length);
-	make_vector(tree_array->z_min, length);
-	make_vector(tree_array->x_max, length);
-	make_vector(tree_array->y_max, length);
-	make_vector(tree_array->z_max, length);
-	make_vector(tree_array->level, length);
-	make_vector(tree_array->cluster_ind, length);
-	make_vector(tree_array->radius, length);
-
-	make_vector(tree_array->num_children, length);
-	make_vector(tree_array->children, 8*length);
-
+    tree_array->numnodes = length;
+    make_vector(tree_array->ibeg, length);
+    make_vector(tree_array->iend, length);
+    make_vector(tree_array->numpar, length);
+    make_vector(tree_array->x_mid, length);
+    make_vector(tree_array->y_mid, length);
+    make_vector(tree_array->z_mid, length);
+    make_vector(tree_array->x_min, length);
+    make_vector(tree_array->y_min, length);
+    make_vector(tree_array->z_min, length);
+    make_vector(tree_array->x_max, length);
+    make_vector(tree_array->y_max, length);
+    make_vector(tree_array->z_max, length);
+    make_vector(tree_array->level, length);
+    make_vector(tree_array->cluster_ind, length);
+    make_vector(tree_array->radius, length);
+    make_vector(tree_array->num_children, length);
+    make_vector(tree_array->children, 8*length);
+    
     return;
 }   /* END of function allocate_tree_array */
 
@@ -397,27 +396,26 @@ void Tree_AllocArray(struct tnode_array **new_tree_array, int length)  {
 
 void Tree_FreeArray(struct tnode_array *tree_array)  {
 
-	free_vector(tree_array->ibeg);
-	free_vector(tree_array->iend);
-	free_vector(tree_array->numpar);
-	free_vector(tree_array->x_mid);
-	free_vector(tree_array->y_mid);
-	free_vector(tree_array->z_mid);
-	free_vector(tree_array->x_min);
-	free_vector(tree_array->y_min);
-	free_vector(tree_array->z_min);
-	free_vector(tree_array->x_max);
-	free_vector(tree_array->y_max);
-	free_vector(tree_array->z_max);
-	free_vector(tree_array->level);
-	free_vector(tree_array->cluster_ind);
-	free_vector(tree_array->radius);
+    free_vector(tree_array->ibeg);
+    free_vector(tree_array->iend);
+    free_vector(tree_array->numpar);
+    free_vector(tree_array->x_mid);
+    free_vector(tree_array->y_mid);
+    free_vector(tree_array->z_mid);
+    free_vector(tree_array->x_min);
+    free_vector(tree_array->y_min);
+    free_vector(tree_array->z_min);
+    free_vector(tree_array->x_max);
+    free_vector(tree_array->y_max);
+    free_vector(tree_array->z_max);
+    free_vector(tree_array->level);
+    free_vector(tree_array->cluster_ind);
+    free_vector(tree_array->radius);
+    free_vector(tree_array->num_children);
+    free_vector(tree_array->children);
 
-	free_vector(tree_array->num_children);
-	free_vector(tree_array->children);
-    
     free(tree_array);
-	tree_array = NULL;
+    tree_array = NULL;
 
     return;
 }   /* END of function allocate_tree_array */
@@ -427,27 +425,27 @@ void Tree_FreeArray(struct tnode_array *tree_array)  {
 
 void Tree_ReallocArray(struct tnode_array *tree_array, int newlength)  {
 
-	tree_array->numnodes = newlength;
-	realloc_vector(tree_array->ibeg, newlength);
-	realloc_vector(tree_array->iend, newlength);
-	realloc_vector(tree_array->numpar, newlength);
-	realloc_vector(tree_array->x_mid, newlength);
-	realloc_vector(tree_array->y_mid, newlength);
-	realloc_vector(tree_array->z_mid, newlength);
-	realloc_vector(tree_array->x_min, newlength);
-	realloc_vector(tree_array->y_min, newlength);
-	realloc_vector(tree_array->z_min, newlength);
-	realloc_vector(tree_array->x_max, newlength);
-	realloc_vector(tree_array->y_max, newlength);
-	realloc_vector(tree_array->z_max, newlength);
-	realloc_vector(tree_array->level, newlength);
-	realloc_vector(tree_array->cluster_ind, newlength);
-	realloc_vector(tree_array->radius, newlength);
+    tree_array->numnodes = newlength;
+    realloc_vector(tree_array->ibeg, newlength);
+    realloc_vector(tree_array->iend, newlength);
+    realloc_vector(tree_array->numpar, newlength);
+    realloc_vector(tree_array->x_mid, newlength);
+    realloc_vector(tree_array->y_mid, newlength);
+    realloc_vector(tree_array->z_mid, newlength);
+    realloc_vector(tree_array->x_min, newlength);
+    realloc_vector(tree_array->y_min, newlength);
+    realloc_vector(tree_array->z_min, newlength);
+    realloc_vector(tree_array->x_max, newlength);
+    realloc_vector(tree_array->y_max, newlength);
+    realloc_vector(tree_array->z_max, newlength);
+    realloc_vector(tree_array->level, newlength);
+    realloc_vector(tree_array->cluster_ind, newlength);
+    realloc_vector(tree_array->radius, newlength);
 
-	realloc_vector(tree_array->num_children, newlength);
-	realloc_vector(tree_array->children, 8*newlength);
+    realloc_vector(tree_array->num_children, newlength);
+    realloc_vector(tree_array->children, 8*newlength);
 
-	return;
+    return;
 
 }   /* END of function allocate_tree_array */
 

@@ -12,5 +12,6 @@ void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, cha
 
 void Clusters_Free(struct clusters *clusters);
 
+void Clusters_Free_Win(struct clusters *clusters);
 
 #endif /* H_CLUSTERFUNCTIONS_H */

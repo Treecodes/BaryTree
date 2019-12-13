@@ -234,7 +234,19 @@ int main(int argc, char **argv)
         exit(0);
     }
 
+    /******************************************************************
+     ** Free the arrays allocated by Zoltan_LB_Partition, and free
+     ** the storage allocated for the Zoltan structure.
+     ******************************************************************/
+
+    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
+                        &importProcs, &importToPart);
+    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, 
+                        &exportProcs, &exportToPart);
+
     if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
+
+
 
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
@@ -244,21 +256,36 @@ int main(int argc, char **argv)
     sources->num = mySources.numMyPoints;
     targets->num = mySources.numMyPoints;
 
-    sources->x = mySources.x;
-    sources->y = mySources.y;
-    sources->z = mySources.z;
-    sources->q = mySources.q;
-    sources->w = mySources.w;
- 
+    //MPI-allocated source arrays for RMA use
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->y));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->z));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->q));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->w));
+    memcpy(sources->x, mySources.x, sources->num * sizeof(double));
+    memcpy(sources->y, mySources.y, sources->num * sizeof(double));
+    memcpy(sources->z, mySources.z, sources->num * sizeof(double));
+    memcpy(sources->q, mySources.q, sources->num * sizeof(double));
+    memcpy(sources->w, mySources.w, sources->num * sizeof(double));
 
-    targets->x = malloc(targets->num*sizeof(double));
-    targets->y = malloc(targets->num*sizeof(double));
-    targets->z = malloc(targets->num*sizeof(double));
-    targets->q = malloc(targets->num*sizeof(double));
-    memcpy(targets->x, mySources.x, targets->num * sizeof(double));
-    memcpy(targets->y, mySources.y, targets->num * sizeof(double));
-    memcpy(targets->z, mySources.z, targets->num * sizeof(double));
-    memcpy(targets->q, mySources.q, targets->num * sizeof(double));
+    //Deallocating arrays used for Zoltan load balancing
+    free(mySources.x);
+    free(mySources.y);
+    free(mySources.z);
+    free(mySources.q);
+    free(mySources.w);
+    free(mySources.b);
+    free(mySources.myGlobalIDs);
+
+    //Making the targets, but just as a copy of sources
+    targets->x = malloc(targets->num * sizeof(double));
+    targets->y = malloc(targets->num * sizeof(double));
+    targets->z = malloc(targets->num * sizeof(double));
+    targets->q = malloc(targets->num * sizeof(double));
+    memcpy(targets->x, sources->x, targets->num * sizeof(double));
+    memcpy(targets->y, sources->y, targets->num * sizeof(double));
+    memcpy(targets->z, sources->z, targets->num * sizeof(double));
+    memcpy(targets->q, sources->q, targets->num * sizeof(double));
 
 
     memset(potential, 0, targets->num * sizeof(double));
@@ -569,25 +596,11 @@ int main(int argc, char **argv)
     }
 
 
-    /******************************************************************
-     ** Free the arrays allocated by Zoltan_LB_Partition, and free
-     ** the storage allocated for the Zoltan structure.
-     ******************************************************************/
-
-    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
-                        &importProcs, &importToPart);
-    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, 
-                        &exportProcs, &exportToPart);
-
-    Zoltan_Destroy(&zz);
-
-    free(mySources.x);
-    free(mySources.y);
-    free(mySources.z);
-    free(mySources.q);
-    free(mySources.w);
-    free(mySources.b);
-    free(mySources.myGlobalIDs);
+    MPI_Free_mem(sources->x);
+    MPI_Free_mem(sources->y);
+    MPI_Free_mem(sources->z);
+    MPI_Free_mem(sources->q);
+    MPI_Free_mem(sources->w);
     free(sources);
 
     free(targets->x);

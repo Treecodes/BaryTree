@@ -436,6 +436,19 @@ void treedriver(struct particles *sources, struct particles *targets,
             Tree_FreeArray(remote_tree_array);
         } //end loop over numProcs
 
+
+        MPI_Win_free(&win_x_mid);
+        MPI_Win_free(&win_y_mid);
+        MPI_Win_free(&win_z_mid);
+        MPI_Win_free(&win_radius);
+        MPI_Win_free(&win_numpar);
+        MPI_Win_free(&win_ibeg);
+        MPI_Win_free(&win_iend);
+        MPI_Win_free(&win_level);
+        MPI_Win_free(&win_children);
+        MPI_Win_free(&win_num_children);
+
+
         if (let_sources_length > 0) Particles_AllocSources(let_sources, let_sources_length);
         if (let_clusters_length > 0) Clusters_Alloc(let_clusters, let_clusters_length,
                                                     approximationName, singularityHandling);
@@ -510,12 +523,25 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         } // end loop over numProcs
 
+
+        MPI_Win_free(&win_clusters_x);
+        MPI_Win_free(&win_clusters_y);
+        MPI_Win_free(&win_clusters_z);
+        MPI_Win_free(&win_clusters_q);
+        MPI_Win_free(&win_clusters_w);
+
+        MPI_Win_free(&win_sources_x);
+        MPI_Win_free(&win_sources_y);
+        MPI_Win_free(&win_sources_z);
+        MPI_Win_free(&win_sources_q);
+        MPI_Win_free(&win_sources_w);
+
         time_tree[3] = MPI_Wtime() - time1;
 
 
+        // Beginning local computation
+        
         time1 = MPI_Wtime();
-
-        // Local particles
 //MAKE THIS BETTER!
         make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
         make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
@@ -642,7 +668,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (max_batch_approx > 0) free_vector(tree_inter_list);
         if (max_batch_direct > 0) free_vector(direct_inter_list);
     }
-    Clusters_Free(clusters); // free local clusters
+    Clusters_Free_Win(clusters); // free local clusters
     Tree_FreeArray(tree_array); // free tree array
     Batches_Free(batches); // free target batches
 
