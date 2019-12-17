@@ -264,7 +264,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             Tree_AllocArray(&remote_tree_array, numNodesOnProc[getFrom]);
 
             // Get remote_tree_array
-            MPI_Barrier(MPI_COMM_WORLD);
+//            MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_y_mid);
@@ -300,7 +300,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Get(remote_tree_array->num_children, numNodesOnProc[getFrom], MPI_INT,
                     getFrom, 0, numNodesOnProc[getFrom], MPI_INT, win_num_children);
             
-            MPI_Barrier(MPI_COMM_WORLD);
+//            MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Win_unlock(getFrom, win_x_mid);
             MPI_Win_unlock(getFrom, win_y_mid);
@@ -313,7 +313,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_children);
             MPI_Win_unlock(getFrom, win_num_children);
             
-            MPI_Barrier(MPI_COMM_WORLD);
+//            MPI_Barrier(MPI_COMM_WORLD);
 
 
 
@@ -437,6 +437,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         } //end loop over numProcs
 
 
+        MPI_Barrier(MPI_COMM_WORLD);
         MPI_Win_free(&win_x_mid);
         MPI_Win_free(&win_y_mid);
         MPI_Win_free(&win_z_mid);
@@ -457,7 +458,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int getFrom = (numProcs+rank-procID) % numProcs;
 
-            MPI_Barrier(MPI_COMM_WORLD);
+//            MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_x);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_y);
@@ -505,7 +506,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                     new_sources_length_array[getFrom], MPI_DOUBLE,
                     getFrom, 0, 1, direct_type[getFrom], win_sources_w);
 
-            MPI_Barrier(MPI_COMM_WORLD);
+//            MPI_Barrier(MPI_COMM_WORLD);
             
             MPI_Win_unlock(getFrom, win_clusters_x);
             MPI_Win_unlock(getFrom, win_clusters_y);
@@ -519,11 +520,12 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_q);
             MPI_Win_unlock(getFrom, win_sources_w);
 
-            MPI_Barrier(MPI_COMM_WORLD);
+//            MPI_Barrier(MPI_COMM_WORLD);
 
         } // end loop over numProcs
 
 
+        MPI_Barrier(MPI_COMM_WORLD);
         MPI_Win_free(&win_clusters_x);
         MPI_Win_free(&win_clusters_y);
         MPI_Win_free(&win_clusters_z);
