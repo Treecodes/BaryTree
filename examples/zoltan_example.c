@@ -67,6 +67,8 @@ int main(int argc, char **argv)
     char *singularityHandling = NULL;
     char *approximationName = NULL;
 
+    int slice = 1;
+
     N = atoi(argv[1]);
     interpolationOrder = atoi(argv[2]);
     theta = atof(argv[3]);
@@ -77,9 +79,11 @@ int main(int argc, char **argv)
     singularityHandling = argv[8];
     approximationName = argv[9];
     tree_type = atoi(argv[10]);
-    sizeCheckFactor=atof(argv[11]);
+    sizeCheckFactor = atof(argv[11]);
     run_direct_comparison = atoi(argv[12]);
     verbosity = atoi(argv[13]);
+
+    if (argc > 14) slice = atoi(argv[14]);
 
 
     int rc, rank, numProcs;
@@ -103,6 +107,7 @@ int main(int argc, char **argv)
 
     struct particles *sources = NULL;
     struct particles *targets = NULL;
+    struct particles *targets_sample = NULL;
     double *potential = NULL, *potential_direct = NULL;
     double potential_engy = 0, potential_engy_glob = 0;
     double potential_engy_direct = 0, potential_engy_direct_glob = 0;
@@ -137,17 +142,17 @@ int main(int argc, char **argv)
     t_hashed = m*t_hashed + c;
 //    srand(t_hashed ^ rank);
     srand(1);
-    for (int j = 0; j < rank+1; j++){
+
+    for (int j = 0; j < rank+1; j++) {
         for (int i = 0; i < N; ++i) {
             mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            double r = sqrt(mySources.x[i]*mySources.x[i] + mySources.y[i]*mySources.y[i] + mySources.z[i]*mySources.z[i]);
             mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-
             mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
 
+            double r = sqrt(mySources.x[i]*mySources.x[i] + mySources.y[i]*mySources.y[i] + mySources.z[i]*mySources.z[i]);
 //            mySources.b[i] = pow(2,-(3-r*r)); // trial weighting scheme
 //            mySources.b[i] = exp(-0.5*r); // trial weighting scheme
 //            mySources.b[i] = 1.0+1.0/4.0/r; // trial weighting scheme
@@ -183,13 +188,6 @@ int main(int argc, char **argv)
     Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &mySources);
     Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
 
-    double x_min = minval(mySources.x, mySources.numMyPoints);
-    double x_max = maxval(mySources.x, mySources.numMyPoints);
-    double y_min = minval(mySources.y, mySources.numMyPoints);
-    double y_max = maxval(mySources.y, mySources.numMyPoints);
-    double z_min = minval(mySources.z, mySources.numMyPoints);
-    double z_max = maxval(mySources.z, mySources.numMyPoints);
-
     rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
                 &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
                 &numGidEntries,  /* Number of integers used for a global ID */
@@ -220,13 +218,6 @@ int main(int argc, char **argv)
         }
     }
 
-    x_min = minval(mySources.x, mySources.numMyPoints);
-    x_max = maxval(mySources.x, mySources.numMyPoints);
-    y_min = minval(mySources.y, mySources.numMyPoints);
-    y_max = maxval(mySources.y, mySources.numMyPoints);
-    z_min = minval(mySources.z, mySources.numMyPoints);
-    z_max = maxval(mySources.z, mySources.numMyPoints);
-
     if (rc != ZOLTAN_OK) {
         printf("Error! Zoltan has failed. Exiting. \n");
         MPI_Finalize();
@@ -247,9 +238,9 @@ int main(int argc, char **argv)
     if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
 
 
-
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
+    targets_sample = malloc(sizeof(struct particles));
     potential = malloc(sizeof(double) * mySources.numMyPoints);
     potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
 
@@ -304,12 +295,33 @@ int main(int argc, char **argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (run_direct_comparison == 1) {
+
+        targets_sample->num = targets->num / slice;
+        targets_sample->x = malloc(targets_sample->num * sizeof(double));
+        targets_sample->y = malloc(targets_sample->num * sizeof(double));
+        targets_sample->z = malloc(targets_sample->num * sizeof(double));
+        targets_sample->q = malloc(targets_sample->num * sizeof(double));
+
+        for (int i = 0; i < targets_sample->num; i++) {
+            targets_sample->x[i] = targets->x[i*slice];
+            targets_sample->y[i] = targets->y[i*slice];
+            targets_sample->z[i] = targets->z[i*slice];
+            targets_sample->q[i] = targets->q[i*slice];
+        }
+
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
-        directdriver(sources, targets, kernelName, kappa, singularityHandling,
+        directdriver(sources, targets_sample, kernelName, kappa, singularityHandling,
                      approximationName, potential_direct, time_direct);
         time_run[1] = MPI_Wtime() - time1;
         potential_engy_direct = sum(potential_direct, targets->num);
+
+        free(targets_sample->x);
+        free(targets_sample->y);
+        free(targets_sample->z);
+        free(targets_sample->q);
+        free(targets_sample);
+
     }
 
 
@@ -503,16 +515,17 @@ int main(int argc, char **argv)
         double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
         double temp;
 
-        for (int j = 0; j < targets->num; ++j) {
-            temp = fabs(potential_direct[j] - potential[j]);
+        for (int j = 0; j < targets->num / slice; j++) {
+
+            temp = fabs(potential_direct[j] - potential[j*slice]);
 
             if (temp >= inferr) inferr = temp;
 
             if (fabs(potential_direct[j]) >= relinferr)
                 relinferr = fabs(potential_direct[j]);
 
-            n2err = n2err + pow(potential_direct[j] - potential[j], 2.0) * fabs(mySources.w[j]);
-            reln2err = reln2err + pow(potential_direct[j], 2.0) * fabs(mySources.w[j]);
+            n2err = n2err + pow(potential_direct[j] - potential[j*slice], 2.0);
+            reln2err = reln2err + pow(potential_direct[j], 2.0);
         }
 
         MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
