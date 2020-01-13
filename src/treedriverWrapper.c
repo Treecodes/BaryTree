@@ -24,6 +24,12 @@ void treedriverWrapper(int numTargets, int numSources,
 
     int verbosity=0;
     double sizeCheckFactor=1.0;
+    if (strcmp(approximationName,"lagrange")==0){
+        sizeCheckFactor=1.0;
+    }else if (strcmp(approximationName,"hermite")==0){
+        sizeCheckFactor=4.0;
+    }
+
 //	int particleOrder[numTargets];
 //	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
 
@@ -53,6 +59,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	double tpeng = 0;
 
 	// Initialize the potential
+	printf("singularityHandling = %s\n", singularityHandling);
 	if (strcmp(singularityHandling,"skipping")==0){
 	    for (int i=0; i<numTargets; i++){
             outputArray[i]=0.0;
@@ -80,17 +87,28 @@ void treedriverWrapper(int numTargets, int numSources,
 
 
 	// Call the treedriver
+    printf("In wrapper, sources->x exist before call to treedriver? %1.3e\n", sources->x[3]);
+    printf("In wrapper, sourceX exist before call to treedriver? %1.3e\n", sourceX[3]);
+    MPI_Barrier(MPI_COMM_WORLD);
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
 			   kernelName, kappa, singularityHandling, approximationName, tree_type,
 			   outputArray, time_tree, sizeCheckFactor, verbosity);
+	MPI_Barrier(MPI_COMM_WORLD);
+
 
 //    tpeng = sum(outputArray, targets->num); // this isn't being used, no need to sum the computed potential
 
     // free the particle structs (but not the member arrays themselves, which already existed before the call to treedriverwrapper and need to persist)
-	free(sources);
-	free(targets);
 
+	printf("In wrapper, sources->x still exist after call to treedriver? %1.3e\n", sources->x[3]);
+    printf("In wrapper, sourceX still exist after call to treedriver? %1.3e\n", sourceX[3]);
+
+//    MPI_Barrier(MPI_COMM_WORLD);
+//    free(sources);
+//	free(targets);
+//	MPI_Barrier(MPI_COMM_WORLD);
+//    printf("In wrapper, sourceX still exist after call to free? %1.3e\n", sourceX[3]);  // sourceX still exists.  sources->x no longer exists.
+//    MPI_Barrier(MPI_COMM_WORLD);
 	return;
-
 }
