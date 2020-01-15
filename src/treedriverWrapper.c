@@ -40,18 +40,36 @@ void treedriverWrapper(int numTargets, int numSources,
 	targets = malloc(sizeof(struct particles));
 
 	targets->num = numTargets;
-	targets->x = targetX;
-	targets->y = targetY;
-	targets->z = targetZ;
-	targets->q = targetValue;
+	targets->x = malloc(targets->num*sizeof(double));
+    targets->y = malloc(targets->num*sizeof(double));
+    targets->z = malloc(targets->num*sizeof(double));
+    targets->q = malloc(targets->num*sizeof(double));
+    memcpy(targets->x, targetX, targets->num*sizeof(double));
+    memcpy(targets->y, targetY, targets->num*sizeof(double));
+    memcpy(targets->z, targetZ, targets->num*sizeof(double));
+    memcpy(targets->q, targetValue, targets->num*sizeof(double));
+//	targets->x = targetX;
+//	targets->y = targetY;
+//	targets->z = targetZ;
+//	targets->q = targetValue;
 //	targets->order = particleOrder;
 
 	sources->num = numSources;
-	sources->x = sourceX;
-	sources->y = sourceY;
-	sources->z = sourceZ;
-	sources->q = sourceValue;
-	sources->w = sourceWeight;
+	sources->x = malloc(sources->num*sizeof(double));
+    sources->y = malloc(sources->num*sizeof(double));
+    sources->z = malloc(sources->num*sizeof(double));
+    sources->q = malloc(sources->num*sizeof(double));
+    sources->w = malloc(sources->num*sizeof(double));
+    memcpy(sources->x, sourceX, sources->num*sizeof(double));
+    memcpy(sources->y, sourceY, sources->num*sizeof(double));
+    memcpy(sources->z, sourceZ, sources->num*sizeof(double));
+    memcpy(sources->q, sourceValue, sources->num*sizeof(double));
+    memcpy(sources->w, sourceWeight, sources->num*sizeof(double));
+//	sources->x = sourceX;
+//	sources->y = sourceY;
+//	sources->z = sourceZ;
+//	sources->q = sourceValue;
+//	sources->w = sourceWeight;
 //	sources->order = particleOrder;
 
 	double time_tree[9];
@@ -59,7 +77,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	double tpeng = 0;
 
 	// Initialize the potential
-	printf("singularityHandling = %s\n", singularityHandling);
+//	printf("singularityHandling = %s\n", singularityHandling);
 	if (strcmp(singularityHandling,"skipping")==0){
 	    for (int i=0; i<numTargets; i++){
             outputArray[i]=0.0;
@@ -87,8 +105,8 @@ void treedriverWrapper(int numTargets, int numSources,
 
 
 	// Call the treedriver
-    printf("In wrapper, sources->x exist before call to treedriver? %1.3e\n", sources->x[3]);
-    printf("In wrapper, sourceX exist before call to treedriver? %1.3e\n", sourceX[3]);
+//    printf("In wrapper, sources->x exist before call to treedriver? %1.3e\n", sources->x[3]);
+//    printf("In wrapper, sourceX exist before call to treedriver? %1.3e\n", sourceX[3]);
     MPI_Barrier(MPI_COMM_WORLD);
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
@@ -101,8 +119,8 @@ void treedriverWrapper(int numTargets, int numSources,
 
     // free the particle structs (but not the member arrays themselves, which already existed before the call to treedriverwrapper and need to persist)
 
-	printf("In wrapper, sources->x still exist after call to treedriver? %1.3e\n", sources->x[3]);
-    printf("In wrapper, sourceX still exist after call to treedriver? %1.3e\n", sourceX[3]);
+//	printf("In wrapper, sources->x still exist after call to treedriver? %1.3e\n", sources->x[3]);
+//    printf("In wrapper, sourceX still exist after call to treedriver? %1.3e\n", sourceX[3]);
 
 //    MPI_Barrier(MPI_COMM_WORLD);
 //    free(sources);

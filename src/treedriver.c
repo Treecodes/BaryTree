@@ -678,7 +678,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     time_tree[10] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6]; //total setup time
     time_tree[11] = time_tree[5] + time_tree[7]; // total compute time
     
-//    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
 
     return;
 } /* END function treecode */
