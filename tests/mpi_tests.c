@@ -911,7 +911,7 @@ static char * test_treecodewrapper_on_1_target_10000_sources() {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-    int N=10000;
+    int N=50000;
     int verbosity=0;
 
     struct particles *sources = NULL;
@@ -965,7 +965,7 @@ static char * test_treecodewrapper_on_1_target_10000_sources() {
     }
 
 
-    int max_per_leaf=100;
+    int max_per_leaf=20;
     int max_per_batch=2;
     double time_tree[9];
 
@@ -975,8 +975,8 @@ static char * test_treecodewrapper_on_1_target_10000_sources() {
     int tree_type=1; // particle-cluster
     double kappa=0.5;
 
-    int order=4;
-    double theta=0.8;
+    int order=2;
+    double theta=0.6;
 
     /***********************************************/
     /******************* Test 1 ********************/
@@ -986,7 +986,7 @@ static char * test_treecodewrapper_on_1_target_10000_sources() {
 
     verbosity=0;
 
-    approximationName="lagrange";
+    approximationName="hermite";
     kernelName="coulomb";
     singularityHandling="skipping";
     printf("singularityHandling = %s\n", singularityHandling);
@@ -996,6 +996,12 @@ static char * test_treecodewrapper_on_1_target_10000_sources() {
         potential_direct[i]=0.0;
     }
 
+    directdriver(sources, targets, kernelName, kappa, singularityHandling, approximationName,
+                 potential_direct, time_tree);
+
+    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
+               kernelName, kappa, singularityHandling, approximationName, tree_type,
+               potential, time_tree, 1.0, verbosity);
     MPI_Barrier(MPI_COMM_WORLD);
     printf("Does sources exist before wrapper call?  %1.3e\n", sources->x[3]); fflush(stdout);
     MPI_Barrier(MPI_COMM_WORLD);
@@ -1007,27 +1013,18 @@ static char * test_treecodewrapper_on_1_target_10000_sources() {
                       targets->x,targets->y,targets->z,targets->q,
                       sources->x, sources->y, sources->z, sources->q, sources->w,
                       potentialWrapper, kernelName, kappa, singularityHandling, approximationName,
-                      order, theta, max_per_leaf, max_per_batch);
+                      order, theta, max_per_leaf, max_per_batch, verbosity);
     MPI_Barrier(MPI_COMM_WORLD);
     printf("Does targets still exist after wrapper call?  %1.3e\n", targets->x[3]);
-    printf("Does sources still exist after wrapper call?  %1.3e\n", sources->x[3]);
+//    printf("Does sources still exist after wrapper call?  %1.3e\n", sources->x[3]);
     MPI_Barrier(MPI_COMM_WORLD);
-
-
-
-    directdriver(sources, targets, kernelName, kappa, singularityHandling, approximationName,
-                 potential_direct, time_tree);
-
-    treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
-               kernelName, kappa, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
-
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-coulomb-skipping\n");
         if (verbosity>0) printf("direct: %1.8e\n", potential_direct[i]);
         if (verbosity>0) printf("approx: %1.8e\n", potential[i]);
         if (verbosity>0) printf("absolute error: %1.2e\n", fabs(potential[i] - potential_direct[i]));
         if (verbosity>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
+        printf("treecode error: %1.3e\n", fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]));
         mu_assert("TEST FAILED: Treecode potential not close to direct:", \
                 fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-4);
         printf("wrapper error: %1.3e\n", fabs(potential[i] - potentialWrapper[i])/fabs(potential[i]));
