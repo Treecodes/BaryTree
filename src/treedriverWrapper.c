@@ -20,9 +20,8 @@ void treedriverWrapper(int numTargets, int numSources,
 		double *targetX, double *targetY, double *targetZ, double *targetValue,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
 		double *outputArray, char *kernelName, double kappa, char *singularityHandling, char *approximationName,
-		int order, double theta, int maxparnode, int batch_size) {
+		int order, double theta, int maxparnode, int batch_size, int verbosity) {
 
-    int verbosity=0;
     double sizeCheckFactor=1.0;
     if (strcmp(approximationName,"lagrange")==0){
         sizeCheckFactor=1.0;
