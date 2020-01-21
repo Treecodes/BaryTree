@@ -68,6 +68,7 @@ int main(int argc, char **argv)
     char *approximationName = NULL;
 
     int slice = 1;
+    int chunk = 8000000;
 
     N = atoi(argv[1]);
     interpolationOrder = atoi(argv[2]);
@@ -102,7 +103,7 @@ int main(int argc, char **argv)
     ZOLTAN_ID_PTR importGlobalGids, importLocalGids, exportGlobalGids, exportLocalGids; 
     int *importProcs, *importToPart, *exportProcs, *exportToPart;
     int *parts;
-    MESH_DATA mySources;
+    MESH_DATA *mySources;
 
 
     struct particles *sources = NULL;
@@ -127,125 +128,183 @@ int main(int argc, char **argv)
 
     time1 = MPI_Wtime();
 
-    mySources.numGlobalPoints = N * numProcs;
-    mySources.numMyPoints = N;
-    mySources.x = malloc(N*sizeof(double));
-    mySources.y = malloc(N*sizeof(double));
-    mySources.z = malloc(N*sizeof(double));
-    mySources.q = malloc(N*sizeof(double));
-    mySources.w = malloc(N*sizeof(double));
-    mySources.b = malloc(N*sizeof(double)); // load balancing weights
-    mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * N);
+    int remainder = N % chunk;
+    int num_full_chunks = N / chunk;
+    int extra_chunk = 0;
+    if (remainder > 0) extra_chunk = 1;
+    int num_total_chunks = num_full_chunks + extra_chunk;
 
     time_t t = time(NULL);
     unsigned t_hashed = (unsigned) t;
     t_hashed = m*t_hashed + c;
 //    srand(t_hashed ^ rank);
-    srand(1);
 
-    for (int j = 0; j < rank+1; j++) {
+    // run through rand so we can start at the right place
+    for (int j = 0; j < rank; j++) {
         for (int i = 0; i < N; ++i) {
-            mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+            rand();
+            rand();
+            rand();
+            rand();
+            rand();
+        }
+    }
 
-            double r = sqrt(mySources.x[i]*mySources.x[i] + mySources.y[i]*mySources.y[i] + mySources.z[i]*mySources.z[i]);
+    mySources = malloc(num_total_chunks * sizeof(MESH_DATA));
+
+    for (int j = 0; j < num_full_chunks; ++j) {
+
+        mySources[j].numGlobalPoints = chunk * numProcs;
+        mySources[j].numMyPoints = chunk;
+        mySources[j].x = malloc(chunk * sizeof(double));
+        mySources[j].y = malloc(chunk * sizeof(double));
+        mySources[j].z = malloc(chunk * sizeof(double));
+        mySources[j].q = malloc(chunk * sizeof(double));
+        mySources[j].w = malloc(chunk * sizeof(double));
+        mySources[j].b = malloc(chunk * sizeof(double)); // load balancing weights
+        mySources[j].myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * chunk);
+
+        for (int i = 0; i < chunk; ++i) {
+            mySources[j].x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[j].y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[j].z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[j].q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[j].w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[j].myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*chunk + i);
+
+//            double r = sqrt(mySources[j].x[i]*mySources[j].x[i]
+//                     + mySources[j].y[i]*mySources[j].y[i] + mySources[j].z[i]*mySources[j].z[i]);
 //            mySources.b[i] = pow(2,-(3-r*r)); // trial weighting scheme
 //            mySources.b[i] = exp(-0.5*r); // trial weighting scheme
 //            mySources.b[i] = 1.0+1.0/4.0/r; // trial weighting scheme
-            mySources.b[i] = 1.0; // dummy weighting scheme
+            mySources[j].b[i] = 1.0; // dummy weighting scheme
+        }
+    }
+
+    if (extra_chunk) {
+
+        mySources[num_total_chunks].numGlobalPoints = remainder * numProcs;
+        mySources[num_total_chunks].numMyPoints = remainder;
+        mySources[num_total_chunks].x = malloc(remainder * sizeof(double));
+        mySources[num_total_chunks].y = malloc(remainder * sizeof(double));
+        mySources[num_total_chunks].z = malloc(remainder * sizeof(double));
+        mySources[num_total_chunks].q = malloc(remainder * sizeof(double));
+        mySources[num_total_chunks].w = malloc(remainder * sizeof(double));
+        mySources[num_total_chunks].b = malloc(remainder * sizeof(double)); // load balancing weights
+        mySources[num_total_chunks].myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * remainder);
+
+        for (int i = 0; i < remainder; ++i) {
+            mySources[num_total_chunks].x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[num_total_chunks].y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[num_total_chunks].z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[num_total_chunks].q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[num_total_chunks].w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources[num_total_chunks].myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*remainder + i);
+
+//            double r = sqrt(mySources[j].x[i]*mySources[j].x[i]
+//                     + mySources[j].y[i]*mySources[j].y[i] + mySources[j].z[i]*mySources[j].z[i]);
+//            mySources.b[i] = pow(2,-(3-r*r)); // trial weighting scheme
+//            mySources.b[i] = exp(-0.5*r); // trial weighting scheme
+//            mySources.b[i] = 1.0+1.0/4.0/r; // trial weighting scheme
+            mySources[num_total_chunks].b[i] = 1.0; // dummy weighting scheme
         }
     }
 
 
-    zz = Zoltan_Create(MPI_COMM_WORLD);
+    for (int j = 0; j < num_total_chunks; ++j) {
 
-    /* General parameters */
-
-    Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
-    Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
-    Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
-    Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
-    Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
-    Zoltan_Set_Param(zz, "RETURN_LISTS", "ALL");
-    Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE"); 
-
-    /* RCB parameters */
-
-    Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
-    Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
-
-    /* Query functions, to provide geometry to Zoltan */
-
-    Zoltan_Set_Num_Obj_Fn(zz, get_number_of_objects, &mySources);
-    Zoltan_Set_Obj_List_Fn(zz, get_object_list, &mySources);
-    Zoltan_Set_Num_Geom_Fn(zz, get_num_geometry, &mySources);
-    Zoltan_Set_Geom_Multi_Fn(zz, get_geometry_list, &mySources);
-    Zoltan_Set_Obj_Size_Fn(zz, ztn_obj_size, &mySources);
-    Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &mySources);
-    Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
-
-    rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
-                &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
-                &numGidEntries,  /* Number of integers used for a global ID */
-                &numLidEntries,  /* Number of integers used for a local ID */
-                &numImport,      /* Number of vertices to be sent to me */
-                &importGlobalGids,  /* Global IDs of vertices to be sent to me */
-                &importLocalGids,   /* Local IDs of vertices to be sent to me */
-                &importProcs,    /* Process rank for source of each incoming vertex */
-                &importToPart,   /* New partition for each incoming vertex */
-                &numExport,      /* Number of vertices I must send to other processes*/
-                &exportGlobalGids,  /* Global IDs of the vertices I must send */
-                &exportLocalGids,   /* Local IDs of the vertices I must send */
-                &exportProcs,    /* Process to which I send each of the vertices */
-                &exportToPart);  /* Partition to which each vertex will belong */
-
-    int i = 0;
-    while (i < mySources.numMyPoints) {
-        if ((int)mySources.myGlobalIDs[i] < 0) {
-            mySources.x[i] = mySources.x[mySources.numMyPoints-1];
-            mySources.y[i] = mySources.y[mySources.numMyPoints-1];
-            mySources.z[i] = mySources.z[mySources.numMyPoints-1];
-            mySources.q[i] = mySources.q[mySources.numMyPoints-1];
-            mySources.w[i] = mySources.w[mySources.numMyPoints-1];
-            mySources.myGlobalIDs[i] = mySources.myGlobalIDs[mySources.numMyPoints-1];
-            mySources.numMyPoints--; 
-        } else {
-          i++;
+        zz = Zoltan_Create(MPI_COMM_WORLD);
+    
+        /* General parameters */
+    
+        Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
+        Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
+        Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
+        Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
+        Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
+        Zoltan_Set_Param(zz, "RETURN_LISTS", "ALL");
+        Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE"); 
+    
+        /* RCB parameters */
+    
+        Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
+        Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
+    
+        /* Query functions, to provide geometry to Zoltan */
+    
+        Zoltan_Set_Num_Obj_Fn(zz, get_number_of_objects, &mySources[j]);
+        Zoltan_Set_Obj_List_Fn(zz, get_object_list, &mySources[j]);
+        Zoltan_Set_Num_Geom_Fn(zz, get_num_geometry, &mySources[j]);
+        Zoltan_Set_Geom_Multi_Fn(zz, get_geometry_list, &mySources[j]);
+        Zoltan_Set_Obj_Size_Fn(zz, ztn_obj_size, &mySources[j]);
+        Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &mySources[j]);
+        Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources[j]);
+    
+        rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
+                    &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
+                    &numGidEntries,  /* Number of integers used for a global ID */
+                    &numLidEntries,  /* Number of integers used for a local ID */
+                    &numImport,      /* Number of vertices to be sent to me */
+                    &importGlobalGids,  /* Global IDs of vertices to be sent to me */
+                    &importLocalGids,   /* Local IDs of vertices to be sent to me */
+                    &importProcs,    /* Process rank for source of each incoming vertex */
+                    &importToPart,   /* New partition for each incoming vertex */
+                    &numExport,      /* Number of vertices I must send to other processes*/
+                    &exportGlobalGids,  /* Global IDs of the vertices I must send */
+                    &exportLocalGids,   /* Local IDs of the vertices I must send */
+                    &exportProcs,    /* Process to which I send each of the vertices */
+                    &exportToPart);  /* Partition to which each vertex will belong */
+    
+        int i = 0;
+        while (i < mySources[j].numMyPoints) {
+            if ((int)mySources[j].myGlobalIDs[i] < 0) {
+                mySources[j].x[i] = mySources[j].x[mySources[j].numMyPoints-1];
+                mySources[j].y[i] = mySources[j].y[mySources[j].numMyPoints-1];
+                mySources[j].z[i] = mySources[j].z[mySources[j].numMyPoints-1];
+                mySources[j].q[i] = mySources[j].q[mySources[j].numMyPoints-1];
+                mySources[j].w[i] = mySources[j].w[mySources[j].numMyPoints-1];
+                mySources[j].myGlobalIDs[i] = mySources[j].myGlobalIDs[mySources[j].numMyPoints-1];
+                mySources[j].numMyPoints--; 
+            } else {
+              i++;
+            }
         }
-    }
-
-    if (rc != ZOLTAN_OK) {
-        printf("Error! Zoltan has failed. Exiting. \n");
-        MPI_Finalize();
+    
+        if (rc != ZOLTAN_OK) {
+            printf("Error! Zoltan has failed. Exiting. \n");
+            MPI_Finalize();
+            Zoltan_Destroy(&zz);
+            exit(0);
+        }
+    
+        /******************************************************************
+         ** Free the arrays allocated by Zoltan_LB_Partition, and free
+         ** the storage allocated for the Zoltan structure.
+         ******************************************************************/
+    
+        Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
+                            &importProcs, &importToPart);
+        Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, 
+                            &exportProcs, &exportToPart);
         Zoltan_Destroy(&zz);
-        exit(0);
     }
 
-    /******************************************************************
-     ** Free the arrays allocated by Zoltan_LB_Partition, and free
-     ** the storage allocated for the Zoltan structure.
-     ******************************************************************/
-
-    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
-                        &importProcs, &importToPart);
-    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, 
-                        &exportProcs, &exportToPart);
 
     if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
 
+    int final_num_sources = 0;
+    for (int j = 0; j < num_total_chunks; ++j)
+        final_num_sources += mySources[j].numMyPoints;
 
     sources = malloc(sizeof(struct particles));
     targets = malloc(sizeof(struct particles));
     targets_sample = malloc(sizeof(struct particles));
-    potential = malloc(sizeof(double) * mySources.numMyPoints);
-    potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
 
-    sources->num = mySources.numMyPoints;
-    targets->num = mySources.numMyPoints;
+    potential = malloc(sizeof(double) * final_num_sources);
+    potential_direct = malloc(sizeof(double) * final_num_sources);
+
+    sources->num = final_num_sources;
+    targets->num = final_num_sources;
 
     //MPI-allocated source arrays for RMA use
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
@@ -253,20 +312,28 @@ int main(int argc, char **argv)
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->z));
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->q));
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->w));
-    memcpy(sources->x, mySources.x, sources->num * sizeof(double));
-    memcpy(sources->y, mySources.y, sources->num * sizeof(double));
-    memcpy(sources->z, mySources.z, sources->num * sizeof(double));
-    memcpy(sources->q, mySources.q, sources->num * sizeof(double));
-    memcpy(sources->w, mySources.w, sources->num * sizeof(double));
+
+    int offset = 0;
+    for (int j = 0; j < num_total_chunks; ++j) {
+        memcpy(&(sources->x[offset]), mySources[j].x, mySources[j].numMyPoints * sizeof(double));
+        memcpy(&(sources->y[offset]), mySources[j].y, mySources[j].numMyPoints * sizeof(double));
+        memcpy(&(sources->z[offset]), mySources[j].z, mySources[j].numMyPoints * sizeof(double));
+        memcpy(&(sources->q[offset]), mySources[j].q, mySources[j].numMyPoints * sizeof(double));
+        memcpy(&(sources->w[offset]), mySources[j].w, mySources[j].numMyPoints * sizeof(double));
+        offset += mySources[j].numMyPoints;
+    }
 
     //Deallocating arrays used for Zoltan load balancing
-    free(mySources.x);
-    free(mySources.y);
-    free(mySources.z);
-    free(mySources.q);
-    free(mySources.w);
-    free(mySources.b);
-    free(mySources.myGlobalIDs);
+    for (int j = 0; j < num_total_chunks; ++j) {
+        free(mySources[j].x);
+        free(mySources[j].y);
+        free(mySources[j].z);
+        free(mySources[j].q);
+        free(mySources[j].w);
+        free(mySources[j].b);
+        free(mySources[j].myGlobalIDs);
+    }
+    free(mySources);
 
     //Making the targets, but just as a copy of sources
     targets->x = malloc(targets->num * sizeof(double));
