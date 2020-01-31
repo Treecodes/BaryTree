@@ -6,6 +6,7 @@
 
 #include "array.h"
 #include "struct_particles.h"
+#include "particles.h"
 #include "tools.h"
 #include "tree.h"
 
@@ -43,6 +44,7 @@ void treedriverWrapper(int numTargets, int numSources,
     targets->y = malloc(targets->num*sizeof(double));
     targets->z = malloc(targets->num*sizeof(double));
     targets->q = malloc(targets->num*sizeof(double));
+    targets->w = malloc(targets->num*sizeof(double));  // need to allocated targets->w so that the free_particles function doesn't segfault.
     memcpy(targets->x, targetX, targets->num*sizeof(double));
     memcpy(targets->y, targetY, targets->num*sizeof(double));
     memcpy(targets->z, targetZ, targets->num*sizeof(double));
@@ -127,5 +129,10 @@ void treedriverWrapper(int numTargets, int numSources,
 //	MPI_Barrier(MPI_COMM_WORLD);
 //    printf("In wrapper, sourceX still exist after call to free? %1.3e\n", sourceX[3]);  // sourceX still exists.  sources->x no longer exists.
 //    MPI_Barrier(MPI_COMM_WORLD);
+
+
+    Particles_FreeSources(sources);
+    Particles_FreeSources(targets);
+
 	return;
 }
