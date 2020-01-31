@@ -31,11 +31,10 @@ if __name__=="__main__":
     approximationName = "lagrange"
     singularityHandling = "subtraction"
     verbosity=0
-    N=200000
+    N=10000
     
     # set number of iterations for the treecode wrapper calls
     n=10
-    print("Page size = ", resource.getpagesize())
     print('Initial memory usage before creating arrays: ', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss )
     # initialize some random data
     RHO = np.random.rand(N)

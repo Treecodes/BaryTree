@@ -57,7 +57,6 @@ def callTreedriver(numTargets, numSources,
     '''
 
    
-    global _treecodeRoutines
     c_double_p = ctypes.POINTER(ctypes.c_double)
 
     
