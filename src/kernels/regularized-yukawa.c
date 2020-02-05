@@ -40,12 +40,11 @@ void regularizedYukawaDirect(int number_of_targets_in_batch, int number_of_sourc
             double dx = tx - source_x[starting_index_of_source + j];
             double dy = ty - source_y[starting_index_of_source + j];
             double dz = tz - source_z[starting_index_of_source + j];
-            double r  = sqrt(dx*dx + dy*dy + dz*dz + epsilon*epsilon);
+            double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential += source_charge[starting_index_of_source + j]
-                                     * source_weight[starting_index_of_source + j] * exp(-kappa*r) / r;
-            }
+
+            temporary_potential += source_charge[starting_index_of_source + j]
+                                 * source_weight[starting_index_of_source + j] * exp(-kappa*r) / sqrt(r*r + epsilon*epsilon);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -95,11 +94,9 @@ void regularizedYukawaApproximationLagrange(int number_of_targets_in_batch, int 
             double dx = tx - cluster_x[starting_index_of_cluster + j];
             double dy = ty - cluster_y[starting_index_of_cluster + j];
             double dz = tz - cluster_z[starting_index_of_cluster + j];
-            double r  = sqrt(dx*dx + dy*dy + dz*dz + epsilon*epsilon);
+            double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN){
-                temporary_potential += cluster_charge[starting_index_of_cluster + j] * exp(-kappa*r) /r;
-            }
+            temporary_potential += cluster_charge[starting_index_of_cluster + j] * exp(-kappa*r) /sqrt(r*r + epsilon*epsilon);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
