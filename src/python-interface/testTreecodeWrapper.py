@@ -27,11 +27,15 @@ if __name__=="__main__":
     theta=0.8
     treecodeOrder=7
     gaussianAlpha=1.0
-    kernelName = "coulomb"
     approximationName = "lagrange"
     singularityHandling = "subtraction"
     verbosity=0
     N=10000
+    
+    kernelName = "regularized-yukawa"
+    numberOfKernelParameters=2
+    kernelParameters=np.array([0.5, 0.1])
+
     
     # set number of iterations for the treecode wrapper calls
     n=10
@@ -53,7 +57,7 @@ if __name__=="__main__":
         output = treecodeWrappers.callTreedriver(  N, N, 
                                                    X, Y, Z, RHO, 
                                                    X, Y, Z, RHO, W,
-                                                   kernelName, gaussianAlpha, singularityHandling, approximationName,
+                                                   kernelName, numberOfKernelParameters, kernelParameters, singularityHandling, approximationName,
                                                    treecodeOrder, theta, maxParNode, batchSize, GPUpresent, verbosity)
     
         newMemory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss

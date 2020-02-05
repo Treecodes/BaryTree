@@ -33,6 +33,7 @@ void treedriverWrapper(int numTargets, int numSources,
     }
 
     struct kernel *kernel = NULL;
+    kernel = malloc(sizeof (struct kernel));
     AllocateKernelStruct(kernel, numberOfParameters, kernelName);
     SetKernelParameters(kernel, kernelParameters);
 
@@ -85,31 +86,11 @@ void treedriverWrapper(int numTargets, int numSources,
 	double tpeng = 0;
 
 	// Initialize the potential
-//	printf("singularityHandling = %s\n", singularityHandling);
-	if (strcmp(singularityHandling,"skipping")==0){
-	    for (int i=0; i<numTargets; i++){
-            outputArray[i]=0.0;
-        }
-	}else if (strcmp(singularityHandling,"subtraction")==0){
 
-	    if (strcmp(kernelName,"coulomb")==0){
-	        if (verbosity>0) printf("Initializing for coulomb singularity subtraction.\n");
-	        for (int i=0; i<numTargets; i++){
-                outputArray[i]=0.0;
-	        }
-        } else if (strcmp(kernelName,"yukawa")==0){
-            if (verbosity>0) printf("Initializing for yukawa singularity subtraction.\n");
-            for (int i=0; i<numTargets; i++){
-                outputArray[i]=0.0;
-            }
-	    } else{
-	        printf("Not sure how to initialize outputArray.  What is the kernel?\n");
-	        exit(-1);
-	    }
-	} else {
-	    printf("Not sure how to initialize outputArray.  How is singularity being handled?\n");
-        exit(-1);
-	}
+	for (int i=0; i<numTargets; i++){
+            outputArray[i]=0.0;
+    }
+
 
 
 	// Call the treedriver

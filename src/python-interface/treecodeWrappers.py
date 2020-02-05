@@ -28,7 +28,7 @@ try:
     _gpu_treecodeRoutines.treedriverWrapper.argtypes = ( ctypes.c_int, ctypes.c_int,
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
-            ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_char), ctypes.c_double,  ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char),
+            ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_char), ctypes.c_int, ctypes.POINTER(ctypes.c_double),  ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char),
             ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_int ) 
 except NameError:
     print("Could not set argtypes of _gpu_treecodeRoutines")
@@ -37,7 +37,7 @@ try:
     _cpu_treecodeRoutines.treedriverWrapper.argtypes = ( ctypes.c_int, ctypes.c_int,
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
-            ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_char), ctypes.c_double,  ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char),
+            ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_char), ctypes.c_int, ctypes.POINTER(ctypes.c_double),  ctypes.POINTER(ctypes.c_char), ctypes.POINTER(ctypes.c_char),
             ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_int ) 
 except NameError:
     print("Could not set argtypes of _cpu_treecodeRoutines")
@@ -50,7 +50,7 @@ print('_treecodeRoutines set.')
 def callTreedriver(numTargets, numSources, 
                    targetX, targetY, targetZ, targetValue, 
                    sourceX, sourceY, sourceZ, sourceValue, sourceWeight,
-                   kernelName, kappa, singularityHandling, approximationName, order, theta, maxParNode, batchSize, GPUversion, verbosity):
+                   kernelName, numberOfKernelParameters, kernelParameters, singularityHandling, approximationName, order, theta, maxParNode, batchSize, GPUversion, verbosity):
     '''
     python function which creates pointers to the arrays and calls treedriverWrapper.
     returns the results array.
@@ -71,6 +71,8 @@ def callTreedriver(numTargets, numSources,
     sourceZ_p = sourceZ.ctypes.data_as(c_double_p)  
     sourceValue_p =  sourceValue.ctypes.data_as(c_double_p)
     sourceWeight_p = sourceWeight.ctypes.data_as(c_double_p)
+
+    kernelParameters_p = kernelParameters.ctypes.data_as(c_double_p)
     
     resultArray = np.zeros(numTargets)
     resultArray_p = resultArray.ctypes.data_as(c_double_p)
@@ -83,14 +85,14 @@ def callTreedriver(numTargets, numSources,
         _gpu_treecodeRoutines.treedriverWrapper(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
                                                      targetX_p, targetY_p, targetZ_p, targetValue_p,
                                                      sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
-                                                     resultArray_p, b_kernelName, ctypes.c_double(kappa),
+                                                     resultArray_p, b_kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
                                                      b_singularityHandling, b_approximationName,
                                                      ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_int(verbosity) )
     elif GPUversion==False: # No gpu present
         _cpu_treecodeRoutines.treedriverWrapper(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
                                                      targetX_p, targetY_p, targetZ_p, targetValue_p,
                                                      sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
-                                                     resultArray_p, b_kernelName, ctypes.c_double(kappa),
+                                                     resultArray_p, b_kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
                                                      b_singularityHandling, b_approximationName,
                                                      ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_int(verbosity) ) 
     else: 
