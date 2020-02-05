@@ -1,1 +1,5 @@
 /CMakeCache.txt
+/interactive-testing
+/job-submitter
+/mapping
+/slurm-submitter.py

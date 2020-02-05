@@ -5,6 +5,8 @@
 #include <string.h>
 
 #include "array.h"
+#include "struct_kernel.h"
+#include "kernel.h"
 #include "struct_particles.h"
 #include "particles.h"
 #include "tools.h"
@@ -20,7 +22,7 @@
 void treedriverWrapper(int numTargets, int numSources,
 		double *targetX, double *targetY, double *targetZ, double *targetValue,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
-		double *outputArray, char *kernelName, double kappa, char *singularityHandling, char *approximationName,
+		double *outputArray, char *kernelName, int numberOfParameters, double * kernelParameters, char *singularityHandling, char *approximationName,
 		int order, double theta, int maxparnode, int batch_size, int verbosity) {
 
     double sizeCheckFactor=1.0;
@@ -29,6 +31,11 @@ void treedriverWrapper(int numTargets, int numSources,
     }else if (strcmp(approximationName,"hermite")==0){
         sizeCheckFactor=4.0;
     }
+
+    struct kernel *kernel = NULL;
+    AllocateKernelStruct(kernel, numberOfParameters, kernelName);
+    SetKernelParameters(kernel, kernelParameters);
+
 
 //	int particleOrder[numTargets];
 //	for (int i=0; i<numTargets; i++){ particleOrder[i]=i;}  // should order start at 0 or 1?  Looks like 0, as in main.c
@@ -111,7 +118,7 @@ void treedriverWrapper(int numTargets, int numSources,
     MPI_Barrier(MPI_COMM_WORLD);
 	treedriver(sources, targets,
 			   order, theta, maxparnode, batch_size,
-			   kernelName, kappa, singularityHandling, approximationName, tree_type,
+			   kernel, singularityHandling, approximationName, tree_type,
 			   outputArray, time_tree, sizeCheckFactor, verbosity);
 	MPI_Barrier(MPI_COMM_WORLD);
 
@@ -133,6 +140,7 @@ void treedriverWrapper(int numTargets, int numSources,
 
     Particles_FreeSources(sources);
     Particles_FreeSources(targets);
+    FreeKernelStruct(kernel);
 
 	return;
 }

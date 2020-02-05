@@ -11,13 +11,14 @@
 #include "array.h"
 #include "tools.h"
 #include "struct_particles.h"
+#include "struct_kernel.h"
 
 #include "interaction_compute.h"
 #include "particles.h"
 
 
 void directdriver(struct particles *sources, struct particles *targets,
-                  char *kernelName, double kernel_parameter, char *singularityHandling,
+                  struct kernel *kernel, double kernel_parameter, char *singularityHandling,
                   char *approximationName, double *pointwisePotential, double *time_direct)
 {
     int rank, numProcs, ierr;
@@ -106,7 +107,7 @@ void directdriver(struct particles *sources, struct particles *targets,
                                    remote_sources->q, remote_sources->w,
                                    target_x, target_y, target_z, target_q,
                                    pointwisePotential, numSources, numTargets,
-                                   kernelName, kernel_parameter, singularityHandling,
+                                   kernel, singularityHandling,
                                    approximationName);
 
         Particles_FreeSources(remote_sources);
@@ -120,7 +121,7 @@ void directdriver(struct particles *sources, struct particles *targets,
     Interaction_Direct_Compute(source_x, source_y, source_z, source_q, source_w,
                                target_x, target_y, target_z, target_q,
                                pointwisePotential, numSources, numTargets,
-                               kernelName, kernel_parameter, singularityHandling,
+                               kernel, singularityHandling,
                                approximationName);
 
     time_direct[2] = MPI_Wtime() - time1;
@@ -129,7 +130,7 @@ void directdriver(struct particles *sources, struct particles *targets,
     time1 = MPI_Wtime();
     //add correction
     Interaction_SubtractionPotentialCorrection(pointwisePotential, target_q, numTargets,
-                               kernelName, kernel_parameter, singularityHandling);
+                               kernel, singularityHandling);
 
     time_direct[3] = MPI_Wtime() - time1;
 

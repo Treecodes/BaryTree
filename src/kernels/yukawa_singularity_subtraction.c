@@ -2,14 +2,18 @@
 #include <float.h>
 #include <stdio.h>
 
+#include "../struct_kernel.h"
+
 #include "yukawa_singularity_subtraction.h"
 
 void yukawaSingularitySubtractionDirect(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
         int starting_index_of_target, int starting_index_of_source,
         double *target_x, double *target_y, double *target_z, double *target_charge,
         double *source_x, double *source_y, double *source_z, double *source_charge, double * source_weight,
-        double kernel_parameter, double *potential, int gpu_async_stream_id)
+        struct kernel *kernel, double *potential, int gpu_async_stream_id)
 {
+
+    double kernel_parameter=kernel->parameters[0];
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
@@ -60,8 +64,9 @@ void yukawaSingularitySubtractionApproximationLagrange(int number_of_targets_in_
         int number_of_interpolation_points_in_cluster, int starting_index_of_target, int starting_index_of_cluster,
         double *target_x, double *target_y, double *target_z, double *target_charge,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
-        double kernel_parameter, double *potential, int gpu_async_stream_id)
+        struct kernel *kernel, double *potential, int gpu_async_stream_id)
 {
+    double kernel_parameter=kernel->parameters[0];
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
@@ -113,8 +118,10 @@ void yukawaSingularitySubtractionApproximationHermite(int number_of_targets_in_b
         int starting_index_of_cluster, int total_number_interpolation_points,
         double *target_x, double *target_y, double *target_z, double *target_charge,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
-        double kernel_parameter, double *potential, int gpu_async_stream_id)
+        struct kernel *kernel, double *potential, int gpu_async_stream_id)
 {
+
+    double kernel_parameter=kernel->parameters[0];
     double kernel_parameter2 = kernel_parameter * kernel_parameter;
     double kernel_parameter3 = kernel_parameter * kernel_parameter2;
 
@@ -221,8 +228,9 @@ void yukawaSingularitySubtractionApproximationHermite(int number_of_targets_in_b
 
 
 void yukawaSingularitySubtractionCorrection(double *potential, double *target_q,
-                                            int numTargets, double kernel_parameter)
+                                            int numTargets, struct kernel *kernel)
 {
+    double kernel_parameter=kernel->parameters[0];
     double param = 4.0 * M_PI / kernel_parameter / kernel_parameter;
     for (int i = 0; i < numTargets; i++) potential[i] += param * target_q[i];
 

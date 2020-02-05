@@ -2,12 +2,13 @@
 #define H_TREEDRIVER_H
 
 #include "struct_particles.h"
+#include "struct_kernel.h"
 
 /* declaration of primary treecode driver */
 
 void treedriver(struct particles *sources, struct particles *targets,
                 int order, double theta, int maxparnode, int batch_size,
-                char *kernel, double kappa, char *singularityHandling, char *approximationName,
+                struct kernel *kernel, char *singularityHandling, char *approximationName,
                 int tree_type, double *tEn, double *timetree, double sizeCheckFactor,
                 int verbosity);
 

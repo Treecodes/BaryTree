@@ -25,7 +25,7 @@
 
 void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
-                char *kernelName, double kappa, char *singularityHandling,
+                struct kernel *kernel, char *singularityHandling,
                 char *approximationName,
                 int tree_type, double *tEn, double *time_tree,
                 double sizeCheckFactor,
@@ -65,6 +65,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     int cumulativeNumberInteractions=0;
     int maxNumberInteractions=0;
     int minNumberInteractions=0;
+
+
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
@@ -201,33 +203,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_create(sources->z, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
         MPI_Win_create(sources->q, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
         MPI_Win_create(sources->w, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
-
-
-//        // START LOCAL COMPUTE BEFORE COMMUNICATION
-//        make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
-//        make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
-//        Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
-//                             tree_array->numnodes, tree_array->numnodes, interpolationOrder, sizeCheckFactor);
-//
-//
-//
-//        if (verbosity>0){
-//            for (int j = 0; j < batches->numnodes; j++){
-//                totalNumberApprox += batches->numApprox[j];
-//                totalNumberDirect += batches->numDirect[j];
-//            }
-//        }
-//
-//        Interaction_PC_Compute(tree_array, batches,
-//                        local_tree_inter_list, local_direct_inter_list,
-//                        sources->x, sources->y, sources->z, sources->q, sources->w,
-//                        targets->x, targets->y, targets->z, targets->q,
-//                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-//                        tEn, interpolationOrder,
-//                        sources->num, targets->num, clusters->num,
-//                        tree_array->numnodes, tree_array->numnodes,
-//                        kernelName, kappa, singularityHandling,
-//                        approximationName);
 
 
         // Perform MPI round robin, filling LET with remote data
@@ -569,7 +544,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         tEn, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         tree_array->numnodes, tree_array->numnodes,
-                        kernelName, kappa, singularityHandling,
+                        kernel, singularityHandling,
                         approximationName);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
@@ -610,7 +585,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                    tEn, interpolationOrder,
                                    let_sources->num, targets->num, let_clusters->num,
                                    max_batch_approx, max_batch_direct,
-                                   kernelName, kappa, singularityHandling, approximationName);
+                                   kernel, singularityHandling, approximationName);
 
             time_tree[7] = MPI_Wtime() - time1;
         }
@@ -626,7 +601,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
         
         Interaction_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
-                                  kernelName, kappa, singularityHandling);
+                                  kernel, singularityHandling);
 
         Particles_ReorderTargetsAndPotential(targets, tEn);
 

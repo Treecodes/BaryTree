@@ -1,22 +1,51 @@
 #!/bin/bash
+#SBATCH --partition=standard
+#SBATCH --account=krasny1
+
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --mem-per-cpu=4g
+#SBATCH --time=00:10:00
+
+#SBATCH --job-name="testing"
+#SBATCH --output="testing--%j.%N.out"
 
 
 
+TREETYPE=1
 THETA=0.8
-ORDER=7
-CLUSTERSIZE=100
-BATCHSIZE=100
-KERNEL=0
-KAPPA=0.0
+CLUSTERSIZE=500
+BATCHSIZE=500
+NUMBEROFKERNELPARAMETERS=1
+KERNELPARAMETER1=0.5
 
+APPROXIMATIONNAME=lagrange
+COMPAREDIRECT=1
+VERBOSITY=0
+SIZECHECKFACTOR=1.0
+COMPAREEVERY=100
 
-
-COMPAREDIRECT=0
-for N in 10000 
+NP=$1
+N=10000
+for ORDER in 6 
 do
-	for NP in 1 
-	do
-    	echo $NP
-    	mpirun -n ${NP} tree-distributed-cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $KAPPA $COMPAREDIRECT
-	done  
-done    
+    for VERBOSITY in 1
+    do
+        for KERNEL in coulomb 
+        do
+            for SINGULARITYHANDLING in skipping #subtraction 
+            do
+                echo
+                echo 
+                echo $NP
+                echo $N
+                echo $KERNEL
+                echo $SINGULARITYHANDLING
+                echo $APPROXIMATIONNAME
+                echo
+                srun -n 1 zoltan_example_cpu $N $ORDER $THETA $CLUSTERSIZE $BATCHSIZE $KERNEL $SINGULARITYHANDLING $APPROXIMATIONNAME $TREETYPE $SIZECHECKFACTOR \
+                                                 $COMPAREDIRECT $VERBOSITY $COMPAREEVERY $NUMBEROFKERNELPARAMETERS $KERNELPARAMETER1
+            done
+        done
+    done   
+done      

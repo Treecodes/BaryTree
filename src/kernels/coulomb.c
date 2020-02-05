@@ -2,13 +2,14 @@
 #include <float.h>
 #include <stdio.h>
 
+#include "../struct_kernel.h"
 #include "coulomb.h"
 
 void coulombDirect(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
         int starting_index_of_target, int starting_index_of_source,
         double *target_x, double *target_y, double *target_z,
         double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
-        double *potential, int gpu_async_stream_id)
+        struct kernel *kernel, double *potential, int gpu_async_stream_id)
 {
 
 #ifdef OPENACC_ENABLED
@@ -67,7 +68,7 @@ void coulombApproximationLagrange(int number_of_targets_in_batch, int number_of_
          int starting_index_of_target, int starting_index_of_cluster,
          double *target_x, double *target_y, double *target_z,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
-         double *potential, int gpu_async_stream_id)
+         struct kernel *kernel, double *potential, int gpu_async_stream_id)
 {
 
 #ifdef OPENACC_ENABLED
@@ -125,7 +126,7 @@ void coulombApproximationHermite(int number_of_targets_in_batch, int number_of_i
         int starting_index_of_target, int starting_index_of_cluster, int total_number_interpolation_points,
         double *target_x, double *target_y, double *target_z,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
-        double *potential, int gpu_async_stream_id)
+        struct kernel *kernel, double *potential, int gpu_async_stream_id)
 {
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.

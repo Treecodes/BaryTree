@@ -2,6 +2,7 @@
 #define H_INTERACTIONCOMPUTE_H
 
 #include "struct_nodes.h"
+#include "struct_kernel.h"
 
 
 void compute_cp2(struct tnode *ap, double *x, double *y, double *z,
@@ -16,7 +17,7 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                             double *pointwisePotential, int interpolationOrder,
                             int numSources, int numTargets, int numClusters,
                             int offset_approx, int offset_direct,
-                            char *kernelName, double kernel_parameter, char *singularityHandling,
+                            struct kernel *kernel, char *singularityHandling,
                             char *approximationName);
 
 
@@ -24,11 +25,11 @@ void Interaction_Direct_Compute(double *source_x, double *source_y, double *sour
                             double *source_q, double *source_w,
                             double *target_x, double *target_y, double *target_z, double *target_q,
                             double *totalPotential, int numSources, int numTargets,
-                            char *kernelName, double kernel_parameter, char *singularityHandling,
+                            struct kernel *kernel, char *singularityHandling,
                             char *approximationName);
 
 
 void Interaction_SubtractionPotentialCorrection(double *pointwisePotential, double *target_q, int numTargets,
-                            char *kernelName, double kernel_parameter, char *singularityHandling);
+                            struct kernel *kernel, char *singularityHandling);
 
 #endif /* H_INTERACTIONCOMPUTE_H */

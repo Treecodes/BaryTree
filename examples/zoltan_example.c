@@ -9,7 +9,10 @@
 #include "../src/treedriver.h"
 #include "../src/directdriver.h"
 #include "../src/struct_particles.h"
+#include "../src/struct_kernel.h"
+#include "../src/kernel.h"
 #include "../src/tools.h"
+#include "../src/array.h"
 
 
 const unsigned m = 1664525u;
@@ -62,34 +65,60 @@ int main(int argc, char **argv)
 
     //run parameters
     int N, tree_type, interpolationOrder, max_per_leaf, max_per_batch, run_direct_comparison, verbosity;
-    double kappa, theta, sizeCheckFactor;
+    double theta, sizeCheckFactor;
     char *kernelName = NULL;
     char *singularityHandling = NULL;
     char *approximationName = NULL;
 
+    int numberOfKernelParameters;
+    double * kernelParameters = NULL;
+
+
     int slice = 1;
 
-    N = atoi(argv[1]);
-    interpolationOrder = atoi(argv[2]);
-    theta = atof(argv[3]);
-    max_per_leaf = atoi(argv[4]);
-    max_per_batch = atoi(argv[5]);
-    kernelName = argv[6];
-    kappa = atof(argv[7]);
-    singularityHandling = argv[8];
-    approximationName = argv[9];
-    tree_type = atoi(argv[10]);
-    sizeCheckFactor = atof(argv[11]);
-    run_direct_comparison = atoi(argv[12]);
-    verbosity = atoi(argv[13]);
+    int n=1;
+    N = atoi(argv[n]); n++;
+    interpolationOrder = atoi(argv[n]); n++;
+    theta = atof(argv[n]); n++;
+    max_per_leaf = atoi(argv[n]); n++;
+    max_per_batch = atoi(argv[n]); n++;
+    kernelName = argv[n]; n++;
+    singularityHandling = argv[n]; n++;
+    approximationName = argv[n]; n++;
+    tree_type = atoi(argv[n]); n++;
+    sizeCheckFactor = atof(argv[n]); n++;
+    run_direct_comparison = atoi(argv[n]); n++;
+    verbosity = atoi(argv[n]); n++;
+    slice = atoi(argv[n]); n++;
+    numberOfKernelParameters = atoi(argv[n]); n++;
+    make_vector(kernelParameters,numberOfKernelParameters);
+    for (int i=0; i<numberOfKernelParameters; i++){
+        kernelParameters[i]=atof(argv[n]); n++;
+    }
 
-    if (argc > 14) slice = atoi(argv[14]);
+    struct kernel *kernel = NULL;
+    kernel = malloc(sizeof (struct kernel));
+    AllocateKernelStruct(kernel, numberOfKernelParameters, kernelName);
+    SetKernelParameters(kernel, kernelParameters);
+
+//    printf("max_per_batch %i\n", max_per_batch);
+//    printf("kernelName %s\n", kernelName);
+//    printf("tree_type %i\n", tree_type);
+//    printf("sizeCheckFactor %f\n", sizeCheckFactor);
+//    printf("SLICE %i\n", slice);
+//    printf("NUMBER OF KERNEL PARAMETERS %i\n", numberOfKernelParameters);
+//    printf("N = %i\n", N);
+//    printf("n = %i\n", n);
 
 
     int rc, rank, numProcs;
+    if (verbosity>0) printf("Initializing MPI.\n");
     MPI_Init(&argc, &argv);
+    if (verbosity>0) printf("MPI initialized, setting size and rank.\n");
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (verbosity>0) printf("Rank set.\n");
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+    if (verbosity>0) printf("Set size.\n");
 
     double timebeg = MPI_Wtime();
 
@@ -311,7 +340,7 @@ int main(int argc, char **argv)
 
         if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
         time1 = MPI_Wtime();
-        directdriver(sources, targets_sample, kernelName, kappa, singularityHandling,
+        directdriver(sources, targets_sample, kernel, singularityHandling,
                      approximationName, potential_direct, time_direct);
         time_run[1] = MPI_Wtime() - time1;
         potential_engy_direct = sum(potential_direct, targets->num);
@@ -330,7 +359,7 @@ int main(int argc, char **argv)
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
     treedriver(sources, targets, interpolationOrder, theta, max_per_leaf, max_per_batch,
-               kernelName, kappa, singularityHandling, approximationName, tree_type,
+               kernel, singularityHandling, approximationName, tree_type,
                potential, time_tree, sizeCheckFactor, verbosity);
     time_run[2] = MPI_Wtime() - time1;
     potential_engy = sum(potential, targets->num);
@@ -550,7 +579,7 @@ int main(int argc, char **argv)
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
-            N, interpolationOrder, theta, max_per_leaf, max_per_batch, kernelName, kappa,
+            N, interpolationOrder, theta, max_per_leaf, max_per_batch, kernel->name,
             singularityHandling, approximationName, numProcs, // 1 ends
 
             time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
