@@ -35,12 +35,16 @@ SET(SRCS_TREEDRIVER
     kernels/regularized-coulomb.h
     kernels/coulomb_singularity_subtraction.c
     kernels/coulomb_singularity_subtraction.h
+    kernels/regularized-coulomb-singularity-subtraction.c
+    kernels/regularized-coulomb-singularity-subtraction.h
     kernels/yukawa.c
     kernels/yukawa.h
     kernels/regularized-yukawa.c
     kernels/regularized-yukawa.h
     kernels/yukawa_singularity_subtraction.c
     kernels/yukawa_singularity_subtraction.h
+    kernels/regularized-yukawa-singularity-subtraction.c
+    kernels/regularized-yukawa-singularity-subtraction.h
     kernels/dcf.c
     kernels/dcf.h
     kernels/tcf.c
