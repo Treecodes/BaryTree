@@ -176,9 +176,11 @@ int main(int argc, char **argv)
         for (int i = 0; i < N; ++i) {
             mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+//            mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.w[i] = 1.0;
             mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
 
             double r = sqrt(mySources.x[i]*mySources.x[i] + mySources.y[i]*mySources.y[i] + mySources.z[i]*mySources.z[i]);

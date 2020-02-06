@@ -20,6 +20,8 @@
 #include "kernels/regularized-yukawa.h"
 #include "kernels/regularized-coulomb-singularity-subtraction.h"
 #include "kernels/regularized-yukawa-singularity-subtraction.h"
+#include "kernels/atan.h"
+
 
 
 #include "interaction_compute.h"
@@ -277,6 +279,24 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                     exit(-1);
                 }
 
+    /***************************************/
+    /****************** ATAN ***************/
+    /***************************************/
+            } else if (strcmp(kernel->name, "atan") == 0) {
+
+                if (strcmp(approximationName, "lagrange") == 0) {
+
+                        atanApproximationLagrange(numberOfTargets,
+                                    numberOfInterpolationPoints, batchStart, clusterStart,
+                                    target_x, target_y, target_z,
+                                    cluster_x, cluster_y, cluster_z, cluster_charge,
+                                    kernel, potentialDueToApprox, streamID);
+
+                } else if (strcmp(approximationName, "hermite") == 0) {
+                    printf("NOT SET UP FOR REGULARIZED ATAN HERMITE.  EXITING.\n");
+                    exit(-1);
+                }
+
             } else {
                 printf("Invalid kernel->name. Exiting.\n");
                 exit(1);
@@ -400,6 +420,16 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
 
                 }
 
+
+
+            } else if (strcmp(kernel->name, "atan") == 0) {
+
+
+                atanDirect(numberOfTargets, number_of_sources_in_cluster,
+                            batchStart, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_charge, source_weight,
+                            kernel, potentialDueToDirect, streamID);
 
 
             } else {
@@ -549,7 +579,15 @@ void Interaction_Direct_Compute(double *source_x, double *source_y, double *sour
                         kernel, pointwisePotential, 0);
         }
 
-} else {
+    } else if (strcmp(kernel->name, "atan") == 0) {
+
+            printf("Computing reference with atan kernel.\n");
+            atanDirect(numTargets, numSources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q, source_w,
+                        kernel, pointwisePotential, 0);
+
+    } else {
         printf("Invalid kernel->name. Exiting.\n");
         exit(1);
     }

@@ -48,7 +48,9 @@ SET(SRCS_TREEDRIVER
     kernels/dcf.c
     kernels/dcf.h
     kernels/tcf.c
-    kernels/tcf.h)
+    kernels/tcf.h
+    kernels/atan.c
+    kernels/atan.h)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED
