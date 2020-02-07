@@ -71,15 +71,33 @@ void treedriver(struct particles *sources, struct particles *targets,
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
 
-        fprintf(stderr, "ERROR: Cluster-particle treecode currently disabled.\n");
-        exit(1);
+        time1 = MPI_Wtime();
 
-        //setup(targets, order, theta, xyzminmax);
-        //cp_create_tree_n0(&troot, targets, 1, targets->num,
-        //                  maxparnode, xyzminmax, level);
-        //setup_batch(&batches, batch_lim, targets, batch_size);
-        //create_source_batch(batches, sources, 1, sources->num,
-        //                    batch_size, batch_lim);
+        Tree_Setup(sources, targets, interpolationOrder, theta, xyzminmax);
+        Tree_CP_Create(&troot, targets, 1, targets->num,
+                       maxparnode, xyzminmax, 0, &numnodes, &numleaves);
+        Tree_SetIndex(troot, 0);
+        Tree_AllocArray(&tree_array, numnodes);
+        Tree_CreateArray(troot, tree_array);
+
+        time_tree[0] = MPI_Wtime() - time1; //time_maketreearray
+        
+
+        time1 = MPI_Wtime();
+
+        Batches_Alloc(&batches, batch_lim, sources, batch_size);
+        Batches_CreateSourceBatches(batches, sources, 1, sources->num, batch_size, batch_lim);
+
+        time_tree[1] = MPI_Wtime() - time1; //time_createbatch
+        
+
+        time1 = MPI_Wtime();
+
+        Clusters_CP_Setup(&clusters, interpolationOrder, tree_array,
+                          approximationName, singularityHandling);
+
+        time_tree[2] = MPI_Wtime() - time1; //time_fillclusters
+
         
     } else if (tree_type == 1) {
 
@@ -135,16 +153,303 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
     if (tree_type == 0) {
-        fprintf(stderr, "ERROR: Cluster-particle treecode is currently not disabled.\n");
-        exit(1);
-//        if (pot_type == 0) {
-//            cp_treecode(troot, batches, sources, targets,
-//                        tpeng, tEn, &timetree[1]);
-//        }
-//        } else if (pot_type == 1) {
-//            cp_treecode_yuk(troot, batches, sources, targets, kappa,
-//                            tpeng, tEn, &timetree[1]);
-//        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        time1 = MPI_Wtime();
+
+        int numBatchesOnProc[numProcs]
+        MPI_Allgather(&(batches->numnodes), 1, MPI_INT, numBatchesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
+
+        int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+        int chargesPerCluster = pointsPerCluster;
+
+        if (strcmp(approximationName, "hermite") == 0)
+            chargesPerCluster *= 8;
+
+        struct tnode_array *let_batches_array = NULL;
+        int let_batches_array_length = 0;
+
+        struct particles *let_sources = NULL;
+        let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for batches
+        int let_sources_length = 0;  // previously let_sources included local.  Now it should not
+
+
+        MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend;
+        MPI_Win win_clusters_x, win_clusters_y, win_clusters_z, win_clusters_q, win_clusters_w;
+        MPI_Win win_sources_x, win_sources_y, win_sources_z, win_sources_q, win_sources_w;
+        MPI_Win win_children, win_num_children;
+        
+        MPI_Win_create(batches->x_mid,  batches->numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
+        MPI_Win_create(batches->y_mid,  batches->numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_y_mid);
+        MPI_Win_create(batches->z_mid,  batches->numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_z_mid);
+        MPI_Win_create(batches->radius, batches->numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_radius);
+        MPI_Win_create(batches->numpar, batches->numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_numpar);
+        MPI_Win_create(batches->ibeg,   batches->numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
+        MPI_Win_create(batches->iend,   batches->numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
+
+        MPI_Win_create(clusters->x, clusters->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_x);
+        MPI_Win_create(clusters->y, clusters->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_y);
+        MPI_Win_create(clusters->z, clusters->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_z);
+        MPI_Win_create(clusters->q, clusters->num_charges*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_q);
+
+        MPI_Win_create(sources->x, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
+        MPI_Win_create(sources->y, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
+        MPI_Win_create(sources->z, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
+        MPI_Win_create(sources->q, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
+        MPI_Win_create(sources->w, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
+
+        // Perform MPI round robin, filling LET with remote data
+        int new_sources_length_array[numProcs];
+        int previous_let_sources_length_array[numProcs];
+        MPI_Datatype direct_type[numProcs];
+
+        for (int procID = 1; procID < numProcs; ++procID) {
+
+            int getFrom = (numProcs+rank-procID) % numProcs;
+
+            // Allocate remote_tree_array
+            struct tnode_array *remote_batches_array = NULL;
+            Batches_AllocArray(&remote_batches_array, numBatchesOnProc[getFrom]);
+
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_y_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_z_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_radius);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_numpar);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_ibeg);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_iend);
+
+            MPI_Get(remote_batches_array->x_mid, numBatchesOnProc[getFrom], MPI_DOUBLE,
+                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_x_mid);
+            MPI_Get(remote_batches_array->y_mid, numBatchesOnProc[getFrom], MPI_DOUBLE,
+                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_y_mid);
+            MPI_Get(remote_batches_array->z_mid, numBatchesOnProc[getFrom], MPI_DOUBLE,
+                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_z_mid);
+            MPI_Get(remote_batches_array->radius, numBatchesOnProc[getFrom], MPI_DOUBLE,
+                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_radius);
+            MPI_Get(remote_batches_array->numpar, numBatchesOnProc[getFrom], MPI_INT,
+                    getFrom, 0, numBatchesOnProc[getFrom], MPI_INT, win_numpar);
+            MPI_Get(remote_batches_array->ibeg, numBatchesOnProc[getFrom], MPI_INT,
+                    getFrom, 0, numBatchesOnProc[getFrom], MPI_INT, win_ibeg);
+            MPI_Get(remote_batches_array->iend, numBatchesOnProc[getFrom], MPI_INT,
+                    getFrom, 0, numBatchesOnProc[getFrom], MPI_INT, win_iend);
+
+            MPI_Win_unlock(getFrom, win_x_mid);
+            MPI_Win_unlock(getFrom, win_y_mid);
+            MPI_Win_unlock(getFrom, win_z_mid);
+            MPI_Win_unlock(getFrom, win_radius);
+            MPI_Win_unlock(getFrom, win_numpar);
+            MPI_Win_unlock(getFrom, win_ibeg);
+            MPI_Win_unlock(getFrom, win_iend);
+            
+            int *direct_list, *direct_ibeg_list, *direct_length_list;
+            make_vector(direct_list, numBatchesOnProc[getFrom]);
+            make_vector(direct_ibeg_list, numBatchesOnProc[getFrom]);
+            make_vector(direct_length_list, numBatchesOnProc[getFrom]);
+
+            Interaction_CP_MakeListRemote(remote_batches_array, tree_array,
+                                          direct_list, interpolationOrder, sizeCheckFactor);
+
+            //MPI_Barrier(MPI_COMM_WORLD);
+
+            // Count number of unique clusters adding to LET
+            int previousBatchesArrayLength = let_batches_array_length;
+            for (int i = 0; i < numBatchesOnProc[getFrom]; ++i) {
+                if (direct_list[i] != -1) let_batches_array_length++;
+            }
+            //MPI_Barrier(MPI_COMM_WORLD);
+            
+
+            if (procID == 1) {
+                Batches_AllocArray(&let_batches_array, let_batches_array_length);
+            } else {
+                Batches_ReallocArray(let_batches_array, let_batches_array_length);
+            }
+            //MPI_Barrier(MPI_COMM_WORLD);
+            
+            int previous_let_sources_length = let_sources_length;
+
+            // Fill in LET tree array from Remote tree array.
+            int appendCounter = 0;
+            for (int i = 0; i < numBatchesOnProc[getFrom]; ++i) {
+                if (direct_list[i] != -1) {
+                    let_batches_array->x_mid[previousBatchesArrayLength + appendCounter] = remote_batches_array->x_mid[i];
+                    let_batches_array->y_mid[previousBatchesArrayLength + appendCounter] = remote_batches_array->y_mid[i];
+                    let_batches_array->z_mid[previousBatchesArrayLength + appendCounter] = remote_batches_array->z_mid[i];
+                    let_batches_array->radius[previousBatchesArrayLength + appendCounter] = remote_batches_array->radius[i];
+                    let_batches_array->numpar[previousBatchesArrayLength + appendCounter] = remote_batches_array->numpar[i];
+                    
+                    let_batches_array->numApprox[previousBatchesArrayLength + appendCounter] = remote_batches_array->numApprox[i];
+                    let_batches_array->numDirect[previousBatchesArrayLength + appendCounter] = remote_batches_array->numDirect[i];
+                        
+                    // Set the beginning and ending particle indices for the associated nodes in the local sources list
+                    let_batches_array->ibeg[previousBatchesArrayLength + appendCounter] = let_sources_length + 1;  // These are one-index based!!!
+                    let_batches_array->iend[previousBatchesArrayLength + appendCounter] = let_sources_length + remote_batches_array->numpar[i];
+                    let_sources_length += remote_tree_array->numpar[i];
+                        
+                    // Determine displacements and lengths for getting prticles from remote sources list
+                    direct_ibeg_list[appendCounter] = remote_batches_array->ibeg[i] - 1; // These are zero-index based!!!
+                    direct_length_list[appendCounter] = remote_batches_array->numpar[i];
+                    appendCounter++;
+                }
+            }
+
+            new_sources_length_array[getFrom] = let_sources_length - previous_let_sources_length;
+            previous_let_sources_length_array[getFrom] = previous_let_sources_length; 
+            
+            //MPI_Barrier(MPI_COMM_WORLD);
+
+            MPI_Type_indexed(appendCounter, direct_length_list, direct_ibeg_list,
+                                          MPI_DOUBLE, &direct_type[getFrom]);
+            MPI_Type_commit(&direct_type[getFrom]);
+            
+            free_vector(direct_list);
+            free_vector(direct_ibeg_list);
+            free_vector(direct_length_list);
+            Batches_Free(remote_batches_array);
+        } //end loop over numProcs
+
+
+        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Win_free(&win_x_mid);
+        MPI_Win_free(&win_y_mid);
+        MPI_Win_free(&win_z_mid);
+        MPI_Win_free(&win_radius);
+        MPI_Win_free(&win_numpar);
+        MPI_Win_free(&win_ibeg);
+        MPI_Win_free(&win_iend);
+
+        if (let_sources_length > 0) Particles_AllocSources(let_sources, let_sources_length);
+
+        for (int procID = 1; procID < numProcs; ++procID) {
+
+            int getFrom = (numProcs+rank-procID) % numProcs;
+
+//            MPI_Barrier(MPI_COMM_WORLD);
+
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_x);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_y);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_z);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_q);
+            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_w);
+
+            MPI_Get(&(let_sources->x[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_x);
+            MPI_Get(&(let_sources->y[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_y);
+            MPI_Get(&(let_sources->z[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_z);
+            MPI_Get(&(let_sources->q[previous_let_sources_length_array[getFrom]]), 
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_q);
+            MPI_Get(&(let_sources->w[previous_let_sources_length_array[getFrom]]),
+                    new_sources_length_array[getFrom], MPI_DOUBLE,
+                    getFrom, 0, 1, direct_type[getFrom], win_sources_w);
+
+            MPI_Win_unlock(getFrom, win_sources_y);
+            MPI_Win_unlock(getFrom, win_sources_z);
+            MPI_Win_unlock(getFrom, win_sources_q);
+            MPI_Win_unlock(getFrom, win_sources_w);
+
+//            MPI_Barrier(MPI_COMM_WORLD);
+
+        } // end loop over numProcs
+
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Win_free(&win_sources_x);
+        MPI_Win_free(&win_sources_y);
+        MPI_Win_free(&win_sources_z);
+        MPI_Win_free(&win_sources_q);
+        MPI_Win_free(&win_sources_w);
+
+        time_tree[3] = MPI_Wtime() - time1;
+
+
+        // Beginning local computation
+        
+        time1 = MPI_Wtime();
+//MAKE THIS BETTER!
+        make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
+        make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
+
+        Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
+                             tree_array->numnodes, tree_array->numnodes, interpolationOrder, sizeCheckFactor);
+
+        time_tree[4] = MPI_Wtime() - time1; //time_constructlet
+
+        time1 = MPI_Wtime();
+
+        Interaction_Compute_CP1(tree_array, batches,
+                        local_tree_inter_list, local_direct_inter_list,
+                        sources->x, sources->y, sources->z, sources->q, sources->w,
+                        targets->x, targets->y, targets->z, targets->q,
+                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
+                        tEn, interpolationOrder,
+                        sources->num, targets->num, clusters->num,
+                        tree_array->numnodes, tree_array->numnodes,
+                        kernel, singularityHandling,
+                        approximationName);
+
+        time_tree[5] = MPI_Wtime() - time1; //time_constructlet
+
+        if (numProcs > 1) {
+            time1 = MPI_Wtime();
+
+            max_batch_approx = maxval_int(let_batches_array->numApprox, let_batches_array->numnodes);
+            max_batch_direct = maxval_int(let_batches_array->numDirect, let_batches_array->numnodes);
+
+            if (max_batch_approx > 0) make_vector(tree_inter_list, batches->numnodes * max_batch_approx);
+            if (max_batch_direct > 0) make_vector(direct_inter_list, batches->numnodes * max_batch_direct);
+
+            //I think this will work? I'm not sure
+            Interaction_MakeList(let_tree_array, batches, tree_inter_list, direct_inter_list,
+                                 max_batch_approx, max_batch_direct, interpolationOrder, sizeCheckFactor);
+
+            time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
+
+            // After filling LET, call interaction_list_treecode
+            time1 = MPI_Wtime(); // start timer for tree evaluation
+
+            Interaction_Compute_CP1(tree_array, let_batches_array,
+                                    tree_inter_list, direct_inter_list,
+                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
+                                    targets->x, targets->y, targets->z, targets->q,
+                                    clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
+                                    tEn, interpolationOrder,
+                                    let_sources->num, targets->num, clusters->num,
+                                    max_batch_approx, max_batch_direct,
+                                    kernel, singularityHandling, approximationName);
+
+            Particles_FreeSources(let_sources);
+            Batches_Free(let_batches_array);
+            
+            time_tree[7] = MPI_Wtime() - time1;
+        }
+
+
+        time1 = MPI_Wtime();
+        
+        Interaction_Compute_CP2(tree_array,
+                                targets->x, targets->y, targets->z, targets->q,
+                                clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
+                                tEn, interpolationOrder,
+                                targets->num, clusters->num, clusters->num_charges, clusters->num_weights,
+                                singularityHandling, approximationName);
+        
+        Interaction_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
+                                kernel, singularityHandling);
+
+        Particles_ReorderTargetsAndPotential(targets, tEn);
+
+        time_tree[8] = MPI_Wtime() - time1;
+
+
     } else if (tree_type == 1) {
 
         MPI_Barrier(MPI_COMM_WORLD);
@@ -587,14 +892,11 @@ void treedriver(struct particles *sources, struct particles *targets,
                                    max_batch_approx, max_batch_direct,
                                    kernel, singularityHandling, approximationName);
 
-            time_tree[7] = MPI_Wtime() - time1;
-        }
-
-        // Free let clusters and sources, if they were used.
-        if (numProcs > 1) {
             Clusters_Free(let_clusters);
             Particles_FreeSources(let_sources);
             Tree_FreeArray(let_tree_array);
+            
+            time_tree[7] = MPI_Wtime() - time1;
         }
 
 
@@ -645,7 +947,10 @@ void treedriver(struct particles *sources, struct particles *targets,
         if (max_batch_approx > 0) free_vector(tree_inter_list);
         if (max_batch_direct > 0) free_vector(direct_inter_list);
     }
-    Clusters_Free_Win(clusters); // free local clusters
+
+    if (tree_type == 0) Clusters_Free(clusters); // free local clusters
+    if (tree_type == 1) Clusters_Free_Win(clusters); // free local clusters
+
     Tree_FreeArray(tree_array); // free tree array
     Batches_Free(batches); // free target batches
 

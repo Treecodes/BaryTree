@@ -64,6 +64,32 @@ void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
 } /* END of function setup */
 
 
+
+void Batches_AllocArray(struct tnode_array **new_batches, int length)
+{
+    
+    *new_batches = malloc(sizeof(struct tnode_array));
+    struct tnode_array *batches = *new_batches;
+
+    batches->numnodes = length;
+
+    make_vector(batches->ibeg, length);
+    make_vector(batches->iend, length);
+    make_vector(batches->numpar, length);
+    make_vector(batches->numApprox, length);
+    make_vector(batches->numDirect, length);
+
+    make_vector(batches->x_mid, length);
+    make_vector(batches->y_mid, length);
+    make_vector(batches->z_mid, length);
+    make_vector(batches->radius, length);
+
+    return;
+    
+} /* END of function setup */
+
+
+
 void Batches_Free(struct tnode_array *batches)
 {
 

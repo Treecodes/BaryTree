@@ -8,6 +8,9 @@
 void Clusters_PC_Setup(struct clusters **clusters, struct particles *sources, int order,
                        struct tnode_array *tree_array, char *approxName, char *singularityHandling);
 
+void Clusters_CP_Setup(struct clusters **clusters, int order,
+                       struct tnode_array *tree_array, char *approxName, char *singularityHandling);
+
 void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, char *singularityHandling);
 
 void Clusters_Free(struct clusters *clusters);

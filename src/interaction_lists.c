@@ -38,9 +38,8 @@ void pc_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
                 int interpolationOrder, double sizeCheckFactor);
-
-
-
+                
+                
 void Interaction_MakeList(const struct tnode_array *tree_array, struct tnode_array *batches,
                           int *tree_inter_list, int *direct_inter_list, int approx_offset,
                           int direct_offset,
