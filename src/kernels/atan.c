@@ -90,7 +90,14 @@ void atanApproximationLagrange(int number_of_targets_in_batch, int number_of_int
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
 
             double dz = (tz - cluster_z[starting_index_of_cluster + j])/domainLength;
-            temporary_potential += cluster_charge[starting_index_of_cluster + j] * ( 1/M_PI * atan( sqrt( 1 + 1./(delta*delta))* tan(M_PI * dz)) - fmod(dz-.5,1.) + .5);
+
+
+            if (fabs(dz-0.5) > DBL_MIN) {
+                if (fabs(dz+0.5) > DBL_MIN) {
+                    temporary_potential += cluster_charge[starting_index_of_cluster + j] * ( 1/M_PI * atan( sqrt( 1 + 1./(delta*delta))* tan(M_PI * dz)) - fmod(dz-.5,1.) + .5);
+                }
+            }
+
 
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED

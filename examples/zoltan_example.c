@@ -101,14 +101,14 @@ int main(int argc, char **argv)
     AllocateKernelStruct(kernel, numberOfKernelParameters, kernelName);
     SetKernelParameters(kernel, kernelParameters);
 
-//    printf("max_per_batch %i\n", max_per_batch);
-//    printf("kernelName %s\n", kernelName);
-//    printf("tree_type %i\n", tree_type);
-//    printf("sizeCheckFactor %f\n", sizeCheckFactor);
-//    printf("SLICE %i\n", slice);
-//    printf("NUMBER OF KERNEL PARAMETERS %i\n", numberOfKernelParameters);
-//    printf("N = %i\n", N);
-//    printf("n = %i\n", n);
+    printf("max_per_batch %i\n", max_per_batch);
+    printf("kernelName %s\n", kernelName);
+    printf("tree_type %i\n", tree_type);
+    printf("sizeCheckFactor %f\n", sizeCheckFactor);
+    printf("SLICE %i\n", slice);
+    printf("NUMBER OF KERNEL PARAMETERS %i\n", numberOfKernelParameters);
+    printf("N = %i\n", N);
+    printf("n = %i\n", n);
 
 
     int rc, rank, numProcs;
@@ -174,11 +174,13 @@ int main(int argc, char **argv)
 
     for (int j = 0; j < rank+1; j++) {
         for (int i = 0; i < N; ++i) {
-            mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+//            mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.x[i] = 0.0;
+//            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.y[i] = 0.0;
             mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+//            mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.q[i] = 1.0;
 //            mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.w[i] = 1.0;
             mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
@@ -191,6 +193,7 @@ int main(int argc, char **argv)
         }
     }
 
+    printf("Created sources.\n");
 
     zz = Zoltan_Create(MPI_COMM_WORLD);
 
@@ -219,6 +222,8 @@ int main(int argc, char **argv)
     Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &mySources);
     Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
 
+
+    printf("About to call Zoltan_LB_Partition\n");
     rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
                 &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
                 &numGidEntries,  /* Number of integers used for a global ID */
