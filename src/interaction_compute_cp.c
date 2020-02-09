@@ -9,8 +9,10 @@
 #include <mpi.h>
 
 #include "array.h"
+#include "globvars.h"
 #include "struct_nodes.h"
 #include "struct_particles.h"
+#include "struct_kernel.h"
 
 #include "kernels/coulomb.h"
 #include "kernels/cp_coulomb.h"
@@ -23,33 +25,33 @@
 #include "interaction_compute.h"
 
 
-static void cp_comp_interp(struct tnode_array *tree_array, int idx, int interpolationOrder,
-                           double *xT, double *yT, double *zT, double *qT,
-                           double *clusterQ, double *clusterW);
+static void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+                        double *xT, double *yT, double *zT, double *qT,
+                        double *clusterQ, double *clusterW);
 
-//static void cp_comp_interp_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
-//                           double *xT, double *yT, double *zT, double *qT,
-//                           double *clusterQ, double *clusterW);
+//static void cp_comp_pot_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+//                      double *xT, double *yT, double *zT, double *qT,
+//                      double *clusterQ, double *clusterW);
 
-static void cp_comp_interp_hermite(struct tnode_array *tree_array, int idx, int interpolationOrder,
-                           int totalNumberInterpolationPoints,
-                           double *xT, double *yT, double *zT, double *qT,
-                           double *clusterQ, double *clusterW);
+static void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+                        int totalNumberInterpolationPoints,
+                        double *xT, double *yT, double *zT, double *qT,
+                        double *clusterQ, double *clusterW);
 
-//static void cp_comp_interp_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
-//                           int totalNumberInterpolationPoints,
-//                           double *xT, double *yT, double *zT, double *qT,
-//                           double *clusterQ, double *clusterW);
+//static void cp_comp_pot_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+//                      int totalNumberInterpolationPoints,
+//                      double *xT, double *yT, double *zT, double *qT,
+//                      double *clusterQ, double *clusterW);
 
 
 
 void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array *batches,
                              int *tree_inter_list, int *direct_inter_list,
                              double *source_x, double *source_y, double *source_z,
-                             double *source_charge, double *source_weight,
-                             double *target_x, double *target_y, double *target_z, double *target_charge,
+                             double *source_q, double *source_w,
+                             double *target_x, double *target_y, double *target_z, double *target_q,
                              double *cluster_x, double *cluster_y, double *cluster_z,
-                             double *cluster_charge, double *cluster_weight,
+                             double *cluster_q, double *cluster_w,
                              double *pointwisePotential, int interpolationOrder,
                              int numSources, int numTargets, int totalNumberOfInterpolationPoints,
                              int batch_approx_offset, int batch_direct_offset,
@@ -60,21 +62,22 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
     int tree_numnodes = tree_array->numnodes;
     int batch_numnodes = batches->numnodes;
     
-    double *xS = sources->x;
-    double *yS = sources->y;
-    double *zS = sources->z;
-    double *qS = sources->q;
-    double *wS = sources->w;
+    double *xS = source_x;
+    double *yS = source_y;
+    double *zS = source_z;
+    double *qS = source_q;
+    double *wS = source_w;
 
-    double *xT = targets->x;
-    double *yT = targets->y;
-    double *zT = targets->z;
-    double *qT = targets->q;
+    double *xT = target_x;
+    double *yT = target_y;
+    double *zT = target_z;
+    double *qT = target_q;
 
-    double *xC = clusters->x;
-    double *yC = clusters->y;
-    double *zC = clusters->z;
-    double *qC = clusters->q;
+    double *xC = cluster_x;
+    double *yC = cluster_y;
+    double *zC = cluster_z;
+    double *qC = cluster_q;
+    double *wC = cluster_w;
 
     int *ibegs = tree_array->ibeg;
     int *iends = tree_array->iend;
@@ -89,7 +92,7 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
     if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
         numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
         
-    for (int i = 0; i < numTargets; i++) pointwisePotential[i] = 0.0;
+    //for (int i = 0; i < numTargets; i++) pointwisePotential[i] = 0.0;
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
@@ -102,8 +105,8 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
                             tree_inter_list[0:batch_approx_offset*batch_numnodes], \
                             direct_inter_list[0:batch_direct_offset*batch_numnodes], \
                             ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \
-                       copy(cluster_charge[0:numberOfClusterCharges], \
-                            cluster_weight[0:numberOfClusterWeights], \
+                       copy(qC[0:numberOfClusterCharges], \
+                            wC[0:numberOfClusterWeights], \
                             pointwisePotential[0:numTargets])
 #endif
     {
@@ -141,8 +144,8 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
             
                         CP_coulombApproximationLagrange(numberOfSources,
                             numberOfInterpolationPoints, batchStart, clusterStart,
-                            source_x, source_y, source_z, source_q,
-                            cluster_x, cluster_y, cluster_z, cluster_charge,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
                             kernel, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
@@ -163,7 +166,7 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
                             numberOfInterpolationPoints, batchStart, clusterStart,
                             totalNumberOfInterpolationPoints,
                             source_x, source_y, source_z, source_q,
-                            cluster_x, cluster_y, cluster_z, cluster_charge,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
                             kernel, streamID);
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
@@ -259,15 +262,15 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
                     coulombDirect(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
                             target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_charge, source_weight,
+                            source_x, source_y, source_z, source_q, source_w,
                             kernel, pointwisePotential, streamID);
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
                     coulombSingularitySubtractionDirect(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
-                            target_x, target_y, target_z, target_charge,
-                            source_x, source_y, source_z, source_charge, source_weight,
+                            target_x, target_y, target_z, target_q,
+                            source_x, source_y, source_z, source_q, source_w,
                             kernel, pointwisePotential, streamID);
 
                 }else {
@@ -286,16 +289,16 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
                     yukawaDirect(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
                             target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            source_x, source_y, source_z, source_q, source_w,
+                            kernel, pointwisePotential, streamID);
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
                     yukawaSingularitySubtractionDirect(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
-                            target_x, target_y, target_z, target_charge,
-                            source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            target_x, target_y, target_z, target_q,
+                            source_x, source_y, source_z, source_q, source_w,
+                            kernel, pointwisePotential, streamID);
 
                 } else {
                     printf("Invalid choice of singularityHandling. Exiting. \n");
@@ -321,7 +324,7 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
 
 
 void Interaction_Compute_CP2(struct tnode_array *tree_array,
-                             double *target_x, double *target_y, double *target_z, double *target_charge,
+                             double *target_x, double *target_y, double *target_z, double *target_q,
                              double *cluster_x, double *cluster_y, double *cluster_z,
                              double *cluster_q, double *cluster_w,
                              double *pointwisePotential, int interpolationOrder,
@@ -330,6 +333,7 @@ void Interaction_Compute_CP2(struct tnode_array *tree_array,
                              char *singularityHandling, char *approximationName)
 {
 
+    int interpOrderLim = interpolationOrder+1;
     int tree_numnodes = tree_array->numnodes;
 
 #ifdef OPENACC_ENABLED
@@ -338,29 +342,29 @@ void Interaction_Compute_CP2(struct tnode_array *tree_array,
                             target_z[0:numTargets], target_q[0:numTargets], \
                             cluster_q[0:totalNumberInterpolationCharges], \
                             cluster_w[0:totalNumberInterpolationWeights]) \
-                       copy(pointwisePotential[0:numTargets)
+                       copy(pointwisePotential[0:numTargets])
     {
 #endif
 
-    if ((strcmp(approxName, "lagrange") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
+    if ((strcmp(approximationName, "lagrange") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_interp(tree_array, i, pointwisePotential interpolationOrder,
-                            target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+            cp_comp_pot(tree_array, i, pointwisePotential, interpolationOrder,
+                        target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
-    } else if ((strcmp(approxName, "lagrange") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+    } else if ((strcmp(approximationName, "lagrange") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
 //        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_interp_SS(tree_array, i, pointwisePotential interpolationOrder,
-//                           target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+//            cp_comp_pot_SS(tree_array, i, pointwisePotential interpolationOrder,
+//                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
-    } else if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
+    } else if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_interp_hermite(tree_array, i, pointwisePotential, interpolationOrder, totalNumberInterpolationPoints,
-                            target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+            cp_comp_pot_hermite(tree_array, i, pointwisePotential, interpolationOrder, totalNumberInterpolationPoints,
+                        target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
-    } else if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+    } else if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
 //        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_interp_hermite_SS(tree_array, i, pointwisePotential, interpolationOrder, totalNumberInterpolationPoints,
-//                           target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+//            cp_comp_pot_hermite_SS(tree_array, i, pointwisePotential, interpolationOrder, totalNumberInterpolationPoints,
+//                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else {
         exit(1);
@@ -375,7 +379,7 @@ void Interaction_Compute_CP2(struct tnode_array *tree_array,
 }
 
 
-void cp_comp_interp(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
         double *target_x, double *target_y, double *target_z, double *target_q,
         double *cluster_q, double *cluster_w)
 {
@@ -491,11 +495,11 @@ void cp_comp_interp(struct tnode_array *tree_array, int idx, double *pointwisePo
 #endif
         for (int j = 0; j < interpolationPointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%torderlim;
-            int kk = (j-k1)/torderlim;
-            int k2 = kk%torderlim;
+            int k1 = j%interpOrderLim;
+            int kk = (j-k1)/interpOrderLim;
+            int k2 = kk%interpOrderLim;
             kk = kk - k2;
-            int k3 = kk / torderlim;
+            int k3 = kk / interpOrderLim;
 
             double w3 = weights[k3];
             double w2 = weights[k2];
@@ -504,7 +508,7 @@ void cp_comp_interp(struct tnode_array *tree_array, int idx, double *pointwisePo
             double cx = nodeX[k1];
             double cy = nodeY[k2];
             double cz = nodeZ[k3];
-            double cq = cluster_q[startingIndexInClusters + j];
+            double cq = cluster_q[startingIndexInClustersArray + j];
         
             double numerator = 1.0;
 
@@ -548,8 +552,8 @@ void cp_comp_interp(struct tnode_array *tree_array, int idx, double *pointwisePo
 }
 
 
-void cp_comp_interp_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
-        double *target_x, double *target_y, double *target_z, double *target_q,
+void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+        int totalNumberInterpolationPoints, double *target_x, double *target_y, double *target_z, double *target_q,
         double *cluster_q, double *cluster_w)
 {
     int interpOrderLim = interpolationOrder + 1;
@@ -653,9 +657,9 @@ void cp_comp_interp_hermite(struct tnode_array *tree_array, int idx, double *poi
             if (fabs(cz)<DBL_MIN) exactIndZ[i] = j;
 
             // Increment the sums
-            sumX += dj[j] / (dx*dx) + wx[j] / cx;
-            sumY += dj[j] / (dy*dy) + wy[j] / cy;
-            sumZ += dj[j] / (dz*dz) + wz[j] / cz;
+            sumX += dj[j] / (cx*cx) + wx[j] / cx;
+            sumY += dj[j] / (cy*cy) + wy[j] / cy;
+            sumZ += dj[j] / (cz*cz) + wz[j] / cz;
 
         }
 
@@ -671,11 +675,11 @@ void cp_comp_interp_hermite(struct tnode_array *tree_array, int idx, double *poi
 #endif
         for (int j = 0; j < interpolationPointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%torderlim;
-            int kk = (j-k1)/torderlim;
-            int k2 = kk%torderlim;
+            int k1 = j%interpOrderLim;
+            int kk = (j-k1)/interpOrderLim;
+            int k2 = kk%interpOrderLim;
             kk = kk - k2;
-            int k3 = kk / torderlim;
+            int k3 = kk / interpOrderLim;
             
             double dx = tx - nodeX[k1];
             double dy = tx - nodeY[k2];
@@ -768,9 +772,9 @@ void cp_comp_interp_hermite(struct tnode_array *tree_array, int idx, double *poi
                 }
             }
 
-            temp += denominator * (numerator0 * cq    +  numerator1 * cqdx   +  numerator2 * cdqy
-                                +  numerator3 * cqdz  +  numerator4 * cqdxy  +  numerator5 * cqdyz
-                                +  numerator6 * cdxz  +  numerator7 * cdxyz);
+            temp += denominator * (numerator0 * cq     +  numerator1 * cqdx   +  numerator2 * cqdy
+                                +  numerator3 * cqdz   +  numerator4 * cqdxy  +  numerator5 * cqdyz
+                                +  numerator6 * cqdxz  +  numerator7 * cqdxyz);
         }
         
 #ifdef OPENACC_ENABLED

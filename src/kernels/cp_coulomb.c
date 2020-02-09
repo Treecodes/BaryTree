@@ -8,14 +8,14 @@
 
 void CP_coulombApproximationLagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
          int starting_index_of_sources, int starting_index_of_cluster,
-         double *source_x, double *source_y, double *source_z, double *source_q,
+         double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
          struct kernel *kernel, int gpu_async_stream_id)
 {
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q \
-                        cluster_x, cluster_y, cluster_z, cluster_charge)
+    #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, \
+                        cluster_x, cluster_y, cluster_z, cluster_q)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -41,13 +41,13 @@ void CP_coulombApproximationLagrange(int number_of_sources_in_batch, int number_
 #endif
 
             int jj = starting_index_of_sources + j;
-            double dx = tx - source_x[jj];
-            double dy = ty - source_y[jj];
-            double dz = tz - source_z[jj];
+            double dx = cx - source_x[jj];
+            double dy = cy - source_y[jj];
+            double dz = cz - source_z[jj];
             double r2  = dx*dx + dy*dy + dz*dz;
 
             if (r2 > DBL_MIN) {
-                temporary_potential += source_q[jj] / sqrt(r2);
+                temporary_potential += source_q[jj]*source_w[jj] / sqrt(r2);
             }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
@@ -66,7 +66,7 @@ void CP_coulombApproximationLagrange(int number_of_sources_in_batch, int number_
 
 void CP_coulombApproximationHermite(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
         int starting_index_of_sources, int starting_index_of_cluster, int total_number_interpolation_points,
-        double *source_x, double *source_y, double *source_z, double *source_q
+        double *source_x, double *source_y, double *source_z, double *source_q,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
         struct kernel *kernel, int gpu_async_stream_id)
 {
@@ -125,9 +125,9 @@ void CP_coulombApproximationHermite(int number_of_sources_in_batch, int number_o
 #endif
 
             int jj = starting_index_of_sources + j;
-            double dx = tx - source_x[jj];
-            double dy = ty - source_y[jj];
-            double dz = tz - source_z[jj];
+            double dx = cx - source_x[jj];
+            double dy = cy - source_y[jj];
+            double dz = cz - source_z[jj];
             double r2  = dx*dx + dy*dy + dz*dz;
 
             double r2inv = 1 / r2;
@@ -136,9 +136,9 @@ void CP_coulombApproximationHermite(int number_of_sources_in_batch, int number_o
             double r5inv = r3inv * r2inv;
             double r7inv = r5inv * r2inv;
             
-            r5inv *= 3.0
+            r5inv *= 3.0;
 
-            if (r > DBL_MIN) {
+            if (r2 > DBL_MIN) {
                 temp_pot_     += rinvq;
                 temp_pot_dx   += r3inv * dx;
                 temp_pot_dy   += r3inv * dy;

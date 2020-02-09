@@ -44,7 +44,12 @@ SET(SRCS_TREEDRIVER
     kernels/dcf.c
     kernels/dcf.h
     kernels/tcf.c
-    kernels/tcf.h)
+    kernels/tcf.h
+    clusters_cp.c
+    interaction_lists_cp.c
+    interaction_compute_cp.c
+    kernels/cp_coulomb.c
+    kernels/cp_coulomb.h)
 
 
 SET(SRCS_DIRECT_DISTRIBUTED

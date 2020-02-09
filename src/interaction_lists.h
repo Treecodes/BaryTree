@@ -12,6 +12,6 @@ void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct tno
                                 int interpolationOrder, double sizeCheckFactor);
                                 
 void Interaction_CP_MakeListRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
-                                   int *direct_list, int interpolationOrder, double sizeCheckFactor)
+                                   int *direct_list, int interpolationOrder, double sizeCheckFactor);
 
 #endif /* H_INTERACTIONLISTS_H */

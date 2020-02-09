@@ -11,6 +11,7 @@
 #include "array.h"
 #include "struct_nodes.h"
 #include "struct_particles.h"
+#include "struct_kernel.h"
 
 #include "kernels/coulomb.h"
 #include "kernels/yukawa.h"

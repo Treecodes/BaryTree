@@ -10,6 +10,7 @@
 #include "struct_nodes.h"
 #include "struct_particles.h"
 #include "struct_clusters.h"
+#include "struct_kernel.h"
 
 #include "interaction_lists.h"
 #include "interaction_compute.h"
@@ -80,6 +81,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         Tree_AllocArray(&tree_array, numnodes);
         Tree_CreateArray(troot, tree_array);
 
+
         time_tree[0] = MPI_Wtime() - time1; //time_maketreearray
         
 
@@ -88,6 +90,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         Batches_Alloc(&batches, batch_lim, sources, batch_size);
         Batches_CreateSourceBatches(batches, sources, 1, sources->num, batch_size, batch_lim);
 
+
         time_tree[1] = MPI_Wtime() - time1; //time_createbatch
         
 
@@ -95,6 +98,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         Clusters_CP_Setup(&clusters, interpolationOrder, tree_array,
                           approximationName, singularityHandling);
+
 
         time_tree[2] = MPI_Wtime() - time1; //time_fillclusters
 
@@ -158,7 +162,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        int numBatchesOnProc[numProcs]
+        int numBatchesOnProc[numProcs];
         MPI_Allgather(&(batches->numnodes), 1, MPI_INT, numBatchesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
 
         int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
@@ -173,6 +177,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         struct particles *let_sources = NULL;
         let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for batches
         int let_sources_length = 0;  // previously let_sources included local.  Now it should not
+
 
 
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend;
@@ -203,6 +208,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         int new_sources_length_array[numProcs];
         int previous_let_sources_length_array[numProcs];
         MPI_Datatype direct_type[numProcs];
+
 
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -248,7 +254,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_ibeg_list, numBatchesOnProc[getFrom]);
             make_vector(direct_length_list, numBatchesOnProc[getFrom]);
 
-            Interaction_CP_MakeListRemote(remote_batches_array, tree_array,
+            Interaction_CP_MakeListRemote(tree_array, remote_batches_array,
                                           direct_list, interpolationOrder, sizeCheckFactor);
 
             //MPI_Barrier(MPI_COMM_WORLD);
@@ -286,12 +292,13 @@ void treedriver(struct particles *sources, struct particles *targets,
                     // Set the beginning and ending particle indices for the associated nodes in the local sources list
                     let_batches_array->ibeg[previousBatchesArrayLength + appendCounter] = let_sources_length + 1;  // These are one-index based!!!
                     let_batches_array->iend[previousBatchesArrayLength + appendCounter] = let_sources_length + remote_batches_array->numpar[i];
-                    let_sources_length += remote_tree_array->numpar[i];
+                    let_sources_length += remote_batches_array->numpar[i];
                         
                     // Determine displacements and lengths for getting prticles from remote sources list
                     direct_ibeg_list[appendCounter] = remote_batches_array->ibeg[i] - 1; // These are zero-index based!!!
                     direct_length_list[appendCounter] = remote_batches_array->numpar[i];
                     appendCounter++;
+
                 }
             }
 
@@ -300,10 +307,11 @@ void treedriver(struct particles *sources, struct particles *targets,
             
             //MPI_Barrier(MPI_COMM_WORLD);
 
+
             MPI_Type_indexed(appendCounter, direct_length_list, direct_ibeg_list,
                                           MPI_DOUBLE, &direct_type[getFrom]);
             MPI_Type_commit(&direct_type[getFrom]);
-            
+
             free_vector(direct_list);
             free_vector(direct_ibeg_list);
             free_vector(direct_length_list);
@@ -321,6 +329,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Win_free(&win_iend);
 
         if (let_sources_length > 0) Particles_AllocSources(let_sources, let_sources_length);
+
 
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -378,6 +387,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
         make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
 
+
         Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
                              tree_array->numnodes, tree_array->numnodes, interpolationOrder, sizeCheckFactor);
 
@@ -404,11 +414,11 @@ void treedriver(struct particles *sources, struct particles *targets,
             max_batch_approx = maxval_int(let_batches_array->numApprox, let_batches_array->numnodes);
             max_batch_direct = maxval_int(let_batches_array->numDirect, let_batches_array->numnodes);
 
-            if (max_batch_approx > 0) make_vector(tree_inter_list, batches->numnodes * max_batch_approx);
-            if (max_batch_direct > 0) make_vector(direct_inter_list, batches->numnodes * max_batch_direct);
+            if (max_batch_approx > 0) make_vector(tree_inter_list, let_batches_array->numnodes * max_batch_approx);
+            if (max_batch_direct > 0) make_vector(direct_inter_list, let_batches_array->numnodes * max_batch_direct);
 
             //I think this will work? I'm not sure
-            Interaction_MakeList(let_tree_array, batches, tree_inter_list, direct_inter_list,
+            Interaction_MakeList(tree_array, let_batches_array, tree_inter_list, direct_inter_list,
                                  max_batch_approx, max_batch_direct, interpolationOrder, sizeCheckFactor);
 
             time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
@@ -441,13 +451,16 @@ void treedriver(struct particles *sources, struct particles *targets,
                                 tEn, interpolationOrder,
                                 targets->num, clusters->num, clusters->num_charges, clusters->num_weights,
                                 singularityHandling, approximationName);
+
+        time_tree[8] = MPI_Wtime() - time1;
+
+        time1 = MPI_Wtime();
         
         Interaction_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
                                 kernel, singularityHandling);
-
         Particles_ReorderTargetsAndPotential(targets, tEn);
 
-        time_tree[8] = MPI_Wtime() - time1;
+        time_tree[9] = MPI_Wtime() - time1;
 
 
     } else if (tree_type == 1) {
@@ -907,7 +920,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         Particles_ReorderTargetsAndPotential(targets, tEn);
 
-        time_tree[8] = MPI_Wtime() - time1;
+        time_tree[8] = 0.0;
+        time_tree[9] = MPI_Wtime() - time1;
     }
 
     if (verbosity > 0) {
@@ -940,25 +954,31 @@ void treedriver(struct particles *sources, struct particles *targets,
 
     free_vector(targets->order); // free particle order arrays
     free_vector(sources->order); // free particle order arrays
+
     Tree_Free(troot); // free tree
+
     free_vector(local_tree_inter_list); // free interaction lists
     free_vector(local_direct_inter_list); // free interaction lists
+
     if (numProcs > 1) { // free remote interaction lists, if they were built
         if (max_batch_approx > 0) free_vector(tree_inter_list);
         if (max_batch_direct > 0) free_vector(direct_inter_list);
     }
 
-    if (tree_type == 0) Clusters_Free(clusters); // free local clusters
-    if (tree_type == 1) Clusters_Free_Win(clusters); // free local clusters
+    fprintf(stderr, "Clusters.\n");
+    //if (tree_type == 0) Clusters_Free(clusters); // free local clusters
+    //if (tree_type == 1) Clusters_Free_Win(clusters); // free local clusters
 
     Tree_FreeArray(tree_array); // free tree array
+
     Batches_Free(batches); // free target batches
 
-    time_tree[9] = MPI_Wtime() - time1; //time_cleanup
-    time_tree[10] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6]; //total setup time
-    time_tree[11] = time_tree[5] + time_tree[7]; // total compute time
+    time_tree[10] = MPI_Wtime() - time1; //time_cleanup
+    time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6]; //total setup time
+    time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8]; // total compute time
     
     MPI_Barrier(MPI_COMM_WORLD);
+    fprintf(stderr, "Done cleaning up.\n");
 
     return;
 } /* END function treecode */

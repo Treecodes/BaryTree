@@ -71,28 +71,23 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
                     int ibeg, int iend, int maxparnode,
                     double *xyzmm, int level, int *numnodes, int *numleaves)
 {
-    printf("Entering cp_create_tree_n0.\n");
-    /*local variables*/
-    double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    int i, j, loclev, numposchild;
-    
     int ind[8][2];
     double xyzmms[6][8];
     double lxyzmm[6];
 
-    for (i = 0; i < 8; i++) {
-        for (j = 0; j < 2; j++) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 2; j++) {
             ind[i][j] = 0.0;
         }
     }
 
-    for (i = 0; i < 6; i++) {
-        for (j = 0; j < 8; j++) {
+    for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 8; j++) {
             xyzmms[i][j] = 0.0;
         }
     }
 
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         lxyzmm[i] = 0.0;
     }
 
@@ -113,17 +108,16 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
     
 
     /*compute aspect ratio*/
-    xl = (*p)->x_max - (*p)->x_min;
-    yl = (*p)->y_max - (*p)->y_min;
-    zl = (*p)->z_max - (*p)->z_min;
+    double xl = (*p)->x_max - (*p)->x_min;
+    double yl = (*p)->y_max - (*p)->y_min;
+    double zl = (*p)->z_max - (*p)->z_min;
         
-    lmax = max3(xl, yl, zl);
-    t1 = lmax;
-    t2 = min3(xl, yl, zl);
+    double tmax = max3(xl, yl, zl);
+    double tmin = min3(xl, yl, zl);
 
 
-    if (t2 != 0.0)
-        (*p)->aspect = t1/t2;
+    if (tmin != 0.0)
+        (*p)->aspect = tmax/tmin;
     else
         (*p)->aspect = 0.0;
 
@@ -133,9 +127,9 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
     (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
     (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
 
-    t1 = (*p)->x_max - (*p)->x_mid;
-    t2 = (*p)->y_max - (*p)->y_mid;
-    t3 = (*p)->z_max - (*p)->z_mid;
+    double t1 = (*p)->x_max - (*p)->x_mid;
+    double t2 = (*p)->y_max - (*p)->y_mid;
+    double t3 = (*p)->z_max - (*p)->z_mid;
 
     (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
     (*p)->radius = sqrt((*p)->sqradius);
@@ -148,7 +142,7 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
 
 
     (*p)->num_children = 0;
-    for (i = 0; i < 8; i++)
+    for (int i = 0; i < 8; i++)
         (*p)->child[i] = NULL;
     
 
@@ -168,24 +162,29 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
-        x_mid = (*p)->x_mid;
-        y_mid = (*p)->y_mid;
-        z_mid = (*p)->z_mid;
+        double x_mid = (*p)->x_mid;
+        double y_mid = (*p)->y_mid;
+        double z_mid = (*p)->z_mid;
+        int numposchild;
 
         cp_partition_8(targets->x, targets->y, targets->z, targets->q, targets->order,
-                       xyzmms, xl, yl, zl, lmax, &numposchild,
+                       xyzmms, xl, yl, zl, tmax, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
-        loclev = level + 1;
+        int loclev = level + 1;
 
-        for (i = 0; i < numposchild; i++) {
+        for (int i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
-                (*p)->num_children = (*p)->num_children + 1;
 
-                for (j = 0; j < 6; j++)
+                (*p)->num_children = (*p)->num_children + 1;
+                int idx = (*p)->num_children - 1;
+
+                for (int j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
 
-                Tree_CP_Create(&((*p)->child[(*p)->num_children - 1]),
+                struct tnode **paddress = &((*p)->child[idx]);
+
+                Tree_CP_Create(paddress,
                                targets, ind[i][0], ind[i][1],
                                maxparnode, lxyzmm, loclev, numnodes, numleaves);
             }

@@ -52,7 +52,11 @@ void Interaction_CP_MakeListRemote(const struct tnode_array *tree_array, struct 
     const int *tree_children = tree_array->children;
 
 
-    for (int i = 0; i < batch_numnodes; i++) direct_list[i] = -1;
+    for (int i = 0; i < batch_numnodes; i++) {
+	 direct_list[i] = -1;
+         batch_num_direct[i] = 0;
+         batch_num_approx[i] = 0;
+    }
     
     for (int i = 0; i < batch_numnodes; i++) {
         cp_compute_interaction_list_remote(0,
@@ -104,7 +108,7 @@ void cp_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
  *           * in the box, use the expansion for the approximation.
  *                */
 
-        (*tree_index_counter)++;
+        (*batch_num_approx)++;
 
     } else {
     /*
@@ -113,7 +117,7 @@ void cp_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
  *                */
         if (tree_num_children[tree_node] == 0) {
 
-            (*direct_index_counter)++;
+            (*batch_num_direct)++;
 
         } else {
             for (int i = 0; i < tree_num_children[tree_node]; i++) {

@@ -19,7 +19,7 @@
 #include "clusters.h"
 
 static void cp_comp_interp(struct tnode_array *tree_array, int idx, int interpolationOrder,
-                          double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
+                          double *clusterX, double *clusterY, double *clusterZ);
 
 
 void Clusters_CP_Setup(struct clusters **new_clusters,
@@ -42,9 +42,9 @@ void Clusters_CP_Setup(struct clusters **new_clusters,
     make_vector(clusters->y, totalNumberInterpolationPoints);
     make_vector(clusters->z, totalNumberInterpolationPoints);
     
-    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->x[i] = 0.0;
-    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->y[i] = 0.0;
-    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
+//    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->x[i] = 0.0;
+//    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->y[i] = 0.0;
+//    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
     
     
     if (strcmp(approxName, "lagrange") == 0) {
@@ -92,24 +92,17 @@ void Clusters_CP_Setup(struct clusters **new_clusters,
     clusters->num_charges = totalNumberInterpolationCharges;
     clusters->num_weights = totalNumberInterpolationWeights;
 
-    double *xT = targets->x;
-    double *yT = targets->y;
-    double *zT = targets->z;
-    double *qT = targets->q;
-
     double *xC = clusters->x;
     double *yC = clusters->y;
     double *zC = clusters->z;
-    double *qC = clusters->q;
-    double *wC = clusters->w;
 
 //    printf("First source weight in clusters routine = %f\n", wS[0]);
 
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(tt[0:interpOrderLim]) \
-                       copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                            zC[0:totalNumberInterpolationPoints])
+                     copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                             zC[0:totalNumberInterpolationPoints])
     {
 #endif
 
@@ -151,10 +144,8 @@ void cp_comp_interp(struct tnode_array *tree_array, int idx, int interpolationOr
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ, tt) \
-                       create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
-                              exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
-                              nodeX[0:(interpolationOrder+1)], nodeY[0:(interpolationOrder+1)], \
-                              nodeZ[0:(interpolationOrder+1)])
+                       create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
+                              nodeZ[0:interpOrderLim])
     {
 #endif
 
