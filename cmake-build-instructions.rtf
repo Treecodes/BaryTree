@@ -1,0 +1,34 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf600
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 BaryTree CMake build instructions\
+\
+Step 1: Navigate to BaryTree\
+Step 2: Make a build directory\
+	- \'93mkdir build\'94\
+Step 3: Navigate into build directory\
+	- \'93cd build\'94\
+Step 4: call CMake.  This will find your C compiler and MPI\
+	- \'93cmake ..\'94\
+Step 5: set make flags\
+	- \'93ccmake ..\'94\
+	- set BUILD_SHARED_LIBS to ON\
+	- set BUILD_TESTS to OFF\
+	- set ENABLE_GPU_BUILD to OFF\
+	- if you have Zoltan installed and want to run standalone examples, set Zoltan_DIR and turn BUILD_EXAMPLES to ON.  Otherwise set BUILD_EXAMPLES to OFF\
+	- set CMAKE_INSTALL_PREFIX, e.g. \'93/usr/local\'94\
+	Other flags can remain untouched.\
+\
+Step 6: Configure and Generate\
+	- press C to configure.\
+	- press G to generate.\
+Step 7: Build.\
+	- \'93make -j install\'94 to compile and install to CMAKE_INSTALL_PREFIX\
+	- executables located in CMAKE_INSTALL_PREFIX/bin\
+	- libraries located in CMAKE_INSTALL_PREFIX/lib\
+\
+}
