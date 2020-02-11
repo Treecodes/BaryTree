@@ -165,7 +165,7 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
                         CP_coulombApproximationHermite(numberOfSources,
                             numberOfInterpolationPoints, batchStart, clusterStart,
                             totalNumberOfInterpolationPoints,
-                            source_x, source_y, source_z, source_q,
+                            source_x, source_y, source_z, source_q, source_w,
                             cluster_x, cluster_y, cluster_z, cluster_q,
                             kernel, streamID);
 
@@ -648,9 +648,9 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
-            double cx = tx - nodeX[j];
-            double cy = ty - nodeY[j];
-            double cz = tz - nodeZ[j];
+            double cx =  tx - nodeX[j];
+            double cy =  ty - nodeY[j];
+            double cz =  tz - nodeZ[j];
 
             if (fabs(cx)<DBL_MIN) exactIndX[i] = j;
             if (fabs(cy)<DBL_MIN) exactIndY[i] = j;
@@ -681,9 +681,9 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
             kk = kk - k2;
             int k3 = kk / interpOrderLim;
             
-            double dx = tx - nodeX[k1];
-            double dy = tx - nodeY[k2];
-            double dz = tx - nodeZ[k3];
+            double dx =  tx - nodeX[k1];
+            double dy =  tx - nodeY[k2];
+            double dz =  tx - nodeZ[k3];
             
             double cq     = cluster_q_[j];
             double cqdx   = cluster_q_dx[j];

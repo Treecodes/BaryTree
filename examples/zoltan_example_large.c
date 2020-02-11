@@ -159,8 +159,8 @@ int main(int argc, char **argv)
     time_t t = time(NULL);
     unsigned t_hashed = (unsigned) t;
     t_hashed = m*t_hashed + c;
-    srand(t_hashed ^ rank);
-//    srand(1);
+//    srand(t_hashed ^ rank);
+    srand(1);
 
     for (int i = 0; i < sample_size; ++i) {
         mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
