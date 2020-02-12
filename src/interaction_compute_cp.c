@@ -453,7 +453,7 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
         int eiz = -1;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
@@ -619,7 +619,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
         int eiz = -1;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
