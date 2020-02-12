@@ -391,7 +391,6 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
     
     double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
     double weights[interpOrderLim], dj[interpOrderLim];
-    int *exactIndX, *exactIndY, *exactIndZ;
     
     double x0 = tree_array->x_min[idx];
     double x1 = tree_array->x_max[idx];
@@ -400,27 +399,14 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
     double z0 = tree_array->z_min[idx];
     double z1 = tree_array->z_max[idx];
     
-    make_vector(exactIndX, targetPointsInCluster);
-    make_vector(exactIndY, targetPointsInCluster);
-    make_vector(exactIndZ, targetPointsInCluster);
-
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q, tt) \
-        create(exactIndX[0:targetPointsInCluster], exactIndY[0:targetPointsInCluster], exactIndZ[0:targetPointsInCluster], \
-               nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
+                create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
                weights[0:interpOrderLim], dj[0:interpOrderLim])
     {
 #endif
     
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
-    for (int j = 0; j < targetPointsInCluster; j++) {
-        exactIndX[j] = -1;
-        exactIndY[j] = -1;
-        exactIndZ[j] = -1;
-    }
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
@@ -462,8 +448,12 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
         double ty = target_y[startingIndexInTargetsArray+i];
         double tz = target_z[startingIndexInTargetsArray+i];
 
+        int eix = -1;
+        int eiy = -1;
+        int eiz = -1;
+
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
@@ -471,9 +461,9 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
             double cy = ty - nodeY[j];
             double cz = tz - nodeZ[j];
 
-            if (fabs(cx)<DBL_MIN) exactIndX[i] = j;
-            if (fabs(cy)<DBL_MIN) exactIndY[i] = j;
-            if (fabs(cz)<DBL_MIN) exactIndZ[i] = j;
+            if (fabs(cx)<DBL_MIN) eix = j;
+            if (fabs(cy)<DBL_MIN) eiy = j;
+            if (fabs(cz)<DBL_MIN) eiz = j;
 
             // Increment the sums
             double w = weights[j];
@@ -484,9 +474,9 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
         }
 
         double denominator = 1.0;
-        if (exactIndX[i]==-1) denominator /= sumX;
-        if (exactIndY[i]==-1) denominator /= sumY;
-        if (exactIndZ[i]==-1) denominator /= sumZ;
+        if (eix==-1) denominator /= sumX;
+        if (eiy==-1) denominator /= sumY;
+        if (eiz==-1) denominator /= sumZ;
         
         double temp = 0.0;
         
@@ -514,22 +504,22 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
 
             // If exactInd[i] == -1, then no issues.
             // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
-            if (exactIndX[i] == -1) {
+            if (eix == -1) {
                 numerator *= w1 / (tx - cx);
             } else {
-                if (exactIndX[i] != k1) numerator *= 0;
+                if (eix != k1) numerator *= 0;
             }
 
-            if (exactIndY[i] == -1) {
+            if (eiy == -1) {
                 numerator *= w2 / (ty - cy);
             } else {
-                if (exactIndY[i] != k2) numerator *= 0;
+                if (eiy != k2) numerator *= 0;
             }
 
-            if (exactIndZ[i] == -1) {
+            if (eiz == -1) {
                 numerator *= w3 / (tz - cz);
             } else {
-                if (exactIndZ[i] != k3) numerator *= 0;
+                if (eiz != k3) numerator *= 0;
             }
 
             temp += numerator * denominator * cq;
@@ -544,10 +534,6 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
     } //end ACC kernels
 #endif
     
-    free_vector(exactIndX);
-    free_vector(exactIndY);
-    free_vector(exactIndZ);
-
     return;
 }
 
@@ -564,7 +550,6 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
     
     double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
     double wx[interpOrderLim], wy[interpOrderLim], wz[interpOrderLim], dj[interpOrderLim];
-    int *exactIndX, *exactIndY, *exactIndZ;
     
     double *cluster_q_     = &cluster_q[8*startingIndexInClustersArray + 0*interpolationPointsPerCluster];
     double *cluster_q_dx   = &cluster_q[8*startingIndexInClustersArray + 1*interpolationPointsPerCluster];
@@ -582,31 +567,17 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
     double z0 = tree_array->z_min[idx];
     double z1 = tree_array->z_max[idx];
     
-    make_vector(exactIndX, targetPointsInCluster);
-    make_vector(exactIndY, targetPointsInCluster);
-    make_vector(exactIndZ, targetPointsInCluster);
-
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, \
                                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                                         cluster_q_dxyz, tt, ww) \
-        create(exactIndX[0:targetPointsInCluster], exactIndY[0:targetPointsInCluster], exactIndZ[0:targetPointsInCluster], \
-               nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
+        create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
                wx[0:interpOrderLim], wy[0:interpOrderLim], wz[0:interpOrderLim], dj[0:interpOrderLim])
     {
 #endif
     
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
-    for (int j = 0; j < targetPointsInCluster; j++) {
-        exactIndX[j] = -1;
-        exactIndY[j] = -1;
-        exactIndZ[j] = -1;
-    }
-
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
@@ -643,8 +614,12 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
         double ty = target_y[startingIndexInTargetsArray+i];
         double tz = target_z[startingIndexInTargetsArray+i];
 
+        int eix = -1;
+        int eiy = -1;
+        int eiz = -1;
+
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent
+        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
 
@@ -652,9 +627,9 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
             double cy =  ty - nodeY[j];
             double cz =  tz - nodeZ[j];
 
-            if (fabs(cx)<DBL_MIN) exactIndX[i] = j;
-            if (fabs(cy)<DBL_MIN) exactIndY[i] = j;
-            if (fabs(cz)<DBL_MIN) exactIndZ[i] = j;
+            if (fabs(cx)<DBL_MIN) eix = j;
+            if (fabs(cy)<DBL_MIN) eiy = j;
+            if (fabs(cz)<DBL_MIN) eiz = j;
 
             // Increment the sums
             sumX += dj[j] / (cx*cx) + wx[j] / cx;
@@ -664,9 +639,9 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
         }
 
         double denominator = 1.0;
-        if (exactIndX[i]==-1) denominator /= sumX;
-        if (exactIndY[i]==-1) denominator /= sumY;
-        if (exactIndZ[i]==-1) denominator /= sumZ;
+        if (eix==-1) denominator /= sumX;
+        if (eiy==-1) denominator /= sumY;
+        if (eiz==-1) denominator /= sumZ;
         
         double temp = 0.0;
         
@@ -706,7 +681,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
 
             // If exactInd[i] == -1, then no issues.
             // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
-            if (exactIndX[i] == -1) {
+            if (eix == -1) {
                 numerator0 *=  Ax;                     // Aaa
 
                 numerator1 *=  Bx;                     // Baa
@@ -720,7 +695,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
                 numerator7 *=  Bx;                     // Bbb
                 
             } else {
-                if (exactIndX[i] != k1) {
+                if (eix != k1) {
                     numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
                     numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
                 } else {
@@ -728,7 +703,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
                 }
             }
 
-            if (exactIndY[i] == -1) {
+            if (eiy == -1) {
                 numerator0 *=  Ay;                     // aAa
 
                 numerator1 *=  Ay;                     // bAa
@@ -742,7 +717,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
                 numerator7 *=  By;                     // bBb
                 
             } else {
-                if (exactIndY[i] != k2) {
+                if (eiy != k2) {
                     numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
                     numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
                 }  else {
@@ -750,7 +725,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
                 }
             }
 
-            if (exactIndZ[i] == -1) {
+            if (eiz == -1) {
                 numerator0 *=  Az;                    // aaA
 
                 numerator1 *=  Az;                    // baA
@@ -764,7 +739,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
                 numerator7 *=  Bz;                    // bbB
                 
             } else {
-                if (exactIndZ[i] != k3) {
+                if (eiz != k3) {
                     numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
                     numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
                 } else {
@@ -786,9 +761,5 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
     } //end ACC kernels
 #endif
     
-    free_vector(exactIndX);
-    free_vector(exactIndY);
-    free_vector(exactIndZ);
-
     return;
 }

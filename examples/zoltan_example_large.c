@@ -585,7 +585,7 @@ int main(int argc, char **argv)
 
     if (rank == 0) {
         FILE *fp = fopen("out.csv", "a");
-        fprintf(fp, "%d,%d,%f,%d,%d,%s,%f,%s,%s,%d,"
+        fprintf(fp, "%d,%d,%f,%d,%d,%s,%s,%s,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
