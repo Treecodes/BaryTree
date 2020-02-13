@@ -164,7 +164,6 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
 
                         CP_coulombApproximationHermite(numberOfSources,
                             numberOfInterpolationPoints, batchStart, clusterStart,
-                            totalNumberOfInterpolationPoints,
                             source_x, source_y, source_z, source_q, source_w,
                             cluster_x, cluster_y, cluster_z, cluster_q,
                             kernel, streamID);

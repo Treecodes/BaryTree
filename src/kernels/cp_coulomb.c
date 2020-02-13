@@ -65,13 +65,12 @@ void CP_coulombApproximationLagrange(int number_of_sources_in_batch, int number_
 
 
 void CP_coulombApproximationHermite(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
-        int starting_index_of_sources, int starting_index_of_cluster, int total_number_interpolation_points,
+        int starting_index_of_sources, int starting_index_of_cluster,
         double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
         struct kernel *kernel, int gpu_async_stream_id)
 {
 
-    // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
     double *cluster_q_     = &cluster_q[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
     double *cluster_q_dx   = &cluster_q[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
     double *cluster_q_dy   = &cluster_q[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];
@@ -126,10 +125,10 @@ void CP_coulombApproximationHermite(int number_of_sources_in_batch, int number_o
 #endif
 
             int jj = starting_index_of_sources + j;
-            double dx =  -cx + source_x[jj];
-            double dy =  -cy + source_y[jj];
-            double dz =  -cz + source_z[jj];
-            double r2 =  dx*dx + dy*dy + dz*dz;
+            double dx = source_x[jj] - cx;
+            double dy = source_y[jj] - cy;
+            double dz = source_z[jj] - cz;
+            double r2 = dx*dx + dy*dy + dz*dz;
 
             double r2inv = 1 / r2;
             double rinvq = source_q[jj] * source_w[jj] / sqrt(r2);
