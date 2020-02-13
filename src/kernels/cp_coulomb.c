@@ -126,9 +126,9 @@ void CP_coulombApproximationHermite(int number_of_sources_in_batch, int number_o
 #endif
 
             int jj = starting_index_of_sources + j;
-            double dx =  cx - source_x[jj];
-            double dy =  cy - source_y[jj];
-            double dz =  cz - source_z[jj];
+            double dx =  -cx + source_x[jj];
+            double dy =  -cy + source_y[jj];
+            double dz =  -cz + source_z[jj];
             double r2 =  dx*dx + dy*dy + dz*dz;
 
             double r2inv = 1 / r2;

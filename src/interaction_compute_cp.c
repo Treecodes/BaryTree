@@ -656,9 +656,9 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
             kk = kk - k2;
             int k3 = kk / interpOrderLim;
             
-            double dx =  tx - nodeX[k1];
-            double dy =  tx - nodeY[k2];
-            double dz =  tx - nodeZ[k3];
+            double dx = tx - nodeX[k1];
+            double dy = ty - nodeY[k2];
+            double dz = tz - nodeZ[k3];
             
             double cq     = cluster_q_[j];
             double cqdx   = cluster_q_dx[j];
