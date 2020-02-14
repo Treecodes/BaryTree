@@ -18,7 +18,7 @@
 
 
 void directdriver(struct particles *sources, struct particles *targets,
-                  struct kernel *kernel, double kernel_parameter, char *singularityHandling,
+                  struct kernel *kernel, char *singularityHandling,
                   char *approximationName, double *pointwisePotential, double *time_direct)
 {
     int rank, numProcs, ierr;
