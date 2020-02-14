@@ -1403,26 +1403,49 @@ static char *all_tests() {
     return 0;
 }
 
+// Run one test
+static char *run_one_test(int i) {
+    if (i==0){
+        mu_run_test(test_direct_sum_on_10_particles);
+        printf("Completed test_direct_sum_on_10_particles().\n");
+    }else if(i==1){
+        mu_run_test(test_treecode_on_100_particles);
+        printf("Completed test_treecode_on_100_particles().\n");
+    }else if(i==2){
+        mu_run_test(test_treecode_on_1_target_10000_sources);
+        printf("Completed test_treecode_on_1_target_10000_sources().\n");
+    }else if(i==3){
+        mu_run_test(test_treecode_parameters_on_1_target_10000_sources);
+        printf("Completed test_treecode_parameters_on_1_target_10000_sources().\n");
+    }else{
+        printf("Incorrect test number.  Exiting.");
+        exit(-1);
+    }
+    return 0;
+}
+
 int main(int argc, char **argv) {
     int rc, rank, numProcs;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
+    printf("input = %i\n", atoi(argv[1]));
+    char *result = run_one_test(atoi(argv[1]));
 
-    char *result = all_tests();
-    printf("Tests run: %d\n", tests_run);
-    if (result != 0) {
-        printf("============================\n" \
-               "| SOME SERIAL TESTS FAILED |\n" \
-               "============================\n");
-        printf("%s\n", result);
-    }
-    else {
-        printf("===========================\n" \
-               "| ALL SERIAL TESTS PASSED |\n" \
-               "===========================\n");
-    }
+//    char *result = all_tests();
+//    printf("Tests run: %d\n", tests_run);
+//    if (result != 0) {
+//        printf("============================\n" \
+//               "| SOME SERIAL TESTS FAILED |\n" \
+//               "============================\n");
+//        printf("%s\n", result);
+//    }
+//    else {
+//        printf("===========================\n" \
+//               "| ALL SERIAL TESTS PASSED |\n" \
+//               "===========================\n");
+//    }
 
 
 
