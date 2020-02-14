@@ -5,7 +5,7 @@
 #include "struct_kernel.h"
 
 void directdriver(struct particles *sources, struct particles *targets,
-                  struct kernel *kernelName, char *singularityHandling,
+                  struct kernel *kernel, char *singularityHandling,
                   char *approximationName, double *pointwisePotential,
                   double *time_direct);
 
