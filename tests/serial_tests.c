@@ -947,7 +947,6 @@ static char * test_treecode_wrapper() {
     targets->y = malloc(targets->num*sizeof(double));
     targets->z = malloc(targets->num*sizeof(double));
     targets->q = malloc(targets->num*sizeof(double));
-//    targets->order = malloc(targets->num*sizeof(int));
 
 
     sources->num = N; // 10,000 sources
@@ -956,7 +955,6 @@ static char * test_treecode_wrapper() {
     sources->z = malloc(sources->num*sizeof(double));
     sources->q = malloc(sources->num*sizeof(double));
     sources->w = malloc(sources->num*sizeof(double));
-//    sources->order = malloc(sources->num*sizeof(int));
 
 
     for (int i=0; i<targets->num; i++){
@@ -1015,22 +1013,22 @@ static char * test_treecode_wrapper() {
                         singularityHandling, approximationName,
                         order, theta, max_per_leaf, max_per_batch, verbosity);
 
-    sources = malloc(sizeof(struct particles));
-    sources->num = N; // 10,000 sources
-    sources->x = malloc(sources->num*sizeof(double));
-    sources->y = malloc(sources->num*sizeof(double));
-    sources->z = malloc(sources->num*sizeof(double));
-    sources->q = malloc(sources->num*sizeof(double));
-    sources->w = malloc(sources->num*sizeof(double));
-    srand(1);
-    for (int i=0; i<sources->num; i++){
-        // 10,000 randomly distributed sources in the [-1,1] box
-        sources->x[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        sources->y[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        sources->z[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        sources->q[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        sources->w[i]=((double)rand()/(double)(RAND_MAX));
-        }
+//    sources = malloc(sizeof(struct particles));
+//    sources->num = N; // 10,000 sources
+//    sources->x = malloc(sources->num*sizeof(double));
+//    sources->y = malloc(sources->num*sizeof(double));
+//    sources->z = malloc(sources->num*sizeof(double));
+//    sources->q = malloc(sources->num*sizeof(double));
+//    sources->w = malloc(sources->num*sizeof(double));
+//    srand(1);
+//    for (int i=0; i<sources->num; i++){
+//        // 10,000 randomly distributed sources in the [-1,1] box
+//        sources->x[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+//        sources->y[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+//        sources->z[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+//        sources->q[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+//        sources->w[i]=((double)rand()/(double)(RAND_MAX));
+//    }
 
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
@@ -1064,7 +1062,6 @@ static char * test_treecode_wrapper() {
     free(potential_wrapper);
     return 0;
 }
-
 
 
 static char * test_treecode_parameters_on_1_target_10000_sources() {
