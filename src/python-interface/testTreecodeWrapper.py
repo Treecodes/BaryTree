@@ -60,12 +60,14 @@ if __name__=="__main__":
                                                    kernelName, numberOfKernelParameters, kernelParameters, singularityHandling, approximationName,
                                                    treecodeOrder, theta, maxParNode, batchSize, GPUpresent, verbosity)
     
+        
         newMemory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         print("Memory growth this iteration: %i to %i " %(previousMemory,newMemory))
         previousMemory=newMemory
         
+        
     finalMemory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    print("Memory growth over %i iterations: %i to %i" %(n,initialMemory,finalMemory))
+    print("Memory growth over %i iterations: %i to %i, difference = %i" %(n,initialMemory,finalMemory,finalMemory-initialMemory))
     
     
     print("\n\nIf no errors occured, and memory didn't blow up, then the wrapper is working as expected!\n\n")

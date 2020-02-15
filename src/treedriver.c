@@ -597,6 +597,11 @@ void treedriver(struct particles *sources, struct particles *targets,
             Tree_FreeArray(let_tree_array);
         }
 
+        free_vector(sizeof_batch_approx);
+        free_vector(sizeof_batch_direct);
+        free_vector(offset_batch_approx);
+        free_vector(offset_batch_direct);
+
 
         time1 = MPI_Wtime();
         
@@ -635,6 +640,8 @@ void treedriver(struct particles *sources, struct particles *targets,
     /***************** Cleanup *********************/
     /***********************************************/
     time1 = MPI_Wtime();
+
+
 
     free_vector(targets->order); // free particle order arrays
     free_vector(sources->order); // free particle order arrays

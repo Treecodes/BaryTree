@@ -1,7 +1,7 @@
 import numpy as np
 import ctypes
 from mpi4py import MPI
-
+import resource
 
 
 
@@ -22,7 +22,6 @@ except OSError:
         print("Could not load GPU treecode library.") 
         
     
-
 """ Set argtypes of the wrappers. """
 try:
     _gpu_treecodeRoutines.treedriverWrapper.argtypes = ( ctypes.c_int, ctypes.c_int,
@@ -55,8 +54,11 @@ def callTreedriver(numTargets, numSources,
     python function which creates pointers to the arrays and calls treedriverWrapper.
     returns the results array.
     '''
+    
+    
+#     memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+#     print("Memory at the start of callTreedriver(): %i " %(memory))
 
-   
     c_double_p = ctypes.POINTER(ctypes.c_double)
 
     
@@ -98,5 +100,8 @@ def callTreedriver(numTargets, numSources,
     else: 
         print("What should GPUversion be set to in the wrapper?")
         exit(-1) 
+    
+#     memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+#     print("Memory at the end of callTreedriver(): %i " %(memory))
     
     return resultArray
