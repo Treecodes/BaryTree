@@ -18,7 +18,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
 option(BUILD_EXAMPLES "build examples with Zoltan"                             ON)
-option(BUILD_SHARED_LIBS "if building tree libraries, build as shared"         OFF)
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
 
 find_package(MPI REQUIRED)
