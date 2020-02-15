@@ -64,85 +64,27 @@ SET(SRCS_DIRECT_DISTRIBUTED
     kernels/kernels_direct.c)
 
 
-#if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
-#    set(TRGT tree-distributed-cpu)
-#    add_executable(${TRGT} ${SRCS_TREEDRIVER})
-#    target_sources(${TRGT}          PRIVATE 
-#                                        main.c)
-#    target_compile_features(${TRGT} PRIVATE
-#                                        c_std_99)
-#    target_link_libraries(${TRGT}   PRIVATE
-#                                        OpenMP::OpenMP_C
-#                                        MPI::MPI_C
-#                                        $<$<C_COMPILER_ID:GNU>:m>)
-#    install(TARGETS ${TRGT} DESTINATION bin)
-#endif()
+set(TRGT treelib-cpu)
+add_library(${TRGT} ${SRCS_TREEDRIVER})
+target_sources(${TRGT}          PRIVATE 
+                                    treedriverWrapper.c
+                                 PUBLIC  
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
+set_target_properties(${TRGT}   PROPERTIES
+                                    POSITION_INDEPENDENT_CODE ON)
+target_compile_features(${TRGT} PUBLIC
+                                    c_std_99)
+target_link_libraries(${TRGT}   PUBLIC
+                                    OpenMP::OpenMP_C
+                                    MPI::MPI_C
+                                    $<$<C_COMPILER_ID:GNU>:m>)
+
+install(TARGETS ${TRGT}               LIBRARY DESTINATION lib
+                                      ARCHIVE DESTINATION lib)
+install(FILES   treedriverWrapper.h           DESTINATION include)
 
 
-#if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
-#    set(TRGT tree-distributed-gpu)
-#    add_executable(${TRGT} ${SRCS_TREEDRIVER})
-#    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
-#    target_sources(${TRGT}        PRIVATE
-#                                      main.c)
-#    target_link_libraries(${TRGT} PRIVATE
-#                                      OpenMP::OpenMP_C
-#                                      MPI::MPI_C
-#                                      OpenACC_C
-#                                      $<$<C_COMPILER_ID:GNU>:m>)
-#    install(TARGETS ${TRGT} DESTINATION bin)
-#endif()
-
-
-#if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
-#    set(TRGT direct-distributed-cpu)
-#    add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
-#    target_compile_features(${TRGT} PRIVATE
-#                                        c_std_99)
-#    target_link_libraries(${TRGT}   PRIVATE
-#                                        OpenMP::OpenMP_C
-#                                        MPI::MPI_C
-#                                        $<$<C_COMPILER_ID:GNU>:m>)
-#    install(TARGETS ${TRGT} DESTINATION bin)
-#endif()
-
-
-#if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
-#    set(TRGT direct-distributed-gpu)
-#    add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
-#    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
-#    target_link_libraries(${TRGT} PRIVATE
-#                                      OpenMP::OpenMP_C
-#                                      MPI::MPI_C
-#                                      OpenACC_C
-#                                      $<$<C_COMPILER_ID:GNU>:m>)
-#    install(TARGETS ${TRGT} DESTINATION bin)
-#endif()
-
-
-if(BUILD_TREE_LIBRARIES AND ENABLE_CPU_BUILD)
-    set(TRGT treelib-cpu)
-    add_library(${TRGT} ${SRCS_TREEDRIVER})
-    target_sources(${TRGT}          PRIVATE 
-                                        treedriverWrapper.c
-                                     PUBLIC  
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
-    set_target_properties(${TRGT}   PROPERTIES
-                                        POSITION_INDEPENDENT_CODE ON)
-    target_compile_features(${TRGT} PUBLIC
-                                        c_std_99)
-    target_link_libraries(${TRGT}   PUBLIC
-                                        OpenMP::OpenMP_C
-                                        MPI::MPI_C
-                                        $<$<C_COMPILER_ID:GNU>:m>)
-
-    install(TARGETS ${TRGT}               LIBRARY DESTINATION lib
-                                          ARCHIVE DESTINATION lib)
-    install(FILES   treedriverWrapper.h           DESTINATION include)
-endif()
-
-
-if(BUILD_TREE_LIBRARIES AND ENABLE_GPU_BUILD)
+if(ENABLE_GPU_BUILD)
     set(TRGT treelib-gpu)
     add_library(${TRGT} ${SRCS_TREEDRIVER})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
@@ -161,4 +103,54 @@ if(BUILD_TREE_LIBRARIES AND ENABLE_GPU_BUILD)
     install(TARGETS ${TRGT}             LIBRARY DESTINATION lib
                                         ARCHIVE DESTINATION lib)
     install(FILES   treedriverWrapper.h         DESTINATION include)
+endif()
+
+
+if(BUILD_EXES)
+    set(TRGT tree-distributed-cpu)
+    add_executable(${TRGT} ${SRCS_TREEDRIVER})
+    target_sources(${TRGT}          PRIVATE 
+                                        main.c)
+    target_compile_features(${TRGT} PRIVATE
+                                        c_std_99)
+    target_link_libraries(${TRGT}   PRIVATE
+                                        OpenMP::OpenMP_C
+                                        MPI::MPI_C
+                                        $<$<C_COMPILER_ID:GNU>:m>)
+    install(TARGETS ${TRGT} DESTINATION bin)
+
+    set(TRGT direct-distributed-cpu)
+    add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
+    target_compile_features(${TRGT} PRIVATE
+                                        c_std_99)
+    target_link_libraries(${TRGT}   PRIVATE
+                                        OpenMP::OpenMP_C
+                                        MPI::MPI_C
+                                        $<$<C_COMPILER_ID:GNU>:m>)
+    install(TARGETS ${TRGT} DESTINATION bin)
+endif()
+
+
+if(BUILD_EXES AND ENABLE_GPU_BUILD)
+    set(TRGT tree-distributed-gpu)
+    add_executable(${TRGT} ${SRCS_TREEDRIVER})
+    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
+    target_sources(${TRGT}        PRIVATE
+                                      main.c)
+    target_link_libraries(${TRGT} PRIVATE
+                                      OpenMP::OpenMP_C
+                                      MPI::MPI_C
+                                      OpenACC_C
+                                      $<$<C_COMPILER_ID:GNU>:m>)
+    install(TARGETS ${TRGT} DESTINATION bin)
+
+    set(TRGT direct-distributed-gpu)
+    add_executable(${TRGT} ${SRCS_DIRECT_DISTRIBUTED})
+    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
+    target_link_libraries(${TRGT} PRIVATE
+                                      OpenMP::OpenMP_C
+                                      MPI::MPI_C
+                                      OpenACC_C
+                                      $<$<C_COMPILER_ID:GNU>:m>)
+    install(TARGETS ${TRGT} DESTINATION bin)
 endif()
