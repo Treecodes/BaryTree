@@ -1430,23 +1430,10 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-    printf("input = %i\n", atoi(argv[1]));
     char *result = run_one_test(atoi(argv[1]));
-
-//    char *result = all_tests();
-//    printf("Tests run: %d\n", tests_run);
-//    if (result != 0) {
-//        printf("============================\n" \
-//               "| SOME SERIAL TESTS FAILED |\n" \
-//               "============================\n");
-//        printf("%s\n", result);
-//    }
-//    else {
-//        printf("===========================\n" \
-//               "| ALL SERIAL TESTS PASSED |\n" \
-//               "===========================\n");
-//    }
-
+    if (result != 0) {
+        printf("%s\n", result);
+    }
 
 
     MPI_Finalize();
