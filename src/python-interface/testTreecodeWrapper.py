@@ -7,8 +7,8 @@ import numpy as np
 import mpi4py.MPI as MPI
 
 
-sys.path.insert(1, '/Users/nathanvaughn/Documents/GitHub/BaryTree/src/python-interface')
 
+sys.path.append(os.getcwd())
 try:
     import treecodeWrappers
 except ImportError:
@@ -36,10 +36,9 @@ if __name__=="__main__":
     numberOfKernelParameters=2
     kernelParameters=np.array([0.5, 0.1])
 
-    
     # set number of iterations for the treecode wrapper calls
     n=10
-    print('Initial memory usage before creating arrays: ', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss )
+    
     # initialize some random data
     RHO = np.random.rand(N)
     X = np.random.rand(N)
@@ -47,12 +46,13 @@ if __name__=="__main__":
     Z = np.random.rand(N)
     W = np.ones(N)
     
-    
+    # measure memory usage
     initialMemory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     previousMemory=initialMemory
     print('Initial memory usage: ', resource.getrusage(resource.RUSAGE_SELF).ru_maxrss )
     
-    for i in range(10):
+    # call the treecode n times, measuring memory each time
+    for i in range(n):
         
         output = treecodeWrappers.callTreedriver(  N, N, 
                                                    X, Y, Z, RHO, 
@@ -65,7 +65,10 @@ if __name__=="__main__":
         previousMemory=newMemory
         
     finalMemory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    print("\nMemory growth over %i iterations: %i to %i" %(n,initialMemory,finalMemory))
+    print("Memory growth over %i iterations: %i to %i" %(n,initialMemory,finalMemory))
+    
+    
+    print("\n\nIf no errors occured, and memory didn't blow up, then the wrapper is working as expected!\n\n")
         
 
 
