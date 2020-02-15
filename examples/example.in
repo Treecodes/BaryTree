@@ -1,0 +1,14 @@
+num_particles   20000
+order           5
+theta           0.5
+max_per_leaf    500
+max_per_batch   500
+kernel_name     yukawa
+singularity     skipping
+approximation   hermite
+tree_type       1
+size_check      1.0
+run_direct      1
+verbosity       1
+slice           10
+kernel_params   1.0

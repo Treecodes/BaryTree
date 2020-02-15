@@ -64,7 +64,7 @@ SET(SRCS_DIRECT_DISTRIBUTED
     kernels/kernels_direct.c)
 
 
-set(TRGT treelib-cpu)
+set(TRGT barytree_cpu)
 add_library(${TRGT} ${SRCS_TREEDRIVER})
 target_sources(${TRGT}          PRIVATE 
                                     treedriverWrapper.c
@@ -85,7 +85,7 @@ install(FILES   treedriverWrapper.h           DESTINATION include)
 
 
 if(ENABLE_GPU_BUILD)
-    set(TRGT treelib-gpu)
+    set(TRGT barytree_gpu)
     add_library(${TRGT} ${SRCS_TREEDRIVER})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE

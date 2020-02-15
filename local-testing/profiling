@@ -1,5 +1,0 @@
-#!/bin/bash
-
-
-nvprof --profile-child-processes --metrics flop_dp_efficiency mpirun -np 1 gpu_kernel_profiler 512 7 coulomb 0.0 skipping lagrange direct 10
-nvprof --profile-child-processes --metrics flop_dp_efficiency mpirun -np 1 gpu_kernel_profiler_cuda 512 7 coulomb 0.0 skipping lagrange direct 10

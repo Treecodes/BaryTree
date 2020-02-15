@@ -15,16 +15,16 @@ void AllocateKernelStruct(struct kernel *kernel, int numberOfParameters, char *n
 
 	kernel->name = name;
     kernel->numberOfParameters = numberOfParameters;
-	make_vector(kernel->parameters, numberOfParameters);
+	if (kernel->numberOfParameters > 0) make_vector(kernel->parameters, numberOfParameters);
 
     return;
 }
 
 
-void SetKernelParameters(struct kernel *kernel, double * parameters){
-
-    for (int i=0;i<kernel->numberOfParameters;i++){
-        kernel->parameters[i]=parameters[i];
+void SetKernelParameters(struct kernel *kernel, double *parameters)
+{
+    for (int i = 0; i < kernel->numberOfParameters; i++) {
+        kernel->parameters[i] = parameters[i];
     }
 
 }
@@ -33,7 +33,7 @@ void SetKernelParameters(struct kernel *kernel, double * parameters){
 
 void FreeKernelStruct(struct kernel *kernel)
 {
-	free_vector(kernel->parameters);
+	if (kernel->numberOfParameters > 0) free_vector(kernel->parameters);
     free(kernel);
 
     return;
