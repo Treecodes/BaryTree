@@ -66,6 +66,55 @@ void Tree_Setup(struct particles *particles1, struct particles *particles2,
 
 
 
+void Tree_CC_Setup(struct particles *particles1, struct particles *particles2, 
+                int order, double theta, double *par1_xyzminmax, double *par2_xyzminmax)
+{
+    /* changing values of our extern variables */
+    thetasq = theta * theta;
+    make_vector(tt, order+1);
+    make_vector(ww, order+1);
+
+    /* initializing array for Chev points */
+    for (int i = 0; i < order+1; i++)
+        tt[i] = cos(i * M_PI / order);
+
+    ww[0] = 0.25 * (order*order/3.0 + 1.0/6.0);
+    ww[order] = -ww[0];
+
+    for (int i = 1; i < order; i++) {
+        double xx = i * M_PI / order;
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
+    }
+
+    int particles1_num = particles1->num;
+    int particles2_num = particles2->num;
+
+    /* find bounds of Cartesian box enclosing the particles */
+    par1_xyzminmax[0] = minval(particles1->x, particles1_num);
+    par1_xyzminmax[1] = maxval(particles1->x, particles1_num);
+    par1_xyzminmax[2] = minval(particles1->y, particles1_num);
+    par1_xyzminmax[3] = maxval(particles1->y, particles1_num);
+    par1_xyzminmax[4] = minval(particles1->z, particles1_num);
+    par1_xyzminmax[5] = maxval(particles1->z, particles1_num);
+
+    par2_xyzminmax[0] = minval(particles2->x, particles1_num);
+    par2_xyzminmax[1] = maxval(particles2->x, particles1_num);
+    par2_xyzminmax[2] = minval(particles2->y, particles1_num);
+    par2_xyzminmax[3] = maxval(particles2->y, particles1_num);
+    par2_xyzminmax[4] = minval(particles2->z, particles1_num);
+    par2_xyzminmax[5] = maxval(particles2->z, particles1_num);
+
+    /* setting up ordering vectors */
+    make_vector(particles1->order, particles1_num);
+    make_vector(particles2->order, particles2_num);
+    for (int i = 0; i < particles1_num; i++) particles1->order[i] = i+1;
+    for (int i = 0; i < particles2_num; i++) particles2->order[i] = i+1;
+
+    return;
+    
+} /* END of function setup */
+
+
 
 void Tree_CP_Create(struct tnode **p, struct particles *targets,
                     int ibeg, int iend, int maxparnode,
