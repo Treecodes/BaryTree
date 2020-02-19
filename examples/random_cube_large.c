@@ -307,13 +307,18 @@ int main(int argc, char **argv)
 
 
     sources = malloc(sizeof(struct particles));
-    targets = malloc(sizeof(struct particles));
-    targets_sample = malloc(sizeof(struct particles));
-    potential = malloc(sizeof(double) * N);
-    potential_direct = malloc(sizeof(double) * N);
-
     sources->num = N;
-    targets->num = N;
+
+    targets = malloc(sizeof(struct particles));
+    targets->num = M;
+    potential = malloc(targets->num * sizeof(double));
+    memset(potential, 0, targets->num * sizeof(double));
+
+    targets_sample = malloc(sizeof(struct particles));
+    targets_sample->num = targets->num / slice;
+    potential_direct = malloc(targets_sample->num * sizeof(double));
+    memset(potential_direct, 0, targets_sample->num * sizeof(double));
+
 
     //MPI-allocated source arrays for RMA use
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
@@ -331,21 +336,19 @@ int main(int argc, char **argv)
         sources->w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
     }
 
-    //Making the targets, but just as a copy of sources
-    targets->x = malloc(targets->num * sizeof(double));
-    targets->y = malloc(targets->num * sizeof(double));
-    targets->z = malloc(targets->num * sizeof(double));
-    targets->q = malloc(targets->num * sizeof(double));
-    memcpy(targets->x, sources->x, targets->num * sizeof(double));
-    memcpy(targets->y, sources->y, targets->num * sizeof(double));
-    memcpy(targets->z, sources->z, targets->num * sizeof(double));
-    memcpy(targets->q, sources->q, targets->num * sizeof(double));
+    //MPI-allocated target arrays for RMA use
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->x));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->y));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->z));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->q));
 
-    memset(potential, 0, targets->num * sizeof(double));
-    memset(potential_direct, 0, targets->num * sizeof(double));
-
-
-
+    //Generating targets based on Zoltan bounding box
+    for (int i = 0; i < targets->num; ++i) {
+        targets->x[i] = ((double)rand()/(double)(RAND_MAX)) * (xmax-xmin) + xmin;
+        targets->y[i] = ((double)rand()/(double)(RAND_MAX)) * (ymax-ymin) + ymin;
+        targets->z[i] = ((double)rand()/(double)(RAND_MAX)) * (zmax-zmin) + zmin;
+        targets->q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+    }
 
 
 #ifdef OPENACC_ENABLED
@@ -361,7 +364,6 @@ int main(int argc, char **argv)
 
     if (run_direct_comparison == 1) {
 
-        targets_sample->num = targets->num / slice;
         targets_sample->x = malloc(targets_sample->num * sizeof(double));
         targets_sample->y = malloc(targets_sample->num * sizeof(double));
         targets_sample->z = malloc(targets_sample->num * sizeof(double));
@@ -379,7 +381,7 @@ int main(int argc, char **argv)
         directdriver(sources, targets_sample, kernel, singularityHandling,
                      approximationName, potential_direct, time_direct);
         time_run[1] = MPI_Wtime() - time1;
-        potential_engy_direct = sum(potential_direct, targets->num);
+        potential_engy_direct = sum(potential_direct, targets_sample->num);
 
         free(targets_sample->x);
         free(targets_sample->y);

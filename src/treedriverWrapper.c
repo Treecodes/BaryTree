@@ -39,23 +39,21 @@ void treedriverWrapper(int numTargets, int numSources,
 
 
 	// Assemble the arrays of data into the particle structs.
-	struct particles *sources = NULL;
-	struct particles *targets = NULL;
-	sources = malloc(sizeof(struct particles));
-	targets = malloc(sizeof(struct particles));
+	struct particles sources;
+	struct particles targets;
 
-	targets->num = numTargets;
-	targets->x = targetX;
-	targets->y = targetY;
-	targets->z = targetZ;
-	targets->q = targetValue;
+	targets.num = numTargets;
+	targets.x = targetX;
+	targets.y = targetY;
+	targets.z = targetZ;
+	targets.q = targetValue;
 
-	sources->num = numSources;
-	sources->x = sourceX;
-	sources->y = sourceY;
-	sources->z = sourceZ;
-	sources->q = sourceValue;
-	sources->w = sourceWeight;
+	sources.num = numSources;
+	sources.x = sourceX;
+	sources.y = sourceY;
+	sources.z = sourceZ;
+	sources.q = sourceValue;
+	sources.w = sourceWeight;
 
 
 	double time_tree[9];
@@ -73,7 +71,7 @@ void treedriverWrapper(int numTargets, int numSources,
 //    printf("In wrapper, sources->x exist before call to treedriver? %1.3e\n", sources->x[3]);
 //    printf("In wrapper, sourceX exist before call to treedriver? %1.3e\n", sourceX[3]);
     MPI_Barrier(MPI_COMM_WORLD);
-	treedriver(sources, targets,
+	treedriver(&sources, &targets,
 			   order, theta, maxparnode, batch_size,
 			   kernel, singularityHandling, approximationName, tree_type,
 			   outputArray, time_tree, sizeCheckFactor, verbosity);
@@ -99,7 +97,5 @@ void treedriverWrapper(int numTargets, int numSources,
     FreeKernelStruct(kernel);
 
 //    free_vector(sources->order);
-    free(sources);
-    free(targets);
 	return;
 }
