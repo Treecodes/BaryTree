@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mpi.h>
-#include <zoltan.h>
 #include <time.h>
 #include <float.h>
 

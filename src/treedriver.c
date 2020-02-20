@@ -74,12 +74,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         fprintf(stderr, "ERROR: Cluster-particle treecode currently disabled.\n");
         exit(1);
 
-        //setup(targets, order, theta, xyzminmax);
-        //cp_create_tree_n0(&troot, targets, 1, targets->num,
-        //                  maxparnode, xyzminmax, level);
-        //setup_batch(&batches, batch_lim, targets, batch_size);
-        //create_source_batch(batches, sources, 1, sources->num,
-        //                    batch_size, batch_lim);
+
         
     } else if (tree_type == 1) {
 
@@ -659,7 +654,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     time_tree[9] = MPI_Wtime() - time1; //time_cleanup
     time_tree[10] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6]; //total setup time
     time_tree[11] = time_tree[5] + time_tree[7]; // total compute time
-    
+
     MPI_Barrier(MPI_COMM_WORLD);
 
     return;

@@ -55,9 +55,6 @@ def callTreedriver(numTargets, numSources,
     returns the results array.
     '''
     
-    
-#     memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-#     print("Memory at the start of callTreedriver(): %i " %(memory))
 
     c_double_p = ctypes.POINTER(ctypes.c_double)
 
@@ -101,7 +98,6 @@ def callTreedriver(numTargets, numSources,
         print("What should GPUversion be set to in the wrapper?")
         exit(-1) 
     
-#     memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-#     print("Memory at the end of callTreedriver(): %i " %(memory))
+    
     
     return resultArray

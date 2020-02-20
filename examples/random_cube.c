@@ -215,7 +215,7 @@ int main(int argc, char **argv)
         }
     }
 
-    printf("Created sources.\n");
+    if (verbosity>0) printf("Created sources.\n");
 
     zz = Zoltan_Create(MPI_COMM_WORLD);
 
@@ -245,7 +245,6 @@ int main(int argc, char **argv)
     Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
 
 
-    printf("About to call Zoltan_LB_Partition\n");
     rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
                 &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
                 &numGidEntries,  /* Number of integers used for a global ID */

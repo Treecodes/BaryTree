@@ -56,7 +56,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	sources.w = sourceWeight;
 
 
-	double time_tree[9];
+	double time_tree[12];
 	int tree_type = 1;   // particle cluster
 	double tpeng = 0;
 
@@ -68,9 +68,6 @@ void treedriverWrapper(int numTargets, int numSources,
 
 
 	// Call the treedriver
-//    printf("In wrapper, sources->x exist before call to treedriver? %1.3e\n", sources->x[3]);
-//    printf("In wrapper, sourceX exist before call to treedriver? %1.3e\n", sourceX[3]);
-    MPI_Barrier(MPI_COMM_WORLD);
 	treedriver(&sources, &targets,
 			   order, theta, maxparnode, batch_size,
 			   kernel, singularityHandling, approximationName, tree_type,
@@ -78,24 +75,7 @@ void treedriverWrapper(int numTargets, int numSources,
 	MPI_Barrier(MPI_COMM_WORLD);
 
 
-//    tpeng = sum(outputArray, targets->num); // this isn't being used, no need to sum the computed potential
-
-    // free the particle structs (but not the member arrays themselves, which already existed before the call to treedriverwrapper and need to persist)
-
-//	printf("In wrapper, sources->x still exist after call to treedriver? %1.3e\n", sources->x[3]);
-//    printf("In wrapper, sourceX still exist after call to treedriver? %1.3e\n", sourceX[3]);
-
-//    MPI_Barrier(MPI_COMM_WORLD);
-//    free(sources);
-//	free(targets);
-//	MPI_Barrier(MPI_COMM_WORLD);
-//    printf("In wrapper, sourceX still exist after call to free? %1.3e\n", sourceX[3]);  // sourceX still exists.  sources->x no longer exists.
-//    MPI_Barrier(MPI_COMM_WORLD);
-
-
-
     FreeKernelStruct(kernel);
 
-//    free_vector(sources->order);
 	return;
 }
