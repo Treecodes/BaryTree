@@ -6,11 +6,6 @@ import resource
 import numpy as np
 import mpi4py.MPI as MPI
 
-import matplotlib.pyplot as plt
-
-
-
-
 
 sys.path.append(os.getcwd())
 try:
@@ -19,7 +14,6 @@ except ImportError:
     print('Unable to import treecodeWrapper due to ImportError')
 except OSError:
     print('Unable to import treecodeWrapper due to OSError')
-    import treecodeWrappers_distributed as treecodeWrappers
 
 
 if __name__=="__main__":
