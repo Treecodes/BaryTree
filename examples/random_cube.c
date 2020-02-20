@@ -70,7 +70,7 @@ int main(int argc, char **argv)
     double theta = 0.5; 
     int max_per_leaf = 500;
     int max_per_batch = 500; 
-    int sizeCheckFactor = 1;
+    double sizeCheckFactor = 1.0;
 
     char kernelName[256] = "coulomb";
     char singularityHandling[256] = "skipping";
