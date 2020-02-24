@@ -124,7 +124,9 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
 /**********************************************************/
 
         for (int j = 0; j < numberOfClusterApproximations; j++) {
+
             int node_index = approx_inter_list[i][j];
+
             int clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
             int streamID = j%3;
 
@@ -241,6 +243,7 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
         for (int j = 0; j < numberOfDirectSums; j++) {
 
             int node_index = direct_inter_list[i][j];
+
             int target_start = ibegs[node_index] - 1;
             int target_end = iends[node_index];
             int number_of_targets_in_cluster = target_end-target_start;

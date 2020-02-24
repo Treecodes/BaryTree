@@ -40,8 +40,8 @@ void InteractionList_Make(const struct tnode_array *tree_array,
     const double *batch_z_mid = batches->z_mid;
     const double *batch_radius = batches->radius;
 
-    int *num_approx_inter = batches->numDirect;
-    int *num_direct_inter = batches->numApprox;
+    int *num_approx_inter = batches->numApprox;
+    int *num_direct_inter = batches->numDirect;
 
     int tree_numnodes = tree_array->numnodes;
     const int *tree_numpar = tree_array->numpar;

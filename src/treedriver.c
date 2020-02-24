@@ -65,7 +65,6 @@ void treedriver(struct particles *sources, struct particles *targets,
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (tree_type == 0) {
     
-    
         struct tnode *troot = NULL;
         struct tnode_array *tree_array = NULL;
         double xyzminmax[6];
@@ -89,6 +88,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time_tree[0] = MPI_Wtime() - time1; //time_maketreearray
         
+
 
         time1 = MPI_Wtime();
 
@@ -163,6 +163,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         int new_sources_length_array[numProcs];
         int previous_let_sources_length_array[numProcs];
         MPI_Datatype direct_type[numProcs];
+
 
 
         for (int procID = 1; procID < numProcs; ++procID) {
@@ -339,6 +340,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
+
+
         InteractionCompute_CP_1(tree_array, batches,
                         local_approx_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
@@ -360,6 +363,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int **let_approx_inter_list, **let_direct_inter_list;
             
+
+
             InteractionList_Make(tree_array, let_batches_array, &let_approx_inter_list, &let_direct_inter_list,
                                  interpolationOrder, sizeCheckFactor);
 
@@ -367,6 +372,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
+
+
 
             InteractionCompute_CP_1(tree_array, let_batches_array,
                                     let_approx_inter_list, let_direct_inter_list,
@@ -388,6 +395,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         time1 = MPI_Wtime();
+
+
         
         InteractionCompute_CP_2(tree_array,
                                 targets->x, targets->y, targets->z, targets->q,
@@ -399,6 +408,8 @@ void treedriver(struct particles *sources, struct particles *targets,
         time_tree[8] = MPI_Wtime() - time1;
 
         time1 = MPI_Wtime();
+
+
         
         InteractionCompute_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
                                 kernel, singularityHandling);
@@ -411,7 +422,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         //CLEANUP
         //-------------------
         
-        
+
         time1 = MPI_Wtime();
         
         free_vector(targets->order); // free particle order arrays
@@ -845,6 +856,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             }
         }
         time1 = MPI_Wtime();
+
+
 
         InteractionCompute_PC(tree_array, batches,
                         local_approx_inter_list, local_direct_inter_list,
