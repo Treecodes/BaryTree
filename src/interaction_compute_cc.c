@@ -26,28 +26,8 @@
 #include "interaction_compute.h"
 
 
-static void cc_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
-                        double *xT, double *yT, double *zT, double *qT,
-                        double *clusterQ, double *clusterW);
-
-//static void cp_comp_pot_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
-//                      double *xT, double *yT, double *zT, double *qT,
-//                      double *clusterQ, double *clusterW);
-
-static void cc_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
-                        int totalNumberInterpolationPoints,
-                        double *xT, double *yT, double *zT, double *qT,
-                        double *clusterQ, double *clusterW);
-
-//static void cp_comp_pot_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
-//                      int totalNumberInterpolationPoints,
-//                      double *xT, double *yT, double *zT, double *qT,
-//                      double *clusterQ, double *clusterW);
-
-
-
 void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode_array *target_tree_array,
-                             int *approx_inter_list, int *direct_inter_list,
+                             int **approx_inter_list, int **direct_inter_list,
                              double *source_x, double *source_y, double *source_z,
                              double *source_q, double *source_w,
                              double *target_x, double *target_y, double *target_z, double *target_q,
@@ -93,6 +73,9 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
     int *target_tree_ibeg = target_tree_array->ibeg;
     int *target_tree_iend = target_tree_array->iend;
     int *target_tree_cluster_ind = target_tree_array->cluster_ind;
+
+    int *target_tree_num_approx = target_tree_array->numApprox;
+    int *target_tree_num_direct = target_tree_array->numDirect;
     
     int numSourceClusterCharges = numSourceClusterPoints;
     int numSourceClusterWeights = numSourceClusterPoints;
@@ -136,14 +119,13 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
     for (int i = 0; i < target_tree_numnodes; i++) {
         int target_ibeg = target_tree_ibeg[i];
         int target_iend = target_tree_iend[i];
-        int target_cluster_ind = target_tree_cluster_ind[i];
-        int target_cluster_start = numInterpPoints * target_cluster_ind;
+        int target_cluster_start = numInterpPoints * target_tree_cluster_ind[i];
 
         int numTargets = target_iend - target_ibeg + 1;
         int targetStart =  target_ibeg - 1;
         
-        int numClusterApprox = target_tree_numApprox[i];
-        int numClusterDirect = target_tree_numDirect[i];
+        int numClusterApprox = target_tree_num_approx[i];
+        int numClusterDirect = target_tree_num_direct[i];
 
 
 /**********************************************************/
@@ -152,7 +134,7 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
 
         for (int j = 0; j < numClusterApprox; j++) {
             int source_node_index = approx_inter_list[i][j];
-            int source_cluster_start = numInterpPoints * source_cluster_ind[source_node_index];
+            int source_cluster_start = numInterpPoints * source_tree_cluster_ind[source_node_index];
             int streamID = j%3;
 
 
@@ -269,7 +251,7 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
 /************** POTENTIAL FROM DIRECT *********************/
 /**********************************************************/
 
-        for (int j = 0; j < numberOfDirectSums; j++) {
+        for (int j = 0; j < numClusterDirect; j++) {
 
             int source_node_index = direct_inter_list[i][j];
             int source_ibeg = source_tree_ibeg[source_node_index];

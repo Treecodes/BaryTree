@@ -32,7 +32,6 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
                             double *cluster_charge, double *cluster_weight,
                             double *pointwisePotential, int interpolationOrder,
                             int numSources, int numTargets, int totalNumberOfInterpolationPoints,
-                            int batch_approx_offset, int batch_direct_offset,
                             struct kernel *kernel, char *singularityHandling,
                             char *approximationName)
 {

@@ -2,13 +2,11 @@
 #define H_INTERACTIONLISTS_H
 
 void InteractionList_Make(const struct tnode_array *tree_array, struct tnode_array *batches,
-                          int *tree_inter_list, int *direct_inter_list, int approx_offset,
-                          int direct_offset,
+                          int ***approx_inter_list_addr, int ***direct_inter_list_addr,
                           int interpolationOrder, double sizeCheckFactor);
 
 void InteractionList_PC_MakeRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
-                                int *approx_mask_packed, int *approx_mask_unpacked, int *direct_mask,
-                                int *num_batch_approx, int *num_batch_direct,
+                                int *approx_list_packed, int *approx_list_unpacked, int *direct_list,
                                 int interpolationOrder, double sizeCheckFactor);
                                 
 void InteractionList_CP_MakeRemote(const struct tnode_array *tree_array, struct tnode_array *batches,

@@ -22,7 +22,7 @@ SET(SRCS_TREEDRIVER
     struct_kernel.h
     interaction_lists.c
     interaction_lists.h
-    interaction_compute.c
+    interaction_compute_pc.c
     interaction_compute.h
     partition.c
     partition.h
@@ -48,6 +48,8 @@ SET(SRCS_TREEDRIVER
     clusters_cp.c
     interaction_lists_cp.c
     interaction_compute_cp.c
+    interaction_lists_cc.c
+    interaction_compute_cc.c
     kernels/cp_coulomb.c
     kernels/cp_coulomb.h)
 

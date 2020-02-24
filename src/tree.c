@@ -97,12 +97,12 @@ void Tree_CC_Setup(struct particles *particles1, struct particles *particles2,
     par1_xyzminmax[4] = minval(particles1->z, particles1_num);
     par1_xyzminmax[5] = maxval(particles1->z, particles1_num);
 
-    par2_xyzminmax[0] = minval(particles2->x, particles1_num);
-    par2_xyzminmax[1] = maxval(particles2->x, particles1_num);
-    par2_xyzminmax[2] = minval(particles2->y, particles1_num);
-    par2_xyzminmax[3] = maxval(particles2->y, particles1_num);
-    par2_xyzminmax[4] = minval(particles2->z, particles1_num);
-    par2_xyzminmax[5] = maxval(particles2->z, particles1_num);
+    par2_xyzminmax[0] = minval(particles2->x, particles2_num);
+    par2_xyzminmax[1] = maxval(particles2->x, particles2_num);
+    par2_xyzminmax[2] = minval(particles2->y, particles2_num);
+    par2_xyzminmax[3] = maxval(particles2->y, particles2_num);
+    par2_xyzminmax[4] = minval(particles2->z, particles2_num);
+    par2_xyzminmax[5] = maxval(particles2->z, particles2_num);
 
     /* setting up ordering vectors */
     make_vector(particles1->order, particles1_num);

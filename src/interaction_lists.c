@@ -73,7 +73,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
         for(int j = 0; j < 50; j++)
             approx_inter_list[i][j] = -1;
 
-    for (int i = 0; i < batcg_numnodes; i++)
+    for (int i = 0; i < batch_numnodes; i++)
         for(int j = 0; j < 50; j++)
             direct_inter_list[i][j] = -1;
             
@@ -81,7 +81,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
     for (int i = 0; i < batch_numnodes; i++) num_direct_inter[i] = 0;
     
     for (int i = 0; i < batch_numnodes; i++)
-        pc_compute_interaction_list_remote
+        pc_compute_interaction_list(
                     0, tree_numpar, tree_radius,
                     tree_x_mid, tree_y_mid, tree_z_mid,
                     tree_num_children, tree_children,
@@ -90,7 +90,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
 
                     &(approx_inter_list[i]), &(direct_inter_list[i]),
                     &(sizeof_approx_inter_list[i]), &(sizeof_direct_inter_list[i]),
-                    &(num_approx_direct[i]), &(num_direct_inter[i]),
+                    &(num_approx_inter[i]), &(num_direct_inter[i]),
                     interpolationOrder, sizeCheckFactor);
                     
     free_vector(sizeof_approx_inter_list);
@@ -163,7 +163,7 @@ void InteractionList_PC_MakeRemote(const struct tnode_array *tree_array, struct 
     // Fill interaction lists
     for (int i = 0; i < batches->numnodes; i++) {
 
-        pc_compute_interaction_list_remote(
+        pc_compute_interaction_list(
                     0, tree_numpar, tree_radius,
                     tree_x_mid, tree_y_mid, tree_z_mid,
                     tree_num_children, tree_children,
@@ -179,7 +179,7 @@ void InteractionList_PC_MakeRemote(const struct tnode_array *tree_array, struct 
 
 
     for (int j = 0; j < batch_numnodes; j++) {
-        for (int i = 0; i < num_tree_inter[j]; i++) {
+        for (int i = 0; i < num_approx_inter[j]; i++) {
 
             int node_index = temp_approx_inter_list[j][i];
             approx_list_unpacked[node_index] = node_index;
@@ -274,7 +274,7 @@ void pc_compute_interaction_list(
 
         } else {
             for (int i = 0; i < tree_num_children[tree_node]; i++) {
-                pc_compute_interaction_list_remote(tree_children[8*tree_node + i],
+                pc_compute_interaction_list(tree_children[8*tree_node + i],
                            tree_numpar, tree_radius,
                            tree_x_mid, tree_y_mid, tree_z_mid,
                            tree_num_children, tree_children,     

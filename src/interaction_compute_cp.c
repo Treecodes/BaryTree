@@ -46,7 +46,7 @@ static void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double 
 
 
 void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array *batches,
-                             int *approx_inter_list, int *direct_inter_list,
+                             int **approx_inter_list, int **direct_inter_list,
                              double *source_x, double *source_y, double *source_z,
                              double *source_q, double *source_w,
                              double *target_x, double *target_y, double *target_z, double *target_q,

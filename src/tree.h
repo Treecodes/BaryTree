@@ -13,6 +13,9 @@ void Tree_Free(struct tnode *p);
 void Tree_Setup(struct particles *particles1, struct particles *particles2,
                 int order, double theta, double *xyzminmax);
 
+void Tree_CC_Setup(struct particles *particles1, struct particles *particles2, 
+                int order, double theta, double *par1_xyzminmax, double *par2_xyzminmax);
+
 int Tree_SetIndex(struct tnode *p, int index);
 
 

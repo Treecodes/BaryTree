@@ -332,7 +332,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         int **local_approx_inter_list, **local_direct_inter_list;
 
-        InteractionList_Make(tree_array, batches, local_approx_inter_list, local_direct_inter_list,
+        InteractionList_Make(tree_array, batches, &local_approx_inter_list, &local_direct_inter_list,
                              interpolationOrder, sizeCheckFactor);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
@@ -360,7 +360,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int **let_approx_inter_list, **let_direct_inter_list;
             
-            InteractionList_Make(tree_array, let_batches_array, let_approx_inter_list, let_direct_inter_list,
+            InteractionList_Make(tree_array, let_batches_array, &let_approx_inter_list, &let_direct_inter_list,
                                  interpolationOrder, sizeCheckFactor);
 
             time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
@@ -553,18 +553,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         MPI_Datatype direct_type[numProcs];
         int let_clusters_num = 0;
 
-        int *sizeof_batch_approx, *sizeof_batch_direct;
-
-        make_vector(sizeof_batch_approx, batches->numnodes);
-        make_vector(sizeof_batch_direct, batches->numnodes);
-
-        int loopsize = batches->numnodes;
-        for (int i = 0; i < loopsize; i++) sizeof_batch_approx[i] = 0;
-        for (int i = 0; i < loopsize; i++) sizeof_batch_direct[i] = 0;
-
-        int total_batch_direct = 0;
-        int total_batch_approx = 0;
-         
 
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -630,7 +618,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
 
             InteractionList_PC_MakeRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
-                                       direct_list, sizeof_batch_approx, sizeof_batch_direct, interpolationOrder, sizeCheckFactor);
+                                       direct_list, interpolationOrder, sizeCheckFactor);
 
 
             // Count number of unique clusters adding to LET
@@ -844,7 +832,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         int **local_approx_inter_list, **local_direct_inter_list;
         
-        InteractionList_Make(tree_array, batches, local_approx_inter_list, local_direct_inter_list,
+        InteractionList_Make(tree_array, batches, &local_approx_inter_list, &local_direct_inter_list,
                              interpolationOrder, sizeCheckFactor);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
@@ -880,7 +868,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int **let_approx_inter_list, **let_direct_inter_list;
 
-            InteractionList_Make(let_tree_array, batches, let_approx_inter_list, let_direct_inter_list,
+            InteractionList_Make(let_tree_array, batches, &let_approx_inter_list, &let_direct_inter_list,
                                  interpolationOrder, sizeCheckFactor);
 
             // Count number of interactions
@@ -969,6 +957,9 @@ void treedriver(struct particles *sources, struct particles *targets,
         struct tnode *target_tree_root = NULL;
         struct tnode_array *target_tree_array = NULL;
 
+        struct clusters *source_clusters = NULL;
+        struct clusters *target_clusters = NULL;
+
         double source_xyzminmax[6], target_xyzminmax[6];
         int source_numnodes = 0, source_numleaves = 0;
         int target_numnodes = 0, target_numleaves = 0;
@@ -982,6 +973,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                        maxparnode, source_xyzminmax, 0,
                        &source_numnodes, &source_numleaves);
         Tree_SetIndex(source_tree_root, 0);
+
         Tree_AllocArray(&source_tree_array, source_numnodes);
         Tree_CreateArray(source_tree_root, source_tree_array);
 
@@ -992,10 +984,13 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         Tree_CP_Create(&target_tree_root, targets, 1, targets->num,
                        batch_size, target_xyzminmax, 0,
-                       &tree_numnodes, &tree_numleaves);
+                       &target_numnodes, &target_numleaves);
         Tree_SetIndex(target_tree_root, 0);
+
         Tree_AllocArray(&target_tree_array, target_numnodes);
         Tree_CreateArray(target_tree_root, target_tree_array);
+        make_vector(target_tree_array->numApprox, target_tree_array->numnodes);
+        make_vector(target_tree_array->numDirect, target_tree_array->numnodes);
 
         time_tree[1] = MPI_Wtime() - time1; //time_maketreearray
          
@@ -1361,7 +1356,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
 
         int **local_approx_inter_list, **local_direct_inter_list;
-        InteractionList_CC_Make(source_tree_array, target_tree_array, local_approx_inter_list, local_direct_inter_list,
+        InteractionList_CC_Make(source_tree_array, target_tree_array, &local_approx_inter_list, &local_direct_inter_list,
                                 interpolationOrder, sizeCheckFactor);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
@@ -1399,7 +1394,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int **let_approx_inter_list, **let_direct_inter_list;
             
-            InteractionList_CC_Make(let_tree_array, target_tree_array, let_approx_inter_list, let_direct_inter_list,
+            InteractionList_CC_Make(let_tree_array, target_tree_array, &let_approx_inter_list, &let_direct_inter_list,
                                     interpolationOrder, sizeCheckFactor);
 
             // Count number of interactions
@@ -1471,6 +1466,9 @@ void treedriver(struct particles *sources, struct particles *targets,
         
         free_vector(targets->order); // free particle order arrays
         free_vector(sources->order); // free particle order arrays
+
+        free_vector(target_tree_array->numApprox);
+        free_vector(target_tree_array->numDirect);
         
         Tree_Free(source_tree_root);
         Tree_Free(target_tree_root);

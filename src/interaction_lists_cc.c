@@ -23,26 +23,26 @@ void cc_compute_interaction_list_1(
                 const int *source_tree_num_children, const int *source_tree_children,
 
                 int target_tree_node, const int *target_tree_numpar, const double *target_tree_radius,
-                const double *target_tree_x_mid, double *target_tree_y_mid, double *target_tree_z_mid,
+                const double *target_tree_x_mid, const double *target_tree_y_mid, const double *target_tree_z_mid,
                 const int *target_tree_num_children, const int *target_tree_children,
 
-                int **target_tree_list, int **target_direct_list,
-                int *sizeof_tree_list, int *sizeof_direct_list,
-                int *tree_index_counter, int *direct_index_counter,
+                int **target_approx_list, int **target_direct_list,
+                int *sizeof_approx_list, int *sizeof_direct_list,
+                int *approx_index_counter, int *direct_index_counter,
                 int interpolationOrder, double sizeCheckFactor);
 
 void cc_compute_interaction_list_2(
                 int target_tree_node, const int *target_tree_numpar, const double *target_tree_radius,
-                const double *target_tree_x_mid, double *target_tree_y_mid, double *target_tree_z_mid,
+                const double *target_tree_x_mid, const double *target_tree_y_mid, const double *target_tree_z_mid,
                 const int *target_tree_num_children, const int *target_tree_children,
 
                 int source_tree_node, const int *source_tree_numpar, const double *source_tree_radius,
                 const double *source_tree_x_mid, const double *source_tree_y_mid, const double *source_tree_z_mid,
                 const int *source_tree_num_children, const int *source_tree_children,
 
-                int **target_tree_list, int **target_direct_list,
-                int *sizeof_tree_list, int *sizeof_direct_list,
-                int *tree_index_counter, int *direct_index_counter,
+                int **target_approx_list, int **target_direct_list,
+                int *sizeof_approx_list, int *sizeof_direct_list,
+                int *approx_index_counter, int *direct_index_counter,
                 int interpolationOrder, double sizeCheckFactor);
                 
                 
@@ -201,14 +201,14 @@ void InteractionList_CC_MakeRemote(const struct tnode_array *source_tree_array,
                 target_tree_x_mid, target_tree_y_mid, target_tree_z_mid,
                 target_tree_num_children, target_tree_children,
 
-                temp_aprox_inter_tree_list, temp_direct_inter_list,
+                temp_approx_inter_list, temp_direct_inter_list,
                 sizeof_approx_inter_list, sizeof_direct_inter_list,
                 num_approx_inter, num_direct_inter,
                 interpolationOrder, sizeCheckFactor);
 
 
     for (int j = 0; j < target_tree_numnodes; j++) {
-        for (int i = 0; i < num_tree_inter[j]; i++) {
+        for (int i = 0; i < num_approx_inter[j]; i++) {
 
             int source_node_index = temp_approx_inter_list[j][i];
             approx_list_unpacked[source_node_index] = source_node_index;
@@ -257,7 +257,7 @@ void cc_compute_interaction_list_1(
                 const int *source_tree_num_children, const int *source_tree_children,     
 
                 int target_tree_node, const int *target_tree_numpar, const double *target_tree_radius,
-                const double *target_tree_x_mid, double *target_tree_y_mid, double *target_tree_z_mid,
+                const double *target_tree_x_mid, const double *target_tree_y_mid, const double *target_tree_z_mid,
                 const int *target_tree_num_children, const int *target_tree_children,
 
                 int **target_tree_list, int **target_direct_list,
@@ -273,7 +273,7 @@ void cc_compute_interaction_list_1(
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
     if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * sqrt(thetasq))
-      && (source_tree_radius[soure_tree_node] != 0.00) //) {
+      && (source_tree_radius[source_tree_node] != 0.00) //) {
       && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < source_tree_numpar[source_tree_node])) {
     /*
  *   * If MAC is accepted and there is more than 1 particle
@@ -306,7 +306,7 @@ void cc_compute_interaction_list_1(
 
         } else {
             for (int i = 0; i < target_tree_num_children[target_tree_node]; i++) {
-                cc_compute_interaction_list_remote_2(target_tree_children[8*target_tree_node + i],
+                cc_compute_interaction_list_2(target_tree_children[8*target_tree_node + i],
                            target_tree_numpar, target_tree_radius,
                            target_tree_x_mid, target_tree_y_mid, target_tree_z_mid,
                            target_tree_num_children, target_tree_children,
@@ -331,7 +331,7 @@ void cc_compute_interaction_list_1(
 
 void cc_compute_interaction_list_2(
                 int target_tree_node, const int *target_tree_numpar, const double *target_tree_radius,
-                const double *target_tree_x_mid, double *target_tree_y_mid, double *target_tree_z_mid,
+                const double *target_tree_x_mid, const double *target_tree_y_mid, const double *target_tree_z_mid,
                 const int *target_tree_num_children, const int *target_tree_children,
 
                 int source_tree_node, const int *source_tree_numpar, const double *source_tree_radius,
@@ -351,7 +351,7 @@ void cc_compute_interaction_list_2(
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
     if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * sqrt(thetasq))
-      && (target_tree_radius[soure_tree_node] != 0.00) //) {
+      && (target_tree_radius[source_tree_node] != 0.00) //) {
       && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < target_tree_numpar[target_tree_node])) {
     /*
  *   * If MAC is accepted and there is more than 1 particle
@@ -384,7 +384,7 @@ void cc_compute_interaction_list_2(
 
         } else {
             for (int i = 0; i < source_tree_num_children[source_tree_node]; i++) {
-                cc_compute_interaction_list_remote_2(source_tree_children[8*source_tree_node + i],
+                cc_compute_interaction_list_1(source_tree_children[8*source_tree_node + i],
                            source_tree_numpar, source_tree_radius,
                            source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
                            source_tree_num_children, source_tree_children,
