@@ -1,5 +1,5 @@
 /*
- *Procedures for Particle-Cluster Treecode
+ *Procedures for Cluster-Particle Treecode
  */
 #include <stdlib.h>
 #include <stdio.h>
@@ -45,8 +45,8 @@ static void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double 
 
 
 
-void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array *batches,
-                             int *tree_inter_list, int *direct_inter_list,
+void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array *batches,
+                             int *approx_inter_list, int *direct_inter_list,
                              double *source_x, double *source_y, double *source_z,
                              double *source_q, double *source_w,
                              double *target_x, double *target_y, double *target_z, double *target_q,
@@ -54,7 +54,6 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
                              double *cluster_q, double *cluster_w,
                              double *pointwisePotential, int interpolationOrder,
                              int numSources, int numTargets, int totalNumberOfInterpolationPoints,
-                             int batch_approx_offset, int batch_direct_offset,
                              struct kernel *kernel, char *singularityHandling,
                              char *approximationName)
 {
@@ -102,9 +101,6 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
                             xC[0:totalNumberOfInterpolationPoints], \
                             yC[0:totalNumberOfInterpolationPoints], \
                             zC[0:totalNumberOfInterpolationPoints], \
-                            tree_inter_list[0:batch_approx_offset*batch_numnodes], \
-                            direct_inter_list[0:batch_direct_offset*batch_numnodes], \
-                            ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \
                        copy(qC[0:numberOfClusterCharges], \
                             wC[0:numberOfClusterWeights], \
                             pointwisePotential[0:numTargets])
@@ -128,7 +124,7 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
 /**********************************************************/
 
         for (int j = 0; j < numberOfClusterApproximations; j++) {
-            int node_index = tree_inter_list[i * batch_approx_offset + j];
+            int node_index = approx_inter_list[i][j];
             int clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
             int streamID = j%3;
 
@@ -244,7 +240,7 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
 
         for (int j = 0; j < numberOfDirectSums; j++) {
 
-            int node_index = direct_inter_list[i * batch_direct_offset + j];
+            int node_index = direct_inter_list[i][j];
             int target_start = ibegs[node_index] - 1;
             int target_end = iends[node_index];
             int number_of_targets_in_cluster = target_end-target_start;
@@ -322,7 +318,7 @@ void Interaction_Compute_CP1(struct tnode_array *tree_array, struct tnode_array 
 } /* END of function pc_treecode */
 
 
-void Interaction_Compute_CP2(struct tnode_array *tree_array,
+void InteractionCompute_CP_2(struct tnode_array *tree_array,
                              double *target_x, double *target_y, double *target_z, double *target_q,
                              double *cluster_x, double *cluster_y, double *cluster_z,
                              double *cluster_q, double *cluster_w,
