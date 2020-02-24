@@ -100,7 +100,7 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
                             qT[0:numTargets], \
                             xC[0:totalNumberOfInterpolationPoints], \
                             yC[0:totalNumberOfInterpolationPoints], \
-                            zC[0:totalNumberOfInterpolationPoints], \
+                            zC[0:totalNumberOfInterpolationPoints]) \
                        copy(qC[0:numberOfClusterCharges], \
                             wC[0:numberOfClusterWeights], \
                             pointwisePotential[0:numTargets])

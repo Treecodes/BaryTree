@@ -66,7 +66,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
                         target_charge[0:numTargets], \
                         cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], \
                         cluster_z[0:totalNumberOfInterpolationPoints], \
-                        cluster_charge[0:numberOfClusterCharges], cluster_weight[0:numberOfClusterWeights], \
+                        cluster_charge[0:numberOfClusterCharges], cluster_weight[0:numberOfClusterWeights]) \
                         copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
     {

@@ -107,7 +107,7 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
                             wCS[0:numSourceClusterWeights], \
                             xCT[0:numTargetClusterPoints], \
                             yCT[0:numTargetClusterPoints], \
-                            zCT[0:numTargetClusterPoints], \
+                            zCT[0:numTargetClusterPoints]) \
                        copy(qCT[0:numTargetClusterCharges], \
                             wCT[0:numTargetClusterWeights], \
                             pointwisePotential[0:numTargets])
