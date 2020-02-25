@@ -846,7 +846,7 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
             }
 
             if (exactIndY[i] == -1) {
-                numerator0 *=  Ay;                    // aAa
+                numerator0 *=  Ay;                     // aAa
 
                 numerator1 *=  Ay;                     // bAa
                 numerator2 *=  By;                     // aBa

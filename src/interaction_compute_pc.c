@@ -11,6 +11,7 @@
 #include "array.h"
 #include "struct_nodes.h"
 #include "struct_particles.h"
+#include "struct_kernel.h"
 
 #include "kernels/coulomb.h"
 #include "kernels/yukawa.h"
@@ -27,8 +28,8 @@
 #include "interaction_compute.h"
 
 
-void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *batches,
-                            int *tree_inter_list, int *direct_inter_list,
+void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *batches,
+                            int **approx_inter_list, int **direct_inter_list,
                             double *source_x, double *source_y, double *source_z,
                             double *source_charge, double *source_weight,
                             double *target_x, double *target_y, double *target_z, double *target_charge,
@@ -36,7 +37,6 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                             double *cluster_charge, double *cluster_weight,
                             double *pointwisePotential, int interpolationOrder,
                             int numSources, int numTargets, int totalNumberOfInterpolationPoints,
-                            int batch_approx_offset, int batch_direct_offset,
                             struct kernel *kernel, char *singularityHandling,
                             char *approximationName)
 {
@@ -71,10 +71,7 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
                         target_charge[0:numTargets], \
                         cluster_x[0:totalNumberOfInterpolationPoints], cluster_y[0:totalNumberOfInterpolationPoints], \
                         cluster_z[0:totalNumberOfInterpolationPoints], \
-                        cluster_charge[0:numberOfClusterCharges], cluster_weight[0:numberOfClusterWeights], \
-                        tree_inter_list[0:batch_approx_offset*batch_numnodes], \
-                        direct_inter_list[0:batch_direct_offset*batch_numnodes], \
-                        ibegs[0:tree_numnodes], iends[0:tree_numnodes]) \
+                        cluster_charge[0:numberOfClusterCharges], cluster_weight[0:numberOfClusterWeights]) \
                         copy(potentialDueToApprox[0:numTargets], potentialDueToDirect[0:numTargets])
 #endif
     {
@@ -96,7 +93,7 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
 /**********************************************************/
 
         for (int j = 0; j < numberOfClusterApproximations; j++) {
-            int node_index = tree_inter_list[i * batch_approx_offset + j];
+            int node_index = approx_inter_list[i][j];
             int clusterStart = numberOfInterpolationPoints*clusterInd[node_index];
             int streamID = j%3;
 
@@ -312,7 +309,7 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
 
         for (int j = 0; j < numberOfDirectSums; j++) {
 
-            int node_index = direct_inter_list[i * batch_direct_offset + j];
+            int node_index = direct_inter_list[i][j];
             int source_start = ibegs[node_index] - 1;
             int source_end = iends[node_index];
             int number_of_sources_in_cluster = source_end-source_start;
@@ -461,7 +458,7 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
 
 
 
-void Interaction_Direct_Compute(double *source_x, double *source_y, double *source_z,
+void InteractionCompute_Direct(double *source_x, double *source_y, double *source_z,
                                 double *source_q, double *source_w,
                                 double *target_x, double *target_y, double *target_z, double *target_q,
                                 double *pointwisePotential, int numSources, int numTargets,
@@ -603,7 +600,7 @@ void Interaction_Direct_Compute(double *source_x, double *source_y, double *sour
 
 
 
-void Interaction_SubtractionPotentialCorrection(double *pointwisePotential, double *target_q, int numTargets,
+void InteractionCompute_SubtractionPotentialCorrection(double *pointwisePotential, double *target_q, int numTargets,
                                   struct kernel *kernel, char *singularityHandling)
 {
 

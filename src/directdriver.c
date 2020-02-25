@@ -103,7 +103,7 @@ void directdriver(struct particles *sources, struct particles *targets,
         
         time1 = MPI_Wtime();
         //compute remote
-        Interaction_Direct_Compute(remote_sources->x, remote_sources->y, remote_sources->z,
+        InteractionCompute_Direct(remote_sources->x, remote_sources->y, remote_sources->z,
                                    remote_sources->q, remote_sources->w,
                                    target_x, target_y, target_z, target_q,
                                    pointwisePotential, numSources, numTargets,
@@ -118,7 +118,7 @@ void directdriver(struct particles *sources, struct particles *targets,
 
     time1 = MPI_Wtime();
     //compute local 
-    Interaction_Direct_Compute(source_x, source_y, source_z, source_q, source_w,
+    InteractionCompute_Direct(source_x, source_y, source_z, source_q, source_w,
                                target_x, target_y, target_z, target_q,
                                pointwisePotential, numSources, numTargets,
                                kernel, singularityHandling,
@@ -129,7 +129,7 @@ void directdriver(struct particles *sources, struct particles *targets,
 
     time1 = MPI_Wtime();
     //add correction
-    Interaction_SubtractionPotentialCorrection(pointwisePotential, target_q, numTargets,
+    InteractionCompute_SubtractionPotentialCorrection(pointwisePotential, target_q, numTargets,
                                kernel, singularityHandling);
 
     time_direct[3] = MPI_Wtime() - time1;

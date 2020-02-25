@@ -173,8 +173,8 @@ int main(int argc, char **argv)
     double potential_engy_direct = 0, potential_engy_direct_glob = 0;
 
     /* variables for date-time calculation */
-    double time_run[4], time_tree[12], time_direct[4];
-    double time_run_glob[3][4], time_tree_glob[3][12], time_direct_glob[3][4];
+    double time_run[4], time_tree[13], time_direct[4];
+    double time_run_glob[3][4], time_tree_glob[3][13], time_direct_glob[3][4];
     double time1, time2;
 
 
@@ -398,9 +398,9 @@ int main(int argc, char **argv)
 
 
     /* Reducing values to root process */
-    MPI_Reduce(time_tree, &time_tree_glob[0], 12, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[1], 12, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[2], 12, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[0], 13, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[1], 13, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(time_tree, &time_tree_glob[2], 13, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     
     MPI_Reduce(time_run, &time_run_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
     MPI_Reduce(time_run, &time_run_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -429,6 +429,8 @@ int main(int argc, char **argv)
         double min_percent_tree = 100. / time_run_glob[0][2];
         double max_percent_tree = 100. / time_run_glob[1][2];
         double avg_percent_tree = 100. / time_run_glob[2][2];
+
+        printf("\n\nTreecode run information: \n");
 
         /* Printing direct and treecode time calculations: */
         printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
@@ -532,28 +534,35 @@ int main(int argc, char **argv)
                      time_tree_glob[1][7]/time_tree_glob[0][7]);
         }
 
-        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
+        if (tree_type == 0) { //cluster-particle
+        printf("|    |....Compute cp2................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                      time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree,
                      time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent_tree,
                      time_tree_glob[1][8]/time_tree_glob[0][8]);
-        printf("|    |....Cleanup....................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n",
+        }
+
+        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                      time_tree_glob[1][9],          time_tree_glob[1][9] * max_percent_tree,
                      time_tree_glob[2][9]/numProcs, time_tree_glob[2][9] * avg_percent_tree,
                      time_tree_glob[1][9]/time_tree_glob[0][9]);
-        
-        if (numProcs > 1) {
-        printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
+        printf("|    |....Cleanup....................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n",
                      time_tree_glob[1][10],          time_tree_glob[1][10] * max_percent_tree,
                      time_tree_glob[2][10]/numProcs, time_tree_glob[2][10] * avg_percent_tree,
                      time_tree_glob[1][10]/time_tree_glob[0][10]);
+        
+        if (numProcs > 1) {
+        printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
+                     time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree,
+                     time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent_tree,
+                     time_tree_glob[1][11]/time_tree_glob[0][10]);
         printf("((   |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                      time_tree_glob[1][02],          time_tree_glob[1][02] * max_percent_tree,
                      time_tree_glob[2][02]/numProcs, time_tree_glob[2][02] * avg_percent_tree,
                      time_tree_glob[1][02]/time_tree_glob[0][02]);
         printf("((   |....Total compute..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n\n\n",
-                     time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree,
-                     time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent_tree,
-                     time_tree_glob[1][11]/time_tree_glob[0][11]);
+                     time_tree_glob[1][12],          time_tree_glob[1][12] * max_percent_tree,
+                     time_tree_glob[2][12]/numProcs, time_tree_glob[2][12] * avg_percent_tree,
+                     time_tree_glob[1][12]/time_tree_glob[0][12]);
         }
         
         printf("               Tree potential energy:  %f\n", potential_engy_glob);
@@ -602,10 +611,10 @@ int main(int argc, char **argv)
 
     if (rank == 0) {
         FILE *fp = fopen("out.csv", "a");
-        fprintf(fp, "%d,%d,%f,%d,%d,%s,%f,%s,%s,%d,"
+        fprintf(fp, "%d,%d,%f,%d,%d,%s,%s,%s,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
-                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
+                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
             N, interpolationOrder, theta, max_per_leaf, max_per_batch, kernel->name,
             singularityHandling, approximationName, numProcs, // 1 ends
@@ -645,15 +654,17 @@ int main(int argc, char **argv)
             time_tree_glob[2][6]/numProcs,
             time_tree_glob[0][7], time_tree_glob[1][7],     // min, max, avg compute remote interactions
             time_tree_glob[2][7]/numProcs,
-            time_tree_glob[0][8], time_tree_glob[1][8],     // min, max, avg correct potential
+            time_tree_glob[0][8], time_tree_glob[1][8],     // min, max, avg compute CP2 (cluster-particle)
             time_tree_glob[2][8]/numProcs,
-            time_tree_glob[0][9], time_tree_glob[1][9],     // min, max, avg cleanup
+            time_tree_glob[0][9], time_tree_glob[1][9],     // min, max, avg correct potential
             time_tree_glob[2][9]/numProcs,
-
-            time_tree_glob[0][10], time_tree_glob[1][10],   // min, max, avg total setup
+            time_tree_glob[0][10], time_tree_glob[1][10],     // min, max, avg cleanup
             time_tree_glob[2][10]/numProcs,
-            time_tree_glob[0][11], time_tree_glob[1][11],   // min, max, avg total cleanup
+
+            time_tree_glob[0][11], time_tree_glob[1][11],   // min, max, avg total setup
             time_tree_glob[2][11]/numProcs,
+            time_tree_glob[0][12], time_tree_glob[1][12],   // min, max, avg total cleanup
+            time_tree_glob[2][12]/numProcs,
 
             time_run_glob[0][3],  time_run_glob[1][3],  // min, max, avg total time
             time_run_glob[2][3]/numProcs, // 4 ends
