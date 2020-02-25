@@ -16,8 +16,8 @@
 
 
 
-const unsigned m = 1664525u;
-const unsigned c = 1013904223u;
+const unsigned mrand = 1664525u;
+const unsigned crand = 1013904223u;
 
 typedef struct{
   int numGlobalPoints;
@@ -85,6 +85,8 @@ int main(int argc, char **argv)
     int slice = 1;
 
     int verbosity = 0;
+
+    int sample_size = 100000;
 
     FILE *fp = fopen(argv[1], "r");
     char c[256], c1[256], c2[256];
@@ -195,7 +197,7 @@ int main(int argc, char **argv)
 
     time_t t = time(NULL);
     unsigned t_hashed = (unsigned) t;
-    t_hashed = m*t_hashed + c;
+    t_hashed = mrand * t_hashed + crand;
 //    srand(t_hashed ^ rank);
     srand(1);
 

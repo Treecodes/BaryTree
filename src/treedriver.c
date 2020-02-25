@@ -1459,11 +1459,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time_tree[8] = MPI_Wtime() - time1;
 
-        free_vector(sizeof_batch_approx);
-        free_vector(sizeof_batch_direct);
-        free_vector(offset_batch_approx);
-        free_vector(offset_batch_direct);
-
 
         time1 = MPI_Wtime();
         
