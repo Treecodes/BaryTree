@@ -68,4 +68,4 @@ References
                                                      
 License
 -------
-Copyright © 2019, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).
+Copyright © 2019-2020, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).
