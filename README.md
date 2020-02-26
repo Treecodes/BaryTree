@@ -35,26 +35,31 @@ Compiling GPU versions requires that a PGI C compiler be used. For more informat
 on building and installing, see **INSTALL.md** in this directory.
 
 
+
 References
 ----------
    Please refer to the following references for more background:
         
-   - Boateng. H. A., Krasny, R.: Comparison of Treecodes for
-            Computing Electrostatic Potentials in Charged Particle 
-        Systems with Disjoint Targets and Sources.
-            _J. Comput. Chem._ (2013)    
+   - N. Vaughn, L. Wilson, and R. Krasny, A GPU-accelerated barycentric 
+            Lagrange treecode, submitted to the _21st IEEE International 
+	    Workshop on Parallel and Distributed Scientific and 
+	    Engineering Computing_ (2020).
+	    
+   - R. Krasny and L. Wang, A treecode based on barycentric Hermite 
+            interpolation for electrostatic particle interactions,
+	    _Comput. Math. Biophys._ __7__ (2019), 73-84.
+		
+   - H. A. Boateng. and R. Krasny, Comparison of treecodes for
+            computing electrostatic potentials in charged particle 
+	    systems with disjoint targets and sources,
+            _J. Comput. Chem._ __34__ (2013), 2159-2167.	
+	   
+   - J.-P. Berrut and L. N. Trefethen, Barycentric Lagrange interpolation,
+            _SIAM Review_ __46__ (2004), 501-517.
 
-   - Duan, Z.-H., Krasny, R.: An adaptive treecode for computing
-            nonbonded potential energy in classical molecular systems.
-            _J. Comput. Chem._ __22__ (2001) 184–195
- 
-   - Lindsay, K., Krasny, R.: A particle method and adaptive treecode
-            for vortex sheet motion in 3-D flow. _J. Comput. Phys._ __172__
-            (2001) 879–907
-
-   - Deng, Q., Driscoll, T. A: A Fast Treecode for Multiquadric 
-            Interpolation with Varying Shape Parameters.
-            _SIAM J. Sci. Comput._ __34__ (2012) A1126–A1140
+   - Z.-H. Duan and R. Krasny, An adaptive treecode for computing
+            nonbonded potential energy in classical molecular systems,
+            _J. Comput. Chem._ __22__ (2001), 184–195.
 
 
                                                      
