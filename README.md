@@ -1,3 +1,11 @@
+     ____                _______            
+    |  _ \              |__   __|           
+    | |_) | __ _ _ __ _   _| |_ __ ___  ___ 
+    |  _ < / _` | '__| | | | | '__/ _ \/ _ \
+    | |_) | (_| | |  | |_| | | | |  __|  __/
+    |____/ \__,_|_|   \__, |_|_|  \___|\___|
+                       __/ |                
+                      |___/         
 BaryTree
 ========
 
@@ -12,20 +20,31 @@ BaryTree
    
    Department of Mathematics,
    University of Michigan, Ann Arbor
-
-
-
-     ____                _______            
-    |  _ \              |__   __|           
-    | |_) | __ _ _ __ _   _| |_ __ ___  ___ 
-    |  _ < / _` | '__| | | | | '__/ _ \/ _ \
-    | |_) | (_| | |  | |_| | | | |  __|  __/
-    |____/ \__,_|_|   \__, |_|_|  \___|\___|
-                       __/ |                
-                      |___/                 
-
    
 
+
+Building
+--------
+This project uses CMake to manage and configure its build system. In principle, 
+building this project is as simple as executing the following from the top level
+directory of BaryTree:
+
+    mkdir build; cd build; export CC=<C compiler>; cmake ..; make
+
+Compiling GPU versions requires that a PGI C compiler be used. If another compiler
+other than pgcc is used, for instance gcc or icc, support for building GPU versions
+will be automatically turned off during configuration.
+
+Some potentiall useful CMake flags during configure:
+
+    -DCMAKE_RELEASE_TYPE={Debug, Release}   build either the debug or release version
+    -DENABLE_GPU_BUILD={ON, OFF}   manually toggle whether to build the GPU versions
+    -DCMAKE_INSTALL_PREFIX=/where/to/install   specify install location for `make install`
+    
+
+
+References
+----------
    Please refer to the following references for more background:
         
    - Boateng. H. A., Krasny, R.: Comparison of Treecodes for
@@ -45,26 +64,6 @@ BaryTree
             Interpolation with Varying Shape Parameters.
             _SIAM J. Sci. Comput._ __34__ (2012) A1126–A1140
 
-
-
-Building
-------------------------------
-This project uses CMake to manage and configure its build system. In principle, 
-building this project is as simple as executing the following from the top level
-directory of BaryTree:
-
-    mkdir build; cd build; export CC=<C compiler>; cmake ..; make
-
-Compiling GPU versions requires that a PGI C compiler be used. If another compiler
-other than pgcc is used, for instance gcc or icc, support for building GPU versions
-will be automatically turned off during configuration.
-
-Some potentiall useful CMake flags during configure:
-
-    -DCMAKE_RELEASE_TYPE={Debug, Release}   build either the debug or release version
-    -DENABLE_GPU_BUILD={ON, OFF}   manually toggle whether to build the GPU versions
-    -DCMAKE_INSTALL_PREFIX=/where/to/install   specify install location for `make install`
-    
 
                                                      
 License
