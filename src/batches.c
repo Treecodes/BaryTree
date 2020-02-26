@@ -46,7 +46,8 @@ void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
     struct tnode_array *batches = *new_batches;
 
     batches->numnodes = 0;
-    int max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size); // this needs improvement.  I set to 2* to stop it from crashing.
+    // this still needs improvement!
+    int max_batch_num = 2*(int)ceil((double)particles->num * 8 / batch_size);
 
     make_vector(batches->ibeg, max_batch_num);
     make_vector(batches->iend, max_batch_num);
@@ -115,16 +116,18 @@ void Batches_ReallocArray(struct tnode_array *batches, int newlength)  {
 void Batches_Free(struct tnode_array *batches)
 {
 
-    free_vector(batches->iend);
-    free_vector(batches->ibeg);
-    free_vector(batches->numpar);
-    free_vector(batches->numApprox);
-    free_vector(batches->numDirect);
-    free_vector(batches->x_mid);
-    free_vector(batches->y_mid);
-    free_vector(batches->z_mid);
-    free_vector(batches->radius);
-    free(batches);
+    if (batches != NULL) {
+        free_vector(batches->iend);
+        free_vector(batches->ibeg);
+        free_vector(batches->numpar);
+        free_vector(batches->numApprox);
+        free_vector(batches->numDirect);
+        free_vector(batches->x_mid);
+        free_vector(batches->y_mid);
+        free_vector(batches->z_mid);
+        free_vector(batches->radius);
+        free(batches);
+    }
 
     return;
 
@@ -159,7 +162,6 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-    /*local variables*/
     double x_min, x_max, y_min, y_max, z_min, z_max;
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
     double sqradius, radius;
@@ -185,7 +187,6 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
         lxyzmm[i] = 0.0;
     }
     
-    /* set node fields: number of particles, exist_ms, and xyz bounds */
     numpar = iend - ibeg + 1;
 
     x_min = minval(particles->x + ibeg - 1, numpar);
@@ -202,11 +203,9 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
     
     lmax = max3(xl, yl, zl);
     
-    /*midpoint coordinates, RADIUS and SQRADIUS*/
     x_mid = (x_max + x_min) / 2.0;
     y_mid = (y_max + y_min) / 2.0;
     z_mid = (z_max + z_min) / 2.0;
-
 
     t1 = x_max - x_mid;
     t2 = y_max - y_mid;
@@ -216,13 +215,9 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
     radius = sqrt(sqradius);
     
 
-    /*set particle limits, tree level of node, and nullify child pointers*/
-
     if (numpar > maxparnode) {
     /*
-     * set IND array to 0, and then call PARTITION_8 routine.
      * IND array holds indices of the eight new subregions.
-     * Also, setup XYZMMS array in the case that SHRINK = 1.
      */
         xyzmms[0][0] = x_min;
         xyzmms[1][0] = x_max;
@@ -231,11 +226,8 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
         xyzmms[4][0] = z_min;
         xyzmms[5][0] = z_max;
 
-
         ind[0][0] = ibeg;
         ind[0][1] = iend;
-
-
 
         cp_partition_batch(particles->x, particles->y, particles->z, particles->q,
                            xyzmms, xl, yl, zl, lmax, &numposchild,
@@ -280,7 +272,6 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
 void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *particles,
                                  int ibeg, int iend, int maxparnode, double *xyzmm)
 {
-    /*local variables*/
     double x_min, x_max, y_min, y_max, z_min, z_max;
     double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
     double sqradius, radius;
@@ -306,7 +297,6 @@ void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *
         lxyzmm[i] = 0.0;
     }
     
-    /* set node fields: number of particles, exist_ms, and xyz bounds */
     numpar = iend - ibeg + 1;
 
     x_min = minval(particles->x + ibeg - 1, numpar);
@@ -323,7 +313,6 @@ void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *
     
     lmax = max3(xl, yl, zl);
     
-    /*midpoint coordinates, RADIUS and SQRADIUS*/
     x_mid = (x_max + x_min) / 2.0;
     y_mid = (y_max + y_min) / 2.0;
     z_mid = (z_max + z_min) / 2.0;
@@ -335,13 +324,9 @@ void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *
     sqradius = t1*t1 + t2*t2 + t3*t3;
     radius = sqrt(sqradius);
     
-    /*set particle limits, tree level of node, and nullify child pointers*/
-
     if (numpar > maxparnode) {
     /*
-     * set IND array to 0, and then call PARTITION_8 routine.
      * IND array holds indices of the eight new subregions.
-     * Also, setup XYZMMS array in the case that SHRINK = 1.
      */
         xyzmms[0][0] = x_min;
         xyzmms[1][0] = x_max;
@@ -401,8 +386,6 @@ static void cp_partition_batch(double *x, double *y, double *z, double *q, doubl
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
                     int *reorder)
 {
-
-    /* local variables */
     int temp_ind, i, j;
     double critlen;
 
@@ -466,7 +449,7 @@ static void cp_partition_batch(double *x, double *y, double *z, double *q, doubl
 
     return;
 
-} /* END of function cp_partition_8 */
+} /* END of function cp_partition_batch */
 
 
 
@@ -476,8 +459,6 @@ static void pc_partition_batch(double *x, double *y, double *z, double *q, doubl
                     double x_mid, double y_mid, double z_mid, int ind[8][2],
                     int *reorder)
 {
-
-    /* local variables */
     int temp_ind, i, j;
     double critlen;
 
@@ -541,4 +522,4 @@ static void pc_partition_batch(double *x, double *y, double *z, double *q, doubl
 
     return;
 
-} /* END of function cp_partition_8 */
+} /* END of function pc_partition_batch */

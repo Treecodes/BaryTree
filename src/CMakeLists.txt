@@ -71,12 +71,12 @@ SET(SRCS_DIRECT_DISTRIBUTED
     kernels/kernels_direct.c)
 
 
-set(TRGT barytree_cpu)
+set(TRGT BaryTree_cpu)
 add_library(${TRGT} ${SRCS_TREEDRIVER})
 target_sources(${TRGT}          PRIVATE 
-                                    treedriverWrapper.c
+                                    BaryTreeInterface.c
                                  PUBLIC  
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/BaryTreeInterface.h)
 set_target_properties(${TRGT}   PROPERTIES
                                     POSITION_INDEPENDENT_CODE ON)
 target_compile_features(${TRGT} PUBLIC
@@ -88,17 +88,17 @@ target_link_libraries(${TRGT}   PUBLIC
 
 install(TARGETS ${TRGT}               LIBRARY DESTINATION lib
                                       ARCHIVE DESTINATION lib)
-install(FILES   treedriverWrapper.h           DESTINATION include)
+install(FILES   BaryTreeInterface.h           DESTINATION include)
 
 
 if(ENABLE_GPU_BUILD)
-    set(TRGT barytree_gpu)
+    set(TRGT BaryTree_gpu)
     add_library(${TRGT} ${SRCS_TREEDRIVER})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
-                                      treedriverWrapper.c
+                                      BaryTreeInterface.c
                                   PUBLIC 
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/BaryTreeInterface.h)
     set_target_properties(${TRGT} PROPERTIES
                                       POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC
@@ -109,5 +109,5 @@ if(ENABLE_GPU_BUILD)
 
     install(TARGETS ${TRGT}             LIBRARY DESTINATION lib
                                         ARCHIVE DESTINATION lib)
-    install(FILES   treedriverWrapper.h         DESTINATION include)
+    install(FILES   BaryTreeInterface.h         DESTINATION include)
 endif()

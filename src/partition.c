@@ -6,8 +6,6 @@
 #include "globvars.h"
 
 /* 
- * definition of partition functions
- *
  * partition determines the index MIDIND, after partitioning in place the arrays a, b, c,
  * and q, such that a(ibeg:midind) <= val and a(midind+1:iend) > val. If on entry, ibeg >
  * iend, or a(ibeg:iend) > val then midind is returned as ibeg-1.
@@ -16,7 +14,6 @@
 void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
                   int ibeg, int iend, double val, int *midind)
 {
-        /* local variables */
         double ta, tb, tc, td;
         int lower, upper, tind;
 
@@ -97,8 +94,6 @@ void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
 void pc_partition(double *a, double *b, double *c, double *d, double *w, int *indarr,
                   int ibeg, int iend, double val, int *midind)
 {
-//	printf("Entering pc_partition...\n");
-    /* local variables */
     double ta, tb, tc, td, tw;
     int lower, upper, tind;
     
@@ -174,7 +169,6 @@ void pc_partition(double *a, double *b, double *c, double *d, double *w, int *in
         *midind = ibeg - 1;
         
     }
-//    printf("Exiting pc_partition.\n");
     
     return;
     

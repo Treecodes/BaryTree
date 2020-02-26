@@ -31,7 +31,6 @@ void Tree_Setup(struct particles *particles1, struct particles *particles2,
     make_vector(tt, order+1);
     make_vector(ww, order+1);
 
-    /* initializing array for Chev points */
     for (int i = 0; i < order+1; i++)
         tt[i] = cos(i * M_PI / order);
 
@@ -144,7 +143,6 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
 
     (*numnodes)++;
 
-    /* set node fields: number of particles, exist_ms, and xyz bounds */
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
 
@@ -171,7 +169,6 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
         (*p)->aspect = 0.0;
 
     
-    /*midpoint coordinates, RADIUS and SQRADIUS*/
     (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
     (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
     (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
@@ -184,7 +181,6 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
     (*p)->radius = sqrt((*p)->sqradius);
 
     
-    /*set particle limits, tree level of node, and nullify child pointers*/
     (*p)->ibeg = ibeg;
     (*p)->iend = iend;
     (*p)->level = level;
@@ -197,9 +193,7 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
 
     if ((*p)->numpar > maxparnode) {
     /*
-     * set IND array to 0, and then call PARTITION_8 routine.
      * IND array holds indices of the eight new subregions.
-     * Also, setup XYZMMS array in the case that SHRINK = 1.
      */
         xyzmms[0][0] = (*p)->x_min;
         xyzmms[1][0] = (*p)->x_max;
@@ -246,7 +240,7 @@ void Tree_CP_Create(struct tnode **p, struct particles *targets,
 
     return;
 
-} /* end of function create_tree_n0 */
+} /* end of function Tree_CP_Create */
 
 
 
@@ -280,10 +274,8 @@ void Tree_PC_Create(struct tnode **p, struct particles *sources,
     (*p) = malloc(sizeof(struct tnode));
 
 
-    /* increment number of nodes */
     (*numnodes)++;
 
-    /* set node fields: number of particles, exist_ms, and xyz bounds */
     (*p)->numpar = iend - ibeg + 1;
     (*p)->exist_ms = 0;
     
@@ -294,7 +286,6 @@ void Tree_PC_Create(struct tnode **p, struct particles *sources,
     (*p)->z_min = minval(sources->z + ibeg - 1, (*p)->numpar);
     (*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
     
-
 
     /*compute aspect ratio*/
     double xl = (*p)->x_max - (*p)->x_min;
@@ -310,7 +301,6 @@ void Tree_PC_Create(struct tnode **p, struct particles *sources,
     else
         (*p)->aspect = 0.0;
 
-    /*midpoint coordinates, RADIUS and SQRADIUS*/
     (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
     (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
     (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
@@ -322,7 +312,6 @@ void Tree_PC_Create(struct tnode **p, struct particles *sources,
     (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
     (*p)->radius = sqrt((*p)->sqradius);
 
-    /*set particle limits, tree level of node, and nullify child pointers*/
     (*p)->ibeg = ibeg;
     (*p)->iend = iend;
     (*p)->level = level;
@@ -332,16 +321,10 @@ void Tree_PC_Create(struct tnode **p, struct particles *sources,
     for (int i = 0; i < 8; i++)
         (*p)->child[i] = NULL;
 
-
-    //printf("Node #%d. level = %d, ibeg = %d, iend = %d.\n", (*p)->node_index, level, ibeg, iend);
-
     
     if ((*p)->numpar > maxparnode) {
-
     /*
-     * set IND array to 0, and then call PARTITION_8 routine.
      * IND array holds indices of the eight new subregions.
-     * Also, setup XYZMMS array in the case that SHRINK = 1.
      */
         xyzmms[0][0] = (*p)->x_min;
         xyzmms[1][0] = (*p)->x_max;
@@ -379,22 +362,16 @@ void Tree_PC_Create(struct tnode **p, struct particles *sources,
                                sources, ind[i][0], ind[i][1],
                                maxparnode, lxyzmm, loclev,
                                numnodes, numleaves);
-
             }
         }
         
     } else {
-   
-        {     
-            /* increment number of leaves */
-            (*numleaves)++;
-        }
+        (*numleaves)++;
     }
 
     return;
 
-} /* END of function create_tree_n0 */
-
+} /* END of function PC_Create_Tree */
 
 
 
@@ -408,7 +385,6 @@ int Tree_SetIndex(struct tnode *p, int index)
 
         return current_index;
 }
-
 
 
 
@@ -444,25 +420,27 @@ void Tree_AllocArray(struct tnode_array **new_tree_array, int length)  {
 
 void Tree_FreeArray(struct tnode_array *tree_array)  {
 
-    free_vector(tree_array->ibeg);
-    free_vector(tree_array->iend);
-    free_vector(tree_array->numpar);
-    free_vector(tree_array->x_mid);
-    free_vector(tree_array->y_mid);
-    free_vector(tree_array->z_mid);
-    free_vector(tree_array->x_min);
-    free_vector(tree_array->y_min);
-    free_vector(tree_array->z_min);
-    free_vector(tree_array->x_max);
-    free_vector(tree_array->y_max);
-    free_vector(tree_array->z_max);
-    free_vector(tree_array->level);
-    free_vector(tree_array->cluster_ind);
-    free_vector(tree_array->radius);
-    free_vector(tree_array->num_children);
-    free_vector(tree_array->children);
+    if (tree_array != NULL) {
+        free_vector(tree_array->ibeg);
+        free_vector(tree_array->iend);
+        free_vector(tree_array->numpar);
+        free_vector(tree_array->x_mid);
+        free_vector(tree_array->y_mid);
+        free_vector(tree_array->z_mid);
+        free_vector(tree_array->x_min);
+        free_vector(tree_array->y_min);
+        free_vector(tree_array->z_min);
+        free_vector(tree_array->x_max);
+        free_vector(tree_array->y_max);
+        free_vector(tree_array->z_max);
+        free_vector(tree_array->level);
+        free_vector(tree_array->cluster_ind);
+        free_vector(tree_array->radius);
+        free_vector(tree_array->num_children);
+        free_vector(tree_array->children);
+        free(tree_array);
+    }
 
-    free(tree_array);
     tree_array = NULL;
 
     return;
@@ -502,7 +480,6 @@ void Tree_ReallocArray(struct tnode_array *tree_array, int newlength)  {
 
 void Tree_CreateArray(struct tnode *p, struct tnode_array *tree_array)
 {
-    /*midpoint coordinates, RADIUS and SQRADIUS*/
     tree_array->x_mid[p->node_index] = p->x_mid;
     tree_array->y_mid[p->node_index] = p->y_mid;
     tree_array->z_mid[p->node_index] = p->z_mid;
@@ -531,20 +508,20 @@ void Tree_CreateArray(struct tnode *p, struct tnode_array *tree_array)
     
     return;
     
-} /* END of function create_tree_n0 */
-
+} /* END of function Tree_CreateArray */
 
 
 
 void Tree_Free(struct tnode *p)
 {
-    remove_node(p);
-    free(p);
+    if (p != NULL) {
+        remove_node(p);
+        free(p);
+    }
 
     return;
 
-} /* END function cleanup */
-
+} /* END function Tree_Free */
 
 
 

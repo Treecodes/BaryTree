@@ -32,16 +32,12 @@ void treedriver(struct particles *sources, struct particles *targets,
                 double sizeCheckFactor,
                 int verbosity)
 {
-
-//    int verbosity = 0;
-
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
 
-    /* date and time */
     double time1;
     
 
@@ -1044,13 +1040,11 @@ void treedriver(struct particles *sources, struct particles *targets,
         struct tnode_array *let_tree_array = NULL;
         int let_tree_array_length = 0;
 
-        struct clusters *let_clusters = NULL;
-        let_clusters = malloc(sizeof(struct clusters));
-        int let_clusters_length = 0; // previously let_clusters included the local.  Now it should not
+        struct clusters *let_clusters = malloc(sizeof(struct clusters));
+        int let_clusters_length = 0;
 
-        struct particles *let_sources = NULL;
-        let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
-        int let_sources_length = 0;  // previously let_sources included local.  Now it should not
+        struct particles *let_sources = malloc(sizeof(struct particles));
+        int let_sources_length = 0;
 
 
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
@@ -1094,7 +1088,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int getFrom = (numProcs+rank-procID) % numProcs;
 
-            // Allocate remote_tree_array
             struct tnode_array *remote_tree_array = NULL;
             Tree_AllocArray(&remote_tree_array, numNodesOnProc[getFrom]);
 
@@ -1133,7 +1126,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Get(remote_tree_array->num_children, numNodesOnProc[getFrom], MPI_INT,
                     getFrom, 0, numNodesOnProc[getFrom], MPI_INT, win_num_children);
             
-
             MPI_Win_unlock(getFrom, win_x_mid);
             MPI_Win_unlock(getFrom, win_y_mid);
             MPI_Win_unlock(getFrom, win_z_mid);
@@ -1224,7 +1216,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             previous_let_clusters_length_array[getFrom] = previous_let_clusters_length;
             previous_let_sources_length_array[getFrom] = previous_let_sources_length;
             
-            //MPI_Barrier(MPI_COMM_WORLD);
             
             int *approx_list_displacements, *approx_charges_list_displacements, *approx_weights_list_displacements;
             make_vector(approx_list_displacements, numNodesOnProc[getFrom]);
@@ -1345,7 +1336,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_z);
             MPI_Win_unlock(getFrom, win_sources_q);
             MPI_Win_unlock(getFrom, win_sources_w);
-
 
         } // end loop over numProcs
 

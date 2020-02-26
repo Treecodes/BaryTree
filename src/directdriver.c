@@ -136,4 +136,4 @@ void directdriver(struct particles *sources, struct particles *targets,
 
     return;
 
-} /* END of function pc_treecode */
+} /* END of function directdriver */

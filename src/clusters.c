@@ -210,12 +210,14 @@ void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, cha
 void Clusters_Free(struct clusters *clusters)
 {
 
-    free_vector(clusters->x);
-    free_vector(clusters->y);
-    free_vector(clusters->z);
-    free_vector(clusters->q);
-    free_vector(clusters->w);
-    free(clusters);
+    if (clusters != NULL) {
+        free_vector(clusters->x);
+        free_vector(clusters->y);
+        free_vector(clusters->z);
+        free_vector(clusters->q);
+        free_vector(clusters->w);
+        free(clusters);
+    }
 
     return;
 }   /* END of function Clusters_Free */
@@ -226,12 +228,14 @@ void Clusters_Free(struct clusters *clusters)
 void Clusters_Free_Win(struct clusters *clusters)
 {
 
-    MPI_Free_mem(clusters->x);
-    MPI_Free_mem(clusters->y);
-    MPI_Free_mem(clusters->z);
-    MPI_Free_mem(clusters->q);
-    MPI_Free_mem(clusters->w);
-    free(clusters);
+    if (clusters != NULL) {
+        MPI_Free_mem(clusters->x);
+        MPI_Free_mem(clusters->y);
+        MPI_Free_mem(clusters->z);
+        MPI_Free_mem(clusters->q);
+        MPI_Free_mem(clusters->w);
+        free(clusters);
+    }
 
     return;
 }   /* END of function Clusters_Free */

@@ -15,9 +15,6 @@
 #include "../src/array.h"
 
 
-const unsigned m = 1664525u;
-const unsigned c = 1013904223u;
-
 typedef struct{
   int numGlobalPoints;
   int numMyPoints;
@@ -65,11 +62,11 @@ int main(int argc, char **argv)
 
     //run parameters
     int N = 10000; 
-    int tree_type = 1;
-    int interpolationOrder = 5; 
+    int treeType = 1;
+    int interpOrder = 5; 
     double theta = 0.5; 
-    int max_per_leaf = 500;
-    int max_per_batch = 500; 
+    int maxPerLeaf = 500;
+    int maxPerBatch = 500; 
     double sizeCheckFactor = 1.0;
 
     char kernelName[256] = "coulomb";
@@ -79,7 +76,7 @@ int main(int argc, char **argv)
     int numberOfKernelParameters = 0;
     double kernelParameters[32];
 
-    int run_direct_comparison = 0;
+    int runDirect = 0;
     int slice = 1;
 
     int verbosity = 0;
@@ -93,13 +90,13 @@ int main(int argc, char **argv)
         if (strncmp(c1, "num_particles", 3) == 0) {
             N = atoi(c2);
         } else if (strncmp(c1, "order", 5) == 0) {
-            interpolationOrder = atoi(c2);
+            interpOrder = atoi(c2);
         } else if (strncmp(c1, "theta", 5) == 0) {
             theta = atof(c2);
         } else if (strncmp(c1, "max_per_leaf", 12) == 0) {
-            max_per_leaf = atoi(c2);
+            maxPerLeaf = atoi(c2);
         } else if (strncmp(c1, "max_per_batch", 12) == 0) {
-            max_per_batch = atoi(c2);
+            maxPerBatch = atoi(c2);
         } else if (strncmp(c1, "kernel_name", 11) == 0) {
             strcpy(kernelName, c2);
         } else if (strncmp(c1, "singularity", 11) == 0) {
@@ -107,11 +104,11 @@ int main(int argc, char **argv)
         } else if (strncmp(c1, "approximation", 13) == 0) {
             strcpy(approximationName, c2);
         } else if (strncmp(c1, "tree_type", 9) == 0) {
-            tree_type = atoi(c2);
+            treeType = atoi(c2);
         } else if (strncmp(c1, "size_check", 10) == 0) {
             sizeCheckFactor = atof(c2);
         } else if (strncmp(c1, "run_direct", 10) == 0) {
-            run_direct_comparison = atoi(c2);
+            runDirect = atoi(c2);
         } else if (strncmp(c1, "verbosity", 9) == 0) {
             verbosity = atoi(c2);
         } else if (strncmp(c1, "slice", 5) == 0) {
@@ -130,26 +127,13 @@ int main(int argc, char **argv)
     }
 
     struct kernel *kernel = malloc(sizeof (struct kernel));
-    AllocateKernelStruct(kernel, numberOfKernelParameters, kernelName);
-    SetKernelParameters(kernel, kernelParameters);
-
-    printf("max_per_batch %i\n", max_per_batch);
-    printf("kernelName %s\n", kernelName);
-    printf("tree_type %i\n", tree_type);
-    printf("sizeCheckFactor %f\n", sizeCheckFactor);
-    printf("SLICE %i\n", slice);
-    printf("NUMBER OF KERNEL PARAMETERS %i\n", numberOfKernelParameters);
-    printf("N = %i\n", N);
-
+    Kernel_Allocate(kernel, numberOfKernelParameters, kernelName);
+    Kernel_SetParams(kernel, kernelParameters);
 
     int rc, rank, numProcs;
-    if (verbosity>0) printf("Initializing MPI.\n");
     MPI_Init(&argc, &argv);
-    if (verbosity>0) printf("MPI initialized, setting size and rank.\n");
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (verbosity>0) printf("Rank set.\n");
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-    if (verbosity>0) printf("Set size.\n");
 
     double timebeg = MPI_Wtime();
 
@@ -196,12 +180,6 @@ int main(int argc, char **argv)
     mySources.w = malloc(N*sizeof(double));
     mySources.b = malloc(N*sizeof(double)); // load balancing weights
     mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * N);
-
-//    time_t t = time(NULL);
-//    unsigned t_hashed = (unsigned) t;
-//    t_hashed = m*t_hashed + c;
-//    srand(t_hashed ^ rank);
-    srand(1);
 
     for (int j = 0; j < rank+1; ++j) {
         for (int i = 0; i < N; ++i) {
@@ -351,7 +329,7 @@ int main(int argc, char **argv)
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (run_direct_comparison == 1) {
+    if (runDirect == 1) {
 
         targets_sample->num = targets->num / slice;
         targets_sample->x = malloc(targets_sample->num * sizeof(double));
@@ -386,8 +364,8 @@ int main(int argc, char **argv)
 
     if (rank == 0) fprintf(stderr,"Running treedriver...\n");
     time1 = MPI_Wtime();
-    treedriver(sources, targets, interpolationOrder, theta, max_per_leaf, max_per_batch,
-               kernel, singularityHandling, approximationName, tree_type,
+    treedriver(sources, targets, interpOrder, theta, maxPerLeaf, maxPerBatch,
+               kernel, singularityHandling, approximationName, treeType,
                potential, time_tree, sizeCheckFactor, verbosity);
     time_run[2] = MPI_Wtime() - time1;
     potential_engy = sum(potential, targets->num);
@@ -443,7 +421,7 @@ int main(int argc, char **argv)
                      time_run_glob[2][0]/numProcs, time_run_glob[2][0] * avg_percent,
                      time_run_glob[1][0]/time_run_glob[0][0]);
 
-        if (run_direct_comparison == 1) {
+        if (runDirect == 1) {
         printf("|    |....Directdriver...............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                      time_run_glob[1][1],          time_run_glob[1][1] * max_percent,
                      time_run_glob[2][1]/numProcs, time_run_glob[2][1] * avg_percent,
@@ -455,7 +433,7 @@ int main(int argc, char **argv)
                      time_run_glob[1][2]/time_run_glob[0][2]);
 
 
-        if (run_direct_comparison == 1) {
+        if (runDirect == 1) {
         printf("|    Directdriver....................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
                      time_run_glob[1][1], time_run_glob[2][1]/numProcs, time_run_glob[1][1]/time_run_glob[0][1]);
 
@@ -534,7 +512,7 @@ int main(int argc, char **argv)
                      time_tree_glob[1][7]/time_tree_glob[0][7]);
         }
 
-        if (tree_type == 0) { //cluster-particle
+        if (treeType == 0) { //cluster-particle
         printf("|    |....Compute cp2................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                      time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree,
                      time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent_tree,
@@ -567,7 +545,7 @@ int main(int argc, char **argv)
         
         printf("               Tree potential energy:  %f\n", potential_engy_glob);
 
-        if (run_direct_comparison == 1) {
+        if (runDirect == 1) {
         printf("             Direct potential energy:  %f\n\n", potential_engy_direct_glob);
         printf("  Absolute error for total potential:  %e\n",
                fabs(potential_engy_glob-potential_engy_direct_glob));
@@ -577,7 +555,7 @@ int main(int argc, char **argv)
     }
 
     double glob_reln2_err, glob_relinf_err, glob_n2_err, glob_inf_err;
-    if (run_direct_comparison == 1) {
+    if (runDirect == 1) {
         double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
         double temp;
 
@@ -616,7 +594,7 @@ int main(int argc, char **argv)
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
-            N, interpolationOrder, theta, max_per_leaf, max_per_batch, kernel->name,
+            N, interpOrder, theta, maxPerLeaf, maxPerBatch, kernel->name,
             singularityHandling, approximationName, numProcs, // 1 ends
 
             time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
@@ -692,6 +670,8 @@ int main(int argc, char **argv)
 
     free(potential);
     free(potential_direct);
+
+    Kernel_Free(kernel);
 
     MPI_Finalize();
 
