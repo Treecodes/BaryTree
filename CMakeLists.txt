@@ -17,11 +17,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
-option(BUILD_EXAMPLES "build examples with Zoltan"                             ON)
-option(ENABLE_GPU_BUILD "build OpenACC GPU version"                            ON)
-option(BUILD_SHARED_LIBS "build libraries as shared objects"		       ON)
+option(BUILD_EXAMPLES "build examples with Zoltan"              ON)
+option(ENABLE_GPU_BUILD "build OpenACC GPU version"             ON)
+option(BUILD_SHARED_LIBS "build libraries as shared objects"	ON)
 
-find_package(MPI REQUIRED)
+find_package(MPI    REQUIRED)
 find_package(OpenMP REQUIRED)
 
 if(BUILD_EXAMPLES OR BUILD_TESTS)

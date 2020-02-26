@@ -15,9 +15,6 @@
 #include "../src/array.h"
 
 
-const unsigned m = 1664525u;
-const unsigned c = 1013904223u;
-
 typedef struct{
   int numGlobalPoints;
   int numMyPoints;
@@ -196,12 +193,6 @@ int main(int argc, char **argv)
     mySources.w = malloc(N*sizeof(double));
     mySources.b = malloc(N*sizeof(double)); // load balancing weights
     mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * N);
-
-//    time_t t = time(NULL);
-//    unsigned t_hashed = (unsigned) t;
-//    t_hashed = m*t_hashed + c;
-//    srand(t_hashed ^ rank);
-    srand(1);
 
     for (int j = 0; j < rank+1; ++j) {
         for (int i = 0; i < N; ++i) {
