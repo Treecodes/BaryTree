@@ -32,7 +32,7 @@ directory of BaryTree:
     mkdir build; cd build; export CC=<C compiler>; cmake ..; make
 
 Compiling GPU versions requires that a PGI C compiler be used. For more information
-on building and installing, see the INSTALL.md file in this directory.
+on building and installing, see **INSTALL.md** in this directory.
 
 
 References
