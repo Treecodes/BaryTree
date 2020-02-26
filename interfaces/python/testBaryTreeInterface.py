@@ -9,11 +9,11 @@ import mpi4py.MPI as MPI
 
 sys.path.append(os.getcwd())
 try:
-    import treecodeWrappers
+    import BaryTreeInterface
 except ImportError:
-    print('Unable to import treecodeWrapper due to ImportError')
+    print('Unable to import BaryTreeInterface due to ImportError')
 except OSError:
-    print('Unable to import treecodeWrapper due to OSError')
+    print('Unable to import BaryTreeInterface due to OSError')
 
 
 if __name__=="__main__":
@@ -48,11 +48,12 @@ if __name__=="__main__":
 
     # call the treecode
         
-    output = treecodeWrappers.callTreedriver(  N, N, 
-                                               X, Y, Z, RHO, 
-                                               X, Y, Z, RHO, W,
-                                               kernelName, numberOfKernelParameters, kernelParameters, singularityHandling, approximationName,
-                                               treecodeOrder, theta, maxParNode, batchSize, GPUpresent, verbosity)
+    output = BaryTreeInterface.callTreedriver(  N, N, 
+                                                X, Y, Z, RHO, 
+                                                X, Y, Z, RHO, W,
+                                                kernelName, numberOfKernelParameters, kernelParameters,
+                                                singularityHandling, approximationName,
+                                                treecodeOrder, theta, maxParNode, batchSize, GPUpresent, verbosity)
     
     
     

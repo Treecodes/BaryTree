@@ -5,7 +5,7 @@ This examples folder builds six executables:
 
 1. __random_cube_cpu__ and __random_cube_gpu__
 2. __random_cube_large_cpu__ and __random_cube_large_gpu__
-3. __testTreecodeWrapper_cpu__ and __testTreecodeWrapper_gpu__
+3. __testBaryTreeInterface_cpu__ and __testBaryTreeInterface_gpu__
 
 - - -
 
@@ -61,11 +61,11 @@ the __random_cube__ examples.
 
 - - -
 
-#### __testTreecodeWrapper__
+#### __testBaryTreeInterface__
 
-The __testTreecodeWrapper__ examples demonstrate how to use the C wrapper 
+The __testBaryTreeInterface__ examples demonstrate how to use the C wrapper 
 for the treecode. A C program that links to the __BaryTree__ library can, 
 in fact, directly use the `treedriver` function if the calling program 
 implements the particle and kernel struct used by `treedriver` 
-(as done in the above examples). The `treecodeWrapper` function, 
+(as done in the above examples). The `BaryTreeInterface` function, 
 however, takes source and target particle arrays directly.

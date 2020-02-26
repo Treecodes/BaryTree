@@ -456,7 +456,7 @@ void Interaction_PC_Compute(struct tnode_array *tree_array, struct tnode_array *
 
     return;
 
-} /* END of function pc_treecode */
+} /* END of Interaction_PC_Compute */
 
 
 
@@ -581,7 +581,6 @@ void Interaction_Direct_Compute(double *source_x, double *source_y, double *sour
 
     } else if (strcmp(kernel->name, "atan") == 0) {
 
-//            printf("Computing reference with atan kernel.\n");
             atanDirect(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,

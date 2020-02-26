@@ -6,9 +6,7 @@ max_per_leaf    500
 max_per_batch   500
 kernel_name     yukawa
 kernel_params   1.0
-singularity     skipping
 approximation   hermite
-tree_type       1
 run_direct      1
 slice           10
 verbosity       1

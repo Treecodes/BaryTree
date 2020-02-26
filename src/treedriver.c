@@ -31,16 +31,12 @@ void treedriver(struct particles *sources, struct particles *targets,
                 double sizeCheckFactor,
                 int verbosity)
 {
-
-//    int verbosity = 0;
-
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
     if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
 
-    /* date and time */
     double time1;
     
     int *tree_inter_list, *local_tree_inter_list;
@@ -130,16 +126,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
     if (tree_type == 0) {
+
         fprintf(stderr, "ERROR: Cluster-particle treecode is currently not disabled.\n");
         exit(1);
-//        if (pot_type == 0) {
-//            cp_treecode(troot, batches, sources, targets,
-//                        tpeng, tEn, &timetree[1]);
-//        }
-//        } else if (pot_type == 1) {
-//            cp_treecode_yuk(troot, batches, sources, targets, kappa,
-//                            tpeng, tEn, &timetree[1]);
-//        }
+
     } else if (tree_type == 1) {
 
         MPI_Barrier(MPI_COMM_WORLD);
@@ -162,13 +152,11 @@ void treedriver(struct particles *sources, struct particles *targets,
         struct tnode_array *let_tree_array = NULL;
         int let_tree_array_length = 0;
 
-        struct clusters *let_clusters = NULL;
-        let_clusters = malloc(sizeof(struct clusters));
-        int let_clusters_length = 0; // previously let_clusters included the local.  Now it should not
+        struct clusters *let_clusters = malloc(sizeof(struct clusters));
+        int let_clusters_length = 0;
 
-        struct particles *let_sources = NULL;
-        let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
-        int let_sources_length = 0;  // previously let_sources included local.  Now it should not
+        struct particles *let_sources = malloc(sizeof(struct particles));
+        int let_sources_length = 0;
 
 
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
@@ -229,13 +217,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int getFrom = (numProcs+rank-procID) % numProcs;
 
-            // Allocate remote_tree_array
             struct tnode_array *remote_tree_array = NULL;
             Tree_AllocArray(&remote_tree_array, numNodesOnProc[getFrom]);
 
             // Get remote_tree_array
-//            MPI_Barrier(MPI_COMM_WORLD);
-
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_y_mid);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_z_mid);
@@ -270,8 +255,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Get(remote_tree_array->num_children, numNodesOnProc[getFrom], MPI_INT,
                     getFrom, 0, numNodesOnProc[getFrom], MPI_INT, win_num_children);
             
-//            MPI_Barrier(MPI_COMM_WORLD);
-
             MPI_Win_unlock(getFrom, win_x_mid);
             MPI_Win_unlock(getFrom, win_y_mid);
             MPI_Win_unlock(getFrom, win_z_mid);
@@ -283,10 +266,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_children);
             MPI_Win_unlock(getFrom, win_num_children);
             
-//            MPI_Barrier(MPI_COMM_WORLD);
-
-
-
             // Construct masks
             int *approx_list_packed, *approx_list_unpacked, *direct_list, *direct_ibeg_list, *direct_length_list;
             make_vector(approx_list_packed, numNodesOnProc[getFrom]);
@@ -298,8 +277,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             Interaction_MakeListRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
                                        direct_list, sizeof_batch_approx, sizeof_batch_direct, interpolationOrder, sizeCheckFactor);
 
-            //MPI_Barrier(MPI_COMM_WORLD);
-
             // Count number of unique clusters adding to LET
             int numberOfUniqueClusters =  0;
             int previousTreeArrayLength = let_tree_array_length;
@@ -307,7 +284,6 @@ void treedriver(struct particles *sources, struct particles *targets,
                 numberOfUniqueClusters++;
                 let_tree_array_length++;
             }
-            //MPI_Barrier(MPI_COMM_WORLD);
             
 
             if (procID == 1) {
@@ -315,14 +291,12 @@ void treedriver(struct particles *sources, struct particles *targets,
             } else {
                 Tree_ReallocArray(let_tree_array, let_tree_array_length);
             }
-            //MPI_Barrier(MPI_COMM_WORLD);
 
             int numberOfRemoteApprox = 0;
             int previous_let_clusters_length = let_clusters_length;
 
             int numberOfRemoteDirect = 0;
             int previous_let_sources_length = let_sources_length;
-
 
 
             // Fill in LET tree array from Remote tree array.
@@ -365,7 +339,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             previous_let_clusters_length_array[getFrom] = previous_let_clusters_length; 
             previous_let_sources_length_array[getFrom] = previous_let_sources_length; 
             
-            //MPI_Barrier(MPI_COMM_WORLD);
             
             int *approx_list_displacements, *approx_charges_list_displacements, *approx_weights_list_displacements;
             make_vector(approx_list_displacements, numNodesOnProc[getFrom]);
@@ -428,7 +401,6 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             int getFrom = (numProcs+rank-procID) % numProcs;
 
-//            MPI_Barrier(MPI_COMM_WORLD);
 
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_x);
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_clusters_y);
@@ -476,7 +448,6 @@ void treedriver(struct particles *sources, struct particles *targets,
                     new_sources_length_array[getFrom], MPI_DOUBLE,
                     getFrom, 0, 1, direct_type[getFrom], win_sources_w);
 
-//            MPI_Barrier(MPI_COMM_WORLD);
             
             MPI_Win_unlock(getFrom, win_clusters_x);
             MPI_Win_unlock(getFrom, win_clusters_y);
@@ -489,8 +460,6 @@ void treedriver(struct particles *sources, struct particles *targets,
             MPI_Win_unlock(getFrom, win_sources_z);
             MPI_Win_unlock(getFrom, win_sources_q);
             MPI_Win_unlock(getFrom, win_sources_w);
-
-//            MPI_Barrier(MPI_COMM_WORLD);
 
         } // end loop over numProcs
 
@@ -514,7 +483,6 @@ void treedriver(struct particles *sources, struct particles *targets,
         // Beginning local computation
         
         time1 = MPI_Wtime();
-//MAKE THIS BETTER!
         make_vector(local_tree_inter_list, batches->numnodes * tree_array->numnodes);
         make_vector(local_direct_inter_list, batches->numnodes * tree_array->numnodes);
         Interaction_MakeList(tree_array, batches, local_tree_inter_list, local_direct_inter_list,
@@ -553,14 +521,12 @@ void treedriver(struct particles *sources, struct particles *targets,
             max_batch_direct = maxval_int(sizeof_batch_direct, batches->numnodes);
 
 
-
             if (max_batch_approx > 0) make_vector(tree_inter_list, batches->numnodes * max_batch_approx);
             if (max_batch_direct > 0) make_vector(direct_inter_list, batches->numnodes * max_batch_direct);
             Interaction_MakeList(let_tree_array, batches, tree_inter_list, direct_inter_list,
                                  max_batch_approx, max_batch_direct, interpolationOrder, sizeCheckFactor);
 
             // Count number of interactions
-
             if (verbosity>0){
                 for (int j = 0; j < batches->numnodes; j++){
                     totalNumberApprox += batches->numApprox[j];
