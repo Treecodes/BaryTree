@@ -22,14 +22,16 @@ will be automatically turned off during configuration.
 
 CMake Flags
 -----------
-A list of the most useful CMake flags to use during configure:
-
- - `-DCMAKE_RELEASE_TYPE={Debug, Release}`      build either the debug or release version
- - `-DENABLE_GPU_BUILD={ON, OFF}`               toggle whether to build the GPU versions
- - `-DCMAKE_INSTALL_PREFIX=<where to install>`  specify install location for `make install`
- - `-DBUILD_EXAMPLES={ON, OFF}`                 toggle whether to build examples (requires Zoltan)
- - `-DBUILD_SHARED_LIBS={ON, OFF}`              toggle whether to build libraries as shared or static objects
- - `-DZoltan_DIR=<location of Zoltan cmake>`    specify location of Zoltan CMake configuration file if not picked up by CMake automatically (typically `lib/cmake/Zoltan` of wherever Trilinos was installed)
+The most useful CMake flags to use during configure are listed below. When passing a flag
+to `cmake` during configure, recall that it takes the form `-D<flag>=value`.
+| Flag                   | Option/ Value                | Description
+|------------------------|------------------------------|------------
+| `CMAKE_RELEASE_TYPE`   | Debug, Release               | Build either the Debug or Release version.
+| `ENABLE_GPU_BUILD`     | ON, OFF                      | Toggle whether to build the GPU versions.
+| `CMAKE_INSTALL_PREFIX` | `<where to install>`         | Specify install location for `make install`.
+| `BUILD_EXAMPLES`       | ON, OFF                      | Toggle whether to build examples (requires Zoltan).
+| `BUILD_SHARED_LIBS`    | ON, OFF                      | Toggle whether to build libraries as shared or static objects.
+| `Zoltan_DIR`           | `<location of Zoltan cmake>` | Specify location of Zoltan CMake configuration file if not picked up by CMake automatically (typically `lib/cmake/Zoltan` of wherever Trilinos was installed).
  
  If the Zoltan install isn't picked up automatically, you can also add the install location of Trilinos or Zoltan to the CMake module search path with `-DCMAKE_PREFIX_PATH=<location of Zoltan install>`. This is an alternative to explicitly setting `Zoltan_DIR`.
     
