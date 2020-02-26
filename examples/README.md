@@ -11,9 +11,8 @@ This examples folder builds six executables:
 
 #### `random_cube` and `random_cube_large`
 
-
 All of the random cube examples demonstrate the treecode's performance
-using uniformly distributed cubes of random particles, load balanced
+using a cube of uniformly distributed random particles, load balanced
 with Zoltan's recursive coordinate bisection.
 
 The argument given to the executable is a parameter file that
@@ -36,9 +35,7 @@ The parameters that can be specified in the infile are as follows:
 | `max_per_leaf`    | Maximum number of particles per tree leaf.
 | `max_per_batch`   | Maximum number of particles per batch.
 | `kernel_name`     | Name of interaction kernel: `yukawa` or `coulomb`.
-| `singularity`     | Singularity handling scheme: `skipping` or `subtraction`.
-| `approximation`   | Type of polynomial: `lagrange` and `hermite`
-| `tree_type`       | Type of treecode: only `1`, which corresponds to particle-cluster, is currently supported.   
+| `approximation`   | Type of polynomial: `lagrange` and `hermite`. 
 | `size_check`      | If the product of this parameter and the number of interpolation points in a cluster is greater than the number of particles in the cluster, then the interaction will be performed directly even if the MAC is accepted.
 | `run_direct`      | Run direct calculation for error comparison. `1` is yes, `0` is no.
 | `verbosity`       | Determines verbosity level of output. `0` is quiet, `1` is verbose.
