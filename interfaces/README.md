@@ -14,12 +14,12 @@ The interfaces contained in these subdirectories are responsible for supplying
 
 ### Python
 
-The python folder contains __treecodeWrappers.py__, which uses the ctypes module to load
-the library, set the argument types, construct pointers to the numpy arrays, and call the
+The Python folder contains __treecodeWrappers.py__, which uses the `ctypes` module to load
+the library, set the argument types, construct pointers to the `numpy` arrays, and call the
 `treedriverWrapper`. 
 
-__testTreecodeWrapper.py__ imports the python wrapper, generates 
-some random particles, and calls the treecode once.
+__testTreecodeWrapper.py__ imports the python wrapper, generates some random particles, 
+and calls the treecode once.
 
 The `w` array is for quadrature weights when computing discrete convolution sums; 
 it is set to ones for particle simulations.
