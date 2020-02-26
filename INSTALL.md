@@ -1,3 +1,6 @@
+Installing
+----------
+
 In a best case scenario, building and installing the libraries and examples should be as simple as this:
 
     export CC=<YOUR C COMPILER HERE>
