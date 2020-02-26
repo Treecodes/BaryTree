@@ -41,21 +41,21 @@ References
    Please refer to the following references for more background:
         
    - N. Vaughn, L. Wilson, and R. Krasny, A GPU-accelerated barycentric 
-            Lagrange treecode, submitted to the _21st IEEE International 
-	    Workshop on Parallel and Distributed Scientific and 
-	    Engineering Computing_ (2020).
+            Lagrange treecode, submitted to _Proc. 21st IEEE Int.
+	    Workshop Parallel Distrib. Sci. Eng. Comput._ (PDSEC 2020) 
+	    (2020).
 	    
    - R. Krasny and L. Wang, A treecode based on barycentric Hermite 
             interpolation for electrostatic particle interactions,
 	    _Comput. Math. Biophys._ __7__ (2019), 73-84.
 		
-   - H. A. Boateng. and R. Krasny, Comparison of treecodes for
+   - H. A. Boateng and R. Krasny, Comparison of treecodes for
             computing electrostatic potentials in charged particle 
 	    systems with disjoint targets and sources,
             _J. Comput. Chem._ __34__ (2013), 2159-2167.	
 	   
    - J.-P. Berrut and L. N. Trefethen, Barycentric Lagrange interpolation,
-            _SIAM Review_ __46__ (2004), 501-517.
+            _SIAM Rev._ __46__ (2004), 501-517.
 
    - Z.-H. Duan and R. Krasny, An adaptive treecode for computing
             nonbonded potential energy in classical molecular systems,
