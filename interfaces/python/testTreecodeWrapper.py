@@ -41,7 +41,8 @@ if __name__=="__main__":
     X = np.random.rand(N)
     Y = np.random.rand(N)
     Z = np.random.rand(N)
-    W = np.ones(N)
+    W = np.ones(N)   # W stores quadrature weights for convolution integrals.  For particle simulations, simply set = ones.
+    
     expectedOutput=-977.407950538299  # using seed of 1, this is the expected value of the first element of the output array.
     
 

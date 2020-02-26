@@ -30,3 +30,4 @@ the library, set the argument types, construct pointers to the numpy arrays, and
 treedriverWrapper.   
 testTreecodeWrapper.py imports the python wrapper, generates some random particles, 
 and calls the treecode once.
+The w array is for quadrature weights when computing discrete convolution sums; it is set to ones for particle simulations.
