@@ -9,8 +9,8 @@
 BaryTree
 ========
 
-   This file is the partial documentation for BaryTree, a work-in-progress
-   library for fast computation of N-body interactions on multiple GPUs.
+   A work-in-progress library for fast computation of N-body interactions on multiple GPUs,
+   BaryTree implements barycentric Lagrange and Hermite polynomial interpolation treecodes.
    The current code employs an OpenACC GPU implementation.
 
 
