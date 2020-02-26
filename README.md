@@ -31,16 +31,8 @@ directory of BaryTree:
 
     mkdir build; cd build; export CC=<C compiler>; cmake ..; make
 
-Compiling GPU versions requires that a PGI C compiler be used. If another compiler
-other than pgcc is used, for instance gcc or icc, support for building GPU versions
-will be automatically turned off during configuration.
-
-Some potentially useful CMake flags during configure:
-
- - `-DCMAKE_RELEASE_TYPE={Debug, Release}`   build either the debug or release version
- - `-DENABLE_GPU_BUILD={ON, OFF}`   manually toggle whether to build the GPU versions
- - `-DCMAKE_INSTALL_PREFIX=/where/to/install`   specify install location for `make install`
-    
+Compiling GPU versions requires that a PGI C compiler be used. For more information
+on building and installing, see the INSTALL.md file in this directory.
 
 
 References
