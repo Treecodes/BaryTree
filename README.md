@@ -19,7 +19,7 @@ BaryTree
    - Nathan J. Vaughn  (njvaughn@umich.edu) 
    
    Department of Mathematics,
-   University of Michigan, Ann Arbor
+   University of Michigan, Ann Arbor.
    
 
 
