@@ -22,7 +22,6 @@ BaryTree
    University of Michigan, Ann Arbor.
    
 
-
 Building
 --------
 This project uses CMake to manage and configure its build system. In principle, 
@@ -32,8 +31,22 @@ directory of BaryTree:
     mkdir build; cd build; export CC=<C compiler>; cmake ..; make
 
 Compiling GPU versions requires that a PGI C compiler be used. For more information
-on building and installing, see **INSTALL.md** in this directory.
+on building and installing, see __INSTALL.md__ in this directory.
 
+
+Examples
+--------
+See the __examples__ directory for several example executables that use __BaryTree__
+and the Trilinos __Zoltan__ library for load balancing, in addition to an example 
+using the library's interface for C programs. See __examples/README.md__ for more
+details.
+
+
+Interfaces
+----------
+See the __interfaces__ directory for __BaryTree__ interfaces for non-C programs.
+Currently, there is a Python interface and an example script using that interface.
+See __interfaces/README.md__ for more details.
 
 
 References
@@ -61,8 +74,7 @@ References
             nonbonded potential energy in classical molecular systems,
             _J. Comput. Chem._ __22__ (2001), 184–195.
 
-
-                                                     
+                                                    
 License
 -------
 Copyright © 2019-2020, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).

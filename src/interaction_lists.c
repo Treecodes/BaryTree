@@ -82,7 +82,7 @@ void Interaction_MakeList(const struct tnode_array *tree_array, struct tnode_arr
 
     return;
 
-} /* END of function pc_treecode */
+} /* END of function Interaction_MakeList */
 
 
 
@@ -147,7 +147,6 @@ void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct tno
             temp_direct_inter_list[i][j] = -1;
  
     
-    // Fill interaction lists
     for (int i = 0; i < batches->numnodes; i++) {
 
         pc_compute_interaction_list_remote(0,
@@ -204,7 +203,7 @@ void Interaction_MakeListRemote(const struct tnode_array *tree_array, struct tno
 
     return;
 
-} /* END of function pc_treecode */
+} /* END of function Interaction_MakeListRemote */
 
 
 
@@ -241,8 +240,7 @@ void pc_compute_interaction_list(int tree_numnodes, const int *tree_level,
                 && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < tree_numpar[j])) {
                 current_level = tree_level[j];
             /*
-             * If MAC is accepted and there is more than 1 particle
-             * in the box, use the expansion for the approximation.
+             * If MAC is accepted use the expansion for the approximation.
              */
         
                 batch_tree_list[tree_index_counter] = j;
@@ -300,9 +298,8 @@ void pc_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
       && (tree_radius[tree_node] != 0.00) //) {
       && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < tree_numpar[tree_node])) {
     /*
- *      * If MAC is accepted and there is more than 1 particle
- *           * in the box, use the expansion for the approximation.
- *                */
+     * If MAC is accepted use the expansion for the approximation.
+     */
 
         if (*tree_index_counter >= *sizeof_tree_list) {
             (*sizeof_tree_list) *= 1.5;
@@ -314,9 +311,9 @@ void pc_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
 
     } else {
     /*
- *      * If MAC fails check to see if there are children. If not, perform direct
- *           * calculation. If there are children, call routine recursively for each.
- *                */
+     * If MAC fails check to see if there are children. If not, perform direct
+     * calculation. If there are children, call routine recursively for each.
+     */
         if (tree_num_children[tree_node] == 0) {
 
             if (*direct_index_counter >= *sizeof_direct_list) {

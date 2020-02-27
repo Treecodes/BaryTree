@@ -8,8 +8,8 @@
 #include <float.h>
 
 #include "minunit.h"
+#include "../src/BaryTreeInterface.h"
 #include "../src/treedriver.h"
-#include "../src/treedriverWrapper.h"
 #include "../src/directdriver.h"
 #include "../src/struct_particles.h"
 #include "../src/struct_kernel.h"
@@ -78,17 +78,16 @@ static char * test_direct_sum_on_10_particles() {
 
 //    kernelName="coulomb";
 
-    struct kernel *kernel = NULL;
-    kernel = malloc(sizeof (struct kernel));
-    double * kernelParameters = NULL;
+    struct kernel *kernel = malloc(sizeof (struct kernel));
+    double *kernelParameters = NULL;
     int numberOfKernelParameters=1;
     make_vector(kernelParameters,numberOfKernelParameters);
     kernelParameters[0]=0.5;
-    AllocateKernelStruct(kernel, numberOfKernelParameters, "coulomb");
+    Kernel_Allocate(kernel, numberOfKernelParameters, "coulomb");
 
     int tree_type=1;
     double kappa=0.5;
-    SetKernelParameters(kernel, kernelParameters);
+    Kernel_SetParams(kernel, kernelParameters);
     singularityHandling="skipping";
 
     directdriver(sources, targets, kernel, singularityHandling, approximationName,
@@ -115,7 +114,7 @@ static char * test_direct_sum_on_10_particles() {
     singularityHandling="subtraction";
     kernelParameters[0]=5.5;
     kappa=5.5;
-    SetKernelParameters(kernel, kernelParameters);
+    Kernel_SetParams(kernel, kernelParameters);
     directdriver(sources, targets, kernel, singularityHandling, approximationName,
                  potential, time_tree);
 
@@ -138,8 +137,8 @@ static char * test_direct_sum_on_10_particles() {
     kernel2 = malloc(sizeof (struct kernel));
     numberOfKernelParameters=1;
     kappa=0.5;
-    AllocateKernelStruct(kernel2, numberOfKernelParameters, "yukawa");
-    SetKernelParameters(kernel2, &kappa);
+    Kernel_Allocate(kernel2, numberOfKernelParameters, "yukawa");
+    Kernel_SetParams(kernel2, &kappa);
 
     for (int i=0; i<targets->num; i++){
         potential[i]=0.0;
@@ -203,8 +202,9 @@ static char * test_direct_sum_on_10_particles() {
 
     free(potential);
 
-    FreeKernelStruct(kernel);
-    FreeKernelStruct(kernel2);
+    Kernel_Free(kernel);
+    Kernel_Free(kernel2);
+
     return 0;
 }
 
@@ -218,8 +218,8 @@ static char * test_treecode_on_100_particles() {
     double * kernelParameters = NULL;
     int numberOfKernelParameters=1;
     make_vector(kernelParameters,numberOfKernelParameters);
-    AllocateKernelStruct(CoulombKernel, numberOfKernelParameters, "coulomb");
-    AllocateKernelStruct(YukawaKernel, numberOfKernelParameters, "yukawa");
+    Kernel_Allocate(CoulombKernel, numberOfKernelParameters, "coulomb");
+    Kernel_Allocate(YukawaKernel, numberOfKernelParameters, "yukawa");
 
 
     int verbosity=0;
@@ -280,8 +280,8 @@ static char * test_treecode_on_100_particles() {
     singularityHandling="skipping";
     int tree_type=1;
     double kappa=0.5;
-    SetKernelParameters(CoulombKernel, &kappa);
-    SetKernelParameters(YukawaKernel, &kappa);
+    Kernel_SetParams(CoulombKernel, &kappa);
+    Kernel_SetParams(YukawaKernel, &kappa);
 
     int order=2;
     double theta=0.7;
@@ -560,8 +560,9 @@ static char * test_treecode_on_100_particles() {
 
     free(potential);
 
-    FreeKernelStruct(CoulombKernel);
-    FreeKernelStruct(YukawaKernel);
+    Kernel_Free(CoulombKernel);
+    Kernel_Free(YukawaKernel);
+
     return 0;
 }
 
@@ -578,8 +579,8 @@ static char * test_treecode_on_1_target_10000_sources() {
     double * kernelParameters = NULL;
     int numberOfKernelParameters=1;
     make_vector(kernelParameters,numberOfKernelParameters);
-    AllocateKernelStruct(CoulombKernel, numberOfKernelParameters, "coulomb");
-    AllocateKernelStruct(YukawaKernel, numberOfKernelParameters, "yukawa");
+    Kernel_Allocate(CoulombKernel, numberOfKernelParameters, "coulomb");
+    Kernel_Allocate(YukawaKernel, numberOfKernelParameters, "yukawa");
 
 
     struct particles *sources = NULL;
@@ -643,8 +644,8 @@ static char * test_treecode_on_1_target_10000_sources() {
     int tree_type=1; // particle-cluster
     double kappa=0.5;
     kernelParameters[0]=kappa;
-    SetKernelParameters(CoulombKernel, &kappa);
-    SetKernelParameters(YukawaKernel, &kappa);
+    Kernel_SetParams(CoulombKernel, &kappa);
+    Kernel_SetParams(YukawaKernel, &kappa);
 
     int order=4;
     double theta=0.8;
@@ -911,6 +912,10 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     free(potential);
     free(potential_direct);
+
+    Kernel_Free(CoulombKernel);
+    Kernel_Free(YukawaKernel);
+
     return 0;
 }
 
@@ -920,12 +925,11 @@ static char * test_treecode_wrapper() {
     int N=10000;
     int verbosity=0;
 
-    struct kernel *CoulombKernel = NULL;
-    CoulombKernel = malloc(sizeof (struct kernel));
+    struct kernel *CoulombKernel = malloc(sizeof (struct kernel));
     double * kernelParameters = NULL;
     int numberOfKernelParameters=1;
     make_vector(kernelParameters,numberOfKernelParameters);
-    AllocateKernelStruct(CoulombKernel, numberOfKernelParameters, "coulomb");
+    Kernel_Allocate(CoulombKernel, numberOfKernelParameters, "coulomb");
 
 
     struct particles *sources = NULL;
@@ -987,7 +991,7 @@ static char * test_treecode_wrapper() {
     int tree_type=1; // particle-cluster
     double kappa=0.5;
     kernelParameters[0]=kappa;
-    SetKernelParameters(CoulombKernel, &kappa);
+    Kernel_SetParams(CoulombKernel, &kappa);
 
     int order=4;
     double theta=0.8;
@@ -1005,30 +1009,12 @@ static char * test_treecode_wrapper() {
         potential_wrapper[i]=0.0;
     }
 
-    treedriverWrapper(targets->num, sources->num,
+    BaryTreeInterface(targets->num, sources->num,
                         targets->x,targets->y,targets->z,targets->q,
                         sources->x,sources->y,sources->z,sources->q,sources->w,
                         potential_wrapper, kernelName,numberOfKernelParameters,kernelParameters,
                         singularityHandling, approximationName,
                         order, theta, max_per_leaf, max_per_batch, verbosity);
-
-//    sources = malloc(sizeof(struct particles));
-//    sources->num = N; // 10,000 sources
-//    sources->x = malloc(sources->num*sizeof(double));
-//    sources->y = malloc(sources->num*sizeof(double));
-//    sources->z = malloc(sources->num*sizeof(double));
-//    sources->q = malloc(sources->num*sizeof(double));
-//    sources->w = malloc(sources->num*sizeof(double));
-//    srand(1);
-//    for (int i=0; i<sources->num; i++){
-//        // 10,000 randomly distributed sources in the [-1,1] box
-//        sources->x[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-//        sources->y[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-//        sources->z[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-//        sources->q[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-//        sources->w[i]=((double)rand()/(double)(RAND_MAX));
-//    }
-
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                CoulombKernel, singularityHandling, approximationName, tree_type,
@@ -1059,6 +1045,9 @@ static char * test_treecode_wrapper() {
 
     free(potential);
     free(potential_wrapper);
+
+    Kernel_Free(CoulombKernel);
+
     return 0;
 }
 
@@ -1072,8 +1061,8 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
     double * kernelParameters = NULL;
     int numberOfKernelParameters=1;
     make_vector(kernelParameters,numberOfKernelParameters);
-    AllocateKernelStruct(CoulombKernel, numberOfKernelParameters, "coulomb");
-    AllocateKernelStruct(YukawaKernel, numberOfKernelParameters, "yukawa");
+    Kernel_Allocate(CoulombKernel, numberOfKernelParameters, "coulomb");
+    Kernel_Allocate(YukawaKernel, numberOfKernelParameters, "yukawa");
 
 
     int N=10000;
@@ -1141,8 +1130,8 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     int tree_type=1; // particle-cluster
     double kappa=0.5;
-    SetKernelParameters(CoulombKernel, &kappa);
-    SetKernelParameters(YukawaKernel, &kappa);
+    Kernel_SetParams(CoulombKernel, &kappa);
+    Kernel_SetParams(YukawaKernel, &kappa);
 
     // 3 parameter sets.  Set 2 increases order, set 3 reduces MAC.  Both should be more accurate than set 1.
     int order1=5;
@@ -1536,6 +1525,10 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
     free(potential2);
     free(potential3);
     free(potential_direct);
+
+    Kernel_Free(CoulombKernel);
+    Kernel_Free(YukawaKernel);
+
     return 0;
 }
 
@@ -1588,7 +1581,6 @@ int main(int argc, char **argv) {
     if (result != 0) {
         printf("%s\n", result);
     }
-
 
     MPI_Finalize();
     return result != 0;
