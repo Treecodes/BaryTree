@@ -1134,13 +1134,13 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
     Kernel_SetParams(YukawaKernel, &kappa);
 
     // 3 parameter sets.  Set 2 increases order, set 3 reduces MAC.  Both should be more accurate than set 1.
-    int order1=5;
-    double theta1=0.7;
+    int order1=3;
+    double theta1=0.9;
 
-    int order2=7;
-    double theta2=0.7;
+    int order2=6;
+    double theta2=0.9;
 
-    int order3=5;
+    int order3=3;
     double theta3=0.4;
 
     /***********************************************/
@@ -1300,15 +1300,15 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
     directdriver(sources, targets, YukawaKernel, singularityHandling, approximationName,
                  potential_direct, time_tree);
 
-    treedriver(sources, targets, 4, theta1, max_per_leaf, max_per_batch,
+    treedriver(sources, targets, order1, theta1, max_per_leaf, max_per_batch,
                YukawaKernel, singularityHandling, approximationName, tree_type,
                potential1, time_tree, sizeCheckFactor, verbosity);
 
-    treedriver(sources, targets, 6, theta2, max_per_leaf, max_per_batch,
+    treedriver(sources, targets, order2, theta2, max_per_leaf, max_per_batch,
                YukawaKernel, singularityHandling, approximationName, tree_type,
                potential2, time_tree, sizeCheckFactor, verbosity);
 
-    treedriver(sources, targets, 4, theta3, max_per_leaf, max_per_batch,
+    treedriver(sources, targets, order3, theta3, max_per_leaf, max_per_batch,
                YukawaKernel, singularityHandling, approximationName, tree_type,
                potential3, time_tree, sizeCheckFactor, verbosity);
 
