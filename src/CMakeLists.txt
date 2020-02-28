@@ -96,6 +96,7 @@ if(ENABLE_GPU_BUILD)
                                       POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC
                                       OpenMP::OpenMP_C
+                                      MPI::MPI_C
                                       OpenACC_C
                                       $<$<C_COMPILER_ID:GNU>:m>)
 
