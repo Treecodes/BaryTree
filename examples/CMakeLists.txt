@@ -1,11 +1,29 @@
-if(BUILD_EXAMPLES AND ENABLE_CPU_BUILD)
-   add_executable(library_example_cpu library_example.c)
-   target_link_libraries(library_example_cpu PUBLIC treelib-cpu)
-   install(TARGETS library_example_cpu DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
-endif()
+if(BUILD_EXAMPLES)
 
-if(BUILD_EXAMPLES AND ENABLE_GPU_BUILD)
-   add_executable(library_example_gpu library_example.c)
-   target_link_libraries(library_example_gpu PUBLIC treelib-gpu)
-   install(TARGETS library_example_gpu DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
+   add_executable(random_cube_cpu random_cube.c)
+   target_link_libraries(random_cube_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
+   install(TARGETS random_cube_cpu DESTINATION bin)
+   
+   add_executable(random_cube_large_cpu random_cube_large.c)
+   target_link_libraries(random_cube_large_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
+   install(TARGETS random_cube_large_cpu DESTINATION bin)
+
+   add_executable(testBaryTreeInterface_cpu testBaryTreeInterface.c)
+   target_link_libraries(testBaryTreeInterface_cpu PRIVATE BaryTree_cpu)
+   install(TARGETS testBaryTreeInterface_cpu DESTINATION bin)
+   
+   if(ENABLE_GPU_BUILD)
+      add_executable(random_cube_gpu random_cube.c)
+      target_link_libraries(random_cube_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
+      install(TARGETS random_cube_gpu DESTINATION bin)
+   
+      add_executable(random_cube_large_gpu random_cube_large.c)
+      target_link_libraries(random_cube_large_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
+      install(TARGETS random_cube_large_gpu DESTINATION bin)
+
+      add_executable(testBaryTreeInterface_gpu testBaryTreeInterface.c)
+      target_link_libraries(testBaryTreeInterface_gpu PRIVATE BaryTree_gpu)
+      install(TARGETS testBaryTreeInterface_gpu DESTINATION bin)
+   endif()
+
 endif()

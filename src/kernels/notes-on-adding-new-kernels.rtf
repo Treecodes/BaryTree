@@ -1,0 +1,28 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf600
+{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\cssrgb\c0\c1\c1;\cssrgb\c0\c1\c1;}
+\margl1440\margr1440\vieww22640\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs32 \cf2 Steps for adding a new kernel named \'93custom-kernel\'94\
+\
+1. Create new source files (custom-kernel.c, custom-kernel.h) in src/kernels/ containing three batch-cluster interaction functions: \
+	-customKernelDirect( )  \
+	-customKernelApproximationLagrange( ) \
+	-customKernelApproximationHermite( ) \
+\
+2. Edit \cf3 interaction_compute.c\
+	Step 1: \cf2  Include custom-kernel.h in interaction_compute.c ( #include \'93kernels/custom-kernel.h )\
+	Step 2:  Add your custom kernel in several places, following the format for the already-present kernels, using string comparison to distinguish your kernel, e.g. \'93if (strcmp(kernel->name, \'93\cf2 \ul \ulc2 custom-kernel\cf2 \ulnone \'94) == 0)\'94\
+		- Inside of Interaction_PC_Compute()\
+			- In the POTENTIAL FROM APPROX subsection, add your Lagrange and/or Hermite kernels.\
+			- In the POTENTIAL FROM DIRECT subsection, add your direct interaction kernel\
+		- Inside of Interaction_Direct_Compute()\
+			- Add direct interaction kernel for performing direct-sum reference calculations\
+\
+3. Add your files to src/CMakeLists.txt \
+	- add \'93kernels/custom-kernel.c\'94 and \'93kernels/custom-kernel.h\'94 to the SRCS_TREEDRIVER list.\
+\
+\
+}

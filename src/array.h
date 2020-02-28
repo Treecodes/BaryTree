@@ -21,6 +21,9 @@
 
 #define free_vector(v)  do { free(v); v = NULL; } while (0)
 
+#define realloc_vector(v,n) ((v) = realloc(v, (n) * sizeof *(v)))
+
+
 #define make_matrix(a, m, n) do {                              \
     size_t make_matrix_loop_counter;                           \
     make_vector(a, (m) + 1);                                   \
@@ -81,5 +84,7 @@
             print_matrix_loop_counter++)                       \
     print_vector(fmt, (a)[print_matrix_loop_counter], (n));    \
 } while (0)
+
+
 
 #endif /*H_ARRAY_H*/

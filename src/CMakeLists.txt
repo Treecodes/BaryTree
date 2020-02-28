@@ -1,121 +1,97 @@
 SET(SRCS_TREEDRIVER
     tools.c
+    tools.h
+    xmalloc.c
+    xmalloc.h
+    array.h
+    globvars.h
+    directdriver.c
+    directdriver.h
     treedriver.c
+    treedriver.h
+    tree.c
+    tree.h
+    batches.c
+    batches.h
+    clusters.c
+    clusters.h
+    particles.c
+    particles.h
+    kernel.c
+    kernel.h
+    struct_kernel.h
+    interaction_lists.c
+    interaction_lists.h
+    interaction_compute.c
+    interaction_compute.h
     partition.c
     partition.h
-    tree-cp.c tree.h
-    tree-cp-yuk.c
-    tree-pc.c
-    tree-pc-hermite.c
-    tree-pc-coulomb-SS.c
-    tree-pc-hermite-coulomb-SS.c
-    tree-pc-yuk.c
-    tree-pc-hermite-yuk.c
-    tree-pc-yuk-SS.c
-    tree-pc-dcf.c
-    tree-pc-hermite-dcf.c
-    tree-pc-tcf.c
-    tree-batch.c
-    xmalloc.c
-    sort.c 
-    tnode.h
-    batch.h
-    globvars.h
-    treedriver.h
+    struct_particles.h
+    struct_clusters.h
+    struct_nodes.h
+    kernels/coulomb.c
+    kernels/coulomb.h
+    kernels/regularized-coulomb.c
+    kernels/regularized-coulomb.h
+    kernels/coulomb_singularity_subtraction.c
+    kernels/coulomb_singularity_subtraction.h
+    kernels/regularized-coulomb-singularity-subtraction.c
+    kernels/regularized-coulomb-singularity-subtraction.h
+    kernels/yukawa.c
+    kernels/yukawa.h
+    kernels/regularized-yukawa.c
+    kernels/regularized-yukawa.h
+    kernels/yukawa_singularity_subtraction.c
+    kernels/yukawa_singularity_subtraction.h
+    kernels/regularized-yukawa-singularity-subtraction.c
+    kernels/regularized-yukawa-singularity-subtraction.h
+    kernels/dcf.c
+    kernels/dcf.h
+    kernels/tcf.c
+    kernels/tcf.h
+    kernels/atan.c
+    kernels/atan.h)
+
+
+SET(SRCS_DIRECT_DISTRIBUTED
+    main_direct.c
     array.h
+    tools.c
+    tools.h 
+    xmalloc.c
     xmalloc.h
-    tools.h
-    particles.h
-    sort.h)
+    kernels/kernels_direct.h
+    kernels/kernels_direct.c)
 
 
-SET(SRCS_DIRECT
-    main-direct.c array.h
-    tools.c tools.h 
-    xmalloc.c xmalloc.h)
+set(TRGT BaryTree_cpu)
+add_library(${TRGT} ${SRCS_TREEDRIVER})
+target_sources(${TRGT}          PRIVATE 
+                                    BaryTreeInterface.c
+                                 PUBLIC  
+                                    ${CMAKE_CURRENT_SOURCE_DIR}/BaryTreeInterface.h)
+set_target_properties(${TRGT}   PROPERTIES
+                                    POSITION_INDEPENDENT_CODE ON)
+target_compile_features(${TRGT} PUBLIC
+                                    c_std_99)
+target_link_libraries(${TRGT}   PUBLIC
+                                    OpenMP::OpenMP_C
+                                    MPI::MPI_C
+                                    $<$<C_COMPILER_ID:GNU>:m>)
+
+install(TARGETS ${TRGT}               LIBRARY DESTINATION lib
+                                      ARCHIVE DESTINATION lib)
+install(FILES   BaryTreeInterface.h           DESTINATION include)
 
 
-if(BUILD_TREECODE AND ENABLE_CPU_BUILD)
-    set(TRGT tree-cpu)
-    add_executable(${TRGT} ${SRCS_TREEDRIVER})
-    target_sources(${TRGT}          PRIVATE 
-                                        main.c)
-    target_compile_features(${TRGT} PRIVATE
-                                        c_std_99)
-    target_link_libraries(${TRGT}   PRIVATE
-                                        OpenMP::OpenMP_C
-                                        $<$<C_COMPILER_ID:GNU>:m>)
-    install(TARGETS ${TRGT} DESTINATION bin)
-endif()
-
-
-if(BUILD_TREECODE AND ENABLE_GPU_BUILD)
-    set(TRGT tree-gpu)
-    add_executable(${TRGT} ${SRCS_TREEDRIVER})
-    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
-    target_sources(${TRGT}        PRIVATE
-                                      main.c)
-    target_link_libraries(${TRGT} PRIVATE
-                                      OpenMP::OpenMP_C
-                                      OpenACC_C
-                                      $<$<C_COMPILER_ID:GNU>:m>)
-    install(TARGETS ${TRGT} DESTINATION bin)
-endif()
-
-
-if (BUILD_DIRECT AND ENABLE_CPU_BUILD)
-    set(TRGT direct-cpu)
-    add_executable(${TRGT} ${SRCS_DIRECT})
-    target_compile_features(${TRGT} PRIVATE
-                                        c_std_99)
-    target_link_libraries(${TRGT}   PRIVATE
-                                        OpenMP::OpenMP_C
-                                        $<$<C_COMPILER_ID:GNU>:m>)
-    install(TARGETS ${TRGT} DESTINATION bin)
-endif()
-
-
-if(BUILD_DIRECT AND ENABLE_GPU_BUILD)
-    set(TRGT direct-gpu)
-    add_executable(${TRGT} ${SRCS_DIRECT})
-    target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
-    target_link_libraries(${TRGT} PRIVATE
-                                      OpenMP::OpenMP_C
-                                      OpenACC_C
-                                      $<$<C_COMPILER_ID:GNU>:m>)
-    install(TARGETS ${TRGT} DESTINATION bin)
-endif()
-
-
-if(BUILD_TREE_LIBRARIES AND ENABLE_CPU_BUILD)
-    set(TRGT treelib-cpu)
-    add_library(${TRGT} ${SRCS_TREEDRIVER})
-    target_sources(${TRGT}          PRIVATE 
-                                        treedriverWrapper.c
-                                     PUBLIC  
-                                        ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
-    set_target_properties(${TRGT}   PROPERTIES
-                                        POSITION_INDEPENDENT_CODE ON)
-    target_compile_features(${TRGT} PUBLIC
-                                        c_std_99)
-    target_link_libraries(${TRGT}   PUBLIC
-                                        OpenMP::OpenMP_C
-                                        $<$<C_COMPILER_ID:GNU>:m>)
-
-    install(TARGETS ${TRGT}               LIBRARY DESTINATION lib
-                                          ARCHIVE DESTINATION lib)
-    install(FILES   treedriverWrapper.h           DESTINATION include)
-endif()
-
-
-if(BUILD_TREE_LIBRARIES AND ENABLE_GPU_BUILD)
-    set(TRGT treelib-gpu)
+if(ENABLE_GPU_BUILD)
+    set(TRGT BaryTree_gpu)
     add_library(${TRGT} ${SRCS_TREEDRIVER})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
-                                      treedriverWrapper.c
+                                      BaryTreeInterface.c
                                   PUBLIC 
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/treedriverWrapper.h)
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/BaryTreeInterface.h)
     set_target_properties(${TRGT} PROPERTIES
                                       POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC
@@ -125,5 +101,5 @@ if(BUILD_TREE_LIBRARIES AND ENABLE_GPU_BUILD)
 
     install(TARGETS ${TRGT}             LIBRARY DESTINATION lib
                                         ARCHIVE DESTINATION lib)
-    install(FILES   treedriverWrapper.h         DESTINATION include)
+    install(FILES   BaryTreeInterface.h         DESTINATION include)
 endif()

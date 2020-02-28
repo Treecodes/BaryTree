@@ -1,46 +1,71 @@
 Examples
-========
+--------
 
-Making example point sets
--------------------------
-Use the make\_points.py script to generate example source and target binary files for running with the executables.
-For example, to generate a file of sources with $N$ particles, run:
+This examples folder builds six executables:
 
-    python3 make_points.py sources sources_example.bin N
+1. __random_cube_cpu__ and __random_cube_gpu__
+2. __random_cube_large_cpu__ and __random_cube_large_gpu__
+3. __testBaryTreeInterface_cpu__ and __testBaryTreeInterface_gpu__
 
-To generate a file of targets with $M$ targets, run:
+- - -
 
-    python3 make_points.py targets targets_example.bin M
+#### __random_cube__ and __random_cube_large__
 
-Using the library
------------------
-`example.c` demonstrates using the library in another program. This program can be built by configuring CMake
-with the flag `-DBUILD\_EXAMPLES=ON` when building the executables and libraries in the top level directory.
+All of the random cube examples demonstrate the treecode's performance
+using a cube of uniformly distributed random particles, load balanced
+with Zoltan's recursive coordinate bisection.
 
-Using the executables
----------------------
-Two short bash scripts, `exec_example_cpu.sh` and `exec_example_gpu.sh`, are included to demonstrate generating
- example point sets, running the direct executable to produce
-a benchmark solution, and then running the tree executable to generate an approximate solution. What follows is a
-description of what the `exec_example_cpu.sh` script does: 
+The argument given to the executable is a parameter file that
+specifies the run. An example is given here as __example.in__. For
+example, one would run:
 
-First produce example point sets using the make_points.py script:
+    mpirun -n 2 random_cube_cpu example.in
 
-    python3 make_points.py sources sources_1E4.bin 10000
-    python3 make_points.py targets targets_1E4.bin 10000
+to run the __random_cube_cpu__ example with the parameters specified in
+the file __example.in__ across two ranks.
 
-Assuming the executables have been installed, run the direct executable to generate a reference solution for the Coulomb
-potential, using 1 OpenMP thread:
+The parameters that can be specified in the infile are as follows:
+| Parameter         | Description
+|-------------------|------------------
+| `num_particles`   | Number of sources and targets. Its use is exclusive with the `num_sources` and `num_targets` parameters.
+| `num_sources`     | Number of sources.
+| `num_targets`     | Number of targets.
+| `order`           | Order of polynomial interpolation. 
+| `theta`           | Multipole acceptance criterion (MAC).
+| `max_per_leaf`    | Maximum number of particles per tree leaf.
+| `max_per_batch`   | Maximum number of particles per batch.
+| `kernel_name`     | Name of interaction kernel: `yukawa` or `coulomb`.
+| `approximation`   | Type of polynomial: `lagrange` and `hermite`. 
+| `size_check`      | If the product of this parameter and the number of interpolation points in a cluster is greater than the number of particles in the cluster, then the interaction will be performed directly even if the MAC is accepted.
+| `run_direct`      | Run direct calculation for error comparison. `1` is yes, `0` is no.
+| `verbosity`       | Determines verbosity level of output. `0` is quiet, `1` is verbose.
+| `slice`           | Determines the proportion of target sites at which the direct calculation is performed for error comparison.
+| `kernel_params`   | Comma separated list of parameters for given kernel.
 
-    direct-cpu sources_1E4.bin targets_1E4.bin direct_benchmark.bin direct_summary.csv 10000 10000 0.0 0 1
+Note the difference between these executables:
 
-Now run the tree executable using Lagrange barycentric interpolation for the Coulomb potential, with a MAC of 0.5 and
-an interpolation order of 5, using 1 OpenMP thread, and compare it to the reference solution:
+- The __random_cube__ examples are designed for reproducibility
+of results. Given a total number of particles across all ranks, the
+actual random particles will be the same no matter how many ranks
+are used.
 
-    tree-cpu sources_1E4.bin targets_1E4.bin direct_benchmark.bin tree_summary.csv 10000 10000 0.5 5 500 5 0 0.0 1
+- The __random_cube_large__ examples are designed to test the
+problem size limits of the treecode by overcoming limits in Zoltan's
+maximum array sizes. Unlike the __random_cube__ examples, which first 
+generate all random particles and then use Zoltan to load balance them,
+these examples generate a small number of particles, load balances
+them, determines the resulting bounding boxes, and then generates the
+specified number of random particles in those bounding boxes. The results
+produced in terms of performanc and accuracy should be very similar to
+the __random_cube__ examples.
 
+- - -
 
-                     
-License
--------
-Copyright © 2019, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).
+#### __testBaryTreeInterface__
+
+The __testBaryTreeInterface__ examples demonstrate how to use the C wrapper 
+for the treecode. A C program that links to the __BaryTree__ library can, 
+in fact, directly use the `treedriver` function if the calling program 
+implements the particle and kernel struct used by `treedriver` 
+(as done in the above examples). The `BaryTreeInterface` function, 
+however, takes source and target particle arrays directly.

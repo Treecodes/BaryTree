@@ -1,10 +1,11 @@
 #include <stdio.h>
+#include <math.h>
 
 #include "tools.h"
 #include "partition.h"
+#include "globvars.h"
+
 /* 
- * definition of partition functions
- *
  * partition determines the index MIDIND, after partitioning in place the arrays a, b, c,
  * and q, such that a(ibeg:midind) <= val and a(midind+1:iend) > val. If on entry, ibeg >
  * iend, or a(ibeg:iend) > val then midind is returned as ibeg-1.
@@ -13,7 +14,6 @@
 void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
                   int ibeg, int iend, double val, int *midind)
 {
-        /* local variables */
         double ta, tb, tc, td;
         int lower, upper, tind;
 
@@ -94,8 +94,6 @@ void cp_partition(double *a, double *b, double *c, double *d, int *indarr,
 void pc_partition(double *a, double *b, double *c, double *d, double *w, int *indarr,
                   int ibeg, int iend, double val, int *midind)
 {
-//	printf("Entering pc_partition...\n");
-    /* local variables */
     double ta, tb, tc, td, tw;
     int lower, upper, tind;
     
@@ -171,8 +169,151 @@ void pc_partition(double *a, double *b, double *c, double *d, double *w, int *in
         *midind = ibeg - 1;
         
     }
-//    printf("Exiting pc_partition.\n");
     
     return;
     
 } /* END function pc_partition */
+
+
+void pc_partition_8(double *x, double *y, double *z, double *q, double *w, int *orderarr, double xyzmms[6][8],
+                    double xl, double yl, double zl, double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid, int ind[8][2])
+{
+    int temp_ind;
+
+    *numposchild = 1;
+    double critlen = lmax / sqrt(2.0);
+
+    if (xl >= critlen) {
+
+        pc_partition(x, y, z, q, w, orderarr, ind[0][0], ind[0][1],
+                     x_mid, &temp_ind);
+
+        ind[1][0] = temp_ind + 1;
+        ind[1][1] = ind[0][1];
+        ind[0][1] = temp_ind;
+
+        for (int i = 0; i < 6; i++)
+            xyzmms[i][1] = xyzmms[i][0];
+
+        xyzmms[1][0] = x_mid;
+        xyzmms[0][1] = x_mid;
+        *numposchild = 2 * *numposchild;
+
+    }
+
+    if (yl >= critlen) {
+
+        for (int i = 0; i < *numposchild; i++) {
+            pc_partition(y, x, z, q, w, orderarr, ind[i][0], ind[i][1],
+                         y_mid, &temp_ind);
+
+            ind[*numposchild + i][0] = temp_ind + 1;
+            ind[*numposchild + i][1] = ind[i][1];
+            ind[i][1] = temp_ind;
+
+            for (int j = 0; j < 6; j++)
+                xyzmms[j][*numposchild + i] = xyzmms[j][i];
+
+            xyzmms[3][i] = y_mid;
+            xyzmms[2][*numposchild + i] = y_mid;
+        }
+
+        *numposchild = 2 * *numposchild;
+
+    }
+
+    if (zl >= critlen) {
+
+        for (int i = 0; i < *numposchild; i++) {
+            pc_partition(z, x, y, q, w, orderarr, ind[i][0], ind[i][1],
+                         z_mid, &temp_ind);
+
+            ind[*numposchild + i][0] = temp_ind + 1;
+            ind[*numposchild + i][1] = ind[i][1];
+            ind[i][1] = temp_ind;
+
+            for (int j = 0; j < 6; j++)
+                xyzmms[j][*numposchild + i] = xyzmms[j][i];
+
+            xyzmms[5][i] = z_mid;
+            xyzmms[4][*numposchild + i] = z_mid;
+        }
+
+        *numposchild = 2 * *numposchild;
+
+    }
+
+    return;
+
+} /* END of function partition_8 */
+
+
+void cp_partition_8(double *x, double *y, double *z, double *q, int *orderarr, double xyzmms[6][8],
+                    double xl, double yl, double zl, double lmax, int *numposchild,
+                    double x_mid, double y_mid, double z_mid, int ind[8][2])
+{
+    int temp_ind;
+
+    *numposchild = 1;
+    double critlen = lmax / sqrt(2.0);
+
+    if (xl >= critlen) {
+        cp_partition(x, y, z, q, orderarr, ind[0][0], ind[0][1],
+                     x_mid, &temp_ind);
+
+        ind[1][0] = temp_ind + 1;
+        ind[1][1] = ind[0][1];
+        ind[0][1] = temp_ind;
+
+        for (int i = 0; i < 6; i++)
+            xyzmms[i][1] = xyzmms[i][0];
+
+        xyzmms[1][0] = x_mid;
+        xyzmms[0][1] = x_mid;
+        *numposchild = 2 * *numposchild;
+    }
+
+    if (yl >= critlen) {
+        for (int i = 0; i < *numposchild; i++) {
+            cp_partition(y, x, z, q, orderarr, ind[i][0], ind[i][1],
+                         y_mid, &temp_ind);
+
+            ind[*numposchild + i][0] = temp_ind + 1;
+            ind[*numposchild + i][1] = ind[i][1];
+            ind[i][1] = temp_ind;
+
+            for (int j = 0; j < 6; j++)
+                xyzmms[j][*numposchild + i] = xyzmms[j][i];
+
+            xyzmms[3][i] = y_mid;
+            xyzmms[2][*numposchild + i] = y_mid;
+        }
+
+        *numposchild = 2 * *numposchild;
+    }
+
+    if (zl >= critlen) {
+        for (int i = 0; i < *numposchild; i++) {
+            cp_partition(z, x, y, q, orderarr, ind[i][0], ind[i][1],
+                         z_mid, &temp_ind);
+
+            ind[*numposchild + i][0] = temp_ind + 1;
+            ind[*numposchild + i][1] = ind[i][1];
+            ind[i][1] = temp_ind;
+
+            for (int j = 0; j < 6; j++)
+                xyzmms[j][*numposchild + i] = xyzmms[j][i];
+
+            xyzmms[5][i] = z_mid;
+            xyzmms[4][*numposchild + i] = z_mid;
+        }
+
+        *numposchild = 2 * *numposchild;
+
+    }
+
+    return;
+
+} /* END of function cp_partition_8 */
+

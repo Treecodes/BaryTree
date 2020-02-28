@@ -17,7 +17,6 @@ double minval(double *x, int numels)
 
 
 
-
 double maxval(double *x, int numels)
 {
     double max = x[0];
@@ -29,7 +28,6 @@ double maxval(double *x, int numels)
 
     return max;
 }
-
 
 
 
@@ -45,7 +43,6 @@ double sum(double *x, int numels)
 
 
 
-
 double max3(double a, double b, double c)
 {
     double max = a;
@@ -58,7 +55,6 @@ double max3(double a, double b, double c)
 
 
 
-
 double min3(double a, double b, double c)
 {
     double min = a;
@@ -67,4 +63,18 @@ double min3(double a, double b, double c)
     if (min > c) min = c;
 
     return min;
+}
+
+
+
+int maxval_int(int *x, int numels)
+{
+    int max = x[0];
+
+    for (int i = 1; i < numels; i++) {
+        if (max < x[i])
+            max = x[i];
+    }
+
+    return max;
 }
