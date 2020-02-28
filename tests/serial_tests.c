@@ -668,7 +668,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                CoulombKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-coulomb-skipping\n");
@@ -700,7 +700,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                CoulombKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-coulomb-subtraction\n");
@@ -730,7 +730,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                YukawaKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-yukawa-skipping\n");
@@ -760,7 +760,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                YukawaKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nlagrange-yukawa-subtraction\n");
@@ -791,7 +791,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                CoulombKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
     if (verbosity>0) printf("\nhermite-coulomb-skipping finished treecode run.\n");
 
     for (int i=0; i<targets->num; i++){
@@ -823,7 +823,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                CoulombKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nhermite-coulomb-subtraction\n");
@@ -853,7 +853,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                YukawaKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nhermite-yukawa-skipping\n");
@@ -883,7 +883,7 @@ static char * test_treecode_on_1_target_10000_sources() {
 
     treedriver(sources, targets, order, theta, max_per_leaf, max_per_batch,
                YukawaKernel, singularityHandling, approximationName, tree_type,
-               potential, time_tree, 1.0, verbosity);
+               potential, time_tree, 0.0, verbosity);
 
     for (int i=0; i<targets->num; i++){
         if (verbosity>0) printf("\nhermite-yukawa-subtraction\n");
@@ -1121,8 +1121,8 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         }
 
 
-    int max_per_leaf=100;
-    int max_per_batch=100;
+    int max_per_leaf=10;
+    int max_per_batch=10;
     double time_tree[9];
 
     char *kernelName, *singularityHandling, *approximationName;
@@ -1135,10 +1135,10 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
 
     // 3 parameter sets.  Set 2 increases order, set 3 reduces MAC.  Both should be more accurate than set 1.
     int order1=3;
-    double theta1=0.7;
+    double theta1=0.9;
 
-    int order2=5;
-    double theta2=0.7;
+    int order2=6;
+    double theta2=0.9;
 
     int order3=3;
     double theta3=0.4;
@@ -1184,7 +1184,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-coulomb-skipping", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-coulomb-skipping", \
                 err3 < err1);
     }
 
@@ -1232,7 +1232,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-coulomb-subtraction", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-coulomb-subtraction", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-coulomb-subtraction", \
                 err3 < err1);
     }
 
@@ -1277,7 +1277,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-yukawa-skipping", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-yukawa-skipping", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-yukawa-skipping", \
                 err3 < err1);
     }
 
@@ -1296,6 +1296,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         potential_direct[i]=0.0;
     }
 
+    sizeCheckFactor=0.0;
     directdriver(sources, targets, YukawaKernel, singularityHandling, approximationName,
                  potential_direct, time_tree);
 
@@ -1321,7 +1322,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-yukawa-subtraction", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-yukawa-subtraction", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-yukawa-subtraction", \
                 err3 < err1);
     }
 
@@ -1368,7 +1369,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         verbosity=0;
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-coulomb-skipping", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-coulomb-skipping", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-coulomb-skipping", \
                 err3 < err1);
     }
 
@@ -1413,7 +1414,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-coulomb-subtraction", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-coulomb-subtraction", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-coulomb-subtraction", \
                 err3 < err1);
     }
 
@@ -1457,7 +1458,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-yukawa-skipping", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-yukawa-skipping", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-yukawa-skipping", \
                 err3 < err1);
     }
 
@@ -1501,7 +1502,7 @@ static char * test_treecode_parameters_on_1_target_10000_sources() {
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-yukawa-subtraction", \
                 err2 < err1);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-yukawa-subtraction", \
+        mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-yukawa-subtraction", \
                 err3 < err1);
     }
 
