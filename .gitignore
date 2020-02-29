@@ -1,9 +1,7 @@
 src/*.o
-src/*.exe
 data/*
-bin*
-lib*
 .DS_Store
+*/.DS_Store
 *.ptp*
 *.cproject
 *org.eclipse*
@@ -14,7 +12,9 @@ lib*
 *.xml
 *.prefs
 *.exe
-build*
+build/
 .project
 .cproject
 .pydevproject
+examples/library_example_cpu
+examples/library_example_gpu

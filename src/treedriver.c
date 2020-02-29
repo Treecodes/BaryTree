@@ -1541,4 +1541,3 @@ void treedriver(struct particles *sources, struct particles *targets,
 //    }
 
 } /* END function treecode */
-
