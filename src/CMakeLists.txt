@@ -53,17 +53,6 @@ SET(SRCS_TREEDRIVER
     kernels/atan.h)
 
 
-SET(SRCS_DIRECT_DISTRIBUTED
-    main_direct.c
-    array.h
-    tools.c
-    tools.h 
-    xmalloc.c
-    xmalloc.h
-    kernels/kernels_direct.h
-    kernels/kernels_direct.c)
-
-
 set(TRGT BaryTree_cpu)
 add_library(${TRGT} ${SRCS_TREEDRIVER})
 target_sources(${TRGT}          PRIVATE 
