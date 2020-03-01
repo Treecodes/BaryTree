@@ -13,16 +13,11 @@
 #include "struct_particles.h"
 #include "struct_kernel.h"
 
-#include "kernels/coulomb.h"
-#include "kernels/yukawa.h"
-#include "kernels/coulomb_singularity_subtraction.h"
-#include "kernels/yukawa_singularity_subtraction.h"
-#include "kernels/regularized-coulomb.h"
-#include "kernels/regularized-yukawa.h"
-#include "kernels/regularized-coulomb-singularity-subtraction.h"
-#include "kernels/regularized-yukawa-singularity-subtraction.h"
-#include "kernels/atan.h"
-
+#include "kernels/coulomb/coulomb.h"
+#include "kernels/yukawa/yukawa.h"
+#include "kernels/regularized-coulomb/regularized-coulomb.h"
+#include "kernels/regularized-yukawa/regularized-yukawa.h"
+#include "kernels/atan/atan.h"
 
 
 #include "interaction_compute.h"
@@ -107,7 +102,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
             
-                        coulombApproximationLagrange(numberOfTargets,
+                        K_Coulomb_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
@@ -115,7 +110,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                        coulombSingularitySubtractionApproximationLagrange(numberOfTargets,
+                        K_Coulomb_SS_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
@@ -130,7 +125,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        coulombApproximationHermite(numberOfTargets,
+                        K_Coulomb_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z,
@@ -139,7 +134,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                        coulombSingularitySubtractionApproximationHermite(numberOfTargets,
+                        K_Coulomb_SS_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z, target_charge,
@@ -167,7 +162,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        yukawaApproximationLagrange(numberOfTargets,
+                        K_Yukawa_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
@@ -175,7 +170,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
                         
-                        yukawaSingularitySubtractionApproximationLagrange(numberOfTargets,
+                        K_Yukawa_SS_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
@@ -190,7 +185,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        yukawaApproximationHermite(numberOfTargets,
+                        K_Yukawa_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z,
@@ -199,7 +194,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                        yukawaSingularitySubtractionApproximationHermite(numberOfTargets,
+                        K_Yukawa_SS_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z, target_charge,
@@ -226,7 +221,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        regularizedCoulombApproximationLagrange(numberOfTargets,
+                        K_RegularizedCoulomb_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z,
                                     cluster_x, cluster_y, cluster_z, cluster_charge,
@@ -234,7 +229,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                        regularizedCoulombSingularitySubtractionApproximationLagrange(numberOfTargets,
+                        K_RegularizedCoulomb_SS_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z, target_charge,
                                     cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
@@ -255,7 +250,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (strcmp(singularityHandling, "skipping") == 0) {
 
-                        regularizedYukawaApproximationLagrange(numberOfTargets,
+                        K_RegularizedYukawa_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z,
                                     cluster_x, cluster_y, cluster_z, cluster_charge,
@@ -263,7 +258,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                        regularizedYukawaSingularitySubtractionApproximationLagrange(numberOfTargets,
+                        K_RegularizedYukawa_SS_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z, target_charge,
                                     cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
@@ -283,7 +278,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 if (strcmp(approximationName, "lagrange") == 0) {
 
-                        atanApproximationLagrange(numberOfTargets,
+                        K_Atan_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z,
                                     cluster_x, cluster_y, cluster_z, cluster_charge,
@@ -323,7 +318,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 if (strcmp(singularityHandling, "skipping") == 0) {
 
-                    coulombDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_Coulomb_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
@@ -331,7 +326,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                    coulombSingularitySubtractionDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_Coulomb_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
@@ -350,7 +345,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 if (strcmp(singularityHandling, "skipping") == 0) {
 
-                    yukawaDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_Yukawa_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
@@ -358,7 +353,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                    yukawaSingularitySubtractionDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_Yukawa_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
@@ -377,7 +372,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 if (strcmp(singularityHandling, "skipping") == 0) {
 
-                    regularizedCoulombDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_RegularizedCoulomb_Direct(numberOfTargets, number_of_sources_in_cluster,
                                 batchStart, source_start,
                                 target_x, target_y, target_z,
                                 source_x, source_y, source_z, source_charge, source_weight,
@@ -385,7 +380,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                    regularizedCoulombSingularitySubtractionDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_RegularizedCoulomb_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                                 batchStart, source_start,
                                 target_x, target_y, target_z, target_charge,
                                 source_x, source_y, source_z, source_charge, source_weight,
@@ -401,7 +396,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 if (strcmp(singularityHandling, "skipping") == 0) {
 
-                regularizedYukawaDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_RegularizedYukawa_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
@@ -409,7 +404,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                 } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-                    regularizedYukawaSingularitySubtractionDirect(numberOfTargets, number_of_sources_in_cluster,
+                    K_RegularizedYukawa_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
@@ -422,7 +417,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
             } else if (strcmp(kernel->name, "atan") == 0) {
 
 
-                atanDirect(numberOfTargets, number_of_sources_in_cluster,
+                K_Atan_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
@@ -489,14 +484,14 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
 
         if (strcmp(singularityHandling, "skipping") == 0) {
 
-            coulombDirect(numTargets, numSources, 0, 0,
+            K_Coulomb_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
                     kernel, pointwisePotential, 0);
 
         } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-            coulombSingularitySubtractionDirect(numTargets, numSources, 0, 0,
+            K_Coulomb_SS_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     kernel, pointwisePotential, 0);
@@ -514,14 +509,14 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
 
         if (strcmp(singularityHandling, "skipping") == 0) {
 
-            yukawaDirect(numTargets, numSources, 0, 0,
+            K_Yukawa_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
                     kernel, pointwisePotential, 0);
 
         } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-            yukawaSingularitySubtractionDirect(numTargets, numSources, 0, 0,
+            K_Yukawa_SS_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     kernel, pointwisePotential, 0);
@@ -540,14 +535,14 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
 
         if (strcmp(singularityHandling, "skipping") == 0) {
 
-            regularizedCoulombDirect(numTargets, numSources, 0, 0,
+            K_RegularizedCoulomb_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
                     kernel, pointwisePotential, 0);
 
         } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-            regularizedCoulombSingularitySubtractionDirect(numTargets, numSources, 0, 0,
+            K_RegularizedCoulomb_SS_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     kernel, pointwisePotential, 0);
@@ -563,14 +558,14 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
 
         if (strcmp(singularityHandling, "skipping") == 0) {
 
-            regularizedYukawaDirect(numTargets, numSources, 0, 0,
+            K_RegularizedYukawa_Direct(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
                         kernel, pointwisePotential, 0);
 
         } else if (strcmp(singularityHandling, "subtraction") == 0) {
 
-            regularizedYukawaSingularitySubtractionDirect(numTargets, numSources, 0, 0,
+            K_RegularizedYukawa_SS_Direct(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z, target_q,
                         source_x, source_y, source_z, source_q, source_w,
                         kernel, pointwisePotential, 0);
@@ -578,7 +573,7 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
 
     } else if (strcmp(kernel->name, "atan") == 0) {
 
-            atanDirect(numTargets, numSources, 0, 0,
+            K_Atan_Direct(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
                         kernel, pointwisePotential, 0);
@@ -605,16 +600,16 @@ void InteractionCompute_SubtractionPotentialCorrection(double *pointwisePotentia
 
     if (strcmp(singularityHandling, "subtraction") == 0) {
         if (strcmp(kernel->name, "coulomb") == 0) {
-            coulombSingularitySubtractionCorrection(pointwisePotential, target_q, numTargets, kernel);
+            K_Coulomb_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
 
         } else if (strcmp(kernel->name, "regularized-coulomb") == 0) {
-            regularizedCoulombSingularitySubtractionCorrection(pointwisePotential, target_q, numTargets, kernel);
+            K_RegularizedCoulomb_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
 
         } else if (strcmp(kernel->name, "yukawa") == 0) {
-            yukawaSingularitySubtractionCorrection(pointwisePotential, target_q, numTargets, kernel);
+            K_Yukawa_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
 
         } else if (strcmp(kernel->name, "regularized-yukawa") == 0) {
-            regularizedYukawaSingularitySubtractionCorrection(pointwisePotential, target_q, numTargets, kernel);
+            K_RegularizedYukawa_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
 
         }
 

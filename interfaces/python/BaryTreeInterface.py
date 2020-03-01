@@ -14,7 +14,7 @@ except OSError:
         _cpu_treecodeRoutines = ctypes.CDLL('libBaryTree_cpu.dylib')
         
 try: 
-    _gpu_treecodeRoutines = ctypes.CDLL('libTaryTree_gpu.so')
+    _gpu_treecodeRoutines = ctypes.CDLL('libBaryTree_gpu.so')
 except OSError:
     try:
         _gpu_treecodeRoutines = ctypes.CDLL('libBaryTree_gpu.dylib')

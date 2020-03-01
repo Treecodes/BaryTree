@@ -1,67 +1,150 @@
 SET(SRCS_TREEDRIVER
-    tools.c
+# Auxiliary utilities
     tools.h
-    xmalloc.c
+    tools.c
     xmalloc.h
+    xmalloc.c
     array.h
+# Global variables, which will be deprecated
     globvars.h
-    directdriver.c
+# Calling functions for tree and direct calculations
     directdriver.h
-    treedriver.c
+    directdriver.c
     treedriver.h
-    tree.c
-    tree.h
-    batches.c
-    batches.h
-    clusters.c
-    clusters.h
-    particles.c
-    particles.h
-    kernel.c
-    kernel.h
-    struct_kernel.h
-    interaction_lists.c
-    interaction_lists.h
-    interaction_compute_pc.c
-    interaction_compute.h
-    partition.c
-    partition.h
-    struct_particles.h
-    struct_clusters.h
+    treedriver.c
+# Tree node struct and related functions
     struct_nodes.h
-    kernels/coulomb.c
-    kernels/coulomb.h
-    kernels/regularized-coulomb.c
-    kernels/regularized-coulomb.h
-    kernels/coulomb_singularity_subtraction.c
-    kernels/coulomb_singularity_subtraction.h
-    kernels/regularized-coulomb-singularity-subtraction.c
-    kernels/regularized-coulomb-singularity-subtraction.h
-    kernels/yukawa.c
-    kernels/yukawa.h
-    kernels/regularized-yukawa.c
-    kernels/regularized-yukawa.h
-    kernels/yukawa_singularity_subtraction.c
-    kernels/yukawa_singularity_subtraction.h
-    kernels/regularized-yukawa-singularity-subtraction.c
-    kernels/regularized-yukawa-singularity-subtraction.h
-    kernels/dcf.c
-    kernels/dcf.h
-    kernels/tcf.c
-    kernels/tcf.h
-    kernels/atan.c
-    kernels/atan.h
+    tree.h
+    tree.c
+    batches.h
+    batches.c
+# Partitioning routines for tree building
+    partition.h
+    partition.c
+# Cluster struct and related functions
+    struct_clusters.h
+    clusters.h
+    clusters.c
     clusters_cp.c
+# Particle struct and related functions
+    struct_particles.h
+    particles.h
+    particles.c
+# Kernel struct and related functions
+    struct_kernel.h
+    kernel.h
+    kernel.c
+# Interaction list related functions
+    interaction_lists.h
+    interaction_lists.c
     interaction_lists_cp.c
-    interaction_compute_cp.c
     interaction_lists_cc.c
-    interaction_compute_cc.c
-    kernels/cp_coulomb.c
-    kernels/cp_coulomb.h)
+# Interaction compute related functions
+    interaction_compute.h
+    interaction_compute_pc.c
+    interaction_compute_cp.c
+    interaction_compute_cc.c)
+
+
+SET(SRCS_K_COULOMB
+# Singularity skipping
+    kernels/coulomb/coulomb.h
+    kernels/coulomb/coulomb_direct.h
+    kernels/coulomb/coulomb_direct.c
+    kernels/coulomb/coulomb_pc.h
+    kernels/coulomb/coulomb_pc.c
+    kernels/coulomb/coulomb_cp.h
+    kernels/coulomb/coulomb_cp.c
+# Singularity subtraction
+    kernels/coulomb/coulomb_ss_direct.h
+    kernels/coulomb/coulomb_ss_direct.c
+    kernels/coulomb/coulomb_ss_correction.h
+    kernels/coulomb/coulomb_ss_correction.c
+    kernels/coulomb/coulomb_ss_pc.h
+    kernels/coulomb/coulomb_ss_pc.c)
+#   kernels/coulomb/coulomb_ss_cp.h
+#   kernels/coulomb/coulomb_ss_cp.c)
+
+
+SET(SRCS_K_YUKAWA
+# Singularity skipping
+    kernels/yukawa/yukawa.h
+    kernels/yukawa/yukawa_direct.h
+    kernels/yukawa/yukawa_direct.c
+    kernels/yukawa/yukawa_pc.h
+    kernels/yukawa/yukawa_pc.c
+#   kernels/yukawa/yukawa_cp.h
+#   kernels/yukawa/yukawa_cp.c
+# Singularity subtraction
+    kernels/yukawa/yukawa_ss_direct.h
+    kernels/yukawa/yukawa_ss_direct.c
+    kernels/yukawa/yukawa_ss_correction.h
+    kernels/yukawa/yukawa_ss_correction.c
+    kernels/yukawa/yukawa_ss_pc.h
+    kernels/yukawa/yukawa_ss_pc.c)
+#   kernels/yukawa/yukawa_ss_cp.h
+#   kernels/yukawa/yukawa_ss_cp.c)
+
+
+SET(SRCS_K_REGULARIZED_COULOMB
+# Singularity skipping
+    kernels/regularized-coulomb/regularized-coulomb.h
+    kernels/regularized-coulomb/regularized-coulomb_direct.h
+    kernels/regularized-coulomb/regularized-coulomb_direct.c
+    kernels/regularized-coulomb/regularized-coulomb_pc.h
+    kernels/regularized-coulomb/regularized-coulomb_pc.c
+#   kernels/regularized-coulomb/regularized-coulomb_cp.h
+#   kernels/regularized-coulomb/regularized-coulomb_cp.c
+# Singularity subtraction
+    kernels/regularized-coulomb/regularized-coulomb_ss_direct.h
+    kernels/regularized-coulomb/regularized-coulomb_ss_direct.c
+    kernels/regularized-coulomb/regularized-coulomb_ss_correction.h
+    kernels/regularized-coulomb/regularized-coulomb_ss_correction.c
+    kernels/regularized-coulomb/regularized-coulomb_ss_pc.h
+    kernels/regularized-coulomb/regularized-coulomb_ss_pc.c)
+#   kernels/regularized-coulomb/regularized-coulomb_ss_cp.h
+#   kernels/regularized-coulomb/regularized-coulomb_ss_cp.c)
+
+
+SET(SRCS_K_REGULARIZED_YUKAWA
+#Singularity skipping
+    kernels/regularized-yukawa/regularized-yukawa.h
+    kernels/regularized-yukawa/regularized-yukawa_direct.h
+    kernels/regularized-yukawa/regularized-yukawa_direct.c
+    kernels/regularized-yukawa/regularized-yukawa_pc.h
+    kernels/regularized-yukawa/regularized-yukawa_pc.c
+#   kernels/regularized-yukawa/regularized-yukawa_cp.h
+#   kernels/regularized-yukawa/regularized-yukawa_cp.c
+#Singularity subtraction
+    kernels/regularized-yukawa/regularized-yukawa_ss_direct.h
+    kernels/regularized-yukawa/regularized-yukawa_ss_direct.c
+    kernels/regularized-yukawa/regularized-yukawa_ss_correction.h
+    kernels/regularized-yukawa/regularized-yukawa_ss_correction.c
+    kernels/regularized-yukawa/regularized-yukawa_ss_pc.h
+    kernels/regularized-yukawa/regularized-yukawa_ss_pc.c)
+#   kernels/regularized-yukawa/regularized-yukawa_ss_cp.h
+#   kernels/regularized-yukawa/regularized-yukawa_ss_cp.c)
+
+
+SET(SRCS_K_ATAN
+    kernels/atan/atan.h
+    kernels/atan/atan_direct.h
+    kernels/atan/atan_direct.c
+    kernels/atan/atan_pc.h
+    kernels/atan/atan_pc.c)
+#   kernels/atan/atan_cp.h
+#   kernels/atan/atan_cp.c)
+
+
+SET(SRCS_KERNELS ${SRCS_K_COULOMB}
+                 ${SRCS_K_YUKAWA}
+                 ${SRCS_K_REGULARIZED_COULOMB}
+                 ${SRCS_K_REGULARIZED_YUKAWA}
+                 ${SRCS_K_ATAN})
 
 
 set(TRGT BaryTree_cpu)
-add_library(${TRGT} ${SRCS_TREEDRIVER})
+add_library(${TRGT} ${SRCS_TREEDRIVER} ${SRCS_KERNELS})
 target_sources(${TRGT}          PRIVATE 
                                     BaryTreeInterface.c
                                  PUBLIC  
@@ -82,7 +165,7 @@ install(FILES   BaryTreeInterface.h           DESTINATION include)
 
 if(ENABLE_GPU_BUILD)
     set(TRGT BaryTree_gpu)
-    add_library(${TRGT} ${SRCS_TREEDRIVER})
+    add_library(${TRGT} ${SRCS_TREEDRIVER} ${SRCS_KERNELS})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
                                       BaryTreeInterface.c
