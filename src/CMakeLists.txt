@@ -15,6 +15,8 @@ SET(SRCS_TREEDRIVER
     batches.h
     clusters.c
     clusters.h
+    output.c
+    output.h
     particles.c
     particles.h
     kernel.c
@@ -28,6 +30,7 @@ SET(SRCS_TREEDRIVER
     partition.h
     struct_particles.h
     struct_clusters.h
+    struct_output.h
     struct_nodes.h
     kernels/coulomb.c
     kernels/coulomb.h

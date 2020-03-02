@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <math.h>
-#include <mpi.h>
+#include <float.h>
 #include <limits.h>
 #include <string.h>
 
@@ -8,6 +8,7 @@
 #include "struct_kernel.h"
 #include "kernel.h"
 #include "struct_particles.h"
+#include "struct_output.h"
 #include "particles.h"
 #include "tools.h"
 #include "tree.h"
@@ -58,11 +59,17 @@ void BaryTreeInterface(int numTargets, int numSources,
 	sources.q = sourceValue;
 	sources.w = sourceWeight;
 
+	struct output output;
+	int forces=0;
+	Output_Alloc(output, numTargets, forces);
+
+
 
 	treedriver(&sources, &targets,
 			   interpOrder, theta, maxPerLeaf, maxPerBatch,
 			   kernel, singularityHandling, approximationName, treeType,
-			   outputArray, timing, sizeCheckFactor, verbosity);
+			   output, timing, sizeCheckFactor, verbosity);
+
 	MPI_Barrier(MPI_COMM_WORLD);
 
 

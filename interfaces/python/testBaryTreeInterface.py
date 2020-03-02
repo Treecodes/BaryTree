@@ -5,30 +5,35 @@ import sys
 import resource
 import numpy as np
 import mpi4py.MPI as MPI
+import time
 
 
 sys.path.append(os.getcwd())
 try:
     import BaryTreeInterface
-except ImportError:
+except ImportError as e:
     print('Unable to import BaryTreeInterface due to ImportError')
-except OSError:
+    print(e)
+#     exit(-1)
+except OSError as e:
     print('Unable to import BaryTreeInterface due to OSError')
+    print(e)
+#     exit(-1)
 
 
 if __name__=="__main__":
     
-    # set treecode parameters
-    maxParNode=50
-    batchSize=10
-    GPUpresent=False
+    # set treecode parameters 
+    maxParNode=2000
+    batchSize=2000 
+    GPUpresent=True 
     theta=0.8
     treecodeOrder=4
     gaussianAlpha=1.0
     approximationName = "lagrange"
     singularityHandling = "subtraction"
     verbosity=0
-    N=5000
+    N=500000
     
     kernelName = "yukawa"
     numberOfKernelParameters=1
@@ -48,6 +53,7 @@ if __name__=="__main__":
 
     # call the treecode
         
+    start=time.time()
     output = BaryTreeInterface.callTreedriver(  N, N, 
                                                 X, Y, Z, RHO, 
                                                 X, Y, Z, RHO, W,
@@ -55,10 +61,10 @@ if __name__=="__main__":
                                                 singularityHandling, approximationName,
                                                 treecodeOrder, theta, maxParNode, batchSize, GPUpresent, verbosity)
     
+    end=time.time()
     
-    
-    assert (abs(output[0]-expectedOutput)<1e-14), "Error: didn't get the expected output."
-    print("If no errors printed, then the call to the treecode wrapper worked!")
+#     assert (abs(output[0]-expectedOutput)<1e-14), "Error: didn't get the expected output."
+    print("If no errors printed, then the call to the treecode wrapper worked!\nIt took %f seconds." %(end-start))
 
 
 

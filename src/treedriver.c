@@ -11,6 +11,7 @@
 #include "struct_particles.h"
 #include "struct_clusters.h"
 #include "struct_kernel.h"
+#include "struct_output.h"
 
 #include "interaction_lists.h"
 #include "interaction_compute.h"
@@ -28,7 +29,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                 int interpolationOrder, double theta, int maxparnode, int batch_size,
                 struct kernel *kernel, char *singularityHandling,
                 char *approximationName,
-                int tree_type, double *tEn, double *time_tree,
+                int tree_type, struct output *output, double *time_tree,
                 double sizeCheckFactor,
                 int verbosity)
 {
@@ -343,7 +344,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
                         clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        tEn, interpolationOrder,
+                        output->potential, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         kernel, singularityHandling,
                         approximationName);
@@ -376,7 +377,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                     let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                     targets->x, targets->y, targets->z, targets->q,
                                     clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                                    tEn, interpolationOrder,
+                                    output->potential, interpolationOrder,
                                     let_sources->num, targets->num, clusters->num,
                                     kernel, singularityHandling, approximationName);
             
@@ -397,7 +398,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         InteractionCompute_CP_2(tree_array,
                                 targets->x, targets->y, targets->z, targets->q,
                                 clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                                tEn, interpolationOrder,
+                                output->potential, interpolationOrder,
                                 targets->num, clusters->num, clusters->num_charges, clusters->num_weights,
                                 singularityHandling, approximationName);
 
@@ -407,9 +408,9 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         
-        InteractionCompute_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
+        InteractionCompute_SubtractionPotentialCorrection(output->potential, targets->q, targets->num,
                                 kernel, singularityHandling);
-        Particles_ReorderTargetsAndPotential(targets, tEn);
+        Particles_ReorderTargetsAndPotential(targets, output->potential);
 
         time_tree[9] = MPI_Wtime() - time1;
         
@@ -860,7 +861,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
                         clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        tEn, interpolationOrder,
+                        output->potential, interpolationOrder,
                         sources->num, targets->num, clusters->num,
                         kernel, singularityHandling,
                         approximationName);
@@ -898,7 +899,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                    targets->x, targets->y, targets->z, targets->q,
                                    let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q, let_clusters->w,
-                                   tEn, interpolationOrder,
+                                   output->potential, interpolationOrder,
                                    let_sources->num, targets->num, let_clusters->num,
                                    kernel, singularityHandling, approximationName);
             
@@ -915,10 +916,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
         
-        InteractionCompute_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
+        InteractionCompute_SubtractionPotentialCorrection(output->potential, targets->q, targets->num,
                                   kernel, singularityHandling);
 
-        Particles_ReorderTargetsAndPotential(targets, tEn);
+        Particles_ReorderTargetsAndPotential(targets, output->potential);
 
         time_tree[8] = 0.0;
         time_tree[9] = MPI_Wtime() - time1;
@@ -1381,7 +1382,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                         source_clusters->q, source_clusters->w,
                         target_clusters->x, target_clusters->y, target_clusters->z,
                         target_clusters->q, target_clusters->w,
-                        tEn, interpolationOrder,
+                        output->potential, interpolationOrder,
                         sources->num, targets->num, source_clusters->num, target_clusters->num,
                         kernel, singularityHandling, approximationName);
                         
@@ -1422,7 +1423,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                    let_clusters->q, let_clusters->w,
                                    target_clusters->x, target_clusters->y, target_clusters->z,
                                    target_clusters->q, target_clusters->w,
-                                   tEn, interpolationOrder,
+                                   output->potential, interpolationOrder,
                                    let_sources->num, targets->num, let_clusters->num, target_clusters->num,
                                    kernel, singularityHandling, approximationName);
 
@@ -1442,7 +1443,7 @@ void treedriver(struct particles *sources, struct particles *targets,
                                 targets->x, targets->y, targets->z, targets->q,
                                 target_clusters->x, target_clusters->y, target_clusters->z,
                                 target_clusters->q, target_clusters->w,
-                                tEn, interpolationOrder,
+                                output->potential, interpolationOrder,
                                 targets->num, target_clusters->num,
                                 target_clusters->num_charges, target_clusters->num_weights,
                                 singularityHandling, approximationName);
@@ -1452,10 +1453,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
         
-        InteractionCompute_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
+        InteractionCompute_SubtractionPotentialCorrection(output->potential, targets->q, targets->num,
                                   kernel, singularityHandling);
 
-        Particles_ReorderTargetsAndPotential(targets, tEn);
+        Particles_ReorderTargetsAndPotential(targets, output->potential);
 
         time_tree[9] = MPI_Wtime() - time1;
                

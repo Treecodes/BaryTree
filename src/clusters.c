@@ -55,12 +55,12 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
     int totalNumberInterpolationPoints = tree_numnodes * interpolationPointsPerCluster;
     int totalNumberInterpolationCharges = totalNumberInterpolationPoints;
-    int totalNumberInterpolationWeights = totalNumberInterpolationPoints; 
+    int totalNumberInterpolationWeights = totalNumberInterpolationPoints;
 
     //make_vector(clusters->x, totalNumberInterpolationPoints);
     //make_vector(clusters->y, totalNumberInterpolationPoints);
     //make_vector(clusters->z, totalNumberInterpolationPoints);
-    
+
     MPI_Alloc_mem(totalNumberInterpolationPoints*sizeof(double), MPI_INFO_NULL, &(clusters->x));
     MPI_Alloc_mem(totalNumberInterpolationPoints*sizeof(double), MPI_INFO_NULL, &(clusters->y));
     MPI_Alloc_mem(totalNumberInterpolationPoints*sizeof(double), MPI_INFO_NULL, &(clusters->z));
@@ -68,8 +68,8 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->x[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->y[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
-    
-    
+
+
     if (strcmp(approxName, "lagrange") == 0) {
         //make_vector(clusters->q, totalNumberInterpolationCharges);
         //make_vector(clusters->w, totalNumberInterpolationWeights);
@@ -78,7 +78,7 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
         MPI_Alloc_mem(totalNumberInterpolationWeights*sizeof(double), MPI_INFO_NULL, &(clusters->w));
 
         for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
-        
+
         if (strcmp(singularityHandling, "skipping") == 0) {
             for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
 
@@ -88,7 +88,7 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
         } else {
             exit(1);
         }
-        
+
     } else if (strcmp(approxName, "hermite") == 0) {
         totalNumberInterpolationCharges *= 8;
 
@@ -96,7 +96,7 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
         MPI_Alloc_mem(totalNumberInterpolationCharges*sizeof(double), MPI_INFO_NULL, &(clusters->q));
 
         for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
-        
+
         if (strcmp(singularityHandling, "skipping") == 0) {
 
             //make_vector(clusters->w, totalNumberInterpolationWeights);
@@ -115,7 +115,7 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
         } else {
             exit(1);
         }
-        
+
     } else {
         exit(1);
     }
@@ -171,7 +171,7 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
     } else {
         exit(1);
     }
-    
+
 #ifdef OPENACC_ENABLED
     #pragma acc wait
     } // end ACC DATA REGION
@@ -183,7 +183,7 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
 
 
-void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, char *singularityHandling) 
+void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, char *singularityHandling)
 {
     clusters->num = length;
     clusters->num_charges = length;
