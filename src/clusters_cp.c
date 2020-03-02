@@ -1,7 +1,3 @@
-
-/*
- *Procedures for Particle-Cluster Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,21 +6,24 @@
 #include <mpi.h>
 
 #include "array.h"
+#include "tools.h"
 #include "globvars.h"
+#include "const.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
 #include "struct_clusters.h"
-#include "tools.h"
 
 #include "clusters.h"
 
+
 static void cp_comp_interp(struct tnode_array *tree_array, int idx, int interpolationOrder,
-                          double *clusterX, double *clusterY, double *clusterZ);
+                           double *clusterX, double *clusterY, double *clusterZ);
 
 
 void Clusters_CP_Setup(struct clusters **new_clusters,
                        int interpolationOrder, struct tnode_array *tree_array,
-                       char *approxName, char *singularityHandling)
+                       APPROXIMATION approxName, SINGULARITY singularity)
 {
     *new_clusters = malloc(sizeof(struct clusters));
     struct clusters *clusters = *new_clusters;
@@ -47,34 +46,34 @@ void Clusters_CP_Setup(struct clusters **new_clusters,
 //    for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
     
     
-    if (strcmp(approxName, "lagrange") == 0) {
+    if (approxName == LAGRANGE) {
         make_vector(clusters->q, totalNumberInterpolationCharges);
         make_vector(clusters->w, totalNumberInterpolationWeights);
 
         for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
         
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (singularity == SKIPPING) {
             for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (singularity == SUBTRACTION) {
             for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
 
         } else {
             exit(1);
         }
         
-    } else if (strcmp(approxName, "hermite") == 0) {
+    } else if (approxName == HERMITE) {
         totalNumberInterpolationCharges *= 8;
 
         make_vector(clusters->q, totalNumberInterpolationCharges);
         for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
         
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (singularity == SKIPPING) {
 
             make_vector(clusters->w, totalNumberInterpolationWeights);
             for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (singularity == SUBTRACTION) {
             totalNumberInterpolationWeights *= 8;
 
             make_vector(clusters->w, totalNumberInterpolationWeights);

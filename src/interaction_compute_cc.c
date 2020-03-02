@@ -11,9 +11,10 @@
 
 #include "array.h"
 #include "globvars.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
-#include "struct_kernel.h"
+#include "struct_run_params.h"
 
 #include "kernels/coulomb/coulomb.h"
 #include "kernels/yukawa/yukawa.h"
@@ -32,9 +33,9 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
                              double *source_cluster_q, double *source_cluster_w,
                              double *target_cluster_x, double *target_cluster_y, double *target_cluster_z,
                              double *target_cluster_q, double *target_cluster_w,
-                             double *pointwisePotential, int interpolationOrder,
+                             double *pointwisePotential,
                              int numSources, int numTargets, int numSourceClusterPoints, int numTargetClusterPoints,
-                             struct kernel *kernel, char *singularityHandling, char *approximationName)
+                             struct RunParams *run_params)
 {
 
     int source_tree_numnodes = source_tree_array->numnodes;
@@ -80,12 +81,12 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
     int numTargetClusterCharges = numTargetClusterPoints;
     int numTargetClusterWeights = numTargetClusterPoints;
 
-    if (strcmp(approximationName, "hermite") == 0) {
+    if (run_params->approximation == HERMITE) {
         numSourceClusterCharges = 8 * numSourceClusterPoints;
         numTargetClusterCharges = 8 * numTargetClusterPoints;
     }
 
-    if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+    if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
         numSourceClusterWeights = 8 * numSourceClusterPoints;
         numTargetClusterWeights = 8 * numTargetClusterPoints;
     }
@@ -111,7 +112,7 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
 #endif
     {
 
-    int numInterpPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+    int numInterpPoints = run_params->interp_pts_per_cluster;
 
     for (int i = 0; i < target_tree_numnodes; i++) {
         int target_ibeg = target_tree_ibeg[i];
@@ -138,11 +139,11 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
     /***********************************************/
     /***************** Coulomb *********************/
     /***********************************************/
-            if (strcmp(kernel->name, "coulomb") == 0) {
+            if (run_params->kernel == COULOMB) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
             
                         K_Coulomb_CP_Lagrange(numInterpPoints, numInterpPoints,
                             source_cluster_start, target_cluster_start,
@@ -150,21 +151,21 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
                             source_cluster_q, source_cluster_w,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
-                            kernel, streamID);
+                            run_params, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         K_Coulomb_CP_Hermite(numInterpPoints, numInterpPoints,
                             source_cluster_start, target_cluster_start,
@@ -172,21 +173,21 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
                             source_cluster_q, source_cluster_w,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
-                            kernel, streamID);
+                            run_params, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
 
                 }else{
-                    printf("Invalid approximationName.  Was set to %s\n", approximationName);
+                    printf("Invalid approximationName.\n");
                     exit(1);
                 }
 
@@ -194,39 +195,39 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
     /***************** Yukawa **********************/
     /***********************************************/
 
-            } else if (strcmp(kernel->name, "yukawa") == 0) {
+            } else if (run_params->kernel == YUKAWA) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
                         
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
@@ -262,26 +263,26 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
     /***************** Coulomb *********************/
     /***********************************************/
 
-            if (strcmp(kernel->name, "coulomb") == 0) {
+            if (run_params->kernel == COULOMB) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_Coulomb_Direct(numTargets, numSources,
                             targetStart, sourceStart,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_Coulomb_SS_Direct(numTargets, numSources,
                             targetStart, sourceStart,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
-                }else {
-                    printf("Invalid choice of singularityHandling. Exiting. \n");
+                } else {
+                    printf("Invalid choice of singularity. Exiting. \n");
                     exit(1);
                 }
 
@@ -289,26 +290,26 @@ void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode
     /***************** Yukawa **********************/
     /***********************************************/
 
-            } else if (strcmp(kernel->name, "yukawa") == 0) {
+            } else if (run_params->kernel == YUKAWA) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_Yukawa_Direct(numTargets, numSources,
                             targetStart, sourceStart,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_Yukawa_SS_Direct(numTargets, numSources,
                             targetStart, sourceStart,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
                 } else {
-                    printf("Invalid choice of singularityHandling. Exiting. \n");
+                    printf("Invalid choice of singularity. Exiting. \n");
                     exit(1);
                 }
 

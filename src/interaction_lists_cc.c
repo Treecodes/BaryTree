@@ -7,14 +7,15 @@
 #include <float.h>
 #include <mpi.h>
 
+#include "tools.h"
 #include "array.h"
 #include "globvars.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
-#include "tools.h"
+#include "struct_run_params.h"
 
 #include "interaction_lists.h"
-
 
 
 void cc_compute_interaction_list_1(
@@ -29,7 +30,8 @@ void cc_compute_interaction_list_1(
                 int **target_approx_list, int **target_direct_list,
                 int *sizeof_approx_list, int *sizeof_direct_list,
                 int *approx_index_counter, int *direct_index_counter,
-                int interpolationOrder, double sizeCheckFactor);
+                struct RunParams *run_params);
+
 
 void cc_compute_interaction_list_2(
                 int target_tree_node, const int *target_tree_numpar, const double *target_tree_radius,
@@ -43,14 +45,14 @@ void cc_compute_interaction_list_2(
                 int **target_approx_list, int **target_direct_list,
                 int *sizeof_approx_list, int *sizeof_direct_list,
                 int *approx_index_counter, int *direct_index_counter,
-                int interpolationOrder, double sizeCheckFactor);
+                struct RunParams *run_params);
                 
                 
                 
 void InteractionList_CC_Make(const struct tnode_array *source_tree_array,
                              struct tnode_array *target_tree_array,
                              int ***approx_inter_list_addr, int ***direct_inter_list_addr,
-                             int interpolationOrder, double sizeCheckFactor)
+                             struct RunParams *run_params)
 {
        int source_tree_numnodes = source_tree_array->numnodes;
        const int *source_tree_numpar = source_tree_array->numpar;
@@ -103,8 +105,6 @@ void InteractionList_CC_Make(const struct tnode_array *source_tree_array,
        for (int i = 0; i < target_tree_numnodes; i++) num_direct_inter[i] = 0;
     
        
-       // Fill interaction lists
-       // !!!!!!!!!!!!!!!!!!!!
        cc_compute_interaction_list_1(
                    0, source_tree_numpar, source_tree_radius,
                    source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
@@ -117,7 +117,7 @@ void InteractionList_CC_Make(const struct tnode_array *source_tree_array,
                    approx_inter_list, direct_inter_list,
                    sizeof_approx_inter_list, sizeof_direct_inter_list,
                    num_approx_inter, num_direct_inter,
-                   interpolationOrder, sizeCheckFactor);
+                   run_params);
 
 
        free_vector(sizeof_approx_inter_list);
@@ -132,7 +132,7 @@ void InteractionList_CC_Make(const struct tnode_array *source_tree_array,
 void InteractionList_CC_MakeRemote(const struct tnode_array *source_tree_array,
                                    struct tnode_array *target_tree_array,
                                    int *approx_list_unpacked,int *approx_list_packed, int *direct_list,
-                                   int interpolationOrder, double sizeCheckFactor)
+                                   struct RunParams *run_params)
 {
     int source_tree_numnodes = source_tree_array->numnodes;
     const int *source_tree_numpar = source_tree_array->numpar;
@@ -190,8 +190,6 @@ void InteractionList_CC_MakeRemote(const struct tnode_array *source_tree_array,
     for (int i = 0; i < target_tree_numnodes; i++) num_direct_inter[i] = 0;
  
     
-    // Fill interaction lists
-    // !!!!!!!!!!!!!!!!!!!!
     cc_compute_interaction_list_1(
                 0, source_tree_numpar, source_tree_radius,
                 source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
@@ -204,7 +202,7 @@ void InteractionList_CC_MakeRemote(const struct tnode_array *source_tree_array,
                 temp_approx_inter_list, temp_direct_inter_list,
                 sizeof_approx_inter_list, sizeof_direct_inter_list,
                 num_approx_inter, num_direct_inter,
-                interpolationOrder, sizeCheckFactor);
+                run_params);
 
 
     for (int j = 0; j < target_tree_numnodes; j++) {
@@ -263,7 +261,7 @@ void cc_compute_interaction_list_1(
                 int **target_tree_list, int **target_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                int interpolationOrder, double sizeCheckFactor)
+                struct RunParams *run_params)
 {
 
     /* determine DIST for MAC test */
@@ -272,13 +270,13 @@ void cc_compute_interaction_list_1(
     double tz = target_tree_z_mid[target_tree_node] - source_tree_z_mid[source_tree_node];
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * sqrt(thetasq))
-      && (source_tree_radius[source_tree_node] != 0.00) //) {
-      && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < source_tree_numpar[source_tree_node])) {
-    /*
- *   * If MAC is accepted and there is more than 1 particle
- *   * in the box, use the expansion for the approximation.
- *   */
+    if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * run_params->theta)
+      && (source_tree_radius[source_tree_node] != 0.00)
+      && (run_params->size_check_factor * run_params->interp_pts_per_cluster < source_tree_numpar[source_tree_node])) {
+   /*
+    * If MAC is accepted and there is more than 1 particle
+    * in the box, use the expansion for the approximation.
+    */
 
         if (tree_index_counter[target_tree_node] >= sizeof_tree_list[target_tree_node]) {
             sizeof_tree_list[target_tree_node] *= 1.5;
@@ -290,10 +288,10 @@ void cc_compute_interaction_list_1(
         tree_index_counter[target_tree_node]++;
 
     } else {
-    /*
- *   * If MAC fails check to see if there are children. If not, perform direct
- *   * calculation. If there are children, call routine recursively for each.
- *   */
+   /*
+    * If MAC fails check to see if there are children. If not, perform direct
+    * calculation. If there are children, call routine recursively for each.
+    */
         if (target_tree_num_children[target_tree_node] == 0) {
 
             if (direct_index_counter[target_tree_node] >= sizeof_direct_list[target_tree_node]) {
@@ -318,7 +316,7 @@ void cc_compute_interaction_list_1(
                            target_tree_list, target_direct_list,
                            sizeof_tree_list, sizeof_direct_list,
                            tree_index_counter, direct_index_counter,
-                           interpolationOrder, sizeCheckFactor);
+                           run_params);
             }
         }
     }
@@ -341,7 +339,7 @@ void cc_compute_interaction_list_2(
                 int **target_tree_list, int **target_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                int interpolationOrder, double sizeCheckFactor)
+                struct RunParams *run_params)
 {
 
     /* determine DIST for MAC test */
@@ -350,13 +348,13 @@ void cc_compute_interaction_list_2(
     double tz = target_tree_z_mid[target_tree_node] - source_tree_z_mid[source_tree_node];
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * sqrt(thetasq))
-      && (target_tree_radius[source_tree_node] != 0.00) //) {
-      && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < target_tree_numpar[target_tree_node])) {
-    /*
- *   * If MAC is accepted and there is more than 1 particle
- *   * in the box, use the expansion for the approximation.
- *   */
+    if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * run_params->theta)
+      && (target_tree_radius[source_tree_node] != 0.00)
+      && (run_params->size_check_factor * run_params->interp_pts_per_cluster < target_tree_numpar[target_tree_node])) {
+   /*
+    * If MAC is accepted and there is more than 1 particle
+    * in the box, use the expansion for the approximation.
+    */
 
         if (tree_index_counter[target_tree_node] >= sizeof_tree_list[target_tree_node]) {
             sizeof_tree_list[target_tree_node] *= 1.5;
@@ -368,10 +366,10 @@ void cc_compute_interaction_list_2(
         tree_index_counter[target_tree_node]++;
 
     } else {
-    /*
- *   * If MAC fails check to see if there are children. If not, perform direct
- *   * calculation. If there are children, call routine recursively for each.
- *   */
+   /*
+    * If MAC fails check to see if there are children. If not, perform direct
+    * calculation. If there are children, call routine recursively for each.
+    */
         if (source_tree_num_children[source_tree_node] == 0) {
 
             if (direct_index_counter[target_tree_node] >= sizeof_direct_list[target_tree_node]) {
@@ -396,7 +394,7 @@ void cc_compute_interaction_list_2(
                            target_tree_list, target_direct_list,
                            sizeof_tree_list, sizeof_direct_list,
                            tree_index_counter, direct_index_counter,
-                           interpolationOrder, sizeCheckFactor);
+                           run_params);
             }
         }
     }

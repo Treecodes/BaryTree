@@ -1,0 +1,22 @@
+#ifndef H_RUN_PARAMS_FUNCTIONS_H
+#define H_RUN_PARAMS_FUNCTIONS_H
+
+#include "const.h"
+#include "struct_run_params.h"
+
+
+void RunParams_Setup(struct RunParams **run_params,
+                     KERNEL kernel, int num_kernel_params, double *kernel_params,
+                     APPROXIMATION approximation,
+                     SINGULARITY singularity,
+                     COMPUTE_TYPE compute_type,
+                     double theta, double size_check_factor, int interp_order,
+                     int max_per_source_leaf, int max_per_target_leaf,
+                     int verbosity);
+
+void RunParams_Validate(struct RunParams *run_params);
+
+void RunParams_Free(struct RunParams *run_params);
+
+
+#endif

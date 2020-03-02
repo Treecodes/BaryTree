@@ -2,14 +2,14 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../struct_kernel.h"
+#include "../../struct_run_params.h"
 #include "yukawa_ss_correction.h"
 
 
 void K_Yukawa_SS_Correction(double *potential, double *target_q,
-                            int numTargets, struct kernel *kernel)
+                            int numTargets, struct RunParams *run_params)
 {
-    double kernel_parameter=kernel->parameters[0];
+    double kernel_parameter=run_params->kernel_params[0];
     double param = 4.0 * M_PI / kernel_parameter / kernel_parameter;
     for (int i = 0; i < numTargets; i++) potential[i] += param * target_q[i];
 

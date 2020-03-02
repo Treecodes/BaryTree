@@ -7,11 +7,13 @@
 #include <float.h>
 #include <mpi.h>
 
+#include "tools.h"
 #include "array.h"
 #include "globvars.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
-#include "tools.h"
+#include "struct_run_params.h"
 
 #include "interaction_lists.h"
 
@@ -25,13 +27,13 @@ void pc_compute_interaction_list(int tree_node, const int *tree_numpar, const do
                 int **batch_tree_list, int **batch_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                int interpolationOrder, double sizeCheckFactor);
+                struct RunParams *run_params);
                 
                 
 void InteractionList_Make(const struct tnode_array *tree_array,
                           struct tnode_array *batches,
                           int ***approx_inter_list_addr, int ***direct_inter_list_addr,
-                          int interpolationOrder, double sizeCheckFactor)
+                          struct RunParams *run_params)
 {
     int batch_numnodes = batches->numnodes;
     const int *batch_numpar = batches->numpar;
@@ -91,7 +93,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
                     &(approx_inter_list[i]), &(direct_inter_list[i]),
                     &(sizeof_approx_inter_list[i]), &(sizeof_direct_inter_list[i]),
                     &(num_approx_inter[i]), &(num_direct_inter[i]),
-                    interpolationOrder, sizeCheckFactor);
+                    run_params);
                     
     free_vector(sizeof_approx_inter_list);
     free_vector(sizeof_direct_inter_list);
@@ -104,7 +106,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
 
 void InteractionList_PC_MakeRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
                                 int *approx_list_unpacked,int *approx_list_packed, int *direct_list,
-                                int interpolationOrder, double sizeCheckFactor)
+                                struct RunParams *run_params)
 {
     int batch_numnodes = batches->numnodes;
     const int *batch_numpar = batches->numpar;
@@ -172,7 +174,7 @@ void InteractionList_PC_MakeRemote(const struct tnode_array *tree_array, struct 
                     &(temp_approx_inter_list[i]), &(temp_direct_inter_list[i]),
                     &(sizeof_approx_inter_list[i]), &(sizeof_direct_inter_list[i]),
                     &(num_approx_inter[i]), &(num_direct_inter[i]),
-                    interpolationOrder, sizeCheckFactor);
+                    run_params);
 
     }
 
@@ -231,7 +233,7 @@ void pc_compute_interaction_list(
                 int **batch_tree_list, int **batch_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                int interpolationOrder, double sizeCheckFactor)
+                struct RunParams *run_params)
 {
 
     /* determine DIST for MAC test */
@@ -240,9 +242,9 @@ void pc_compute_interaction_list(
     double tz = batch_z_mid - tree_z_mid[tree_node];
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    if (((tree_radius[tree_node] + batch_radius) < dist * sqrt(thetasq))
-      && (tree_radius[tree_node] != 0.00) //) {
-      && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < tree_numpar[tree_node])) {
+    if (((tree_radius[tree_node] + batch_radius) < dist * run_params->theta)
+      && (tree_radius[tree_node] != 0.00)
+      && (run_params->size_check_factor * run_params->interp_pts_per_cluster < tree_numpar[tree_node])) {
     /*
      * If MAC is accepted use the expansion for the approximation.
      */
@@ -282,7 +284,7 @@ void pc_compute_interaction_list(
                            batch_tree_list, batch_direct_list,
                            sizeof_tree_list, sizeof_direct_list,
                            tree_index_counter, direct_index_counter,
-                           interpolationOrder, sizeCheckFactor);
+                           run_params);
             }
         }
     }

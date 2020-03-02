@@ -15,9 +15,10 @@ int main(int argc, char **argv)
     int numSources = 20000;
     int numTargets = 20000;
 
-    char kernelName[256] = "yukawa";
-    char singularityHandling[256] = "skipping";
-    char approximationType[256] = "lagrange";
+    KERNEL kernel                = YUKAWA;
+    SINGULARITY singularity      = SKIPPING;
+    APPROXIMATION approximation  = LAGRANGE;
+    COMPUTE_TYPE compute_type    = PARTICLE_CLUSTER;
 
     int numParams = 1;
     double kernelParams[1] = {0.5};
@@ -60,8 +61,8 @@ int main(int argc, char **argv)
 
     BaryTreeInterface(numTargets, numSources, xT, yT, zT, qT,
                       xS, yS, zS, qS, wS, potential,
-                      kernelName, numParams, kernelParams,
-                      singularityHandling, approximationType,
+                      kernel, numParams, kernelParams,
+                      singularity, approximation, compute_type,
                       interpOrder, theta, maxPerLeaf, maxPerBatch,
                       verbosity);
 

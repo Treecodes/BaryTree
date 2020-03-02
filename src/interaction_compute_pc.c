@@ -9,9 +9,11 @@
 #include <mpi.h>
 
 #include "array.h"
+#include "const.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
-#include "struct_kernel.h"
+#include "struct_run_params.h"
 
 #include "kernels/coulomb/coulomb.h"
 #include "kernels/yukawa/yukawa.h"
@@ -30,10 +32,9 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
                             double *target_x, double *target_y, double *target_z, double *target_charge,
                             double *cluster_x, double *cluster_y, double *cluster_z,
                             double *cluster_charge, double *cluster_weight,
-                            double *pointwisePotential, int interpolationOrder,
+                            double *pointwisePotential,
                             int numSources, int numTargets, int totalNumberOfInterpolationPoints,
-                            struct kernel *kernel, char *singularityHandling,
-                            char *approximationName)
+                            struct RunParams *run_params)
 {
 
     int tree_numnodes = tree_array->numnodes;
@@ -53,10 +54,10 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     int numberOfClusterCharges = totalNumberOfInterpolationPoints;
     int numberOfClusterWeights = totalNumberOfInterpolationPoints;
 
-    if (strcmp(approximationName, "hermite") == 0)
+    if (run_params->approximation == HERMITE)
         numberOfClusterCharges = 8 * totalNumberOfInterpolationPoints;
 
-    if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
+    if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION))
         numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
 
 #ifdef OPENACC_ENABLED
@@ -71,7 +72,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 #endif
     {
 
-    int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+    int numberOfInterpolationPoints = run_params->interp_pts_per_cluster;
 
     for (int i = 0; i < batches->numnodes; i++) {
         int batch_ibeg = batches->ibeg[i];
@@ -96,59 +97,59 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     /***********************************************/
     /***************** Coulomb *********************/
     /***********************************************/
-            if (strcmp(kernel->name, "coulomb") == 0) {
+            if (run_params->kernel == COULOMB) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
             
                         K_Coulomb_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         K_Coulomb_SS_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         K_Coulomb_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         K_Coulomb_SS_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
 
                 }else{
-                    printf("Invalid approximationName.  Was set to %s\n", approximationName);
+                    printf("Invalid approximationName.");
                     exit(1);
                 }
 
@@ -156,53 +157,53 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     /***************** Yukawa **********************/
     /***********************************************/
 
-            } else if (strcmp(kernel->name, "yukawa") == 0) {
+            } else if (run_params->kernel == YUKAWA) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         K_Yukawa_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
                         
                         K_Yukawa_SS_PC_Lagrange(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart, clusterStart,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         K_Yukawa_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_charge,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         K_Yukawa_SS_PC_Hermite(numberOfTargets,
                                 numberOfInterpolationPoints, batchStart,
                                 clusterStart, totalNumberOfInterpolationPoints,
                                 target_x, target_y, target_z, target_charge,
                                 cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                kernel, potentialDueToApprox, streamID);
+                                run_params, potentialDueToApprox, streamID);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
@@ -215,27 +216,28 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     /********* Regularized-Coulomb *********/
     /***************************************/
 
-            } else if (strcmp(kernel->name, "regularized-coulomb") == 0) {
+            } else if (run_params->kernel == REGULARIZED_COULOMB) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         K_RegularizedCoulomb_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z,
                                     cluster_x, cluster_y, cluster_z, cluster_charge,
-                                    kernel, potentialDueToApprox, streamID);
+                                    run_params, potentialDueToApprox, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         K_RegularizedCoulomb_SS_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z, target_charge,
                                     cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                    kernel, potentialDueToApprox, streamID);
+                                    run_params, potentialDueToApprox, streamID);
                     }
-                } else if (strcmp(approximationName, "hermite") == 0) {
+
+                } else if (run_params->approximation == HERMITE) {
                     printf("NOT SET UP FOR REGULARIZED COULOMB HERMITE.  EXITING.\n");
                     exit(-1);
                 }
@@ -244,47 +246,49 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     /********* Regularized-Yukawa *********/
     /***************************************/
 
-            } else if (strcmp(kernel->name, "regularized-yukawa") == 0) {
+            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         K_RegularizedYukawa_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z,
                                     cluster_x, cluster_y, cluster_z, cluster_charge,
-                                    kernel, potentialDueToApprox, streamID);
+                                    run_params, potentialDueToApprox, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         K_RegularizedYukawa_SS_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z, target_charge,
                                     cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                                    kernel, potentialDueToApprox, streamID);
+                                    run_params, potentialDueToApprox, streamID);
 
                     }
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
                     printf("NOT SET UP FOR REGULARIZED COULOMB HERMITE.  EXITING.\n");
                     exit(-1);
                 }
 
-    /***************************************/
-    /****************** ATAN ***************/
-    /***************************************/
-            } else if (strcmp(kernel->name, "atan") == 0) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+    /***************************************/
+    /****************** Atan ***************/
+    /***************************************/
+
+            } else if (run_params->kernel == ATAN) {
+
+                if (run_params->approximation == LAGRANGE) {
 
                         K_Atan_PC_Lagrange(numberOfTargets,
                                     numberOfInterpolationPoints, batchStart, clusterStart,
                                     target_x, target_y, target_z,
                                     cluster_x, cluster_y, cluster_z, cluster_charge,
-                                    kernel, potentialDueToApprox, streamID);
+                                    run_params, potentialDueToApprox, streamID);
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
                     printf("NOT SET UP FOR REGULARIZED ATAN HERMITE.  EXITING.\n");
                     exit(-1);
                 }
@@ -314,26 +318,26 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     /***************** Coulomb *********************/
     /***********************************************/
 
-            if (strcmp(kernel->name, "coulomb") == 0) {
+            if (run_params->kernel == COULOMB) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_Coulomb_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            run_params, potentialDueToDirect, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_Coulomb_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            run_params, potentialDueToDirect, streamID);
 
                 }else {
-                    printf("Invalid choice of singularityHandling. Exiting. \n");
+                    printf("Invalid choice of singularity. Exiting. \n");
                     exit(1);
                 }
 
@@ -341,26 +345,26 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     /***************** Yukawa **********************/
     /***********************************************/
 
-            } else if (strcmp(kernel->name, "yukawa") == 0) {
+            } else if (run_params->kernel == YUKAWA) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_Yukawa_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            run_params, potentialDueToDirect, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_Yukawa_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            run_params, potentialDueToDirect, streamID);
 
                 } else {
-                    printf("Invalid choice of singularityHandling. Exiting. \n");
+                    printf("Invalid choice of singularity. Exiting. \n");
                     exit(1);
                 }
 
@@ -368,60 +372,62 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
     /********* Regularized-Coulomb *********/
     /***************************************/
 
-            } else if (strcmp(kernel->name, "regularized-coulomb") == 0) {
+            } else if (run_params->kernel == REGULARIZED_COULOMB) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_RegularizedCoulomb_Direct(numberOfTargets, number_of_sources_in_cluster,
                                 batchStart, source_start,
                                 target_x, target_y, target_z,
                                 source_x, source_y, source_z, source_charge, source_weight,
-                                kernel, potentialDueToDirect, streamID);
+                                run_params, potentialDueToDirect, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_RegularizedCoulomb_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                                 batchStart, source_start,
                                 target_x, target_y, target_z, target_charge,
                                 source_x, source_y, source_z, source_charge, source_weight,
-                                kernel, potentialDueToDirect, streamID);
+                                run_params, potentialDueToDirect, streamID);
                 }
 
 
     /***************************************/
-    /********* Regularized-Yukawa *********/
+    /********* Regularized-Yukawa **********/
     /***************************************/
 
-            } else if (strcmp(kernel->name, "regularized-yukawa") == 0) {
+            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_RegularizedYukawa_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            run_params, potentialDueToDirect, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_RegularizedYukawa_SS_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z, target_charge,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            run_params, potentialDueToDirect, streamID);
 
                 }
 
 
+    /***************************************/
+    /********* Atan ************************/
+    /***************************************/
 
-            } else if (strcmp(kernel->name, "atan") == 0) {
-
+            } else if (run_params->kernel == ATAN) {
 
                 K_Atan_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,
-                            kernel, potentialDueToDirect, streamID);
+                            run_params, potentialDueToDirect, streamID);
 
 
             } else {
@@ -454,11 +460,10 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
 
 void InteractionCompute_Direct(double *source_x, double *source_y, double *source_z,
-                                double *source_q, double *source_w,
-                                double *target_x, double *target_y, double *target_z, double *target_q,
-                                double *pointwisePotential, int numSources, int numTargets,
-                                struct kernel *kernel, char *singularityHandling,
-                                char *approximationName)
+                               double *source_q, double *source_w,
+                               double *target_x, double *target_y, double *target_z, double *target_q,
+                               double *pointwisePotential, int numSources, int numTargets,
+                               struct RunParams *run_params)
 {
 
 
@@ -480,24 +485,24 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
     /********* Coulomb *********************/
     /***************************************/
 
-    if (strcmp(kernel->name, "coulomb") == 0) {
+    if (run_params->kernel == COULOMB) {
 
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (run_params->singularity == SKIPPING) {
 
             K_Coulomb_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
-                    kernel, pointwisePotential, 0);
+                    run_params, pointwisePotential, 0);
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (run_params->singularity == SUBTRACTION) {
 
             K_Coulomb_SS_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
-                    kernel, pointwisePotential, 0);
+                    run_params, pointwisePotential, 0);
 
         }else {
-            printf("Invalid choice of singularityHandling. Exiting. \n");
+            printf("Invalid choice of singularity. Exiting. \n");
             exit(1);
         }
 
@@ -505,24 +510,24 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
     /********* Yukawa **********************/
     /***************************************/
 
-    } else if (strcmp(kernel->name, "yukawa") == 0) {
+    } else if (run_params->kernel == YUKAWA) {
 
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (run_params->singularity == SKIPPING) {
 
             K_Yukawa_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
-                    kernel, pointwisePotential, 0);
+                    run_params, pointwisePotential, 0);
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (run_params->singularity == SUBTRACTION) {
 
             K_Yukawa_SS_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
-                    kernel, pointwisePotential, 0);
+                    run_params, pointwisePotential, 0);
 
         } else {
-            printf("Invalid choice of singularityHandling. Exiting. \n");
+            printf("Invalid choice of singularity. Exiting. \n");
             exit(1);
         }
 
@@ -531,55 +536,61 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
     /********* Regularized-Coulomb *********/
     /***************************************/
 
-    } else if (strcmp(kernel->name, "regularized-coulomb") == 0) {
+    } else if (run_params->kernel == REGULARIZED_COULOMB) {
 
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (run_params->singularity == SKIPPING) {
 
             K_RegularizedCoulomb_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
-                    kernel, pointwisePotential, 0);
+                    run_params, pointwisePotential, 0);
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (run_params->singularity == SUBTRACTION) {
 
             K_RegularizedCoulomb_SS_Direct(numTargets, numSources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
-                    kernel, pointwisePotential, 0);
+                    run_params, pointwisePotential, 0);
 
         }
 
 
     /***************************************/
-    /********* Regularized-Yukawa *********/
+    /********* Regularized-Yukawa **********/
     /***************************************/
 
-    } else if (strcmp(kernel->name, "regularized-yukawa") == 0) {
+    } else if (run_params->kernel == REGULARIZED_YUKAWA) {
 
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (run_params->singularity == SKIPPING) {
 
             K_RegularizedYukawa_Direct(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
-                        kernel, pointwisePotential, 0);
+                        run_params, pointwisePotential, 0);
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (run_params->singularity == SUBTRACTION) {
 
             K_RegularizedYukawa_SS_Direct(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z, target_q,
                         source_x, source_y, source_z, source_q, source_w,
-                        kernel, pointwisePotential, 0);
+                        run_params, pointwisePotential, 0);
         }
 
-    } else if (strcmp(kernel->name, "atan") == 0) {
+
+
+    /***************************************/
+    /********* Atan ************************/
+    /***************************************/
+
+    } else if (run_params->kernel == ATAN) {
 
             K_Atan_Direct(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
-                        kernel, pointwisePotential, 0);
+                        run_params, pointwisePotential, 0);
 
     } else {
-        printf("Invalid kernel->name. Exiting.\n");
+        printf("Invalid kernel. Exiting.\n");
         exit(1);
     }
 
@@ -595,24 +606,23 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
 
 
 void InteractionCompute_SubtractionPotentialCorrection(double *pointwisePotential, double *target_q, int numTargets,
-                                  struct kernel *kernel, char *singularityHandling)
+                                  struct RunParams *run_params)
 {
 
-    if (strcmp(singularityHandling, "subtraction") == 0) {
-        if (strcmp(kernel->name, "coulomb") == 0) {
-            K_Coulomb_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
+    if (run_params->singularity == SUBTRACTION) {
+        if (run_params->kernel == COULOMB) {
+            K_Coulomb_SS_Correction(pointwisePotential, target_q, numTargets, run_params);
 
-        } else if (strcmp(kernel->name, "regularized-coulomb") == 0) {
-            K_RegularizedCoulomb_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
+        } else if (run_params->kernel == REGULARIZED_COULOMB) {
+            K_RegularizedCoulomb_SS_Correction(pointwisePotential, target_q, numTargets, run_params);
 
-        } else if (strcmp(kernel->name, "yukawa") == 0) {
-            K_Yukawa_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
+        } else if (run_params->kernel == YUKAWA) {
+            K_Yukawa_SS_Correction(pointwisePotential, target_q, numTargets, run_params);
 
-        } else if (strcmp(kernel->name, "regularized-yukawa") == 0) {
-            K_RegularizedYukawa_SS_Correction(pointwisePotential, target_q, numTargets, kernel);
+        } else if (run_params->kernel == REGULARIZED_YUKAWA) {
+            K_RegularizedYukawa_SS_Correction(pointwisePotential, target_q, numTargets, run_params);
 
         }
-
     }
 
     return;

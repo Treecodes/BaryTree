@@ -2,11 +2,11 @@
 #ifndef H_K_REGULARIZED_COULOMB_SS_CORRECTION_H
 #define H_K_REGULARIZED_COULOMB_SS_CORRECTION_H
  
-#include "../../struct_kernel.h"
+#include "../../struct_run_params.h"
 
 
 void K_RegularizedCoulomb_SS_Correction(double *potential, double *target_q,
-        int numTargets, struct kernel *kernel);
+        int numTargets, struct RunParams *run_params);
 
 
 #endif /* H_K_REGULARIZED_COULOMB_SS_CORRECTION_H */

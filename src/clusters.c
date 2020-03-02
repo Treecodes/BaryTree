@@ -1,7 +1,3 @@
-
-/*
- *Procedures for Particle-Cluster Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,13 +6,16 @@
 #include <mpi.h>
 
 #include "array.h"
+#include "tools.h"
 #include "globvars.h"
+#include "const.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
 #include "struct_clusters.h"
-#include "tools.h"
 
 #include "clusters.h"
+
 
 static void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpolationOrder,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
@@ -42,7 +41,7 @@ static void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int 
 
 void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources,
                        int interpolationOrder, struct tnode_array *tree_array,
-                       char *approxName, char *singularityHandling)
+                       APPROXIMATION approxName, SINGULARITY singularity)
 {
     *new_clusters = malloc(sizeof(struct clusters));
     struct clusters *clusters = *new_clusters;
@@ -70,7 +69,7 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
     
     
-    if (strcmp(approxName, "lagrange") == 0) {
+    if (approxName == LAGRANGE) {
         //make_vector(clusters->q, totalNumberInterpolationCharges);
         //make_vector(clusters->w, totalNumberInterpolationWeights);
 
@@ -79,17 +78,17 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
         for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
         
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (singularity == SKIPPING) {
             for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (singularity == SUBTRACTION) {
             for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
 
         } else {
             exit(1);
         }
         
-    } else if (strcmp(approxName, "hermite") == 0) {
+    } else if (approxName == HERMITE) {
         totalNumberInterpolationCharges *= 8;
 
         //make_vector(clusters->q, totalNumberInterpolationCharges);
@@ -97,14 +96,14 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
         for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
         
-        if (strcmp(singularityHandling, "skipping") == 0) {
+        if (singularity == SKIPPING) {
 
             //make_vector(clusters->w, totalNumberInterpolationWeights);
             MPI_Alloc_mem(totalNumberInterpolationWeights*sizeof(double), MPI_INFO_NULL, &(clusters->w));
 
             for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
 
-        } else if (strcmp(singularityHandling, "subtraction") == 0) {
+        } else if (singularity == SUBTRACTION) {
             totalNumberInterpolationWeights *= 8;
 
             //make_vector(clusters->w, totalNumberInterpolationWeights);
@@ -150,20 +149,20 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
     {
 #endif
 
-    if ((strcmp(approxName, "lagrange") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
+    if ((approxName == LAGRANGE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
-    } else if ((strcmp(approxName, "lagrange") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+    } else if ((approxName == LAGRANGE) && (singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF_SS(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
-    } else if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
+    } else if ((approxName == HERMITE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF_hermite(tree_array, i, interpolationOrder, totalNumberInterpolationPoints,
                                          xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
-    } else if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+    } else if ((approxName == HERMITE) && (singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF_hermite_SS(tree_array, i, interpolationOrder, totalNumberInterpolationPoints,
                                             xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
@@ -183,16 +182,17 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
 
 
-void Clusters_Alloc(struct clusters *clusters, int length, char *approxName, char *singularityHandling) 
+void Clusters_Alloc(struct clusters *clusters, int length,
+                    APPROXIMATION approxName,  SINGULARITY singularity) 
 {
     clusters->num = length;
     clusters->num_charges = length;
     clusters->num_weights = length;
 
-    if (strcmp(approxName, "hermite") == 0)
+    if (approxName == HERMITE)
         clusters->num_charges *= 8;
 
-    if ((strcmp(approxName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
+    if ((approxName == HERMITE) && (singularity == SUBTRACTION))
         clusters->num_weights *= 8;
 
     make_vector(clusters->x, clusters->num);

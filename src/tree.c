@@ -17,17 +17,15 @@
 #include "tree.h"
 
 
-double thetasq;
 double *tt, *ww;
 
 static void remove_node(struct tnode *p);
 
 
 void Tree_Setup(struct particles *particles1, struct particles *particles2, 
-                int order, double theta, double *xyzminmax)
+                int order, double *xyzminmax)
 {
     /* changing values of our extern variables */
-    thetasq = theta * theta;
     make_vector(tt, order+1);
     make_vector(ww, order+1);
 
@@ -66,10 +64,9 @@ void Tree_Setup(struct particles *particles1, struct particles *particles2,
 
 
 void Tree_CC_Setup(struct particles *particles1, struct particles *particles2, 
-                int order, double theta, double *par1_xyzminmax, double *par2_xyzminmax)
+                int order,  double *par1_xyzminmax, double *par2_xyzminmax)
 {
     /* changing values of our extern variables */
-    thetasq = theta * theta;
     make_vector(tt, order+1);
     make_vector(ww, order+1);
 

@@ -10,9 +10,11 @@
 
 #include "array.h"
 #include "globvars.h"
+#include "const.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
-#include "struct_kernel.h"
+#include "struct_run_params.h"
 
 #include "kernels/coulomb/coulomb.h"
 #include "kernels/yukawa/yukawa.h"
@@ -32,7 +34,6 @@ static void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwi
 //                      double *clusterQ, double *clusterW);
 
 static void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
-                        int totalNumberInterpolationPoints,
                         double *xT, double *yT, double *zT, double *qT,
                         double *clusterQ, double *clusterW);
 
@@ -50,10 +51,9 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
                              double *target_x, double *target_y, double *target_z, double *target_q,
                              double *cluster_x, double *cluster_y, double *cluster_z,
                              double *cluster_q, double *cluster_w,
-                             double *pointwisePotential, int interpolationOrder,
+                             double *pointwisePotential,
                              int numSources, int numTargets, int totalNumberOfInterpolationPoints,
-                             struct kernel *kernel, char *singularityHandling,
-                             char *approximationName)
+                             struct RunParams *run_params)
 {
 
     int tree_numnodes = tree_array->numnodes;
@@ -83,13 +83,12 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
     int numberOfClusterCharges = totalNumberOfInterpolationPoints;
     int numberOfClusterWeights = totalNumberOfInterpolationPoints;
 
-    if (strcmp(approximationName, "hermite") == 0)
+    if (run_params->approximation == HERMITE)
         numberOfClusterCharges = 8 * totalNumberOfInterpolationPoints;
 
-    if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
+    if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION))
         numberOfClusterWeights = 8 * totalNumberOfInterpolationPoints;
         
-    //for (int i = 0; i < numTargets; i++) pointwisePotential[i] = 0.0;
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
@@ -105,7 +104,7 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
 #endif
     {
 
-    int numberOfInterpolationPoints = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+    int numberOfInterpolationPoints = run_params->interp_pts_per_cluster;
 
     for (int i = 0; i < batches->numnodes; i++) {
         int batch_ibeg = batches->ibeg[i];
@@ -132,51 +131,51 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
     /***********************************************/
     /***************** Coulomb *********************/
     /***********************************************/
-            if (strcmp(kernel->name, "coulomb") == 0) {
+            if (run_params->kernel == COULOMB) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
             
                         K_Coulomb_CP_Lagrange(numberOfSources,
                             numberOfInterpolationPoints, batchStart, clusterStart,
                             source_x, source_y, source_z, source_q, source_w,
                             cluster_x, cluster_y, cluster_z, cluster_q,
-                            kernel, streamID);
+                            run_params, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         K_Coulomb_CP_Hermite(numberOfSources,
                             numberOfInterpolationPoints, batchStart, clusterStart,
                             source_x, source_y, source_z, source_q, source_w,
                             cluster_x, cluster_y, cluster_z, cluster_q,
-                            kernel, streamID);
+                            run_params, streamID);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
 
                 }else{
-                    printf("Invalid approximationName.  Was set to %s\n", approximationName);
+                    printf("Invalid approximationName.\n");
                     exit(1);
                 }
 
@@ -184,39 +183,39 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
     /***************** Yukawa **********************/
     /***********************************************/
 
-            } else if (strcmp(kernel->name, "yukawa") == 0) {
+            } else if (run_params->kernel == YUKAWA) {
 
-                if (strcmp(approximationName, "lagrange") == 0) {
+                if (run_params->approximation == LAGRANGE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
                         
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
-                } else if (strcmp(approximationName, "hermite") == 0) {
+                } else if (run_params->approximation == HERMITE) {
 
-                    if (strcmp(singularityHandling, "skipping") == 0) {
+                    if (run_params->singularity == SKIPPING) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
-                    } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                    } else if (run_params->singularity == SUBTRACTION) {
 
                         printf("Not yet implemented!\n");
                         exit(1);
 
                     } else {
-                        printf("Invalid choice of singularityHandling. Exiting. \n");
+                        printf("Invalid choice of singularity. Exiting. \n");
                         exit(1);
                     }
 
@@ -251,26 +250,26 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
     /***************** Coulomb *********************/
     /***********************************************/
 
-            if (strcmp(kernel->name, "coulomb") == 0) {
+            if (run_params->kernel == COULOMB) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_Coulomb_Direct(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_Coulomb_SS_Direct(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
                 }else {
-                    printf("Invalid choice of singularityHandling. Exiting. \n");
+                    printf("Invalid choice of singularity. Exiting. \n");
                     exit(1);
                 }
 
@@ -278,26 +277,26 @@ void InteractionCompute_CP_1(struct tnode_array *tree_array, struct tnode_array 
     /***************** Yukawa **********************/
     /***********************************************/
 
-            } else if (strcmp(kernel->name, "yukawa") == 0) {
+            } else if (run_params->kernel == YUKAWA) {
 
-                if (strcmp(singularityHandling, "skipping") == 0) {
+                if (run_params->singularity == SKIPPING) {
 
                     K_Yukawa_Direct(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
-                } else if (strcmp(singularityHandling, "subtraction") == 0) {
+                } else if (run_params->singularity == SUBTRACTION) {
 
                     K_Yukawa_SS_Direct(number_of_targets_in_cluster, numberOfSources,
                             target_start, batchStart,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            kernel, pointwisePotential, streamID);
+                            run_params, pointwisePotential, streamID);
 
                 } else {
-                    printf("Invalid choice of singularityHandling. Exiting. \n");
+                    printf("Invalid choice of singularity. Exiting. \n");
                     exit(1);
                 }
 
@@ -323,13 +322,12 @@ void InteractionCompute_CP_2(struct tnode_array *tree_array,
                              double *target_x, double *target_y, double *target_z, double *target_q,
                              double *cluster_x, double *cluster_y, double *cluster_z,
                              double *cluster_q, double *cluster_w,
-                             double *pointwisePotential, int interpolationOrder,
-                             int numTargets, int totalNumberInterpolationPoints,
+                             double *pointwisePotential, int numTargets,
                              int totalNumberInterpolationCharges, int totalNumberInterpolationWeights,
-                             char *singularityHandling, char *approximationName)
+                             struct RunParams *run_params)
 {
 
-    int interpOrderLim = interpolationOrder+1;
+    int interpOrderLim = run_params->interp_order + 1;
     int tree_numnodes = tree_array->numnodes;
 
 #ifdef OPENACC_ENABLED
@@ -342,24 +340,24 @@ void InteractionCompute_CP_2(struct tnode_array *tree_array,
     {
 #endif
 
-    if ((strcmp(approximationName, "lagrange") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
+    if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot(tree_array, i, pointwisePotential, interpolationOrder,
+            cp_comp_pot(tree_array, i, pointwisePotential, run_params->interp_order,
                         target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
-    } else if ((strcmp(approximationName, "lagrange") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+    } else if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SUBTRACTION)) {
 //        for (int i = 0; i < tree_numnodes; i++)
 //            cp_comp_pot_SS(tree_array, i, pointwisePotential interpolationOrder,
 //                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
-    } else if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "skipping") == 0)) {
+    } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot_hermite(tree_array, i, pointwisePotential, interpolationOrder, totalNumberInterpolationPoints,
+            cp_comp_pot_hermite(tree_array, i, pointwisePotential, run_params->interp_order,
                         target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
-    } else if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0)) {
+    } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
 //        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_pot_hermite_SS(tree_array, i, pointwisePotential, interpolationOrder, totalNumberInterpolationPoints,
+//            cp_comp_pot_hermite_SS(tree_array, i, pointwisePotential, interpolationOrder,
 //                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else {
@@ -535,8 +533,7 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
 
 
 void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
-        int totalNumberInterpolationPoints, double *target_x, double *target_y, double *target_z, double *target_q,
-        double *cluster_q, double *cluster_w)
+        double *target_x, double *target_y, double *target_z, double *target_q, double *cluster_q, double *cluster_w)
 {
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;

@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../struct_kernel.h"
+#include "../../struct_run_params.h"
 #include "atan_pc.h"
 
 
@@ -10,11 +10,11 @@ void K_Atan_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolat
         int starting_index_of_target, int starting_index_of_cluster,
         double *target_x, double *target_y, double *target_z,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
-        struct kernel *kernel, double *potential, int gpu_async_stream_id)
+        struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
-    double domainLength=kernel->parameters[0];
-    double delta=kernel->parameters[1];
+    double domainLength=run_params->kernel_params[0];
+    double delta=run_params->kernel_params[1];
     double wadj = 1/(1-delta/sqrt(1+delta*delta));
 
 #ifdef OPENACC_ENABLED
@@ -64,7 +64,7 @@ void K_Atan_PC_Hermite(int number_of_targets_in_batch, int number_of_interpolati
         int starting_index_of_target, int starting_index_of_cluster, int total_number_interpolation_points,
         double *target_x, double *target_y, double *target_z,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
-        struct kernel *kernel, double *potential, int gpu_async_stream_id)
+        struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
     printf("#######################################\n");

@@ -7,11 +7,13 @@
 #include <float.h>
 #include <mpi.h>
 
+#include "tools.h"
 #include "array.h"
 #include "globvars.h"
+
 #include "struct_nodes.h"
 #include "struct_particles.h"
-#include "tools.h"
+#include "struct_run_params.h"
 
 #include "interaction_lists.h"
 
@@ -23,12 +25,12 @@ void cp_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
                 int *batch_num_direct, int *batch_num_approx,
                 double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
-                int interpolationOrder, double sizeCheckFactor);
+                struct RunParams *run_params);
 
 
 
 void InteractionList_CP_MakeRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
-                                   int *direct_list, int interpolationOrder, double sizeCheckFactor)
+                                   int *direct_list, struct RunParams *run_params)
 {
     int batch_numnodes = batches->numnodes;
     const int *batch_numpar = batches->numpar;
@@ -67,7 +69,7 @@ void InteractionList_CP_MakeRemote(const struct tnode_array *tree_array, struct 
                 &(batch_num_direct[i]), &(batch_num_approx[i]),
                 batch_radius[i], batch_x_mid[i], batch_y_mid[i], batch_z_mid[i],
 
-                interpolationOrder, sizeCheckFactor);
+                run_params);
                 
         if ((batch_num_direct[i] > 0) || (batch_num_approx[i] > 0)) direct_list[i] = 1;
 
@@ -91,7 +93,7 @@ void cp_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
                 int *batch_num_direct, int *batch_num_approx,
                 double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
-                int interpolationOrder, double sizeCheckFactor)
+                struct RunParams *run_params)
 {
 
     /* determine DIST for MAC test */
@@ -100,21 +102,21 @@ void cp_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
     double tz = batch_z_mid - tree_z_mid[tree_node];
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
-    if (((tree_radius[tree_node] + batch_radius) < dist * sqrt(thetasq))
-      && (tree_radius[tree_node] != 0.00) //) {
-      && (sizeCheckFactor*(interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1) < tree_numpar[tree_node])) {
-    /*
- *      * If MAC is accepted and there is more than 1 particle
- *           * in the box, use the expansion for the approximation.
- *                */
+    if (((tree_radius[tree_node] + batch_radius) < dist * run_params->theta)
+      && (tree_radius[tree_node] != 0.00)
+      && (run_params->size_check_factor * run_params->interp_pts_per_cluster < tree_numpar[tree_node])) {
+   /*
+    * If MAC is accepted and there is more than 1 particle
+    * in the box, use the expansion for the approximation.
+    */
 
         (*batch_num_approx)++;
 
     } else {
-    /*
- *      * If MAC fails check to see if there are children. If not, perform direct
- *           * calculation. If there are children, call routine recursively for each.
- *                */
+   /*
+    * If MAC fails check to see if there are children. If not, perform direct
+    * calculation. If there are children, call routine recursively for each.
+    */
         if (tree_num_children[tree_node] == 0) {
 
             (*batch_num_direct)++;
@@ -129,7 +131,7 @@ void cp_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
                            batch_num_direct, batch_num_approx,
                            batch_radius, batch_x_mid, batch_y_mid, batch_z_mid,
 
-                           interpolationOrder, sizeCheckFactor);
+                           run_params);
             }
         }
     }

@@ -5,42 +5,46 @@
 #include <string.h>
 
 #include "array.h"
-#include "struct_kernel.h"
-#include "kernel.h"
-#include "struct_particles.h"
-#include "particles.h"
 #include "tools.h"
+#include "const.h"
+
+#include "struct_particles.h"
+#include "struct_run_params.h"
+
+#include "run_params.h"
+#include "particles.h"
 #include "tree.h"
 
 #include "treedriver.h"
 #include "BaryTreeInterface.h"
 
 
-/* definition of primary treecode driver */
-
-
 void BaryTreeInterface(int numTargets, int numSources,
 		double *targetX, double *targetY, double *targetZ, double *targetValue,
 		double *sourceX, double *sourceY, double *sourceZ, double *sourceValue, double *sourceWeight,
-		double *outputArray, char *kernelName, int numberOfParameters, double *kernelParameters,
-        char *singularityHandling, char *approximationName,
-		int interpOrder, double theta, int maxPerLeaf, int maxPerBatch, int verbosity)
+		double *outputArray,
+        KERNEL kernel, int numKernelParams, double *kernelParams,
+        SINGULARITY singularity, APPROXIMATION approximation, COMPUTE_TYPE compute_type,
+		int interpOrder, double theta, int maxPerSourceLeaf, int maxPerTargetLeaf, int verbosity)
 {
 
 	double timing[12];
-	int treeType = 1;   // particle-cluster
     memset(outputArray, 0, numTargets * sizeof(double));
 
     double sizeCheckFactor = 1.0;
-    if (strcmp(approximationName, "lagrange") == 0) {
+    if (approximation == LAGRANGE) {
         sizeCheckFactor = 1.0;
-    } else if (strcmp(approximationName, "hermite") == 0) {
+    } else if (approximation == HERMITE) {
         sizeCheckFactor = 4.0;
     }
 
-    struct kernel *kernel = malloc(sizeof (struct kernel));
-    Kernel_Allocate(kernel, numberOfParameters, kernelName);
-    Kernel_SetParams(kernel, kernelParameters);
+    struct RunParams *run_params;
+    RunParams_Setup(&run_params,
+                    kernel, numKernelParams, kernelParams,
+                    approximation, singularity, compute_type,
+                    theta, sizeCheckFactor, interpOrder, 
+                    maxPerSourceLeaf, maxPerTargetLeaf,
+                    verbosity);
 
 
 	struct particles sources, targets;
@@ -59,14 +63,11 @@ void BaryTreeInterface(int numTargets, int numSources,
 	sources.w = sourceWeight;
 
 
-	treedriver(&sources, &targets,
-			   interpOrder, theta, maxPerLeaf, maxPerBatch,
-			   kernel, singularityHandling, approximationName, treeType,
-			   outputArray, timing, sizeCheckFactor, verbosity);
+	treedriver(&sources, &targets, run_params, outputArray, timing);
 	MPI_Barrier(MPI_COMM_WORLD);
 
 
-    Kernel_Free(kernel);
+    RunParams_Free(run_params);
 
 	return;
 }

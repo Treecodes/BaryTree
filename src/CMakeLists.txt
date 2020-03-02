@@ -5,6 +5,7 @@ SET(SRCS_TREEDRIVER
     xmalloc.h
     xmalloc.c
     array.h
+    const.h
 # Global variables, which will be deprecated
     globvars.h
 # Calling functions for tree and direct calculations
@@ -31,9 +32,9 @@ SET(SRCS_TREEDRIVER
     particles.h
     particles.c
 # Kernel struct and related functions
-    struct_kernel.h
-    kernel.h
-    kernel.c
+    struct_run_params.h
+    run_params.h
+    run_params.c
 # Interaction list related functions
     interaction_lists.h
     interaction_lists.c

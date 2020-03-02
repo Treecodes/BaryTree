@@ -1,6 +1,3 @@
-/*
- *Procedures for Particle-Cluster Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,16 +7,19 @@
 
 #include "array.h"
 #include "tools.h"
+#include "const.h"
+
 #include "struct_particles.h"
-#include "struct_kernel.h"
+#include "struct_run_params.h"
 
 #include "interaction_compute.h"
 #include "particles.h"
 
+#include "directdriver.h"
 
-void directdriver(struct particles *sources, struct particles *targets,
-                  struct kernel *kernel, char *singularityHandling,
-                  char *approximationName, double *pointwisePotential, double *time_direct)
+
+void directdriver(struct particles *sources, struct particles *targets, struct RunParams *run_params,
+                  double *pointwisePotential, double *time_direct)
 {
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -103,12 +103,14 @@ void directdriver(struct particles *sources, struct particles *targets,
         
         time1 = MPI_Wtime();
         //compute remote
+
+        fprintf(stderr, "I shouldn't be in here if I'm running in serial.\n");
+
         InteractionCompute_Direct(remote_sources->x, remote_sources->y, remote_sources->z,
                                    remote_sources->q, remote_sources->w,
                                    target_x, target_y, target_z, target_q,
                                    pointwisePotential, numSources, numTargets,
-                                   kernel, singularityHandling,
-                                   approximationName);
+                                   run_params);
 
         Particles_FreeSources(remote_sources);
 
@@ -121,16 +123,14 @@ void directdriver(struct particles *sources, struct particles *targets,
     InteractionCompute_Direct(source_x, source_y, source_z, source_q, source_w,
                                target_x, target_y, target_z, target_q,
                                pointwisePotential, numSources, numTargets,
-                               kernel, singularityHandling,
-                               approximationName);
+                               run_params);
 
     time_direct[2] = MPI_Wtime() - time1;
 
 
     time1 = MPI_Wtime();
     //add correction
-    InteractionCompute_SubtractionPotentialCorrection(pointwisePotential, target_q, numTargets,
-                               kernel, singularityHandling);
+    InteractionCompute_SubtractionPotentialCorrection(pointwisePotential, target_q, numTargets, run_params);
 
     time_direct[3] = MPI_Wtime() - time1;
 

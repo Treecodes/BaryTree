@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../struct_kernel.h"
+#include "../../struct_run_params.h"
 #include "regularized-coulomb_pc.h"
 
 
@@ -10,10 +10,10 @@ void K_RegularizedCoulomb_PC_Lagrange(int number_of_targets_in_batch, int number
          int starting_index_of_target, int starting_index_of_cluster,
          double *target_x, double *target_y, double *target_z,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
-         struct kernel *kernel, double *potential, int gpu_async_stream_id)
+         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
-    double epsilon=kernel->parameters[0];
+    double epsilon=run_params->kernel_params[0];
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
@@ -70,10 +70,10 @@ void K_RegularizedCoulomb_PC_Hermite(int number_of_targets_in_batch, int number_
         int starting_index_of_target, int starting_index_of_cluster, int total_number_interpolation_points,
         double *target_x, double *target_y, double *target_z,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
-        struct kernel *kernel, double *potential, int gpu_async_stream_id)
+        struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
-    double epsilon=kernel->parameters[0];
+    double epsilon=run_params->kernel_params[0];
 
     printf("\n\nWARNING: Hermite regularized coulomb has not been implemented yet.\n\n\n");
 

@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../struct_kernel.h"
+#include "../../struct_run_params.h"
 #include "coulomb_cp.h"
 
 
@@ -10,7 +10,7 @@ void K_Coulomb_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpo
          int starting_index_of_sources, int starting_index_of_cluster,
          double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-         struct kernel *kernel, int gpu_async_stream_id)
+         struct RunParams *run_params, int gpu_async_stream_id)
 {
 
 #ifdef OPENACC_ENABLED
@@ -68,7 +68,7 @@ void K_Coulomb_CP_Hermite(int number_of_sources_in_batch, int number_of_interpol
         int starting_index_of_sources, int starting_index_of_cluster,
         double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-        struct kernel *kernel, int gpu_async_stream_id)
+        struct RunParams *run_params, int gpu_async_stream_id)
 {
 
     double *cluster_q_     = &cluster_q[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];

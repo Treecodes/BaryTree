@@ -6,11 +6,12 @@
 #include "array.h"
 #include "tools.h"
 #include "globvars.h"
+#include "const.h"
 
 #include "struct_nodes.h"
 #include "struct_particles.h"
 #include "struct_clusters.h"
-#include "struct_kernel.h"
+#include "struct_run_params.h"
 
 #include "interaction_lists.h"
 #include "interaction_compute.h"
@@ -22,31 +23,25 @@
 #include "treedriver.h"
 
 
-/* definition of primary treecode driver */
-
-void treedriver(struct particles *sources, struct particles *targets,
-                int interpolationOrder, double theta, int maxparnode, int batch_size,
-                struct kernel *kernel, char *singularityHandling,
-                char *approximationName,
-                int tree_type, double *tEn, double *time_tree,
-                double sizeCheckFactor,
-                int verbosity)
+void treedriver(struct particles *sources, struct particles *targets, struct RunParams *run_params,
+                double *potential_array, double *time_tree)
 {
     int rank, numProcs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-    if (verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
+    RunParams_Validate(run_params);
+    if (run_params->verbosity > 0) printf("Set rank %i and numProcs %i.\n", rank, numProcs);
 
     double time1;
     
 
-    int totalNumberDirect=0;
-    int totalNumberApprox=0;
-    int totalNumberInteractions=0;
-    int cumulativeNumberInteractions=0;
-    int maxNumberInteractions=0;
-    int minNumberInteractions=0;
+    int totalNumberDirect = 0;
+    int totalNumberApprox = 0;
+    int totalNumberInteractions = 0;
+    int cumulativeNumberInteractions = 0;
+    int maxNumberInteractions = 0;
+    int minNumberInteractions = 0;
 
 
 
@@ -59,7 +54,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
-    if (tree_type == 0) {
+    if (run_params->compute_type == CLUSTER_PARTICLE) {
     
         struct tnode *troot = NULL;
         struct tnode_array *tree_array = NULL;
@@ -74,9 +69,9 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        Tree_Setup(sources, targets, interpolationOrder, theta, xyzminmax);
+        Tree_Setup(sources, targets, run_params->interp_order, xyzminmax);
         Tree_CP_Create(&troot, targets, 1, targets->num,
-                       maxparnode, xyzminmax, 0, &numnodes, &numleaves);
+                       run_params->max_per_target_leaf, xyzminmax, 0, &numnodes, &numleaves);
         Tree_SetIndex(troot, 0);
         Tree_AllocArray(&tree_array, numnodes);
         Tree_CreateArray(troot, tree_array);
@@ -88,8 +83,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        Batches_Alloc(&batches, batch_lim, sources, batch_size);
-        Batches_CreateSourceBatches(batches, sources, 1, sources->num, batch_size, batch_lim);
+        Batches_Alloc(&batches, batch_lim, sources, run_params->max_per_source_leaf);
+        Batches_CreateSourceBatches(batches, sources, 1, sources->num, run_params->max_per_source_leaf, batch_lim);
 
 
         time_tree[1] = MPI_Wtime() - time1; //time_createbatch
@@ -97,8 +92,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        Clusters_CP_Setup(&clusters, interpolationOrder, tree_array,
-                          approximationName, singularityHandling);
+        Clusters_CP_Setup(&clusters, run_params->interp_order, tree_array,
+                          run_params->approximation, run_params->singularity);
 
 
         time_tree[2] = MPI_Wtime() - time1; //time_fillclusters
@@ -116,10 +111,10 @@ void treedriver(struct particles *sources, struct particles *targets,
         int numBatchesOnProc[numProcs];
         MPI_Allgather(&(batches->numnodes), 1, MPI_INT, numBatchesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
 
-        int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+        int pointsPerCluster = run_params->interp_pts_per_cluster;
         int chargesPerCluster = pointsPerCluster;
 
-        if (strcmp(approximationName, "hermite") == 0)
+        if (run_params->approximation == HERMITE)
             chargesPerCluster *= 8;
 
         struct tnode_array *let_batches_array = NULL;
@@ -207,7 +202,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_length_list, numBatchesOnProc[getFrom]);
 
             InteractionList_CP_MakeRemote(tree_array, remote_batches_array,
-                                          direct_list, interpolationOrder, sizeCheckFactor);
+                                          direct_list, run_params);
 
 
             // Count number of unique clusters adding to LET
@@ -330,7 +325,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         int **local_approx_inter_list, **local_direct_inter_list;
 
         InteractionList_Make(tree_array, batches, &local_approx_inter_list, &local_direct_inter_list,
-                             interpolationOrder, sizeCheckFactor);
+                             run_params);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
@@ -343,10 +338,8 @@ void treedriver(struct particles *sources, struct particles *targets,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
                         clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        tEn, interpolationOrder,
-                        sources->num, targets->num, clusters->num,
-                        kernel, singularityHandling,
-                        approximationName);
+                        potential_array, sources->num, targets->num, clusters->num,
+                        run_params);
                         
         free_matrix(local_approx_inter_list);
         free_matrix(local_direct_inter_list);
@@ -360,9 +353,8 @@ void treedriver(struct particles *sources, struct particles *targets,
             int **let_approx_inter_list, **let_direct_inter_list;
             
 
-
             InteractionList_Make(tree_array, let_batches_array, &let_approx_inter_list, &let_direct_inter_list,
-                                 interpolationOrder, sizeCheckFactor);
+                                 run_params);
 
             time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
 
@@ -370,15 +362,13 @@ void treedriver(struct particles *sources, struct particles *targets,
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
 
-
             InteractionCompute_CP_1(tree_array, let_batches_array,
                                     let_approx_inter_list, let_direct_inter_list,
                                     let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                     targets->x, targets->y, targets->z, targets->q,
                                     clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                                    tEn, interpolationOrder,
-                                    let_sources->num, targets->num, clusters->num,
-                                    kernel, singularityHandling, approximationName);
+                                    potential_array, let_sources->num, targets->num, clusters->num,
+                                    run_params);
             
             free_matrix(let_approx_inter_list);
             free_matrix(let_direct_inter_list);
@@ -397,9 +387,9 @@ void treedriver(struct particles *sources, struct particles *targets,
         InteractionCompute_CP_2(tree_array,
                                 targets->x, targets->y, targets->z, targets->q,
                                 clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                                tEn, interpolationOrder,
-                                targets->num, clusters->num, clusters->num_charges, clusters->num_weights,
-                                singularityHandling, approximationName);
+                                potential_array,
+                                targets->num, clusters->num_charges, clusters->num_weights,
+                                run_params);
 
         time_tree[8] = MPI_Wtime() - time1;
 
@@ -407,9 +397,8 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         
-        InteractionCompute_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
-                                kernel, singularityHandling);
-        Particles_ReorderTargetsAndPotential(targets, tEn);
+        InteractionCompute_SubtractionPotentialCorrection(potential_array, targets->q, targets->num, run_params);
+        Particles_ReorderTargetsAndPotential(targets, potential_array);
 
         time_tree[9] = MPI_Wtime() - time1;
         
@@ -450,7 +439,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
         
-    } else if (tree_type == 1) {
+    } else if (run_params->compute_type == PARTICLE_CLUSTER) {
     
         struct tnode *troot = NULL;
         struct tnode_array *tree_array = NULL;
@@ -464,9 +453,9 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        Tree_Setup(sources, targets, interpolationOrder, theta, xyzminmax);
+        Tree_Setup(sources, targets, run_params->interp_order, xyzminmax);
         Tree_PC_Create(&troot, sources, 1, sources->num,
-                       maxparnode, xyzminmax, 0, &numnodes, &numleaves);
+                       run_params->max_per_source_leaf, xyzminmax, 0, &numnodes, &numleaves);
         Tree_SetIndex(troot, 0);
         Tree_AllocArray(&tree_array, numnodes);
         Tree_CreateArray(troot, tree_array);
@@ -476,16 +465,16 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        Batches_Alloc(&batches, batch_lim, targets, batch_size);
-        Batches_CreateTargetBatches(batches, targets, 1, targets->num, batch_size, batch_lim);
+        Batches_Alloc(&batches, batch_lim, targets, run_params->max_per_target_leaf);
+        Batches_CreateTargetBatches(batches, targets, 1, targets->num, run_params->max_per_target_leaf, batch_lim);
 
         time_tree[1] = MPI_Wtime() - time1; //time_createbatch
         
 
         time1 = MPI_Wtime();
 
-        Clusters_PC_Setup(&clusters, sources, interpolationOrder, tree_array,
-                          approximationName, singularityHandling);
+        Clusters_PC_Setup(&clusters, sources, run_params->interp_order, tree_array,
+                          run_params->approximation, run_params->singularity);
 
         time_tree[2] = MPI_Wtime() - time1; //time_fillclusters
 
@@ -502,14 +491,14 @@ void treedriver(struct particles *sources, struct particles *targets,
         int numNodesOnProc[numProcs];
         MPI_Allgather(&numnodes, 1, MPI_INT, numNodesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
 
-        int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+        int pointsPerCluster = run_params->interp_pts_per_cluster;
         int chargesPerCluster = pointsPerCluster;
         int weightsPerCluster = pointsPerCluster;
 
-        if (strcmp(approximationName, "hermite") == 0)
+        if (run_params->approximation == HERMITE)
             chargesPerCluster *= 8;
 
-        if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
+        if (run_params->approximation == HERMITE && run_params->singularity == SUBTRACTION)
             weightsPerCluster *= 8;
 
         struct tnode_array *let_tree_array = NULL;
@@ -625,7 +614,7 @@ void treedriver(struct particles *sources, struct particles *targets,
             make_vector(direct_length_list, numNodesOnProc[getFrom]);
 
             InteractionList_PC_MakeRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
-                                       direct_list, interpolationOrder, sizeCheckFactor);
+                                          direct_list, run_params);
 
 
             // Count number of unique clusters adding to LET
@@ -749,7 +738,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         if (let_sources_length > 0) Particles_AllocSources(let_sources, let_sources_length);
         if (let_clusters_length > 0) Clusters_Alloc(let_clusters, let_clusters_length,
-                                                    approximationName, singularityHandling);
+                                                    run_params->approximation, run_params->singularity);
     
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -840,12 +829,12 @@ void treedriver(struct particles *sources, struct particles *targets,
         int **local_approx_inter_list, **local_direct_inter_list;
         
         InteractionList_Make(tree_array, batches, &local_approx_inter_list, &local_direct_inter_list,
-                             interpolationOrder, sizeCheckFactor);
+                             run_params);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
 
-        if (verbosity>0){
+        if (run_params->verbosity > 0) {
             for (int j = 0; j < batches->numnodes; j++){
                 totalNumberApprox += batches->numApprox[j];
                 totalNumberDirect += batches->numDirect[j];
@@ -860,10 +849,9 @@ void treedriver(struct particles *sources, struct particles *targets,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
                         clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        tEn, interpolationOrder,
+                        potential_array,
                         sources->num, targets->num, clusters->num,
-                        kernel, singularityHandling,
-                        approximationName);
+                        run_params);
                         
         free_matrix(local_approx_inter_list);
         free_matrix(local_direct_inter_list);
@@ -878,11 +866,11 @@ void treedriver(struct particles *sources, struct particles *targets,
             int **let_approx_inter_list, **let_direct_inter_list;
 
             InteractionList_Make(let_tree_array, batches, &let_approx_inter_list, &let_direct_inter_list,
-                                 interpolationOrder, sizeCheckFactor);
+                                 run_params);
 
             // Count number of interactions
 
-            if (verbosity>0){
+            if (run_params->verbosity > 0) {
                 for (int j = 0; j < batches->numnodes; j++){
                     totalNumberApprox += batches->numApprox[j];
                     totalNumberDirect += batches->numDirect[j];
@@ -898,9 +886,9 @@ void treedriver(struct particles *sources, struct particles *targets,
                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                    targets->x, targets->y, targets->z, targets->q,
                                    let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q, let_clusters->w,
-                                   tEn, interpolationOrder,
+                                   potential_array,
                                    let_sources->num, targets->num, let_clusters->num,
-                                   kernel, singularityHandling, approximationName);
+                                   run_params);
             
             free_matrix(let_approx_inter_list);
             free_matrix(let_direct_inter_list);
@@ -915,10 +903,10 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
         
-        InteractionCompute_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
-                                  kernel, singularityHandling);
+        InteractionCompute_SubtractionPotentialCorrection(potential_array, targets->q, targets->num,
+                                  run_params);
 
-        Particles_ReorderTargetsAndPotential(targets, tEn);
+        Particles_ReorderTargetsAndPotential(targets, potential_array);
 
         time_tree[8] = 0.0;
         time_tree[9] = MPI_Wtime() - time1;
@@ -958,7 +946,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
 
-    } else if (tree_type == 2) {
+    } else if (run_params->compute_type == CLUSTER_CLUSTER) {
     
         struct tnode *source_tree_root = NULL;
         struct tnode_array *source_tree_array = NULL;
@@ -975,11 +963,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        Tree_CC_Setup(sources, targets, interpolationOrder, theta,
-                   source_xyzminmax, target_xyzminmax);
+        Tree_CC_Setup(sources, targets, run_params->interp_order,
+                      source_xyzminmax, target_xyzminmax);
 
         Tree_PC_Create(&source_tree_root, sources, 1, sources->num,
-                       maxparnode, source_xyzminmax, 0,
+                       run_params->max_per_source_leaf, source_xyzminmax, 0,
                        &source_numnodes, &source_numleaves);
         Tree_SetIndex(source_tree_root, 0);
 
@@ -992,7 +980,7 @@ void treedriver(struct particles *sources, struct particles *targets,
         time1 = MPI_Wtime();
 
         Tree_CP_Create(&target_tree_root, targets, 1, targets->num,
-                       batch_size, target_xyzminmax, 0,
+                       run_params->max_per_target_leaf, target_xyzminmax, 0,
                        &target_numnodes, &target_numleaves);
         Tree_SetIndex(target_tree_root, 0);
 
@@ -1006,11 +994,11 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         time1 = MPI_Wtime();
 
-        Clusters_PC_Setup(&source_clusters, sources, interpolationOrder, source_tree_array,
-                          approximationName, singularityHandling);
+        Clusters_PC_Setup(&source_clusters, sources, run_params->interp_order, source_tree_array,
+                          run_params->approximation, run_params->singularity);
 
-        Clusters_CP_Setup(&target_clusters, interpolationOrder, target_tree_array,
-                          approximationName, singularityHandling);
+        Clusters_CP_Setup(&target_clusters, run_params->interp_order, target_tree_array,
+                          run_params->approximation, run_params->singularity);
 
         time_tree[2] = MPI_Wtime() - time1; //time_fillclusters
         
@@ -1027,14 +1015,14 @@ void treedriver(struct particles *sources, struct particles *targets,
         int numNodesOnProc[numProcs];
         MPI_Allgather(&source_numnodes, 1, MPI_INT, numNodesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
 
-        int pointsPerCluster = (interpolationOrder+1)*(interpolationOrder+1)*(interpolationOrder+1);
+        int pointsPerCluster = run_params->interp_pts_per_cluster;
         int chargesPerCluster = pointsPerCluster;
         int weightsPerCluster = pointsPerCluster;
 
-        if (strcmp(approximationName, "hermite") == 0)
+        if (run_params->approximation == HERMITE)
             chargesPerCluster *= 8;
 
-        if ((strcmp(approximationName, "hermite") == 0) && (strcmp(singularityHandling, "subtraction") == 0))
+        if (run_params->approximation == HERMITE && run_params->singularity == SUBTRACTION)
             weightsPerCluster *= 8;
 
         struct tnode_array *let_tree_array = NULL;
@@ -1148,7 +1136,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
             InteractionList_CC_MakeRemote(remote_tree_array, target_tree_array,
                                           approx_list_unpacked, approx_list_packed, direct_list,
-                                          interpolationOrder, sizeCheckFactor);
+                                          run_params);
 
 
             // Count number of unique clusters adding to LET
@@ -1272,7 +1260,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         if (let_sources_length > 0) Particles_AllocSources(let_sources, let_sources_length);
         if (let_clusters_length > 0) Clusters_Alloc(let_clusters, let_clusters_length,
-                                                    approximationName, singularityHandling);
+                                                    run_params->approximation, run_params->singularity);
     
         for (int procID = 1; procID < numProcs; ++procID) {
 
@@ -1360,12 +1348,12 @@ void treedriver(struct particles *sources, struct particles *targets,
 
         int **local_approx_inter_list, **local_direct_inter_list;
         InteractionList_CC_Make(source_tree_array, target_tree_array, &local_approx_inter_list, &local_direct_inter_list,
-                                interpolationOrder, sizeCheckFactor);
+                                run_params);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
 
-        if (verbosity > 0) {
+        if (run_params->verbosity > 0) {
             for (int j = 0; j < target_tree_array->numnodes; j++){
                 totalNumberApprox += target_tree_array->numApprox[j];
                 totalNumberDirect += target_tree_array->numDirect[j];
@@ -1381,9 +1369,9 @@ void treedriver(struct particles *sources, struct particles *targets,
                         source_clusters->q, source_clusters->w,
                         target_clusters->x, target_clusters->y, target_clusters->z,
                         target_clusters->q, target_clusters->w,
-                        tEn, interpolationOrder,
+                        potential_array,
                         sources->num, targets->num, source_clusters->num, target_clusters->num,
-                        kernel, singularityHandling, approximationName);
+                        run_params);
                         
         free_matrix(local_approx_inter_list);
         free_matrix(local_direct_inter_list);
@@ -1398,11 +1386,11 @@ void treedriver(struct particles *sources, struct particles *targets,
             int **let_approx_inter_list, **let_direct_inter_list;
             
             InteractionList_CC_Make(let_tree_array, target_tree_array, &let_approx_inter_list, &let_direct_inter_list,
-                                    interpolationOrder, sizeCheckFactor);
+                                    run_params);
 
             // Count number of interactions
 
-            if (verbosity > 0) {
+            if (run_params->verbosity > 0) {
                 for (int j = 0; j < target_tree_array->numnodes; j++){
                     totalNumberApprox += target_tree_array->numApprox[j];
                     totalNumberDirect += target_tree_array->numDirect[j];
@@ -1422,9 +1410,9 @@ void treedriver(struct particles *sources, struct particles *targets,
                                    let_clusters->q, let_clusters->w,
                                    target_clusters->x, target_clusters->y, target_clusters->z,
                                    target_clusters->q, target_clusters->w,
-                                   tEn, interpolationOrder,
+                                   potential_array,
                                    let_sources->num, targets->num, let_clusters->num, target_clusters->num,
-                                   kernel, singularityHandling, approximationName);
+                                   run_params);
 
             free_matrix(let_approx_inter_list);
             free_matrix(let_direct_inter_list);
@@ -1442,20 +1430,19 @@ void treedriver(struct particles *sources, struct particles *targets,
                                 targets->x, targets->y, targets->z, targets->q,
                                 target_clusters->x, target_clusters->y, target_clusters->z,
                                 target_clusters->q, target_clusters->w,
-                                tEn, interpolationOrder,
-                                targets->num, target_clusters->num,
-                                target_clusters->num_charges, target_clusters->num_weights,
-                                singularityHandling, approximationName);
+                                potential_array, 
+                                targets->num, target_clusters->num_charges, target_clusters->num_weights,
+                                run_params);
 
         time_tree[8] = MPI_Wtime() - time1;
 
 
         time1 = MPI_Wtime();
         
-        InteractionCompute_SubtractionPotentialCorrection(tEn, targets->q, targets->num,
-                                  kernel, singularityHandling);
+        InteractionCompute_SubtractionPotentialCorrection(potential_array, targets->q, targets->num,
+                                  run_params);
 
-        Particles_ReorderTargetsAndPotential(targets, tEn);
+        Particles_ReorderTargetsAndPotential(targets, potential_array);
 
         time_tree[9] = MPI_Wtime() - time1;
                
@@ -1495,7 +1482,7 @@ void treedriver(struct particles *sources, struct particles *targets,
     
     
 
-//    if (verbosity > 0) {
+//    if (run_params->verbosity > 0) {
 //        printf("Tree information: \n\n");
 //
 //        printf("                      numpar: %d\n", troot->numpar);
@@ -1518,7 +1505,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 
 
 
-//    if (verbosity > 0) {
+//    if (run_params->verbosity > 0) {
 //        totalNumberInteractions=totalNumberDirect+totalNumberApprox;
 //        printf("Interaction information: \n");
 //        printf("rank %d: number of direct batch-cluster interactions: %d\n", rank, totalNumberApprox);
@@ -1527,7 +1514,7 @@ void treedriver(struct particles *sources, struct particles *targets,
 //        MPI_Barrier(MPI_COMM_WORLD);
 //    }
 //
-//    if (verbosity > 0) {
+//    if (run_params -> verbosity > 0) {
 //        MPI_Reduce(&totalNumberInteractions,&cumulativeNumberInteractions, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 //        MPI_Reduce(&totalNumberInteractions,&maxNumberInteractions, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
 //        MPI_Reduce(&totalNumberInteractions,&minNumberInteractions, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);

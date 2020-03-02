@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../struct_kernel.h"
+#include "../../struct_run_params.h"
 #include "regularized-yukawa_ss_pc.h"
 
 
@@ -10,10 +10,10 @@ void K_RegularizedYukawa_SS_PC_Lagrange(int number_of_targets_in_batch,
         int number_of_interpolation_points_in_cluster, int starting_index_of_target, int starting_index_of_cluster,
         double *target_x, double *target_y, double *target_z, double *target_charge,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
-        struct kernel *kernel, double *potential, int gpu_async_stream_id)
+        struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
-    double kappa=kernel->parameters[0];
-    double epsilon=kernel->parameters[1];
+    double kappa=run_params->kernel_params[0];
+    double epsilon=run_params->kernel_params[1];
 //    printf("epsilon=%f\n",epsilon);
 
 #ifdef OPENACC_ENABLED
@@ -64,12 +64,12 @@ void K_RegularizedYukawa_SS_PC_Hermite(int number_of_targets_in_batch,
         int starting_index_of_cluster, int total_number_interpolation_points,
         double *target_x, double *target_y, double *target_z, double *target_charge,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
-        struct kernel *kernel, double *potential, int gpu_async_stream_id)
+        struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
     printf("WARNING, HERMITE NOT SET UP FOR THIS KERNEL!!!");
-    double epsilon=kernel->parameters[1];
-    double kappa=kernel->parameters[0];
+    double epsilon=run_params->kernel_params[1];
+    double kappa=run_params->kernel_params[0];
     double kappa2 = kappa * kappa;
     double kappa3 = kappa * kappa2;
 
