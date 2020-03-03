@@ -37,10 +37,12 @@ void atanDirect(int number_of_targets_in_batch, int number_of_source_points_in_c
             int jj = starting_index_of_source + j;
             double dz = (tz - source_z[jj])/domainLength;
 
-
+            
             if (fabs(dz-0.5) > DBL_MIN) {
                 if (fabs(dz+0.5) > DBL_MIN) {
-//                temporary_potential += source_charge[jj] * source_weight[jj] * ( 1/M_PI * atan( sqrt( 1 + 1.0/(delta*delta))* tan(M_PI * dz)) - fmod(dz-0.5,1.0) + 0.5);
+                    double modz = fmod(0.5-dz,1.0);
+                    modz += (0.5 - dz < 0 ? 1.0 : 0);
+                    temporary_potential += source_charge[jj] * source_weight[jj] * ( 1/M_PI * atan( sqrt( 1 + 1.0/(delta*delta))* tan(M_PI * dz)) + modz - 0.5);
                 }
             }
 
@@ -91,10 +93,12 @@ void atanApproximationLagrange(int number_of_targets_in_batch, int number_of_int
 
             double dz = (tz - cluster_z[starting_index_of_cluster + j])/domainLength;
 
+            double modz = fmod(0.5-dz,1.0);
+            modz += (0.5 - dz < 0 ? 1.0 : 0);
 
             if (fabs(dz-0.5) > DBL_MIN) {
                 if (fabs(dz+0.5) > DBL_MIN) {
-//                    temporary_potential += cluster_charge[starting_index_of_cluster + j] * ( 1/M_PI * atan( sqrt( 1 + 1./(delta*delta))* tan(M_PI * dz)) - fmod(dz-.5,1.) + .5);
+//                    temporary_potential += cluster_charge[starting_index_of_cluster + j] * ( 1/M_PI * atan( sqrt( 1 + 1./(delta*delta))* tan(M_PI * dz)) + modz - .5);
                 }
             }
 
