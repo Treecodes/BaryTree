@@ -75,8 +75,8 @@ SET(SRCS_K_YUKAWA
     kernels/yukawa/yukawa_direct.c
     kernels/yukawa/yukawa_pc.h
     kernels/yukawa/yukawa_pc.c
-#   kernels/yukawa/yukawa_cp.h
-#   kernels/yukawa/yukawa_cp.c
+    kernels/yukawa/yukawa_cp.h
+    kernels/yukawa/yukawa_cp.c
 # Singularity subtraction
     kernels/yukawa/yukawa_ss_direct.h
     kernels/yukawa/yukawa_ss_direct.c

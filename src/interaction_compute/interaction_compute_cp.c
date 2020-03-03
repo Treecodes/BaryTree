@@ -167,8 +167,11 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (run_params->singularity == SKIPPING) {
 
-                        printf("Not yet implemented!\n");
-                        exit(1);
+                        K_Yukawa_CP_Lagrange(numberOfSources,
+                            numberOfInterpolationPoints, batchStart, clusterStart,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, streamID);
 
                     } else if (run_params->singularity == SUBTRACTION) {
                         
@@ -184,8 +187,11 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
 
                     if (run_params->singularity == SKIPPING) {
 
-                        printf("Not yet implemented!\n");
-                        exit(1);
+                        K_Yukawa_CP_Hermite(numberOfSources,
+                            numberOfInterpolationPoints, batchStart, clusterStart,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, streamID);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
