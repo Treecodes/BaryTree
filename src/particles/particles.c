@@ -4,10 +4,9 @@
 #include <mpi.h>
 #include <string.h>
 
-#include "array.h"
-#include "struct_particles.h"
-#include "struct_nodes.h"
+#include "../utilities/array.h"
 
+#include "struct_particles.h"
 #include "particles.h"
 
 

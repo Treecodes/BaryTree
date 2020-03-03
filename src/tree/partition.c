@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "tools.h"
+#include "../utilities/tools.h"
+
 #include "partition.h"
-#include "globvars.h"
 
 /* 
  * partition determines the index MIDIND, after partitioning in place the arrays a, b, c,

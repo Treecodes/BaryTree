@@ -1,5 +1,5 @@
-#ifndef H_BARYTREE_ENUMS_H
-#define H_BARYTREE_ENUMS_H
+#ifndef H_BARYTREE_TYPES_H
+#define H_BARYTREE_TYPES_H
 
 
 typedef enum KERNEL
@@ -40,4 +40,4 @@ typedef enum COMPUTE_TYPE
 } COMPUTE_TYPE;
 
 
-#endif /* H_BARYTREE_ENUMS_H */
+#endif /* H_BARYTREE_TYPES_H */

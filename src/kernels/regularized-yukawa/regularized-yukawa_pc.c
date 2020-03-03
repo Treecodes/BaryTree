@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../struct_run_params.h"
+#include "../../run_params/struct_run_params.h"
 #include "regularized-yukawa_pc.h"
 
 

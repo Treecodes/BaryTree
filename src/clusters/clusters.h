@@ -1,10 +1,11 @@
 #ifndef H_CLUSTERFUNCTIONS_H
 #define H_CLUSTERFUNCTIONS_H
 
-#include "const.h"
+#include "../utilities/enums.h"
 
-#include "struct_nodes.h"
-#include "struct_particles.h"
+#include "../tree/struct_nodes.h"
+#include "../particles/struct_particles.h"
+
 #include "struct_clusters.h"
 
 void Clusters_PC_Setup(struct clusters **clusters, struct particles *sources, int order,

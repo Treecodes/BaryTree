@@ -1,50 +1,51 @@
 SET(SRCS_TREEDRIVER
 # Auxiliary utilities
-    tools.h
-    tools.c
-    xmalloc.h
-    xmalloc.c
-    array.h
-    const.h
+    utilities/tools.h
+    utilities/tools.c
+    utilities/xmalloc.h
+    utilities/xmalloc.c
+    utilities/array.h
+    utilities/enums.h
 # Global variables, which will be deprecated
     globvars.h
 # Calling functions for tree and direct calculations
-    directdriver.h
-    directdriver.c
-    treedriver.h
-    treedriver.c
+    drivers/directdriver.h
+    drivers/directdriver.c
+    drivers/treedriver.h
+    drivers/treedriver.c
 # Tree node struct and related functions
-    struct_nodes.h
-    tree.h
-    tree.c
-    batches.h
-    batches.c
+    tree/struct_nodes.h
+    tree/tree.h
+    tree/tree.c
+    tree/batches.h
+    tree/batches.c
 # Partitioning routines for tree building
-    partition.h
-    partition.c
+    tree/partition.h
+    tree/partition.c
 # Cluster struct and related functions
-    struct_clusters.h
-    clusters.h
-    clusters.c
-    clusters_cp.c
+    clusters/struct_clusters.h
+    clusters/clusters.h
+    clusters/clusters.c
+    clusters/clusters_cp.c
 # Particle struct and related functions
-    struct_particles.h
-    particles.h
-    particles.c
+    particles/struct_particles.h
+    particles/particles.h
+    particles/particles.c
 # Kernel struct and related functions
-    struct_run_params.h
-    run_params.h
-    run_params.c
+    run_params/struct_run_params.h
+    run_params/run_params.h
+    run_params/run_params.c
 # Interaction list related functions
-    interaction_lists.h
-    interaction_lists.c
-    interaction_lists_cp.c
-    interaction_lists_cc.c
+    interaction_lists/interaction_lists.h
+    interaction_lists/interaction_lists.c
+    interaction_lists/interaction_lists_cp_remote.c
+    interaction_lists/interaction_lists_cc.c
 # Interaction compute related functions
-    interaction_compute.h
-    interaction_compute_pc.c
-    interaction_compute_cp.c
-    interaction_compute_cc.c)
+    interaction_compute/interaction_compute.h
+    interaction_compute/interaction_compute_pc.c
+    interaction_compute/interaction_compute_cp.c
+    interaction_compute/interaction_compute_cc.c
+    interaction_compute/interaction_compute_downpass.c)
 
 
 SET(SRCS_K_COULOMB
@@ -147,9 +148,9 @@ SET(SRCS_KERNELS ${SRCS_K_COULOMB}
 set(TRGT BaryTree_cpu)
 add_library(${TRGT} ${SRCS_TREEDRIVER} ${SRCS_KERNELS})
 target_sources(${TRGT}          PRIVATE 
-                                    BaryTreeInterface.c
+                                    interface/BaryTreeInterface.c
                                  PUBLIC  
-                                    ${CMAKE_CURRENT_SOURCE_DIR}/BaryTreeInterface.h)
+                                    interface/BaryTreeInterface.h)
 set_target_properties(${TRGT}   PROPERTIES
                                     POSITION_INDEPENDENT_CODE ON)
 target_compile_features(${TRGT} PUBLIC
@@ -159,9 +160,9 @@ target_link_libraries(${TRGT}   PUBLIC
                                     MPI::MPI_C
                                     $<$<C_COMPILER_ID:GNU>:m>)
 
-install(TARGETS ${TRGT}               LIBRARY DESTINATION lib
-                                      ARCHIVE DESTINATION lib)
-install(FILES   BaryTreeInterface.h           DESTINATION include)
+install(TARGETS ${TRGT}                         LIBRARY DESTINATION lib
+                                                ARCHIVE DESTINATION lib)
+install(FILES   interface/BaryTreeInterface.h           DESTINATION include)
 
 
 if(ENABLE_GPU_BUILD)
@@ -169,9 +170,9 @@ if(ENABLE_GPU_BUILD)
     add_library(${TRGT} ${SRCS_TREEDRIVER} ${SRCS_KERNELS})
     target_compile_definitions(${TRGT} PRIVATE OPENACC_ENABLED)
     target_sources(${TRGT}        PRIVATE
-                                      BaryTreeInterface.c
+                                      interface/BaryTreeInterface.c
                                   PUBLIC 
-                                      ${CMAKE_CURRENT_SOURCE_DIR}/BaryTreeInterface.h)
+                                      interface/BaryTreeInterface.h)
     set_target_properties(${TRGT} PROPERTIES
                                       POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC
@@ -180,7 +181,7 @@ if(ENABLE_GPU_BUILD)
                                       OpenACC_C
                                       $<$<C_COMPILER_ID:GNU>:m>)
 
-    install(TARGETS ${TRGT}             LIBRARY DESTINATION lib
-                                        ARCHIVE DESTINATION lib)
-    install(FILES   BaryTreeInterface.h         DESTINATION include)
+    install(TARGETS ${TRGT}                       LIBRARY DESTINATION lib
+                                                  ARCHIVE DESTINATION lib)
+    install(FILES   interface/BaryTreeInterface.h         DESTINATION include)
 endif()

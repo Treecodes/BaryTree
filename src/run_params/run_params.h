@@ -1,7 +1,7 @@
 #ifndef H_RUN_PARAMS_FUNCTIONS_H
 #define H_RUN_PARAMS_FUNCTIONS_H
 
-#include "const.h"
+#include "../utilities/enums.h"
 #include "struct_run_params.h"
 
 

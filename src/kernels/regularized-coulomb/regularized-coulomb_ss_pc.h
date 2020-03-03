@@ -2,7 +2,7 @@
 #ifndef H_K_REGULARIZED_COULOMB_SS_PC_LAGRANGE_H
 #define H_K_REGULARIZED_COULOMB_SS_PC_LAGRANGE_H
  
-#include "../../struct_run_params.h"
+#include "../../run_params/struct_run_params.h"
 
 
 void K_RegularizedCoulomb_SS_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,

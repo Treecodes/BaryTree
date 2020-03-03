@@ -5,18 +5,17 @@
 #include <float.h>
 #include <mpi.h>
 
+#include "../src/utilities/tools.h"
+
+#include "../src/particles/struct_particles.h"
+#include "../src/run_params/struct_run_params.h"
+#include "../src/run_params/run_params.h"
+
+#include "../src/drivers/treedriver.h"
+#include "../src/drivers/directdriver.h"
+
 #include "zoltan_fns.h"
 #include "support_fns.h"
-
-#include "../src/treedriver.h"
-#include "../src/directdriver.h"
-
-#include "../src/tools.h"
-#include "../src/const.h"
-#include "../src/run_params.h"
-
-#include "../src/struct_particles.h"
-#include "../src/struct_run_params.h"
 
 
 int main(int argc, char **argv)

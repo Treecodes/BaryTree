@@ -1,8 +1,9 @@
 #ifndef H_TREEFUNCTIONS_H
 #define H_TREEFUNCTIONS_H
 
+#include "../particles/struct_particles.h"
+
 #include "struct_nodes.h"
-#include "struct_particles.h"
 
 
 /* declaration of treecode support functions */

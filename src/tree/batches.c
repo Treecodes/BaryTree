@@ -1,21 +1,16 @@
-/*
- *Procedures for Cluster-Particle Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <mpi.h>
 
-#include "array.h"
-#include "globvars.h"
+#include "../utilities/array.h"
+#include "../utilities/tools.h"
+
+#include "../particles/struct_particles.h"
+
 #include "struct_nodes.h"
-#include "struct_particles.h"
-#include "tools.h"
-
 #include "partition.h"
-
 #include "batches.h"
-
 
 
 static void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],

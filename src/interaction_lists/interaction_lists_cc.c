@@ -7,13 +7,12 @@
 #include <float.h>
 #include <mpi.h>
 
-#include "tools.h"
-#include "array.h"
-#include "globvars.h"
+#include "../utilities/tools.h"
+#include "../utilities/array.h"
 
-#include "struct_nodes.h"
-#include "struct_particles.h"
-#include "struct_run_params.h"
+#include "../tree/struct_nodes.h"
+#include "../particles/struct_particles.h"
+#include "../run_params/struct_run_params.h"
 
 #include "interaction_lists.h"
 

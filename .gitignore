@@ -1,4 +1,3 @@
-src/*.o
 data/*
 .DS_Store
 */.DS_Store
@@ -8,13 +7,10 @@ data/*
 *.settings*
 *.tsv
 *.csv
-*.o
 *.xml
 *.prefs
-*.exe
 build/
 .project
 .cproject
 .pydevproject
-examples/library_example_cpu
-examples/library_example_gpu
+interfaces/python/__pycache__

@@ -8,18 +8,17 @@
 #include <float.h>
 #include <mpi.h>
 
-#include "array.h"
-#include "const.h"
+#include "../utilities/array.h"
 
-#include "struct_nodes.h"
-#include "struct_particles.h"
-#include "struct_run_params.h"
+#include "../tree/struct_nodes.h"
+#include "../particles/struct_particles.h"
+#include "../run_params/struct_run_params.h"
 
-#include "kernels/coulomb/coulomb.h"
-#include "kernels/yukawa/yukawa.h"
-#include "kernels/regularized-coulomb/regularized-coulomb.h"
-#include "kernels/regularized-yukawa/regularized-yukawa.h"
-#include "kernels/atan/atan.h"
+#include "../kernels/coulomb/coulomb.h"
+#include "../kernels/yukawa/yukawa.h"
+#include "../kernels/regularized-coulomb/regularized-coulomb.h"
+#include "../kernels/regularized-yukawa/regularized-yukawa.h"
+#include "../kernels/atan/atan.h"
 
 
 #include "interaction_compute.h"

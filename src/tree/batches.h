@@ -1,8 +1,8 @@
 #ifndef H_BATCHFUNCTIONS_H
 #define H_BATCHFUNCTIONS_H
 
+#include "../particles/struct_particles.h"
 #include "struct_nodes.h"
-#include "struct_particles.h"
 
 void Batches_Alloc(struct tnode_array **batches, double *batch_lim,
                    struct particles *particles, int batch_size);

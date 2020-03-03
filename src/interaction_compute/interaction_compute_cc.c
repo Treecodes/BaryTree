@@ -9,33 +9,30 @@
 #include <float.h>
 #include <mpi.h>
 
-#include "array.h"
-#include "globvars.h"
+#include "../tree/struct_nodes.h"
+#include "../particles/struct_particles.h"
+#include "../run_params/struct_run_params.h"
 
-#include "struct_nodes.h"
-#include "struct_particles.h"
-#include "struct_run_params.h"
-
-#include "kernels/coulomb/coulomb.h"
-#include "kernels/yukawa/yukawa.h"
-#include "kernels/regularized-coulomb/regularized-coulomb.h"
-#include "kernels/regularized-yukawa/regularized-yukawa.h"
+#include "../kernels/coulomb/coulomb.h"
+#include "../kernels/yukawa/yukawa.h"
+#include "../kernels/regularized-coulomb/regularized-coulomb.h"
+#include "../kernels/regularized-yukawa/regularized-yukawa.h"
 
 #include "interaction_compute.h"
 
 
-void InteractionCompute_CC_1(struct tnode_array *source_tree_array, struct tnode_array *target_tree_array,
-                             int **approx_inter_list, int **direct_inter_list,
-                             double *source_x, double *source_y, double *source_z,
-                             double *source_q, double *source_w,
-                             double *target_x, double *target_y, double *target_z, double *target_q,
-                             double *source_cluster_x, double *source_cluster_y, double *source_cluster_z,
-                             double *source_cluster_q, double *source_cluster_w,
-                             double *target_cluster_x, double *target_cluster_y, double *target_cluster_z,
-                             double *target_cluster_q, double *target_cluster_w,
-                             double *pointwisePotential,
-                             int numSources, int numTargets, int numSourceClusterPoints, int numTargetClusterPoints,
-                             struct RunParams *run_params)
+void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_array *target_tree_array,
+                           int **approx_inter_list, int **direct_inter_list,
+                           double *source_x, double *source_y, double *source_z,
+                           double *source_q, double *source_w,
+                           double *target_x, double *target_y, double *target_z, double *target_q,
+                           double *source_cluster_x, double *source_cluster_y, double *source_cluster_z,
+                           double *source_cluster_q, double *source_cluster_w,
+                           double *target_cluster_x, double *target_cluster_y, double *target_cluster_z,
+                           double *target_cluster_q, double *target_cluster_w,
+                           double *pointwisePotential,
+                           int numSources, int numTargets, int numSourceClusterPoints, int numTargetClusterPoints,
+                           struct RunParams *run_params)
 {
 
     int source_tree_numnodes = source_tree_array->numnodes;

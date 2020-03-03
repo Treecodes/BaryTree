@@ -4,10 +4,10 @@
 #include <mpi.h>
 #include <string.h>
 
-#include "const.h"
-#include "array.h"
-#include "struct_run_params.h"
+#include "../utilities/array.h"
+#include "../utilities/enums.h"
 
+#include "struct_run_params.h"
 #include "run_params.h"
 
 

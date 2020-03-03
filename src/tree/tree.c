@@ -7,13 +7,15 @@
 #include <float.h>
 #include <mpi.h>
 
-#include "array.h"
-#include "globvars.h"
-#include "struct_nodes.h"
-#include "struct_particles.h"
-#include "tools.h"
-#include "partition.h"
+#include "../utilities/array.h"
+#include "../utilities/tools.h"
 
+#include "../globvars.h"
+
+#include "../particles/struct_particles.h"
+
+#include "struct_nodes.h"
+#include "partition.h"
 #include "tree.h"
 
 

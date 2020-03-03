@@ -2,7 +2,7 @@
 #ifndef H_K_YUKAWA_SS_DIRECT_H
 #define H_K_YUKAWA_SS_DIRECT_H
  
-#include "../../struct_run_params.h"
+#include "../../run_params/struct_run_params.h"
 
 
 void K_Yukawa_SS_Direct(int number_of_targets_in_batch, int number_of_source_points_in_cluster,

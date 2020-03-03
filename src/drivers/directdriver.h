@@ -1,8 +1,8 @@
 #ifndef H_DIRECTDRIVER_H
 #define H_DIRECTDRIVER_H
 
-#include "struct_particles.h"
-#include "struct_run_params.h"
+#include "../particles/struct_particles.h"
+#include "../run_params/struct_run_params.h"
 
 
 void directdriver(struct particles *sources, struct particles *targets, struct RunParams *run_params,

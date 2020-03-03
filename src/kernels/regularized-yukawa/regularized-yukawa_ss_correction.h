@@ -2,7 +2,7 @@
 #ifndef H_REGULARIZED_YUKAWA_SS_CORRECTION_H
 #define H_REGULARIZED_YUKAWA_SS_CORRECTION_H
  
-#include "../../struct_run_params.h"
+#include "../../run_params/struct_run_params.h"
 
 
 void K_RegularizedYukawa_SS_Correction(double *potential, double *target_q,

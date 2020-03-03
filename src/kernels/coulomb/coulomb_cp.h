@@ -2,7 +2,7 @@
 #ifndef H_K_COULOMB_CP_H
 #define H_K_COULOMB_CP_H
  
-#include "../../struct_run_params.h"
+#include "../../run_params/struct_run_params.h"
 
 
 void K_Coulomb_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,

@@ -6,17 +6,18 @@
 #include <string.h>
 #include <mpi.h>
 
+#include "../src/utilities/array.h"
+
+#include "../src/particles/struct_particles.h"
+
+#include "../src/run_params/struct_run_params.h"
+#include "../src/run_params/run_params.h"
+
+#include "../src/interface/BaryTreeInterface.h"
+#include "../src/drivers/treedriver.h"
+#include "../src/drivers/directdriver.h"
+
 #include "minunit.h"
-
-#include "../src/BaryTreeInterface.h"
-#include "../src/treedriver.h"
-#include "../src/directdriver.h"
-
-#include "../src/run_params.h"
-#include "../src/array.h"
-
-#include "../src/struct_particles.h"
-#include "../src/struct_run_params.h"
 
 
 int tests_run = 0;

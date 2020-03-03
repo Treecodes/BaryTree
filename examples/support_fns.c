@@ -2,9 +2,8 @@
 #include <stdio.h>
 #include <strings.h>
 
-#include "../src/const.h"
-#include "../src/run_params.h"
-#include "../src/struct_run_params.h"
+#include "../src/run_params/run_params.h"
+#include "../src/run_params/struct_run_params.h"
 
 #include "support_fns.h"
 

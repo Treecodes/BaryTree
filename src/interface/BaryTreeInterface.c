@@ -4,18 +4,14 @@
 #include <limits.h>
 #include <string.h>
 
-#include "array.h"
-#include "tools.h"
-#include "const.h"
 
-#include "struct_particles.h"
-#include "struct_run_params.h"
+#include "../particles/struct_particles.h"
+#include "../particles/particles.h"
 
-#include "run_params.h"
-#include "particles.h"
-#include "tree.h"
+#include "../run_params/struct_run_params.h"
+#include "../run_params/run_params.h"
 
-#include "treedriver.h"
+#include "../drivers/treedriver.h"
 #include "BaryTreeInterface.h"
 
 

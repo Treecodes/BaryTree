@@ -1,7 +1,7 @@
 #ifndef H_BARYTREE_INTERFACE_H
 #define H_BARYTREE_INTERFACE_H
 
-#include "const.h"
+#include "../utilities/enums.h"
 
 
 void BaryTreeInterface(int numTargets, int numSources,

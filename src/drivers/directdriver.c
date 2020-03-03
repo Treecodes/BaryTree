@@ -5,15 +5,16 @@
 #include <float.h>
 #include <mpi.h>
 
-#include "array.h"
-#include "tools.h"
-#include "const.h"
+#include "../utilities/array.h"
+#include "../utilities/tools.h"
+#include "../utilities/enums.h"
 
-#include "struct_particles.h"
-#include "struct_run_params.h"
+#include "../particles/struct_particles.h"
+#include "../particles/particles.h"
 
-#include "interaction_compute.h"
-#include "particles.h"
+#include "../run_params/struct_run_params.h"
+
+#include "../interaction_compute/interaction_compute.h"
 
 #include "directdriver.h"
 

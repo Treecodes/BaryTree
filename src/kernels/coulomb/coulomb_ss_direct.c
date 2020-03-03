@@ -2,7 +2,7 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../struct_run_params.h"
+#include "../../run_params/struct_run_params.h"
 #include "coulomb_ss_direct.h"
 
 void K_Coulomb_SS_Direct(int number_of_targets_in_batch, int number_of_source_points_in_cluster,

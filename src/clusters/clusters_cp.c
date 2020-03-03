@@ -5,15 +5,16 @@
 #include <float.h>
 #include <mpi.h>
 
-#include "array.h"
-#include "tools.h"
-#include "globvars.h"
-#include "const.h"
+#include "../utilities/array.h"
+#include "../utilities/tools.h"
+#include "../utilities/enums.h"
 
-#include "struct_nodes.h"
-#include "struct_particles.h"
+#include "../globvars.h"
+
+#include "../tree/struct_nodes.h"
+#include "../particles/struct_particles.h"
+
 #include "struct_clusters.h"
-
 #include "clusters.h"
 
 

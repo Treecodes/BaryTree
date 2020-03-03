@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <mpi.h>
 
-#include "../src/BaryTreeInterface.h"
+#include "../src/interface/BaryTreeInterface.h"
 
 int main(int argc, char **argv)
 {

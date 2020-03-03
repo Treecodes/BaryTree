@@ -3,23 +3,27 @@
 #include <mpi.h>
 #include <limits.h>
 
-#include "array.h"
-#include "tools.h"
-#include "globvars.h"
-#include "const.h"
+#include "../utilities/array.h"
+#include "../utilities/tools.h"
+#include "../utilities/enums.h"
 
-#include "struct_nodes.h"
-#include "struct_particles.h"
-#include "struct_clusters.h"
-#include "struct_run_params.h"
+#include "../globvars.h"
 
-#include "interaction_lists.h"
-#include "interaction_compute.h"
-#include "tree.h"
-#include "batches.h"
-#include "clusters.h"
-#include "particles.h"
-#include "run_params.h"
+#include "../tree/struct_nodes.h"
+#include "../tree/tree.h"
+#include "../tree/batches.h"
+
+#include "../particles/struct_particles.h"
+#include "../particles/particles.h"
+
+#include "../clusters/struct_clusters.h"
+#include "../clusters/clusters.h"
+
+#include "../run_params/struct_run_params.h"
+#include "../run_params/run_params.h"
+
+#include "../interaction_lists/interaction_lists.h"
+#include "../interaction_compute/interaction_compute.h"
 
 #include "treedriver.h"
 
@@ -334,7 +338,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
 
 
-        InteractionCompute_CP_1(tree_array, batches,
+        InteractionCompute_CP(tree_array, batches,
                         local_approx_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
@@ -363,7 +367,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
 
-            InteractionCompute_CP_1(tree_array, let_batches_array,
+            InteractionCompute_CP(tree_array, let_batches_array,
                                     let_approx_inter_list, let_direct_inter_list,
                                     let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                     targets->x, targets->y, targets->z, targets->q,
@@ -385,7 +389,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
 
         
-        InteractionCompute_CP_2(tree_array,
+        InteractionCompute_Downpass(tree_array,
                                 targets->x, targets->y, targets->z, targets->q,
                                 clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
                                 potential_array,
@@ -1362,7 +1366,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         }
         time1 = MPI_Wtime();
 
-        InteractionCompute_CC_1(source_tree_array, target_tree_array,
+        InteractionCompute_CC(source_tree_array, target_tree_array,
                         local_approx_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
@@ -1402,7 +1406,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-            InteractionCompute_CC_1(let_tree_array, target_tree_array,
+            InteractionCompute_CC(let_tree_array, target_tree_array,
                                    let_approx_inter_list, let_direct_inter_list,
                                    let_sources->x, let_sources->y, let_sources->z,
                                    let_sources->q, let_sources->w,
@@ -1427,7 +1431,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
         time1 = MPI_Wtime();
         
-        InteractionCompute_CP_2(target_tree_array,
+        InteractionCompute_Downpass(target_tree_array,
                                 targets->x, targets->y, targets->z, targets->q,
                                 target_clusters->x, target_clusters->y, target_clusters->z,
                                 target_clusters->q, target_clusters->w,
