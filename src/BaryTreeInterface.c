@@ -38,7 +38,8 @@ void BaryTreeInterface(int numTargets, int numSources,
         sizeCheckFactor = 4.0;
     }
 
-    struct RunParams *run_params;
+
+    struct RunParams *run_params = NULL;
     RunParams_Setup(&run_params,
                     kernel, numKernelParams, kernelParams,
                     approximation, singularity, compute_type,

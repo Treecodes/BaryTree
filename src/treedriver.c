@@ -19,6 +19,7 @@
 #include "batches.h"
 #include "clusters.h"
 #include "particles.h"
+#include "run_params.h"
 
 #include "treedriver.h"
 
@@ -425,7 +426,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8]; // total compute time
     
         MPI_Barrier(MPI_COMM_WORLD);
-        fprintf(stderr, "Done cleaning up.\n");
+        if (run_params->verbosity > 0) fprintf(stderr, "Done cleaning up.\n");
 
         return;
         
@@ -932,7 +933,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8]; // total compute time
     
         MPI_Barrier(MPI_COMM_WORLD);
-        fprintf(stderr, "Done cleaning up.\n");
+        if (run_params->verbosity > 0) fprintf(stderr, "Done cleaning up.\n");
 
         return;
 
@@ -1473,7 +1474,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8]; // total compute time
         
         MPI_Barrier(MPI_COMM_WORLD);
-        fprintf(stderr, "Done cleaning up.\n");
+        if (run_params->verbosity > 0) fprintf(stderr, "Done cleaning up.\n");
 
         return;
         
