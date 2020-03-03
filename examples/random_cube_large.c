@@ -16,8 +16,6 @@
 
 #include "zoltan_fns.h"
 #include "support_fns.h"
-#include "zoltan_fns.h"
-#include "support_fns.h"
 
 const unsigned mrand = 1664525u;
 const unsigned crand = 1013904223u;
