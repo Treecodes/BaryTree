@@ -1,4 +1,7 @@
 #include <math.h>
+#ifdef OPENACC_ENABLED
+    #include <accelmath.h>
+#endif
 #include <float.h>
 #include <stdio.h>
 
