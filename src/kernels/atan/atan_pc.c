@@ -13,9 +13,9 @@ void K_Atan_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolat
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
-    double domainLength=run_params->kernel_params[0];
-    double delta=run_params->kernel_params[1];
-    double wadj = 1/(1-delta/sqrt(1+delta*delta));
+    double domainLength = run_params->kernel_params[0];
+    double delta = run_params->kernel_params[1];
+    double wadj = 1. / (1. - delta / sqrt(1. + delta * delta));
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
@@ -27,20 +27,27 @@ void K_Atan_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolat
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
 
+        int ii = starting_index_of_target + i;
         double temporary_potential = 0.0;
-        double tz = target_z[starting_index_of_target + i];
+        double tz = target_z[ii];
 
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
 
-            double dz = (tz - cluster_z[starting_index_of_cluster + j])/domainLength;
+            int jj = starting_index_of_cluster + j;
+            double dz = (tz - cluster_z[jj]) / domainLength;
 
+            if (fabs(dz - 0.5) > DBL_MIN) {
+                if (fabs(dz + 0.5) > DBL_MIN) {
 
-            if (fabs(dz-0.5) > DBL_MIN) {
-                if (fabs(dz+0.5) > DBL_MIN) {
-//                    temporary_potential += cluster_charge[starting_index_of_cluster + j] * ( 1/M_PI * atan( sqrt( 1 + 1./(delta*delta))* tan(M_PI * dz)) - fmod(dz-.5,1.) + .5);
+                    double modz = fmod(0.5 - dz, 1.0);
+                    modz += (0.5 - dz < 0 ? 1.0 : 0);
+
+                    temporary_potential += cluster_charge[jj]
+                                         * (1. / M_PI * atan(sqrt(1. + 1. / (delta * delta)) * tan(M_PI * dz))
+                                         + modz - 0.5);
                 }
             }
 
@@ -49,7 +56,7 @@ void K_Atan_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolat
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
-        potential[starting_index_of_target + i] += wadj*temporary_potential;
+        potential[ii] += wadj * temporary_potential;
     }
 #ifdef OPENACC_ENABLED
     } // end kernel
