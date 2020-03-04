@@ -1,134 +1,32 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <mpi.h>
-#include <zoltan.h>
 #include <time.h>
 #include <float.h>
+#include <mpi.h>
 
-#include "../src/treedriver.h"
-#include "../src/directdriver.h"
-#include "../src/struct_particles.h"
-#include "../src/struct_kernel.h"
-#include "../src/kernel.h"
-#include "../src/tools.h"
-#include "../src/array.h"
+#include "../src/utilities/tools.h"
 
+#include "../src/particles/struct_particles.h"
+#include "../src/run_params/struct_run_params.h"
+#include "../src/run_params/run_params.h"
 
-typedef struct{
-  int numGlobalPoints;
-  int numMyPoints;
-  ZOLTAN_ID_PTR myGlobalIDs;
-  double *x;
-  double *y;
-  double *z;
-  double *q;
-  double *w;
-  double *b;
-} MESH_DATA;
+#include "../src/drivers/treedriver.h"
+#include "../src/drivers/directdriver.h"
 
-typedef struct{
-  ZOLTAN_ID_TYPE myGlobalID;
-  double x;
-  double y;
-  double z;
-  double q;
-  double w;
-  double b;
-} SINGLE_MESH_DATA;
-
-
-/* Application defined query functions */
-static int get_number_of_objects(void *data, int *ierr);
-static void get_object_list(void *data, int sizeGID, int sizeLID,
-            ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-                  int wgt_dim, float *obj_wgts, int *ierr);
-static int get_num_geometry(void *data, int *ierr);
-static void get_geometry_list(void *data, int sizeGID, int sizeLID,
-             int num_obj, ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-             int num_dim, double *geom_vec, int *ierr);
-static void ztn_pack(void *data, int num_gid_entries, int num_lid_entries,
-              ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
-              int dest, int size, char *buf, int *ierr);
-static void ztn_unpack(void *data, int num_gid_entries,
-                ZOLTAN_ID_PTR global_id,
-                int size, char *buf, int *ierr);
-static int ztn_obj_size(void *data, int num_gid_entries, int num_lid_entries,
-    ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id, int *ierr);
+#include "zoltan_fns.h"
+#include "support_fns.h"
 
 
 int main(int argc, char **argv)
 {
-
-    //run parameters
-    int N = 10000; 
-    int treeType = 1;
-    int interpOrder = 5; 
-    double theta = 0.5; 
-    int maxPerLeaf = 500;
-    int maxPerBatch = 500; 
-    double sizeCheckFactor = 1.0;
-
-    char kernelName[256] = "coulomb";
-    char singularityHandling[256] = "skipping";
-    char approximationName[256] = "lagrange";
-
-    int numberOfKernelParameters = 0;
-    double kernelParameters[32];
-
-    int runDirect = 0;
-    int slice = 1;
-
-    int verbosity = 0;
+    int N, M, run_direct, slice;
+    struct RunParams *run_params;
 
     FILE *fp = fopen(argv[1], "r");
-    char c[256], c1[256], c2[256];
 
-    while (fgets(c, 256, fp) != NULL) {
-        sscanf(c, "%s %s", c1, c2);
-    
-        if (strncmp(c1, "num_particles", 3) == 0) {
-            N = atoi(c2);
-        } else if (strncmp(c1, "order", 5) == 0) {
-            interpOrder = atoi(c2);
-        } else if (strncmp(c1, "theta", 5) == 0) {
-            theta = atof(c2);
-        } else if (strncmp(c1, "max_per_leaf", 12) == 0) {
-            maxPerLeaf = atoi(c2);
-        } else if (strncmp(c1, "max_per_batch", 12) == 0) {
-            maxPerBatch = atoi(c2);
-        } else if (strncmp(c1, "kernel_name", 11) == 0) {
-            strcpy(kernelName, c2);
-        } else if (strncmp(c1, "singularity", 11) == 0) {
-            strcpy(singularityHandling, c2);
-        } else if (strncmp(c1, "approximation", 13) == 0) {
-            strcpy(approximationName, c2);
-        } else if (strncmp(c1, "tree_type", 9) == 0) {
-            treeType = atoi(c2);
-        } else if (strncmp(c1, "size_check", 10) == 0) {
-            sizeCheckFactor = atof(c2);
-        } else if (strncmp(c1, "run_direct", 10) == 0) {
-            runDirect = atoi(c2);
-        } else if (strncmp(c1, "verbosity", 9) == 0) {
-            verbosity = atoi(c2);
-        } else if (strncmp(c1, "slice", 5) == 0) {
-            slice = atoi(c2);
-        } else if (strncmp(c1, "kernel_params", 13) == 0) {
-            char *k_param = strtok(c2, " ,");
-            while (k_param != NULL) {
-                kernelParameters[numberOfKernelParameters] = atof(k_param);
-                numberOfKernelParameters++;
-                k_param = strtok(NULL, " ,");
-            }
-        } else {
-            fprintf(stderr, "ERROR! Undefined token \"%s\". Exiting.\n", c1);
-            return 1;
-        }
-    }
+    Parse_Params(fp, &run_params, &N, &M, &run_direct, &slice);
 
-    struct kernel *kernel = malloc(sizeof (struct kernel));
-    Kernel_Allocate(kernel, numberOfKernelParameters, kernelName);
-    Kernel_SetParams(kernel, kernelParameters);
 
     int rc, rank, numProcs;
     MPI_Init(&argc, &argv);
@@ -146,7 +44,7 @@ int main(int argc, char **argv)
     ZOLTAN_ID_PTR importGlobalGids, importLocalGids, exportGlobalGids, exportLocalGids; 
     int *importProcs, *importToPart, *exportProcs, *exportToPart;
     int *parts;
-    MESH_DATA mySources;
+    MESH_DATA mySources, myTargets;
 
 
     struct particles *sources = NULL;
@@ -162,14 +60,41 @@ int main(int argc, char **argv)
     double time1, time2;
 
 
+    /*************************************************/
+    /***** Initializing Zoltan ***********************/
+    /*************************************************/
+
+    time1 = MPI_Wtime();
+
     if (Zoltan_Initialize(argc, argv, &ver) != ZOLTAN_OK) {
         if (rank == 0) printf("Zoltan failed to initialize. Exiting.\n");
         MPI_Finalize();
         exit(0);
     }
 
+    zz = Zoltan_Create(MPI_COMM_WORLD);
 
-    time1 = MPI_Wtime();
+    /* General parameters */
+
+    Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
+    Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
+    Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
+    Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
+    Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
+    Zoltan_Set_Param(zz, "RETURN_LISTS", "ALL");
+    Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE"); 
+
+    /* RCB parameters */
+
+    Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
+    Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
+
+
+    /*************************************************/
+    /***** Setting up sources and load balancing *****/
+    /*************************************************/
+
+    srand(1);
 
     mySources.numGlobalPoints = N * numProcs;
     mySources.numMyPoints = N;
@@ -193,35 +118,17 @@ int main(int argc, char **argv)
         }
     }
 
-    if (verbosity>0) printf("Created sources.\n");
-
-    zz = Zoltan_Create(MPI_COMM_WORLD);
-
-    /* General parameters */
-
-    Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
-    Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
-    Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
-    Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
-    Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
-    Zoltan_Set_Param(zz, "RETURN_LISTS", "ALL");
-    Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE"); 
-
-    /* RCB parameters */
-
-    Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
-    Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
+    if (run_params->verbosity > 0) printf("Created sources.\n");
 
     /* Query functions, to provide geometry to Zoltan */
 
-    Zoltan_Set_Num_Obj_Fn(zz, get_number_of_objects, &mySources);
-    Zoltan_Set_Obj_List_Fn(zz, get_object_list, &mySources);
-    Zoltan_Set_Num_Geom_Fn(zz, get_num_geometry, &mySources);
-    Zoltan_Set_Geom_Multi_Fn(zz, get_geometry_list, &mySources);
+    Zoltan_Set_Num_Obj_Fn(zz, ztn_get_number_of_objects, &mySources);
+    Zoltan_Set_Obj_List_Fn(zz, ztn_get_object_list, &mySources);
+    Zoltan_Set_Num_Geom_Fn(zz, ztn_get_num_geometry, &mySources);
+    Zoltan_Set_Geom_Multi_Fn(zz, ztn_get_geometry_list, &mySources);
     Zoltan_Set_Obj_Size_Fn(zz, ztn_obj_size, &mySources);
     Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &mySources);
     Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
-
 
     rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
                 &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
@@ -257,30 +164,14 @@ int main(int argc, char **argv)
         printf("Error! Zoltan has failed. Exiting. \n");
         MPI_Finalize();
         Zoltan_Destroy(&zz);
-        exit(0);
+        exit(1);
     }
 
-    /******************************************************************
-     ** Free the arrays allocated by Zoltan_LB_Partition, and free
-     ** the storage allocated for the Zoltan structure.
-     ******************************************************************/
-
-    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
-                        &importProcs, &importToPart);
-    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, 
-                        &exportProcs, &exportToPart);
-
-    if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
-
+    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, &importProcs, &importToPart);
+    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
 
     sources = malloc(sizeof(struct particles));
-    targets = malloc(sizeof(struct particles));
-    targets_sample = malloc(sizeof(struct particles));
-    potential = malloc(sizeof(double) * mySources.numMyPoints);
-    potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
-
     sources->num = mySources.numMyPoints;
-    targets->num = mySources.numMyPoints;
 
     //MPI-allocated source arrays for RMA use
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
@@ -303,16 +194,121 @@ int main(int argc, char **argv)
     free(mySources.b);
     free(mySources.myGlobalIDs);
 
-    //Making the targets, but just as a copy of sources
-    targets->x = malloc(targets->num * sizeof(double));
-    targets->y = malloc(targets->num * sizeof(double));
-    targets->z = malloc(targets->num * sizeof(double));
-    targets->q = malloc(targets->num * sizeof(double));
-    memcpy(targets->x, sources->x, targets->num * sizeof(double));
-    memcpy(targets->y, sources->y, targets->num * sizeof(double));
-    memcpy(targets->z, sources->z, targets->num * sizeof(double));
-    memcpy(targets->q, sources->q, targets->num * sizeof(double));
 
+    /*************************************************/
+    /***** Setting up targets and load balancing *****/
+    /*************************************************/
+
+    myTargets.numGlobalPoints = M * numProcs;
+    myTargets.numMyPoints = M;
+    myTargets.x = malloc(M*sizeof(double));
+    myTargets.y = malloc(M*sizeof(double));
+    myTargets.z = malloc(M*sizeof(double));
+    myTargets.q = malloc(M*sizeof(double));
+    myTargets.w = malloc(M*sizeof(double));
+    myTargets.b = malloc(M*sizeof(double)); // load balancing weights
+    myTargets.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * M);
+
+    srand(2);
+
+    for (int j = 0; j < rank+1; ++j) {
+        for (int i = 0; i < M; ++i) {
+            myTargets.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            myTargets.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            myTargets.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            myTargets.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            myTargets.w[i] = 1.0;
+            myTargets.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+            myTargets.b[i] = 1.0; // dummy weighting scheme
+        }
+    }
+
+    if (run_params->verbosity > 0) printf("Created targets.\n");
+
+    /* Query functions, to provide geometry to Zoltan */
+
+    Zoltan_Set_Num_Obj_Fn(zz, ztn_get_number_of_objects, &myTargets);
+    Zoltan_Set_Obj_List_Fn(zz, ztn_get_object_list, &myTargets);
+    Zoltan_Set_Num_Geom_Fn(zz, ztn_get_num_geometry, &myTargets);
+    Zoltan_Set_Geom_Multi_Fn(zz, ztn_get_geometry_list, &myTargets);
+    Zoltan_Set_Obj_Size_Fn(zz, ztn_obj_size, &myTargets);
+    Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &myTargets);
+    Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &myTargets);
+
+    rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
+                &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
+                &numGidEntries,  /* Number of integers used for a global ID */
+                &numLidEntries,  /* Number of integers used for a local ID */
+                &numImport,      /* Number of vertices to be sent to me */
+                &importGlobalGids,  /* Global IDs of vertices to be sent to me */
+                &importLocalGids,   /* Local IDs of vertices to be sent to me */
+                &importProcs,    /* Process rank for source of each incoming vertex */
+                &importToPart,   /* New partition for each incoming vertex */
+                &numExport,      /* Number of vertices I must send to other processes*/
+                &exportGlobalGids,  /* Global IDs of the vertices I must send */
+                &exportLocalGids,   /* Local IDs of the vertices I must send */
+                &exportProcs,    /* Process to which I send each of the vertices */
+                &exportToPart);  /* Partition to which each vertex will belong */
+
+    i = 0;
+    while (i < myTargets.numMyPoints) {
+        if ((int)myTargets.myGlobalIDs[i] < 0) {
+            myTargets.x[i] = myTargets.x[myTargets.numMyPoints-1];
+            myTargets.y[i] = myTargets.y[myTargets.numMyPoints-1];
+            myTargets.z[i] = myTargets.z[myTargets.numMyPoints-1];
+            myTargets.q[i] = myTargets.q[myTargets.numMyPoints-1];
+            myTargets.w[i] = myTargets.w[myTargets.numMyPoints-1];
+            myTargets.myGlobalIDs[i] = mySources.myGlobalIDs[myTargets.numMyPoints-1];
+            myTargets.numMyPoints--; 
+        } else {
+          i++;
+        }
+    }
+
+    if (rc != ZOLTAN_OK) {
+        printf("Error! Zoltan has failed. Exiting. \n");
+        MPI_Finalize();
+        Zoltan_Destroy(&zz);
+        exit(1);
+    }
+
+    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, &importProcs, &importToPart);
+    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
+    Zoltan_Destroy(&zz);
+
+    targets = malloc(sizeof(struct particles));
+    targets->num = mySources.numMyPoints;
+
+    //MPI-allocated source arrays for RMA use
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->x));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->y));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->z));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->q));
+    memcpy(targets->x, myTargets.x, targets->num * sizeof(double));
+    memcpy(targets->y, myTargets.y, targets->num * sizeof(double));
+    memcpy(targets->z, myTargets.z, targets->num * sizeof(double));
+    memcpy(targets->q, myTargets.q, targets->num * sizeof(double));
+
+    //Deallocating arrays used for Zoltan load balancing
+    free(myTargets.x);
+    free(myTargets.y);
+    free(myTargets.z);
+    free(myTargets.q);
+    free(myTargets.w);
+    free(myTargets.b);
+    free(myTargets.myGlobalIDs);
+
+    if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
+
+
+    /******************************************************/
+    /******* Initializing direct and treedriver runs ******/
+    /******************************************************/
+
+    targets_sample = malloc(sizeof(struct particles));
+
+    potential = malloc(sizeof(double) * mySources.numMyPoints);
+    potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
 
     memset(potential, 0, targets->num * sizeof(double));
     memset(potential_direct, 0, targets->num * sizeof(double));
@@ -329,7 +325,7 @@ int main(int argc, char **argv)
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (runDirect == 1) {
+    if (run_direct == 1) {
 
         targets_sample->num = targets->num / slice;
         targets_sample->x = malloc(targets_sample->num * sizeof(double));
@@ -344,11 +340,12 @@ int main(int argc, char **argv)
             targets_sample->q[i] = targets->q[i*slice];
         }
 
-        if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
+        if (rank == 0) fprintf(stderr, "Running direct comparison...\n");
+
         time1 = MPI_Wtime();
-        directdriver(sources, targets_sample, kernel, singularityHandling,
-                     approximationName, potential_direct, time_direct);
+        directdriver(sources, targets_sample, run_params, potential_direct, time_direct);
         time_run[1] = MPI_Wtime() - time1;
+
         potential_engy_direct = sum(potential_direct, targets->num);
 
         free(targets_sample->x);
@@ -362,12 +359,12 @@ int main(int argc, char **argv)
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (rank == 0) fprintf(stderr,"Running treedriver...\n");
+    if (rank == 0) fprintf(stderr, "Running treedriver...\n");
+
     time1 = MPI_Wtime();
-    treedriver(sources, targets, interpOrder, theta, maxPerLeaf, maxPerBatch,
-               kernel, singularityHandling, approximationName, treeType,
-               potential, time_tree, sizeCheckFactor, verbosity);
+    treedriver(sources, targets, run_params, potential, time_tree);
     time_run[2] = MPI_Wtime() - time1;
+
     potential_engy = sum(potential, targets->num);
     
     MPI_Barrier(MPI_COMM_WORLD);
@@ -421,7 +418,7 @@ int main(int argc, char **argv)
                      time_run_glob[2][0]/numProcs, time_run_glob[2][0] * avg_percent,
                      time_run_glob[1][0]/time_run_glob[0][0]);
 
-        if (runDirect == 1) {
+        if (run_direct == 1) {
         printf("|    |....Directdriver...............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                      time_run_glob[1][1],          time_run_glob[1][1] * max_percent,
                      time_run_glob[2][1]/numProcs, time_run_glob[2][1] * avg_percent,
@@ -433,7 +430,7 @@ int main(int argc, char **argv)
                      time_run_glob[1][2]/time_run_glob[0][2]);
 
 
-        if (runDirect == 1) {
+        if (run_direct == 1) {
         printf("|    Directdriver....................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
                      time_run_glob[1][1], time_run_glob[2][1]/numProcs, time_run_glob[1][1]/time_run_glob[0][1]);
 
@@ -458,7 +455,7 @@ int main(int argc, char **argv)
                      time_direct_glob[1][1]/time_direct_glob[0][1]);
         }
 
-        if (strcmp(singularityHandling, "subtraction") == 0) {
+        if (run_params->singularity == SUBTRACTION) {
         printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n\n",
                      time_direct_glob[1][3],          time_direct_glob[1][3] * max_percent_direct,
                      time_direct_glob[2][3]/numProcs, time_direct_glob[2][3] * avg_percent_direct,
@@ -512,7 +509,7 @@ int main(int argc, char **argv)
                      time_tree_glob[1][7]/time_tree_glob[0][7]);
         }
 
-        if (treeType == 0) { //cluster-particle
+        if (run_params->compute_type == CLUSTER_PARTICLE || run_params->compute_type == CLUSTER_CLUSTER) {
         printf("|    |....Compute cp2................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                      time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree,
                      time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent_tree,
@@ -545,7 +542,7 @@ int main(int argc, char **argv)
         
         printf("               Tree potential energy:  %f\n", potential_engy_glob);
 
-        if (runDirect == 1) {
+        if (run_direct == 1) {
         printf("             Direct potential energy:  %f\n\n", potential_engy_direct_glob);
         printf("  Absolute error for total potential:  %e\n",
                fabs(potential_engy_glob-potential_engy_direct_glob));
@@ -555,7 +552,7 @@ int main(int argc, char **argv)
     }
 
     double glob_reln2_err, glob_relinf_err, glob_n2_err, glob_inf_err;
-    if (runDirect == 1) {
+    if (run_direct == 1) {
         double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
         double temp;
 
@@ -589,13 +586,14 @@ int main(int argc, char **argv)
 
     if (rank == 0) {
         FILE *fp = fopen("out.csv", "a");
-        fprintf(fp, "%d,%d,%f,%d,%d,%s,%s,%s,%d,"
+        fprintf(fp, "%d,%d,%d,%f,%d,%d,%d,%d,%d,%d,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
-            N, interpOrder, theta, maxPerLeaf, maxPerBatch, kernel->name,
-            singularityHandling, approximationName, numProcs, // 1 ends
+            N, M, run_params->interp_order, run_params->theta,
+            run_params->max_per_source_leaf, run_params->max_per_target_leaf, run_params->kernel,
+            run_params->singularity, run_params->compute_type, run_params->approximation, numProcs, // 1 ends
 
             time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
             time_run_glob[2][0]/numProcs,
@@ -662,130 +660,18 @@ int main(int argc, char **argv)
     MPI_Free_mem(sources->w);
     free(sources);
 
-    free(targets->x);
-    free(targets->y);
-    free(targets->z);
-    free(targets->q);
+    MPI_Free_mem(targets->x);
+    MPI_Free_mem(targets->y);
+    MPI_Free_mem(targets->z);
+    MPI_Free_mem(targets->q);
     free(targets);
 
     free(potential);
     free(potential_direct);
 
-    Kernel_Free(kernel);
+    RunParams_Free(run_params);
 
     MPI_Finalize();
 
     return 0;
-}
-
-
-static int get_number_of_objects(void *data, int *ierr)
-{
-    MESH_DATA *mesh = (MESH_DATA *)data;
-    *ierr = ZOLTAN_OK;
-    return mesh->numMyPoints;
-}
-
-static void get_object_list(void *data, int sizeGID, int sizeLID,
-                            ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-                            int wgt_dim, float *obj_wgts, int *ierr)
-{
-    int i;
-    MESH_DATA *mesh = (MESH_DATA *)data;
-    *ierr = ZOLTAN_OK;
-
-  /* In this example, return the IDs of our objects, but no weights.
-   * Zoltan will assume equally weighted objects.
-   */
-
-    for (i = 0; i < mesh->numMyPoints; i++) {
-        globalID[i] = mesh->myGlobalIDs[i];
-        localID[i] = i;
-        obj_wgts[i] = mesh->b[i];
-    }
-}
-
-static int get_num_geometry(void *data, int *ierr)
-{
-    *ierr = ZOLTAN_OK;
-    return 3;
-}
-
-static void get_geometry_list(void *data, int sizeGID, int sizeLID, int num_obj,
-                              ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-                              int num_dim, double *geom_vec, int *ierr)
-{
-    int i;
-
-    MESH_DATA *mesh = (MESH_DATA *)data;
-
-    if ( (sizeGID != 1) || (sizeLID != 1) || (num_dim != 3)) {
-        *ierr = ZOLTAN_FATAL;
-        return;
-    }
-
-    *ierr = ZOLTAN_OK;
-
-    for (i = 0;  i < num_obj ; i++){
-        geom_vec[3*i] = (double)mesh->x[i];
-        geom_vec[3*i + 1] = (double)mesh->y[i];
-        geom_vec[3*i + 2] = (double)mesh->z[i];
-    } 
-
-    return;
-}
-
-static void ztn_pack(void *data, int num_gid_entries, int num_lid_entries,
-              ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
-              int dest, int size, char *buf, int *ierr) {
-
-    SINGLE_MESH_DATA *mesh_single = (SINGLE_MESH_DATA *)buf;
-    MESH_DATA *mesh = (MESH_DATA *)data;
-
-    mesh_single->x = mesh->x[(*local_id)];
-    mesh_single->y = mesh->y[(*local_id)];
-    mesh_single->z = mesh->z[(*local_id)];
-    mesh_single->q = mesh->q[(*local_id)];
-    mesh_single->w = mesh->w[(*local_id)];
-    mesh_single->b = mesh->b[(*local_id)];
-    mesh_single->myGlobalID = mesh->myGlobalIDs[(*local_id)];
-
-    mesh->myGlobalIDs[(*local_id)] = (ZOLTAN_ID_TYPE)(-1); // Mark local particle as exported
-
-    return;
-}
-
-static void ztn_unpack(void *data, int num_gid_entries,
-                ZOLTAN_ID_PTR global_id,
-                int size, char *buf, int *ierr) {
-
-    SINGLE_MESH_DATA *mesh_single = (SINGLE_MESH_DATA *)buf;
-    MESH_DATA *mesh = (MESH_DATA *)data;
-
-    mesh->numMyPoints += 1;
-
-    mesh->myGlobalIDs = (ZOLTAN_ID_TYPE *)realloc(mesh->myGlobalIDs,
-                        sizeof(ZOLTAN_ID_TYPE) * mesh->numMyPoints);
-    mesh->x = (double *)realloc(mesh->x, sizeof(double) * mesh->numMyPoints);
-    mesh->y = (double *)realloc(mesh->y, sizeof(double) * mesh->numMyPoints);
-    mesh->z = (double *)realloc(mesh->z, sizeof(double) * mesh->numMyPoints);
-    mesh->q = (double *)realloc(mesh->q, sizeof(double) * mesh->numMyPoints);
-    mesh->w = (double *)realloc(mesh->w, sizeof(double) * mesh->numMyPoints);
-    mesh->b = (double *)realloc(mesh->b, sizeof(double) * mesh->numMyPoints);
-
-    mesh->x[mesh->numMyPoints-1] = mesh_single->x;
-    mesh->y[mesh->numMyPoints-1] = mesh_single->y;
-    mesh->z[mesh->numMyPoints-1] = mesh_single->z;
-    mesh->q[mesh->numMyPoints-1] = mesh_single->q;
-    mesh->w[mesh->numMyPoints-1] = mesh_single->w;
-    mesh->b[mesh->numMyPoints-1] = mesh_single->b;
-    mesh->myGlobalIDs[mesh->numMyPoints-1] = mesh_single->myGlobalID;
-
-    return;
-}
-
-static int ztn_obj_size(void *data, int num_gid_entries, int num_lid_entries, 
-    ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id, int *ierr)
-{
-    return sizeof(SINGLE_MESH_DATA);
 }

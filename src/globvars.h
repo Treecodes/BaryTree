@@ -2,7 +2,6 @@
 #define H_GLOBALVARS_H
 
 /* declaration of external global variables */
-extern double thetasq;
 extern double *tt, *ww;
 
 #endif /* H_GLOBALVARS_H */
