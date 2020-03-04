@@ -1,7 +1,7 @@
-#include <math.h>
 #ifdef OPENACC_ENABLED
     #include <accelmath.h>
 #endif
+#include <math.h>
 #include <float.h>
 #include <stdio.h>
 

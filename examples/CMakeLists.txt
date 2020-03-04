@@ -28,7 +28,7 @@ if(BUILD_EXAMPLES)
       install(TARGETS random_cube_large_gpu DESTINATION bin)
 
       add_executable(test_BaryTreeInterface_gpu test_BaryTreeInterface.c)
-      target_link_libraries(testBaryTreeInterface_gpu PRIVATE BaryTree_gpu)
+      target_link_libraries(test_BaryTreeInterface_gpu PRIVATE BaryTree_gpu)
       install(TARGETS test_BaryTreeInterface_gpu DESTINATION bin)
    endif()
 
