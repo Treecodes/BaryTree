@@ -12,9 +12,8 @@ void K_RegularizedCoulomb_SS_PC_Lagrange(int number_of_targets_in_batch,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
-    double alpha = run_params->kernel_params[0];
-    double alpha2 = alpha * alpha;
-    double epsilon = run_params->kernel_params[1];
+    double alpha2   = run_params->kernel_params[0] * run_params->kernel_params[0];
+    double epsilon2 = run_params->kernel_params[1] * run_params->kernel_params[1];
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
@@ -43,9 +42,10 @@ void K_RegularizedCoulomb_SS_PC_Lagrange(int number_of_targets_in_batch,
             double dx = tx - cluster_x[jj];
             double dy = ty - cluster_y[jj];
             double dz = tz - cluster_z[jj];
-            double r  = sqrt(dx*dx + dy*dy + dz*dz);
+            double r2  = dx*dx + dy*dy + dz*dz;
 
-            temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj] * exp(-r*r/alpha2)) / sqrt(r*r+epsilon*epsilon);
+            temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj] * exp(-r2 / alpha2))
+                                  / sqrt(r2 + epsilon2);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -67,9 +67,8 @@ void K_RegularizedCoulomb_SS_PC_Hermite(int number_of_targets_in_batch,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge, double *cluster_weight,
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
-    double alpha = run_params->kernel_params[0];
-    double alpha2 = alpha * alpha;
-    double epsilon = run_params->kernel_params[1];
+    double alpha2   = run_params->kernel_params[0] * run_params->kernel_params[0];
+    double epsilon2 = run_params->kernel_params[1] * run_params->kernel_params[1];
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
     double *cluster_charge_          = &cluster_charge[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
@@ -123,7 +122,7 @@ void K_RegularizedCoulomb_SS_PC_Hermite(int number_of_targets_in_batch,
             double dx = tx - cluster_x[jj];
             double dy = ty - cluster_y[jj];
             double dz = tz - cluster_z[jj];
-            double r  = sqrt( dx*dx + dy*dy + dz*dz);
+            double r  = sqrt( dx*dx + dy*dy + dz*dz + epsilon2);
 
             double r2 = r*r;
             double rinv = 1 / r;
@@ -134,8 +133,6 @@ void K_RegularizedCoulomb_SS_PC_Hermite(int number_of_targets_in_batch,
             double r_over_k_2 = r2 / alpha2;
             double r_over_k_4 = r_over_k_2*r_over_k_2;
             double r_over_k_6 = r_over_k_4*r_over_k_2;
-
-            if (r > DBL_MIN) {
 
                 temporary_potential +=  rinv  * (cluster_charge_[j])
                                  +      r3inv * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
@@ -155,7 +152,6 @@ void K_RegularizedCoulomb_SS_PC_Hermite(int number_of_targets_in_batch,
                                  +      r7inv * (15 + 18*r_over_k_2 + 12*r_over_k_4 + 8*r_over_k_6)
                                               * cluster_weight_delta_xyz[j]*dx*dy*dz);
 
-            }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

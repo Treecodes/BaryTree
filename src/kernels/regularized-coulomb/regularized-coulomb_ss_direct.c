@@ -12,9 +12,8 @@ void K_RegularizedCoulomb_SS_Direct(int number_of_targets_in_batch, int number_o
         double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
-    double alpha = run_params->kernel_params[0];
-    double alpha2 = alpha * alpha;
-    double epsilon = run_params->kernel_params[1];
+    double alpha2   = run_params->kernel_params[0] * run_params->kernel_params[0];
+    double epsilon2 = run_params->kernel_params[1] * run_params->kernel_params[1];
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
@@ -43,10 +42,10 @@ void K_RegularizedCoulomb_SS_Direct(int number_of_targets_in_batch, int number_o
             double dx = tx - source_x[jj];
             double dy = ty - source_y[jj];
             double dz = tz - source_z[jj];
-            double r  = sqrt(dx*dx + dy*dy + dz*dz);
+            double r2 = dx*dx + dy*dy + dz*dz;
 
-                temporary_potential += (source_charge[jj] - tq * exp(-r*r/alpha2))
-                                      * source_weight[jj] / sqrt(r*r+epsilon*epsilon);
+                temporary_potential += (source_charge[jj] - tq * exp(-r2 / alpha2))
+                                      * source_weight[jj] / sqrt(r2 + epsilon2);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

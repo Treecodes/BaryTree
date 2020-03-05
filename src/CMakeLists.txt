@@ -42,6 +42,7 @@ SET(SRCS_TREEDRIVER
     interaction_lists/interaction_lists_cc.c
 # Interaction compute related functions
     interaction_compute/interaction_compute.h
+    interaction_compute/interaction_compute_direct.c
     interaction_compute/interaction_compute_pc.c
     interaction_compute/interaction_compute_cp.c
     interaction_compute/interaction_compute_cc.c
@@ -95,8 +96,8 @@ SET(SRCS_K_REGULARIZED_COULOMB
     kernels/regularized-coulomb/regularized-coulomb_direct.c
     kernels/regularized-coulomb/regularized-coulomb_pc.h
     kernels/regularized-coulomb/regularized-coulomb_pc.c
-#   kernels/regularized-coulomb/regularized-coulomb_cp.h
-#   kernels/regularized-coulomb/regularized-coulomb_cp.c
+    kernels/regularized-coulomb/regularized-coulomb_cp.h
+    kernels/regularized-coulomb/regularized-coulomb_cp.c
 # Singularity subtraction
     kernels/regularized-coulomb/regularized-coulomb_ss_direct.h
     kernels/regularized-coulomb/regularized-coulomb_ss_direct.c
@@ -115,8 +116,8 @@ SET(SRCS_K_REGULARIZED_YUKAWA
     kernels/regularized-yukawa/regularized-yukawa_direct.c
     kernels/regularized-yukawa/regularized-yukawa_pc.h
     kernels/regularized-yukawa/regularized-yukawa_pc.c
-#   kernels/regularized-yukawa/regularized-yukawa_cp.h
-#   kernels/regularized-yukawa/regularized-yukawa_cp.c
+    kernels/regularized-yukawa/regularized-yukawa_cp.h
+    kernels/regularized-yukawa/regularized-yukawa_cp.c
 #Singularity subtraction
     kernels/regularized-yukawa/regularized-yukawa_ss_direct.h
     kernels/regularized-yukawa/regularized-yukawa_ss_direct.c

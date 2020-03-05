@@ -5,7 +5,7 @@
 
 #include "regularized-yukawa_direct.h"
 #include "regularized-yukawa_pc.h"
-//#include "regularized-yukawa_cp.h"
+#include "regularized-yukawa_cp.h"
 
 #include "regularized-yukawa_ss_direct.h"
 #include "regularized-yukawa_ss_correction.h"

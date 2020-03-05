@@ -60,4 +60,5 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
 void InteractionCompute_SubtractionPotentialCorrection(double *pointwisePotential, double *target_q, int numTargets,
                            struct RunParams *run_params);
 
+
 #endif /* H_INTERACTIONCOMPUTE_H */
