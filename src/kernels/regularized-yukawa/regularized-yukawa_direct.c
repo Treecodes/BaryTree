@@ -13,8 +13,8 @@ void K_RegularizedYukawa_Direct(int number_of_targets_in_batch, int number_of_so
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
-    double kappa=run_params->kernel_params[0];
-    double epsilon=run_params->kernel_params[1];
+    double kappa    = run_params->kernel_params[0];
+    double epsilon2 = run_params->kernel_params[1] * run_params->kernel_params[1];
 
 
 #ifdef OPENACC_ENABLED
@@ -44,8 +44,8 @@ void K_RegularizedYukawa_Direct(int number_of_targets_in_batch, int number_of_so
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
 
-            temporary_potential += source_charge[starting_index_of_source + j]
-                                 * source_weight[starting_index_of_source + j] * exp(-kappa*r) / sqrt(r*r + epsilon*epsilon);
+            temporary_potential += source_charge[starting_index_of_source + j] 
+                                 * source_weight[starting_index_of_source + j] * exp(-kappa*r) / sqrt(r*r + epsilon2);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

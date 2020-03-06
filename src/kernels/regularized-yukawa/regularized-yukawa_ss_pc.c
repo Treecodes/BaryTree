@@ -14,7 +14,6 @@ void K_RegularizedYukawa_SS_PC_Lagrange(int number_of_targets_in_batch,
 {
     double kappa=run_params->kernel_params[0];
     double epsilon=run_params->kernel_params[1];
-//    printf("epsilon=%f\n",epsilon);
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
@@ -59,6 +58,7 @@ void K_RegularizedYukawa_SS_PC_Lagrange(int number_of_targets_in_batch,
 }
 
 
+/*
 void K_RegularizedYukawa_SS_PC_Hermite(int number_of_targets_in_batch,
         int number_of_interpolation_points_in_cluster, int starting_index_of_target,
         int starting_index_of_cluster, int total_number_interpolation_points,
@@ -67,7 +67,6 @@ void K_RegularizedYukawa_SS_PC_Hermite(int number_of_targets_in_batch,
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
-    printf("WARNING, HERMITE NOT SET UP FOR THIS KERNEL!!!");
     double epsilon=run_params->kernel_params[1];
     double kappa=run_params->kernel_params[0];
     double kappa2 = kappa * kappa;
@@ -172,3 +171,4 @@ void K_RegularizedYukawa_SS_PC_Hermite(int number_of_targets_in_batch,
 #endif
     return;
 }
+*/
