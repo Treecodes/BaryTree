@@ -79,12 +79,12 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
     int numTargetClusterWeights = numTargetClusterPoints;
 
     if (run_params->approximation == HERMITE) {
-        numSourceClusterCharges = 8 * numSourceClusterPoints;
+        //numSourceClusterCharges = 8 * numSourceClusterPoints;
         numTargetClusterCharges = 8 * numTargetClusterPoints;
     }
 
     if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
-        numSourceClusterWeights = 8 * numSourceClusterPoints;
+        //numSourceClusterWeights = 8 * numSourceClusterPoints;
         numTargetClusterWeights = 8 * numTargetClusterPoints;
     }
         
@@ -174,7 +174,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS.  EXITING.\n");
                         exit(1);
 
                     } else {
@@ -207,7 +207,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP YUKAWA SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS.  EXITING.\n");
                         exit(1);
 
                     } else {
@@ -229,7 +229,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP YUKAWA SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS.  EXITING.\n");
                         exit(1);
 
                     } else {
@@ -262,7 +262,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
                         exit(1);
 
                     } else {
@@ -284,7 +284,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
                         exit(1);
 
                     } else {
@@ -317,7 +317,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
                         exit(1);
 
                     } else {
@@ -329,12 +329,12 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     if (run_params->singularity == SKIPPING) {
 
-                        printf("**ERROR** NOT SET UP FOR CP REGULARIZED COULOMB HERMITE.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB HERMITE.  EXITING.\n");
                         exit(1);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
                         exit(1);
 
                     } else {

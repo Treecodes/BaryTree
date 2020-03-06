@@ -58,6 +58,8 @@ SET(SRCS_K_COULOMB
     kernels/coulomb/coulomb_pc.c
     kernels/coulomb/coulomb_cp.h
     kernels/coulomb/coulomb_cp.c
+    kernels/coulomb/coulomb_cc_hermite.h
+    kernels/coulomb/coulomb_cc_hermite.c
 # Singularity subtraction
     kernels/coulomb/coulomb_ss_direct.h
     kernels/coulomb/coulomb_ss_direct.c

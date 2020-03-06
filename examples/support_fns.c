@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 
 #include "../src/run_params/run_params.h"
 #include "../src/run_params/struct_run_params.h"

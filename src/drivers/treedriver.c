@@ -1000,7 +1000,8 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time1 = MPI_Wtime();
 
         Clusters_PC_Setup(&source_clusters, sources, run_params->interp_order, source_tree_array,
-                          run_params->approximation, run_params->singularity);
+                          LAGRANGE, run_params->singularity);
+                          //run_params->approximation, run_params->singularity);
 
         Clusters_CP_Setup(&target_clusters, run_params->interp_order, target_tree_array,
                           run_params->approximation, run_params->singularity);
