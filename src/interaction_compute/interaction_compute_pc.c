@@ -247,15 +247,11 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR "
-                               "PC REGULARIZED COULOMB SINGULARITY SUBTRACTION HERMITE. EXITING.\n");
-                        exit(1);
-
-                        //K_RegularizedCoulomb_SS_PC_Hermite(numberOfTargets,
-                        //            numberOfInterpolationPoints, batchStart, clusterStart,
-                        //            totalNumberOfInterpolationPoints, target_x, target_y, target_z, target_charge,
-                        //            cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
-                        //            run_params, potentialDueToApprox, streamID);
+                        K_RegularizedCoulomb_SS_PC_Hermite(numberOfTargets,
+                                    numberOfInterpolationPoints, batchStart, clusterStart,
+                                    totalNumberOfInterpolationPoints, target_x, target_y, target_z, target_charge,
+                                    cluster_x, cluster_y, cluster_z, cluster_charge, cluster_weight,
+                                    run_params, potentialDueToApprox, streamID);
                     }
                 }
 

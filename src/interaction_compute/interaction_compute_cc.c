@@ -79,12 +79,12 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
     int numTargetClusterWeights = numTargetClusterPoints;
 
     if (run_params->approximation == HERMITE) {
-        //numSourceClusterCharges = 8 * numSourceClusterPoints;
+        numSourceClusterCharges = 8 * numSourceClusterPoints;
         numTargetClusterCharges = 8 * numTargetClusterPoints;
     }
 
     if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
-        //numSourceClusterWeights = 8 * numSourceClusterPoints;
+        numSourceClusterWeights = 8 * numSourceClusterPoints;
         numTargetClusterWeights = 8 * numTargetClusterPoints;
     }
         
