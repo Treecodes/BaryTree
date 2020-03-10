@@ -16,6 +16,7 @@
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/atan/atan.h"
+#include "../kernels/sin-over-r/sin-over-r.h"
 
 
 #include "interaction_compute.h"
@@ -138,7 +139,6 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
         }
 
 
-
     /***************************************/
     /********* Atan ************************/
     /***************************************/
@@ -146,6 +146,18 @@ void InteractionCompute_Direct(double *source_x, double *source_y, double *sourc
     } else if (run_params->kernel == ATAN) {
 
             K_Atan_Direct(numTargets, numSources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q, source_w,
+                        run_params, pointwisePotential, 0);
+
+
+    /***************************************/
+    /********* Sin Over R ******************/
+    /***************************************/
+
+    } else if (run_params->kernel == SIN_OVER_R) {
+
+            K_SinOverR_Direct(numTargets, numSources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, pointwisePotential, 0);

@@ -126,6 +126,12 @@ void Parse_Params(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     
     } else if (strcasecmp(kernel_string, "DCF") == 0) {
         kernel = DCF;
+
+    } else if ((strcasecmp(kernel_string, "SIN_OVER_R") == 0)
+            || (strcasecmp(kernel_string, "SIN-OVER-R") == 0)) {
+        kernel = SIN_OVER_R;
+    
+    } else if (strcasecmp(kernel_string, "ATAN") == 0) {
     
     } else {
         fprintf(stderr, "ERROR! Undefined kernel token \"%s\". Exiting.\n", kernel_string);

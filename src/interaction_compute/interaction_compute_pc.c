@@ -19,6 +19,7 @@
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/atan/atan.h"
+#include "../kernels/sin-over-r/sin-over-r.h"
 
 
 #include "interaction_compute.h"
@@ -333,6 +334,36 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
                     exit(1);
                 }
 
+
+    /***************************************/
+    /************* Sin Over R **************/
+    /***************************************/
+
+            } else if (run_params->kernel == SIN_OVER_R) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_SinOverR_PC_Lagrange(numberOfTargets,
+                                    numberOfInterpolationPoints, batchStart, clusterStart,
+                                    target_x, target_y, target_z,
+                                    cluster_x, cluster_y, cluster_z, cluster_charge,
+                                    run_params, potentialDueToApprox, streamID);
+                    }
+
+                } else if (run_params->approximation == HERMITE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_SinOverR_PC_Hermite(numberOfTargets,
+                                    numberOfInterpolationPoints, batchStart, clusterStart,
+                                    totalNumberOfInterpolationPoints, target_x, target_y, target_z,
+                                    cluster_x, cluster_y, cluster_z, cluster_charge,
+                                    run_params, potentialDueToApprox, streamID);
+                    }
+                }
+
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -464,6 +495,19 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
             } else if (run_params->kernel == ATAN) {
 
                 K_Atan_Direct(numberOfTargets, number_of_sources_in_cluster,
+                            batchStart, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_charge, source_weight,
+                            run_params, potentialDueToDirect, streamID);
+
+
+    /***************************************/
+    /********* Sin Over R ******************/
+    /***************************************/
+
+            } else if (run_params->kernel == SIN_OVER_R) {
+
+                K_SinOverR_Direct(numberOfTargets, number_of_sources_in_cluster,
                             batchStart, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_charge, source_weight,

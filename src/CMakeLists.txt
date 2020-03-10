@@ -141,11 +141,22 @@ SET(SRCS_K_ATAN
 #   kernels/atan/atan_cp.c)
 
 
+SET(SRCS_K_SIN_OVER_R
+    kernels/sin-over-r/sin-over-r.h
+    kernels/sin-over-r/sin-over-r_direct.h
+    kernels/sin-over-r/sin-over-r_direct.c
+    kernels/sin-over-r/sin-over-r_pc.h
+    kernels/sin-over-r/sin-over-r_pc.c
+    kernels/sin-over-r/sin-over-r_cp.h
+    kernels/sin-over-r/sin-over-r_cp.c)
+
+
 SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_YUKAWA}
                  ${SRCS_K_REGULARIZED_COULOMB}
                  ${SRCS_K_REGULARIZED_YUKAWA}
-                 ${SRCS_K_ATAN})
+                 ${SRCS_K_ATAN}
+                 ${SRCS_K_SIN_OVER_R})
 
 
 set(TRGT BaryTree_cpu)

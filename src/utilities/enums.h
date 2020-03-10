@@ -11,7 +11,8 @@ typedef enum KERNEL
     REGULARIZED_YUKAWA,
     ATAN,
     TCF,
-    DCF
+    DCF,
+    SIN_OVER_R
 } KERNEL;
 
 
