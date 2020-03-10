@@ -163,8 +163,8 @@ set(TRGT BaryTree_cpu)
 add_library(${TRGT} ${SRCS_TREEDRIVER} ${SRCS_KERNELS})
 target_sources(${TRGT}          PRIVATE 
                                     interface/BaryTreeInterface.c
-                                 PUBLIC  
-                                    interface/BaryTreeInterface.h)
+                                PUBLIC  
+                                   ${CMAKE_CURRENT_SOURCE_DIR}/interface/BaryTreeInterface.h)
 set_target_properties(${TRGT}   PROPERTIES
                                     POSITION_INDEPENDENT_CODE ON)
 target_compile_features(${TRGT} PUBLIC
@@ -186,7 +186,7 @@ if(ENABLE_GPU_BUILD)
     target_sources(${TRGT}        PRIVATE
                                       interface/BaryTreeInterface.c
                                   PUBLIC 
-                                      interface/BaryTreeInterface.h)
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/interface/BaryTreeInterface.h)
     set_target_properties(${TRGT} PROPERTIES
                                       POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC
