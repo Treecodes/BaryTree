@@ -20,6 +20,7 @@ class Kernel(CEnum):
     ATAN = 5
     TCF = 6
     DCF = 7
+    SIN_OVER_R = 8
     
 class Singularity(CEnum):
     NO_SINGULARITY = 0
