@@ -3,15 +3,17 @@
 #include <stdio.h>
 
 #include "../../run_params/struct_run_params.h"
-#include "coulomb_pc.h"
+#include "sin-over-r_pc.h"
 
 
-void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
+void K_SinOverR_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
          int starting_index_of_target, int starting_index_of_cluster,
          double *target_x, double *target_y, double *target_z,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
          struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
+
+    double kernel_parameter = run_params->kernel_params[0];
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
@@ -44,10 +46,10 @@ void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpo
             double dx = tx - cluster_x[jj];
             double dy = ty - cluster_y[jj];
             double dz = tz - cluster_z[jj];
-            double r2  = dx*dx + dy*dy + dz*dz;
+            double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r2 > DBL_MIN) {
-                temporary_potential += cluster_charge[starting_index_of_cluster + j] / sqrt(r2);
+            if (r > DBL_MIN) {
+                temporary_potential += cluster_charge[starting_index_of_cluster + j] * sin(kernel_parameter * r) / r;
             }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
@@ -64,7 +66,7 @@ void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpo
 
 
 
-void K_Coulomb_PC_Hermite(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
+void K_SinOverR_PC_Hermite(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
         int starting_index_of_target, int starting_index_of_cluster, int total_number_interpolation_points,
         double *target_x, double *target_y, double *target_z,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_charge,
@@ -81,6 +83,9 @@ void K_Coulomb_PC_Hermite(int number_of_targets_in_batch, int number_of_interpol
     double *cluster_charge_delta_xz  = &cluster_charge[8*starting_index_of_cluster + 6*number_of_interpolation_points_in_cluster];
     double *cluster_charge_delta_xyz = &cluster_charge[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
 
+    double k  = run_params->kernel_params[0];
+    double k2 = k * k;
+    double k3 = k * k2;
 
 
 #ifdef OPENACC_ENABLED
@@ -114,19 +119,28 @@ void K_Coulomb_PC_Hermite(int number_of_targets_in_batch, int number_of_interpol
             double dz = tz - cluster_z[jj];
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            double rinv  = 1 / r;
-            double r3inv = rinv*rinv*rinv;
-            double r5inv = r3inv*rinv*rinv;
-            double r7inv = r5inv*rinv*rinv;
-
             if (r > DBL_MIN) {
 
-                temporary_potential +=  rinv  * (cluster_charge_[j])
-                                 +      r3inv * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
-                                               + cluster_charge_delta_z[j]*dz)
-                                 +  3 * r5inv * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
-                                               + cluster_charge_delta_xz[j]*dx*dz)
-                                 + 15 * r7inv *  cluster_charge_delta_xyz[j]*dx*dy*dz;
+                double rinv  = 1 / r;
+                double r2inv = rinv  *  rinv;
+                double r3inv = rinv  * r2inv;
+                double r4inv = r2inv * r2inv;
+                double r5inv = r3inv * r2inv;
+                double r6inv = r3inv * r3inv;
+                double r7inv = r4inv * r3inv;
+
+                double sinr = sin(k*r);
+                double cosr = cos(k*r);
+
+                temporary_potential +=  sinr * rinv * (cluster_charge_[j])
+                                    +  (sinr * r3inv  -  k * cosr * r2inv)
+                                             * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
+                                              + cluster_charge_delta_z[j]*dz)
+                                    +  (sinr * (3 * r5inv - k2 * r3inv)  -  3 * k * cosr * r4inv) 
+                                             * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
+                                              + cluster_charge_delta_xz[j]*dx*dz)
+                                    +  (sinr * (15 * r7inv - 6 * k2 * r5inv)  +  cosr * (k3 * r4inv - 15 * k * r6inv)) 
+                                             *  cluster_charge_delta_xyz[j]*dx*dy*dz;
 
             }
         } // end loop over interpolation points

@@ -18,6 +18,7 @@
 #include "../kernels/yukawa/yukawa.h"
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
+#include "../kernels/sin-over-r/sin-over-r.h"
 
 #include "interaction_compute.h"
 
@@ -306,6 +307,36 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
                     exit(1);
                 }
 
+
+    /***************************************/
+    /********* Sin Over R ******************/
+    /***************************************/
+
+            } else if (run_params->kernel == SIN_OVER_R) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_SinOverR_CP_Lagrange(numberOfSources,
+                            numberOfInterpolationPoints, batchStart, clusterStart,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, streamID);
+                    }
+
+                } else if (run_params->approximation == HERMITE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_SinOverR_CP_Hermite(numberOfSources,
+                            numberOfInterpolationPoints, batchStart, clusterStart,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, streamID);
+                    }
+                }
+
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -434,6 +465,22 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
+                }
+
+
+    /***********************************************/
+    /*********** Sin Over R ************************/
+    /***********************************************/
+
+            } else if (run_params->kernel == SIN_OVER_R) {
+
+                if (run_params->singularity == SKIPPING) {
+
+                    K_SinOverR_Direct(number_of_targets_in_cluster, numberOfSources,
+                            target_start, batchStart,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q, source_w,
+                            run_params, pointwisePotential, streamID);
                 }
 
             } else {

@@ -17,6 +17,7 @@
 #include "../kernels/yukawa/yukawa.h"
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
+#include "../kernels/sin-over-r/sin-over-r.h"
 
 #include "interaction_compute.h"
 
@@ -152,7 +153,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -162,19 +163,22 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                 } else if (run_params->approximation == HERMITE) {
 
+                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
+                    exit(1);
+
                     if (run_params->singularity == SKIPPING) {
 
-                        K_Coulomb_CP_Hermite(numInterpPoints, numInterpPoints,
-                            source_cluster_start, target_cluster_start,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, streamID);
+                        //K_Coulomb_CP_Hermite(numInterpPoints, numInterpPoints,
+                        //    source_cluster_start, target_cluster_start,
+                        //    source_cluster_x, source_cluster_y, source_cluster_z,
+                        //    source_cluster_q, source_cluster_w,
+                        //    target_cluster_x, target_cluster_y, target_cluster_z,
+                        //    target_cluster_q,
+                        //    run_params, streamID);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -207,7 +211,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -217,19 +221,22 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                 } else if (run_params->approximation == HERMITE) {
 
+                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
+                    exit(1);
+
                     if (run_params->singularity == SKIPPING) {
 
-                        K_Yukawa_CP_Hermite(numInterpPoints, numInterpPoints,
-                            source_cluster_start, target_cluster_start,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, streamID);
+                        //K_Yukawa_CP_Hermite(numInterpPoints, numInterpPoints,
+                        //    source_cluster_start, target_cluster_start,
+                        //    source_cluster_x, source_cluster_y, source_cluster_z,
+                        //    source_cluster_q, source_cluster_w,
+                        //    target_cluster_x, target_cluster_y, target_cluster_z,
+                        //    target_cluster_q,
+                        //    run_params, streamID);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -262,7 +269,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -272,19 +279,22 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                 } else if (run_params->approximation == HERMITE) {
 
+                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
+                    exit(1);
+
                     if (run_params->singularity == SKIPPING) {
 
-                        K_RegularizedCoulomb_CP_Hermite(numInterpPoints, numInterpPoints,
-                            source_cluster_start, target_cluster_start,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, streamID);
+                        //K_RegularizedCoulomb_CP_Hermite(numInterpPoints, numInterpPoints,
+                        //    source_cluster_start, target_cluster_start,
+                        //    source_cluster_x, source_cluster_y, source_cluster_z,
+                        //    source_cluster_q, source_cluster_w,
+                        //    target_cluster_x, target_cluster_y, target_cluster_z,
+                        //    target_cluster_q,
+                        //    run_params, streamID);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -317,7 +327,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -327,14 +337,17 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
 
                 } else if (run_params->approximation == HERMITE) {
 
+                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
+                    exit(1);
+
                     if (run_params->singularity == SKIPPING) {
 
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB HERMITE.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB HERMITE. EXITING.\n");
                         exit(1);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS.  EXITING.\n");
+                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
                         exit(1);
 
                     } else {
@@ -345,6 +358,26 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
                 } else {
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
+                }
+
+    /***********************************************/
+    /********* Sin Over R **************************/
+    /***********************************************/
+
+            } else if (run_params->kernel == SIN_OVER_R) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_SinOverR_CP_Lagrange(numInterpPoints, numInterpPoints,
+                            source_cluster_start, target_cluster_start,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q, source_cluster_w,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q,
+                            run_params, streamID);
+                    }
                 }
 
             } else {
@@ -476,6 +509,21 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
+                }
+
+    /***********************************************/
+    /************ Sin Over R ***********************/
+    /***********************************************/
+
+            } else if (run_params->kernel == SIN_OVER_R) {
+
+                if (run_params->singularity == SKIPPING) {
+
+                    K_SinOverR_Direct(numTargets, numSources,
+                            targetStart, sourceStart,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q, source_w,
+                            run_params, pointwisePotential, streamID);
                 }
 
             } else {

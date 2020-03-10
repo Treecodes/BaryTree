@@ -24,7 +24,7 @@ const unsigned crand = 1013904223u;
 int main(int argc, char **argv)
 {
     int N, M, run_direct, slice;
-    struct RunParams *run_params;
+    struct RunParams *run_params = NULL;
     int sample_size = 10000;
 
     FILE *fp = fopen(argv[1], "r");

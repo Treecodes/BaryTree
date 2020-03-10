@@ -141,19 +141,30 @@ SET(SRCS_K_ATAN
 #   kernels/atan/atan_cp.c)
 
 
+SET(SRCS_K_SIN_OVER_R
+    kernels/sin-over-r/sin-over-r.h
+    kernels/sin-over-r/sin-over-r_direct.h
+    kernels/sin-over-r/sin-over-r_direct.c
+    kernels/sin-over-r/sin-over-r_pc.h
+    kernels/sin-over-r/sin-over-r_pc.c
+    kernels/sin-over-r/sin-over-r_cp.h
+    kernels/sin-over-r/sin-over-r_cp.c)
+
+
 SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_YUKAWA}
                  ${SRCS_K_REGULARIZED_COULOMB}
                  ${SRCS_K_REGULARIZED_YUKAWA}
-                 ${SRCS_K_ATAN})
+                 ${SRCS_K_ATAN}
+                 ${SRCS_K_SIN_OVER_R})
 
 
 set(TRGT BaryTree_cpu)
 add_library(${TRGT} ${SRCS_TREEDRIVER} ${SRCS_KERNELS})
 target_sources(${TRGT}          PRIVATE 
                                     interface/BaryTreeInterface.c
-                                 PUBLIC  
-                                    interface/BaryTreeInterface.h)
+                                PUBLIC  
+                                   ${CMAKE_CURRENT_SOURCE_DIR}/interface/BaryTreeInterface.h)
 set_target_properties(${TRGT}   PROPERTIES
                                     POSITION_INDEPENDENT_CODE ON)
 target_compile_features(${TRGT} PUBLIC
@@ -175,7 +186,7 @@ if(ENABLE_GPU_BUILD)
     target_sources(${TRGT}        PRIVATE
                                       interface/BaryTreeInterface.c
                                   PUBLIC 
-                                      interface/BaryTreeInterface.h)
+                                      ${CMAKE_CURRENT_SOURCE_DIR}/interface/BaryTreeInterface.h)
     set_target_properties(${TRGT} PROPERTIES
                                       POSITION_INDEPENDENT_CODE ON)
     target_link_libraries(${TRGT} PUBLIC
