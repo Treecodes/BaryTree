@@ -119,7 +119,7 @@ def callTreedriver(numTargets, numSources,
                                                 targetX_p, targetY_p, targetZ_p, targetValue_p,
                                                 sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
                                                 resultArray_p, kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
-                                                singularityHandling, approximationName,
+                                                singularityHandling, approximationName, computeType,
                                                 ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_int(verbosity) )
     elif GPUversion==False: # No gpu present
         _cpu_treecodeRoutines.BaryTreeInterface(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
