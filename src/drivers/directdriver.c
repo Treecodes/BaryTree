@@ -105,8 +105,6 @@ void directdriver(struct particles *sources, struct particles *targets, struct R
         time1 = MPI_Wtime();
         //compute remote
 
-        fprintf(stderr, "I shouldn't be in here if I'm running in serial.\n");
-
         InteractionCompute_Direct(remote_sources->x, remote_sources->y, remote_sources->z,
                                    remote_sources->q, remote_sources->w,
                                    target_x, target_y, target_z, target_q,

@@ -430,7 +430,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8]; // total compute time
     
         MPI_Barrier(MPI_COMM_WORLD);
-        if (run_params->verbosity > 0) fprintf(stderr, "Done cleaning up.\n");
 
         return;
         
@@ -506,16 +505,13 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         if (run_params->approximation == HERMITE && run_params->singularity == SUBTRACTION)
             weightsPerCluster *= 8;
 
-        struct tnode_array *let_tree_array = NULL;
-        int let_tree_array_length = 0;
+        struct tnode_array *let_tree_arrays[numProcs];
 
-        struct clusters *let_clusters = NULL;
-        let_clusters = malloc(sizeof(struct clusters));
-        int let_clusters_length = 0; // previously let_clusters included the local.  Now it should not
+        struct clusters *let_clusters = malloc(sizeof(struct clusters));
+        int let_clusters_length = 0;
 
-        struct particles *let_sources = NULL;
-        let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for direct interactions
-        int let_sources_length = 0;  // previously let_sources included local.  Now it should not
+        struct particles *let_sources = malloc(sizeof(struct particles));
+        int let_sources_length = 0;
 
 
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
@@ -560,8 +556,9 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             int getFrom = (numProcs+rank-procID) % numProcs;
 
             // Allocate remote_tree_array
-            struct tnode_array *remote_tree_array = NULL;
-            Tree_AllocArray(&remote_tree_array, numNodesOnProc[getFrom]);
+            let_tree_arrays[getFrom] == NULL;
+            Tree_AllocArray(&(let_tree_arrays[getFrom]), numNodesOnProc[getFrom]);
+            struct tnode_array *remote_tree_array = let_tree_arrays[getFrom];
 
             // Get remote_tree_array
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
@@ -621,20 +618,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             InteractionList_PC_MakeRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
                                           direct_list, run_params);
 
-
-            // Count number of unique clusters adding to LET
-            int previousTreeArrayLength = let_tree_array_length;
-            for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
-                let_tree_array_length++;
-            }
-            
-
-            if (procID == 1) {
-                Tree_AllocArray(&let_tree_array, let_tree_array_length);
-            } else {
-                Tree_ReallocArray(let_tree_array, let_tree_array_length);
-            }
-
             int numberOfRemoteApprox = 0;
             int previous_let_clusters_length = let_clusters_length;
 
@@ -642,41 +625,29 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             int previous_let_sources_length = let_sources_length;
 
 
-
             // Fill in LET tree array from Remote tree array.
             int appendCounter = 0;
             for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
 
-                let_tree_array->x_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->x_mid[i];
-                let_tree_array->y_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->y_mid[i];
-                let_tree_array->z_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->z_mid[i];
-                let_tree_array->radius[previousTreeArrayLength + appendCounter] = remote_tree_array->radius[i];
-                let_tree_array->numpar[previousTreeArrayLength + appendCounter] = remote_tree_array->numpar[i];
-                let_tree_array->level[previousTreeArrayLength + appendCounter] = remote_tree_array->level[i];
-                let_tree_array->num_children[previousTreeArrayLength + appendCounter] = remote_tree_array->num_children[i];
-                
-                for (int j = 0; j < let_tree_array->num_children[previousTreeArrayLength + appendCounter]; ++j)
-                    let_tree_array->children[8 * (previousTreeArrayLength + appendCounter) + j]
-                        = remote_tree_array->children[8*i + j];
-                    
                 if (approx_list_unpacked[i] != -1) {
-                    let_tree_array->cluster_ind[previousTreeArrayLength + appendCounter] = let_clusters_num;
+                    remote_tree_array->cluster_ind[i] = let_clusters_num;
                     let_clusters_length += pointsPerCluster;
                     let_clusters_num++;
                     numberOfRemoteApprox++;
                 }
                     
                 if (direct_list[i] != -1) {
-                        
-                    // Set the beginning and ending particle indices for the associated nodes in the local sources list
-                    let_tree_array->ibeg[previousTreeArrayLength + appendCounter] = let_sources_length + 1;  // These are one-index based!!!
-                    let_tree_array->iend[previousTreeArrayLength + appendCounter] = let_sources_length + remote_tree_array->numpar[i];
-                    let_sources_length += remote_tree_array->numpar[i];
-                        
-                    // Determine displacements and lengths for getting prticles from remote sources list
-                    direct_ibeg_list[numberOfRemoteDirect] = remote_tree_array->ibeg[i] - 1; // These are zero-index based!!!
+                
+                    // Determine displacements and lengths for getting particles from remote sources list
+                    direct_ibeg_list[numberOfRemoteDirect] = remote_tree_array->ibeg[i] - 1; // zero index based
                     direct_length_list[numberOfRemoteDirect] = remote_tree_array->numpar[i];
                     numberOfRemoteDirect++;
+       
+                    // Set beginning and ending particle indices for associated nodes in let sources list
+                    remote_tree_array->ibeg[i] = let_sources_length + 1; //one index based, for some reason
+                    remote_tree_array->iend[i] = let_sources_length + remote_tree_array->numpar[i];
+                    let_sources_length += remote_tree_array->numpar[i];
+                        
                 }
                 
                 appendCounter++;
@@ -724,7 +695,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             free_vector(direct_list);
             free_vector(direct_ibeg_list);
             free_vector(direct_length_list);
-            Tree_FreeArray(remote_tree_array);
         } //end loop over numProcs
 
 
@@ -827,7 +797,9 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time_tree[3] = MPI_Wtime() - time1;
 
 
-        // Beginning local computation
+        //-------------------
+        //LOCAL COMPUTE
+        //-------------------
         
         time1 = MPI_Wtime();
 
@@ -848,7 +820,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time1 = MPI_Wtime();
 
 
-
         InteractionCompute_PC(tree_array, batches,
                         local_approx_inter_list, local_direct_inter_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
@@ -864,29 +835,36 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
 
 
-        // Compute interaction lists based on LET
-        if (numProcs > 1) {
+        //-------------------
+        //REMOTE COMPUTE
+        //-------------------
+        
+        time_tree[6] = 0;
+        time_tree[7] = 0;
+            
+        for (int procID = 1; procID < numProcs; ++procID) {
             time1 = MPI_Wtime();
+            int getFrom = (numProcs+rank-procID) % numProcs;
 
             int **let_approx_inter_list, **let_direct_inter_list;
-
-            InteractionList_Make(let_tree_array, batches, &let_approx_inter_list, &let_direct_inter_list,
+            InteractionList_Make(let_tree_arrays[getFrom], batches,
+                                 &let_approx_inter_list, &let_direct_inter_list,
                                  run_params);
 
             // Count number of interactions
-
             if (run_params->verbosity > 0) {
-                for (int j = 0; j < batches->numnodes; j++){
+                for (int j = 0; j < batches->numnodes; j++) {
                     totalNumberApprox += batches->numApprox[j];
                     totalNumberDirect += batches->numDirect[j];
                 }
             }
-            time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
+            time_tree[6] += MPI_Wtime() - time1; //time_makeglobintlist
+
 
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-            InteractionCompute_PC(let_tree_array, batches,
+            InteractionCompute_PC(let_tree_arrays[getFrom], batches,
                                    let_approx_inter_list, let_direct_inter_list,
                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                    targets->x, targets->y, targets->z, targets->q,
@@ -898,13 +876,14 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             free_matrix(let_approx_inter_list);
             free_matrix(let_direct_inter_list);
             
-            Clusters_Free(let_clusters);
-            Particles_FreeSources(let_sources);
-            Tree_FreeArray(let_tree_array);
+            time_tree[7] += MPI_Wtime() - time1;
             
-            time_tree[7] = MPI_Wtime() - time1;
         }
-
+            
+        
+        //-------------------
+        //CORRECT AND REORDER
+        //-------------------
 
         time1 = MPI_Wtime();
         
@@ -921,7 +900,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         //CLEANUP
         //-------------------
         
-        
         time1 = MPI_Wtime();
         
         free_vector(targets->order); // free particle order arrays
@@ -932,12 +910,18 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         Clusters_Free_Win(clusters);
         Batches_Free(batches);
         
+        //remote pieces
+        Clusters_Free(let_clusters);
+        Particles_FreeSources(let_sources);
+        for (int procID = 1; procID < numProcs; ++procID) {
+            Tree_FreeArray(let_tree_arrays[(numProcs+rank-procID) % numProcs]);
+        }
+        
         time_tree[10] = MPI_Wtime() - time1; //time_cleanup
         time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6]; //total setup time
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8]; // total compute time
     
         MPI_Barrier(MPI_COMM_WORLD);
-        if (run_params->verbosity > 0) fprintf(stderr, "Done cleaning up.\n");
 
         return;
 
@@ -1030,8 +1014,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         if (run_params->approximation == HERMITE && run_params->singularity == SUBTRACTION)
             weightsPerCluster *= 8;
 
-        struct tnode_array *let_tree_array = NULL;
-        int let_tree_array_length = 0;
+        struct tnode_array *let_tree_arrays[numProcs];
 
         struct clusters *let_clusters = malloc(sizeof(struct clusters));
         int let_clusters_length = 0;
@@ -1078,11 +1061,13 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
          
 
         for (int procID = 1; procID < numProcs; ++procID) {
-
             int getFrom = (numProcs+rank-procID) % numProcs;
 
-            struct tnode_array *remote_tree_array = NULL;
-            Tree_AllocArray(&remote_tree_array, numNodesOnProc[getFrom]);
+            // Allocate remote_tree_array
+            let_tree_arrays[getFrom] == NULL;
+            Tree_AllocArray(&(let_tree_arrays[getFrom]), numNodesOnProc[getFrom]);
+            struct tnode_array *remote_tree_array = let_tree_arrays[getFrom];
+            
 
             // Get remote_tree_array
             MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
@@ -1143,20 +1128,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
                                           approx_list_unpacked, approx_list_packed, direct_list,
                                           run_params);
 
-
-            // Count number of unique clusters adding to LET
-            int previousTreeArrayLength = let_tree_array_length;
-            for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
-                let_tree_array_length++;
-            }
-            
-
-            if (procID == 1) {
-                Tree_AllocArray(&let_tree_array, let_tree_array_length);
-            } else {
-                Tree_ReallocArray(let_tree_array, let_tree_array_length);
-            }
-
             int numberOfRemoteApprox = 0;
             int previous_let_clusters_length = let_clusters_length;
 
@@ -1167,21 +1138,9 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             // Fill in LET tree array from Remote tree array.
             int appendCounter = 0;
             for (int i = 0; i < numNodesOnProc[getFrom]; ++i) {
-
-                let_tree_array->x_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->x_mid[i];
-                let_tree_array->y_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->y_mid[i];
-                let_tree_array->z_mid[previousTreeArrayLength + appendCounter] = remote_tree_array->z_mid[i];
-                let_tree_array->radius[previousTreeArrayLength + appendCounter] = remote_tree_array->radius[i];
-                let_tree_array->numpar[previousTreeArrayLength + appendCounter] = remote_tree_array->numpar[i];
-                let_tree_array->level[previousTreeArrayLength + appendCounter] = remote_tree_array->level[i];
-                let_tree_array->num_children[previousTreeArrayLength + appendCounter] = remote_tree_array->num_children[i];
-                
-                for (int j = 0; j < let_tree_array->num_children[previousTreeArrayLength + appendCounter]; ++j)
-                    let_tree_array->children[8 * (previousTreeArrayLength + appendCounter) + j]
-                        = remote_tree_array->children[8*i + j];
                     
                 if (approx_list_unpacked[i] != -1) {
-                    let_tree_array->cluster_ind[previousTreeArrayLength + appendCounter] = let_clusters_num;
+                    remote_tree_array->cluster_ind[i] = let_clusters_num;
                     let_clusters_length += pointsPerCluster;
                     let_clusters_num++;
                     numberOfRemoteApprox++;
@@ -1189,15 +1148,15 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
                     
                 if (direct_list[i] != -1) {
                         
-                    // Set the beginning and ending particle indices for the associated nodes in the local sources list
-                    let_tree_array->ibeg[previousTreeArrayLength + appendCounter] = let_sources_length + 1;  // These are one-index based!!!
-                    let_tree_array->iend[previousTreeArrayLength + appendCounter] = let_sources_length + remote_tree_array->numpar[i];
-                    let_sources_length += remote_tree_array->numpar[i];
-                        
-                    // Determine displacements and lengths for getting prticles from remote sources list
-                    direct_ibeg_list[numberOfRemoteDirect] = remote_tree_array->ibeg[i] - 1; // These are zero-index based!!!
+                    // Determine displacements and lengths for getting particles from remote sources list
+                    direct_ibeg_list[numberOfRemoteDirect] = remote_tree_array->ibeg[i] - 1; // zero index based
                     direct_length_list[numberOfRemoteDirect] = remote_tree_array->numpar[i];
                     numberOfRemoteDirect++;
+       
+                    // Set beginning and ending particle indices for associated nodes in let sources list
+                    remote_tree_array->ibeg[i] = let_sources_length + 1; //one index based, for some reason
+                    remote_tree_array->iend[i] = let_sources_length + remote_tree_array->numpar[i];
+                    let_sources_length += remote_tree_array->numpar[i];
                 }
                 
                 appendCounter++;
@@ -1246,7 +1205,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             free_vector(direct_list);
             free_vector(direct_ibeg_list);
             free_vector(direct_length_list);
-            Tree_FreeArray(remote_tree_array);
         } //end loop over numProcs
 
 
@@ -1349,6 +1307,10 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time_tree[3] = MPI_Wtime() - time1;
 
         
+        //-------------------
+        //LOCAL COMPUTE
+        //-------------------
+        
         time1 = MPI_Wtime();
 
         int **local_approx_inter_list, **local_direct_inter_list;
@@ -1382,31 +1344,36 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         free_matrix(local_direct_inter_list);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
+        
 
-
-        // Compute interaction lists based on LET
-        if (numProcs > 1) {
+        //-------------------
+        //REMOTE COMPUTE
+        //-------------------
+        
+        time_tree[6] = 0;
+        time_tree[7] = 0;
+            
+        for (int procID = 1; procID < numProcs; ++procID) {
             time1 = MPI_Wtime();
+            int getFrom = (numProcs+rank-procID) % numProcs;
 
             int **let_approx_inter_list, **let_direct_inter_list;
-            
-            InteractionList_CC_Make(let_tree_array, target_tree_array, &let_approx_inter_list, &let_direct_inter_list,
+            InteractionList_CC_Make(let_tree_arrays[getFrom], target_tree_array, &let_approx_inter_list, &let_direct_inter_list,
                                     run_params);
 
             // Count number of interactions
-
             if (run_params->verbosity > 0) {
                 for (int j = 0; j < target_tree_array->numnodes; j++){
                     totalNumberApprox += target_tree_array->numApprox[j];
                     totalNumberDirect += target_tree_array->numDirect[j];
                 }
             }
-            time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
+            time_tree[6] += MPI_Wtime() - time1; //time_makeglobintlist
 
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-            InteractionCompute_CC(let_tree_array, target_tree_array,
+            InteractionCompute_CC(let_tree_arrays[getFrom], target_tree_array,
                                    let_approx_inter_list, let_direct_inter_list,
                                    let_sources->x, let_sources->y, let_sources->z,
                                    let_sources->q, let_sources->w,
@@ -1422,12 +1389,14 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             free_matrix(let_approx_inter_list);
             free_matrix(let_direct_inter_list);
             
-            Clusters_Free(let_clusters);
-            Particles_FreeSources(let_sources);
-            Tree_FreeArray(let_tree_array);
+            time_tree[7] += MPI_Wtime() - time1;
             
-            time_tree[7] = MPI_Wtime() - time1;
         }
+            
+        
+        //-------------------
+        //DOWNPASS
+        //-------------------
         
         time1 = MPI_Wtime();
         
@@ -1440,7 +1409,11 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
                                 run_params);
 
         time_tree[8] = MPI_Wtime() - time1;
-
+            
+        
+        //-------------------
+        //CORRECT AND REORDER
+        //-------------------
 
         time1 = MPI_Wtime();
         
@@ -1455,7 +1428,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         //-------------------
         //CLEANUP
         //-------------------
-        
         
         time1 = MPI_Wtime();
         
@@ -1473,12 +1445,17 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         Clusters_Free_Win(source_clusters);
         Clusters_Free(target_clusters);
         
+        Clusters_Free(let_clusters);
+        Particles_FreeSources(let_sources);
+        for (int procID = 1; procID < numProcs; ++procID) {
+            Tree_FreeArray(let_tree_arrays[(numProcs+rank-procID) % numProcs]);
+        }
+        
         time_tree[10] = MPI_Wtime() - time1; //time_cleanup
         time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6]; //total setup time
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8]; // total compute time
         
         MPI_Barrier(MPI_COMM_WORLD);
-        if (run_params->verbosity > 0) fprintf(stderr, "Done cleaning up.\n");
 
         return;
         

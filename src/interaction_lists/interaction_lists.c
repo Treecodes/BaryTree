@@ -34,6 +34,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
                           int ***approx_inter_list_addr, int ***direct_inter_list_addr,
                           struct RunParams *run_params)
 {
+
     int batch_numnodes = batches->numnodes;
     const int *batch_numpar = batches->numpar;
     const double *batch_x_mid = batches->x_mid;
@@ -81,6 +82,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
     for (int i = 0; i < batch_numnodes; i++) num_approx_inter[i] = 0;
     for (int i = 0; i < batch_numnodes; i++) num_direct_inter[i] = 0;
     
+    
     for (int i = 0; i < batch_numnodes; i++)
         pc_compute_interaction_list(
                     0, tree_numpar, tree_radius,
@@ -96,6 +98,7 @@ void InteractionList_Make(const struct tnode_array *tree_array,
                     
     free_vector(sizeof_approx_inter_list);
     free_vector(sizeof_direct_inter_list);
+    
 
     return;
 
@@ -235,11 +238,13 @@ void pc_compute_interaction_list(
                 struct RunParams *run_params)
 {
 
+
     /* determine DIST for MAC test */
     double tx = batch_x_mid - tree_x_mid[tree_node];
     double ty = batch_y_mid - tree_y_mid[tree_node];
     double tz = batch_z_mid - tree_z_mid[tree_node];
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
+
 
     if (((tree_radius[tree_node] + batch_radius) < dist * run_params->theta)
       && (tree_radius[tree_node] != 0.00)
