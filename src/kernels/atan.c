@@ -32,15 +32,15 @@ void atanDirect(int number_of_targets_in_batch, int number_of_source_points_in_c
         #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_source_points_in_cluster; j++) {
-
+            double ATAN_TOL = 1e-15;
 
             int jj = starting_index_of_source + j;
             double dz = (tz - source_z[jj])/domainLength;
 
 
-            if (fabs(dz-0.5) > DBL_MIN) {
-                if (fabs(dz+0.5) > DBL_MIN) {
-//                temporary_potential += source_charge[jj] * source_weight[jj] * ( 1/M_PI * atan( sqrt( 1 + 1.0/(delta*delta))* tan(M_PI * dz)) - fmod(dz-0.5,1.0) + 0.5);
+            if (fabs(dz-0.5) > ATAN_TOL) {
+                if (fabs(dz+0.5) > ATAN_TOL) {
+               temporary_potential += source_charge[jj] * source_weight[jj] * ( 1/M_PI * atan( sqrt( 1 + 1.0/(delta*delta))* tan(M_PI * dz)) - fmod(dz-0.5,1.0) + 0.5);
                 }
             }
 
@@ -80,6 +80,7 @@ void atanApproximationLagrange(int number_of_targets_in_batch, int number_of_int
     #pragma acc loop independent
 #endif
     for (int i = 0; i < number_of_targets_in_batch; i++) {
+        double ATAN_TOL = 1e-15;
 
         double temporary_potential = 0.0;
         double tz = target_z[starting_index_of_target + i];
@@ -92,9 +93,9 @@ void atanApproximationLagrange(int number_of_targets_in_batch, int number_of_int
             double dz = (tz - cluster_z[starting_index_of_cluster + j])/domainLength;
 
 
-            if (fabs(dz-0.5) > DBL_MIN) {
-                if (fabs(dz+0.5) > DBL_MIN) {
-//                    temporary_potential += cluster_charge[starting_index_of_cluster + j] * ( 1/M_PI * atan( sqrt( 1 + 1./(delta*delta))* tan(M_PI * dz)) - fmod(dz-.5,1.) + .5);
+            if (fabs(dz-0.5) > ATAN_TOL) {
+                if (fabs(dz+0.5) > ATAN_TOL) {
+                   temporary_potential += cluster_charge[starting_index_of_cluster + j] * ( 1/M_PI * atan( sqrt( 1 + 1./(delta*delta))* tan(M_PI * dz)) - fmod(dz-.5,1.) + .5);
                 }
             }
 
