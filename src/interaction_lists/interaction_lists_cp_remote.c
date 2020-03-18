@@ -28,7 +28,7 @@ void cp_compute_interaction_list_remote(int tree_node, const int *tree_numpar, c
 
 
 
-void InteractionList_CP_MakeRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
+void InteractionLists_CP_MakeRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
                                    int *direct_list, struct RunParams *run_params)
 {
     int batch_numnodes = batches->numnodes;

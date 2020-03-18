@@ -152,13 +152,10 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
         make_vector(direct_ibeg_list, num_nodes_on_proc[get_from]);
         make_vector(direct_length_list, num_nodes_on_proc[get_from]);
 
-        if (run_params->compute_type = PARTICLE_CLUSTER) {
-            InteractionList_PC_MakeRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
-                                          direct_list, run_params);
-        } else if (run_params->compute_type = CLUSTER_CLUSTER) {
-            InteractionList_CC_MakeRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
-                                          direct_list, run_params);
-        }
+
+        InteractionLists_MakeRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
+                                    direct_list, run_params);
+
 
         int num_remote_approx = 0;
         int previous_let_clusters_length = comm_types->let_clusters_length;

@@ -12,6 +12,7 @@
 #include "../tree/struct_nodes.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
+#include "../interaction_lists/struct_interaction_lists.h"
 
 #include "../kernels/coulomb/coulomb.h"
 #include "../kernels/yukawa/yukawa.h"
@@ -23,7 +24,7 @@
 
 
 void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_array *target_tree_array,
-                           int **approx_inter_list, int **direct_inter_list,
+                           struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_q, double *source_w,
                            double *target_x, double *target_y, double *target_z, double *target_q,
@@ -35,6 +36,12 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
                            int numSources, int numTargets, int numSourceClusterPoints, int numTargetClusterPoints,
                            struct RunParams *run_params)
 {
+
+    int **approx_inter_list = interaction_list->approx_interactions;
+    int **direct_inter_list = interaction_list->direct_interactions;
+    
+    int *num_approx = interaction_list->num_approx;
+    int *num_direct = interaction_list->num_direct;
 
     int source_tree_numnodes = source_tree_array->numnodes;
     int target_tree_numnodes = target_tree_array->numnodes;
@@ -69,9 +76,6 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
     int *target_tree_ibeg = target_tree_array->ibeg;
     int *target_tree_iend = target_tree_array->iend;
     int *target_tree_cluster_ind = target_tree_array->cluster_ind;
-
-    int *target_tree_num_approx = target_tree_array->numApprox;
-    int *target_tree_num_direct = target_tree_array->numDirect;
     
     int numSourceClusterCharges = numSourceClusterPoints;
     int numSourceClusterWeights = numSourceClusterPoints;
@@ -120,8 +124,8 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
         int numTargets = target_iend - target_ibeg + 1;
         int targetStart =  target_ibeg - 1;
         
-        int numClusterApprox = target_tree_num_approx[i];
-        int numClusterDirect = target_tree_num_direct[i];
+        int numClusterApprox = num_approx[i];
+        int numClusterDirect = num_direct[i];
 
 
 /**********************************************************/

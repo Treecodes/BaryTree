@@ -50,7 +50,6 @@ SET(SRCS_TREEDRIVER
     interaction_lists/interaction_lists.h
     interaction_lists/interaction_lists.c
     interaction_lists/interaction_lists_cp_remote.c
-    interaction_lists/interaction_lists_cc.c
 # Interaction compute related functions
     interaction_compute/interaction_compute.h
     interaction_compute/interaction_compute_direct.c

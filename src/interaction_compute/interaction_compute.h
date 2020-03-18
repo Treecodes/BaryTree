@@ -3,10 +3,11 @@
 
 #include "../tree/struct_nodes.h"
 #include "../run_params/struct_run_params.h"
+#include "../interaction_lists/struct_interaction_lists.h"
 
 
 void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *batches,
-                           int **approx_inter_list, int **direct_inter_list,
+                           struct InteractionLists *interaction_list,
                            double *xS, double *yS, double *zS, double *qS, double *wS,
                            double *xT, double *yT, double *zT, double *qT,
                            double *xC, double *yC, double *zC, double *qC, double *wC,
@@ -16,7 +17,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
 
 
 void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *batches,
-                           int **approx_inter_list, int **direct_inter_list,
+                           struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_charge, double *source_weight,
                            double *target_x, double *target_y, double *target_z, double *target_charge,
@@ -28,7 +29,7 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
                           
                           
 void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_array *target_tree_array,
-                           int **approx_inter_list, int **direct_inter_list,
+                           struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_q, double *source_w,
                            double *target_x, double *target_y, double *target_z, double *target_q,

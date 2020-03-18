@@ -13,6 +13,7 @@
 #include "../tree/struct_nodes.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
+#include "../interaction_lists/struct_interaction_lists.h"
 
 #include "../kernels/coulomb/coulomb.h"
 #include "../kernels/yukawa/yukawa.h"
@@ -24,7 +25,7 @@
 
 
 void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *batches,
-                           int **approx_inter_list, int **direct_inter_list,
+                           struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_q, double *source_w,
                            double *target_x, double *target_y, double *target_z, double *target_q,
@@ -35,6 +36,12 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
                            struct RunParams *run_params)
 {
 
+    int **approx_inter_list = interaction_list->approx_interactions;
+    int **direct_inter_list = interaction_list->direct_interactions;
+    
+    int *num_approx = interaction_list->num_approx;
+    int *num_direct = interaction_list->num_direct;
+    
     int tree_numnodes = tree_array->numnodes;
     int batch_numnodes = batches->numnodes;
     
@@ -88,8 +95,8 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
     for (int i = 0; i < batches->numnodes; i++) {
         int batch_ibeg = batches->ibeg[i];
         int batch_iend = batches->iend[i];
-        int numberOfClusterApproximations = batches->numApprox[i];
-        int numberOfDirectSums = batches->numDirect[i];
+        int numberOfClusterApproximations = num_approx[i];
+        int numberOfDirectSums = num_direct[i];
 
         int numberOfSources = batch_iend - batch_ibeg + 1;
         int batchStart =  batch_ibeg - 1;
