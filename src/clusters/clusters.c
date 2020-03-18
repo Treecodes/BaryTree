@@ -189,6 +189,12 @@ void Clusters_Alloc(struct clusters *clusters, int length,
     clusters->num = length;
     clusters->num_charges = length;
     clusters->num_weights = length;
+    
+    clusters->x = NULL;
+    clusters->y = NULL;
+    clusters->z = NULL;
+    clusters->q = NULL;
+    clusters->w = NULL;
 
     if (approxName == HERMITE)
         clusters->num_charges *= 8;
@@ -196,11 +202,13 @@ void Clusters_Alloc(struct clusters *clusters, int length,
     if ((approxName == HERMITE) && (singularity == SUBTRACTION))
         clusters->num_weights *= 8;
 
-    make_vector(clusters->x, clusters->num);
-    make_vector(clusters->y, clusters->num);
-    make_vector(clusters->z, clusters->num);
-    make_vector(clusters->q, clusters->num_charges);
-    make_vector(clusters->w, clusters->num_weights);
+    if (clusters->num > 0) {
+        make_vector(clusters->x, clusters->num);
+        make_vector(clusters->y, clusters->num);
+        make_vector(clusters->z, clusters->num);
+        make_vector(clusters->q, clusters->num_charges);
+        make_vector(clusters->w, clusters->num_weights);
+    }
 
     return;
 }   /* END of function allocate_cluster */
@@ -209,14 +217,13 @@ void Clusters_Alloc(struct clusters *clusters, int length,
 
 
 void Clusters_Free(struct clusters *clusters)
-{
-
+{    
     if (clusters != NULL) {
-        free_vector(clusters->x);
-        free_vector(clusters->y);
-        free_vector(clusters->z);
-        free_vector(clusters->q);
-        free_vector(clusters->w);
+        if (clusters->x != NULL) free_vector(clusters->x);
+        if (clusters->y != NULL) free_vector(clusters->y);
+        if (clusters->z != NULL) free_vector(clusters->z);
+        if (clusters->q != NULL) free_vector(clusters->q);
+        if (clusters->w != NULL) free_vector(clusters->w);
         free(clusters);
     }
 

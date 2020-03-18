@@ -14,6 +14,7 @@
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
 
+#include "struct_interaction_lists.h"
 #include "interaction_lists.h"
 
 
@@ -29,11 +30,17 @@ void pc_compute_interaction_list(int tree_node, const int *tree_numpar, const do
                 struct RunParams *run_params);
                 
                 
-void InteractionList_Make(const struct tnode_array *tree_array,
+void InteractionList_Make(struct InteractionList **interaction_list_addr,
+                          const struct tnode_array *tree_array,
                           struct tnode_array *batches,
-                          int ***approx_inter_list_addr, int ***direct_inter_list_addr,
                           struct RunParams *run_params)
 {
+
+    *interaction_list_addr = malloc(sizeof(struct InteractionList));
+    struct InteractionList *interaction_list = *interaction_list_addr;
+
+    int ***approx_inter_list_addr = &(interaction_list->approx_interactions);
+    int ***direct_inter_list_addr = &(interaction_list->direct_interactions);
 
     int batch_numnodes = batches->numnodes;
     const int *batch_numpar = batches->numpar;
@@ -103,6 +110,17 @@ void InteractionList_Make(const struct tnode_array *tree_array,
     return;
 
 } /* END of function Interaction_MakeList */
+
+
+
+void InteractionList_Free(struct InteractionList *interaction_list)
+{
+    free_matrix(interaction_list->approx_interactions);
+    free_matrix(interaction_list->direct_interactions);
+    free(interaction_list);
+
+    return;
+}
 
 
 

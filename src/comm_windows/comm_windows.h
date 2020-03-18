@@ -1,0 +1,26 @@
+#ifndef H_COMM_WINDOWS_FUNCTIONS_H
+#define H_COMM_WINDOWS_FUNCTIONS_H
+
+#include "../clusters/struct_clusters.h"
+#include "../particles/struct_particles.h"
+#include "../run_params/struct_run_params.h"
+#include "../comm_types/struct_comm_types.h"
+
+#include "struct_comm_windows.h"
+
+
+void CommWindows_Create(struct CommWindows **comm_windows_addr,
+                        struct clusters *clusters, struct particles *sources);
+
+void CommWindows_Free(struct CommWindows *comm_windows);
+
+void CommWindows_Lock(struct CommWindows *comm_windows, int get_from);
+
+void CommWindows_Unlock(struct CommWindows *comm_windows, int get_from);
+
+void CommWindows_GetData(struct clusters *let_clusters, struct particles *let_sources,
+                         struct CommTypes *comm_types, struct CommWindows *comm_windows,
+                         int get_from, struct RunParams *run_params);
+
+
+#endif /* H_COMM_WINDOWS_FUNCTIONS_H */

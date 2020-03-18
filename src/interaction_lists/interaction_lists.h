@@ -2,11 +2,14 @@
 #define H_INTERACTION_LISTS_H
 
 #include "../run_params/struct_run_params.h"
+#include "struct_interaction_lists.h"
 
 
-void InteractionList_Make(const struct tnode_array *tree_array, struct tnode_array *batches,
-                          int ***approx_inter_list_addr, int ***direct_inter_list_addr,
+void InteractionList_Make(struct InteractionList **interaction_list_addr,
+                          const struct tnode_array *tree_array, struct tnode_array *batches,
                           struct RunParams *run_params);
+                          
+void InteractionList_Free(struct InteractionList *interaction_list_addr);
 
 void InteractionList_PC_MakeRemote(const struct tnode_array *tree_array, struct tnode_array *batches,
                           int *approx_list_packed, int *approx_list_unpacked, int *direct_list,

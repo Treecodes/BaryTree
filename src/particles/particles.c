@@ -13,11 +13,19 @@
 void Particles_AllocSources(struct particles *sources, int length) 
 {
 	sources->num = length;
-	make_vector(sources->x, length);
-	make_vector(sources->y, length);
-	make_vector(sources->z, length);
-	make_vector(sources->q, length);
-	make_vector(sources->w, length);
+    sources->x = NULL;
+    sources->y = NULL;
+    sources->z = NULL;
+    sources->q = NULL;
+    sources->w = NULL;
+    
+    if (sources->num > 0) {
+        make_vector(sources->x, sources->num);
+        make_vector(sources->y, sources->num);
+        make_vector(sources->z, sources->num);
+        make_vector(sources->q, sources->num);
+        make_vector(sources->w, sources->num);
+    }
 
     return;
 }
@@ -27,11 +35,11 @@ void Particles_AllocSources(struct particles *sources, int length)
 void Particles_FreeSources(struct particles *sources) 
 {
     if (sources != NULL) {
-	    free_vector(sources->x);
-	    free_vector(sources->y);
-	    free_vector(sources->z);
-	    free_vector(sources->q);
-	    free_vector(sources->w);
+	    if (sources->x != NULL) free_vector(sources->x);
+	    if (sources->y != NULL) free_vector(sources->y);
+	    if (sources->z != NULL) free_vector(sources->z);
+	    if (sources->q != NULL) free_vector(sources->q);
+	    if (sources->w != NULL) free_vector(sources->w);
         free(sources);
     }
 

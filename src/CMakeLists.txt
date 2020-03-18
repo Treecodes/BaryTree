@@ -1,5 +1,7 @@
 SET(SRCS_TREEDRIVER
 # Auxiliary utilities
+    utilities/timers.h
+    utilities/timers.c
     utilities/tools.h
     utilities/tools.c
     utilities/xmalloc.h
@@ -31,11 +33,20 @@ SET(SRCS_TREEDRIVER
     particles/struct_particles.h
     particles/particles.h
     particles/particles.c
+# Comm Types struct and related functions
+    comm_types/struct_comm_types.h
+    comm_types/comm_types.h
+    comm_types/comm_types.c
+# Comm Windows struct and related functions
+    comm_windows/struct_comm_windows.h
+    comm_windows/comm_windows.h
+    comm_windows/comm_windows.c
 # Kernel struct and related functions
     run_params/struct_run_params.h
     run_params/run_params.h
     run_params/run_params.c
 # Interaction list related functions
+    interaction_lists/struct_interaction_lists.h
     interaction_lists/interaction_lists.h
     interaction_lists/interaction_lists.c
     interaction_lists/interaction_lists_cp_remote.c
