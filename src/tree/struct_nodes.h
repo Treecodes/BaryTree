@@ -51,8 +51,6 @@ struct tnode_array
     int *num_children;
     int *children;
 
-
-
     int *numApprox;
     int *numDirect;
 };

@@ -93,8 +93,10 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
     int numberOfInterpolationPoints = run_params->interp_pts_per_cluster;
 
     for (int i = 0; i < batches->numnodes; i++) {
+    
         int batch_ibeg = batches->ibeg[i];
         int batch_iend = batches->iend[i];
+        
         int numberOfClusterApproximations = num_approx[i];
         int numberOfDirectSums = num_direct[i];
 

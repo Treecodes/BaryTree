@@ -67,8 +67,8 @@ void directdriver(struct particles *sources, struct particles *targets, struct R
 
         int getFrom = (numProcs+rank-procID) % numProcs;
 
-        struct particles *remote_sources = malloc(sizeof(struct particles));
-        Particles_AllocSources(remote_sources, numSourcesOnProc[getFrom]);
+        struct particles *remote_sources = NULL;
+        Particles_Alloc(&remote_sources, numSourcesOnProc[getFrom]);
 
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -111,7 +111,7 @@ void directdriver(struct particles *sources, struct particles *targets, struct R
                                    pointwisePotential, numSources, numTargets,
                                    run_params);
 
-        Particles_FreeSources(remote_sources);
+        Particles_Free(remote_sources);
 
         time_direct[1] += MPI_Wtime() - time1;
     }

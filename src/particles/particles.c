@@ -10,8 +10,11 @@
 #include "particles.h"
 
 
-void Particles_AllocSources(struct particles *sources, int length) 
+void Particles_Alloc(struct particles **sources_addr, int length)
 {
+    *sources_addr = malloc(sizeof(struct particles));
+    struct particles *sources = *sources_addr;
+
 	sources->num = length;
     sources->x = NULL;
     sources->y = NULL;
@@ -32,7 +35,7 @@ void Particles_AllocSources(struct particles *sources, int length)
 
 
 
-void Particles_FreeSources(struct particles *sources) 
+void Particles_Free(struct particles *sources) 
 {
     if (sources != NULL) {
 	    if (sources->x != NULL) free_vector(sources->x);

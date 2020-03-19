@@ -119,28 +119,25 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         time1 = MPI_Wtime();
 
-        int numBatchesOnProc[num_procs];
-        MPI_Allgather(&(batches->numnodes), 1, MPI_INT, numBatchesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
+        int num_batches_on_proc[num_procs];
+        MPI_Allgather(&(batches->numnodes), 1, MPI_INT, num_batches_on_proc, 1, MPI_INT, MPI_COMM_WORLD);
+        
+        int num_sources_on_proc[num_procs];
+        MPI_Allgather(&(sources->num), 1, MPI_INT, num_sources_on_proc, 1, MPI_INT, MPI_COMM_WORLD);
+        
+        int num_remote_batches = sum_int(num_batches_on_proc, num_procs) - num_batches_on_proc[rank];
+        int num_remote_sources = sum_int(num_sources_on_proc, num_procs) - num_sources_on_proc[rank];
+        
+        int previous_remote_sources_length[num_procs];
 
-        int pointsPerCluster = run_params->interp_pts_per_cluster;
-        int chargesPerCluster = pointsPerCluster;
-
-        if (run_params->approximation == HERMITE)
-            chargesPerCluster *= 8;
-
-        struct tnode_array *let_batches_array = NULL;
-        int let_batches_array_length = 0;
-
-        struct particles *let_sources = NULL;
-        let_sources = malloc(sizeof(struct particles));  // let_sources will hold all source nodes needed for batches
-        int let_sources_length = 0;  // previously let_sources included local.  Now it should not
-
+        struct tnode_array *remote_batches = NULL;
+        struct particles *remote_sources = NULL;
+        
+        Batches_AllocArray(&remote_batches, num_remote_batches);
 
 
         MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend;
-        MPI_Win win_clusters_x, win_clusters_y, win_clusters_z, win_clusters_q, win_clusters_w;
         MPI_Win win_sources_x, win_sources_y, win_sources_z, win_sources_q, win_sources_w;
-        MPI_Win win_children, win_num_children;
         
         MPI_Win_create(batches->x_mid,  batches->numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
         MPI_Win_create(batches->y_mid,  batches->numnodes*sizeof(double), sizeof(double),  MPI_INFO_NULL, MPI_COMM_WORLD, &win_y_mid);
@@ -150,125 +147,73 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         MPI_Win_create(batches->ibeg,   batches->numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
         MPI_Win_create(batches->iend,   batches->numnodes*sizeof(int),    sizeof(int),     MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
 
-        MPI_Win_create(clusters->x, clusters->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_x);
-        MPI_Win_create(clusters->y, clusters->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_y);
-        MPI_Win_create(clusters->z, clusters->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_z);
-        MPI_Win_create(clusters->q, clusters->num_charges*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_clusters_q);
 
-        MPI_Win_create(sources->x, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
-        MPI_Win_create(sources->y, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
-        MPI_Win_create(sources->z, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
-        MPI_Win_create(sources->q, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
-        MPI_Win_create(sources->w, troot->numpar*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
+        MPI_Win_create(sources->x, sources->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
+        MPI_Win_create(sources->y, sources->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_y);
+        MPI_Win_create(sources->z, sources->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
+        MPI_Win_create(sources->q, sources->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
+        MPI_Win_create(sources->w, sources->num*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
 
         // Perform MPI round robin, filling LET with remote data
-        int new_sources_length_array[num_procs];
-        int previous_let_sources_length_array[num_procs];
-        MPI_Datatype direct_type[num_procs];
-
-
+        
+        int previous_remote_batches_counter = 0;
+        int previous_remote_sources_counter = 0;
 
         for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
 
-            int getFrom = (num_procs+rank-proc_id) % num_procs;
+            int get_from = (num_procs+rank-proc_id) % num_procs;
 
-            // Allocate remote_tree_array
-            struct tnode_array *remote_batches_array = NULL;
-            Batches_AllocArray(&remote_batches_array, numBatchesOnProc[getFrom]);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_x_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_y_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_z_mid);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_radius);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_numpar);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_ibeg);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_iend);
 
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_x_mid);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_y_mid);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_z_mid);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_radius);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_numpar);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_ibeg);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_iend);
+            MPI_Get(&(remote_batches->x_mid[previous_remote_batches_counter]),  num_batches_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_batches_on_proc[get_from], MPI_DOUBLE, win_x_mid);
+                    
+            MPI_Get(&(remote_batches->y_mid[previous_remote_batches_counter]),  num_batches_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_batches_on_proc[get_from], MPI_DOUBLE, win_y_mid);
+                    
+            MPI_Get(&(remote_batches->z_mid[previous_remote_batches_counter]),  num_batches_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_batches_on_proc[get_from], MPI_DOUBLE, win_z_mid);
+                    
+            MPI_Get(&(remote_batches->radius[previous_remote_batches_counter]), num_batches_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_batches_on_proc[get_from], MPI_DOUBLE, win_radius);
+                    
+            MPI_Get(&(remote_batches->numpar[previous_remote_batches_counter]), num_batches_on_proc[get_from], MPI_INT,
+                    get_from, 0, num_batches_on_proc[get_from], MPI_INT,    win_numpar);
+                    
+            MPI_Get(&(remote_batches->ibeg[previous_remote_batches_counter]),   num_batches_on_proc[get_from], MPI_INT,
+                    get_from, 0, num_batches_on_proc[get_from], MPI_INT,    win_ibeg);
+                    
+            MPI_Get(&(remote_batches->iend[previous_remote_batches_counter]),   num_batches_on_proc[get_from], MPI_INT,
+                    get_from, 0, num_batches_on_proc[get_from], MPI_INT,    win_iend);
 
-            MPI_Get(remote_batches_array->x_mid, numBatchesOnProc[getFrom], MPI_DOUBLE,
-                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_x_mid);
-            MPI_Get(remote_batches_array->y_mid, numBatchesOnProc[getFrom], MPI_DOUBLE,
-                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_y_mid);
-            MPI_Get(remote_batches_array->z_mid, numBatchesOnProc[getFrom], MPI_DOUBLE,
-                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_z_mid);
-            MPI_Get(remote_batches_array->radius, numBatchesOnProc[getFrom], MPI_DOUBLE,
-                    getFrom, 0, numBatchesOnProc[getFrom], MPI_DOUBLE, win_radius);
-            MPI_Get(remote_batches_array->numpar, numBatchesOnProc[getFrom], MPI_INT,
-                    getFrom, 0, numBatchesOnProc[getFrom], MPI_INT, win_numpar);
-            MPI_Get(remote_batches_array->ibeg, numBatchesOnProc[getFrom], MPI_INT,
-                    getFrom, 0, numBatchesOnProc[getFrom], MPI_INT, win_ibeg);
-            MPI_Get(remote_batches_array->iend, numBatchesOnProc[getFrom], MPI_INT,
-                    getFrom, 0, numBatchesOnProc[getFrom], MPI_INT, win_iend);
-
-            MPI_Win_unlock(getFrom, win_x_mid);
-            MPI_Win_unlock(getFrom, win_y_mid);
-            MPI_Win_unlock(getFrom, win_z_mid);
-            MPI_Win_unlock(getFrom, win_radius);
-            MPI_Win_unlock(getFrom, win_numpar);
-            MPI_Win_unlock(getFrom, win_ibeg);
-            MPI_Win_unlock(getFrom, win_iend);
+            MPI_Win_unlock(get_from, win_x_mid);
+            MPI_Win_unlock(get_from, win_y_mid);
+            MPI_Win_unlock(get_from, win_z_mid);
+            MPI_Win_unlock(get_from, win_radius);
+            MPI_Win_unlock(get_from, win_numpar);
+            MPI_Win_unlock(get_from, win_ibeg);
+            MPI_Win_unlock(get_from, win_iend);
             
-            int *direct_list, *direct_ibeg_list, *direct_length_list;
-            make_vector(direct_list, numBatchesOnProc[getFrom]);
-            make_vector(direct_ibeg_list, numBatchesOnProc[getFrom]);
-            make_vector(direct_length_list, numBatchesOnProc[getFrom]);
-
-            InteractionLists_CP_MakeRemote(tree_array, remote_batches_array,
-                                          direct_list, run_params);
-
-
-            // Count number of unique clusters adding to LET
-            int previousBatchesArrayLength = let_batches_array_length;
-            for (int i = 0; i < numBatchesOnProc[getFrom]; ++i) {
-                if (direct_list[i] != -1) let_batches_array_length++;
-            }
-            
-
-            if (proc_id == 1) {
-                Batches_AllocArray(&let_batches_array, let_batches_array_length);
-            } else {
-                Batches_ReallocArray(let_batches_array, let_batches_array_length);
-            }
-            
-            int previous_let_sources_length = let_sources_length;
 
             // Fill in LET tree array from Remote tree array.
-            int appendCounter = 0;
-            for (int i = 0; i < numBatchesOnProc[getFrom]; ++i) {
-                if (direct_list[i] != -1) {
-                    let_batches_array->x_mid[previousBatchesArrayLength + appendCounter] = remote_batches_array->x_mid[i];
-                    let_batches_array->y_mid[previousBatchesArrayLength + appendCounter] = remote_batches_array->y_mid[i];
-                    let_batches_array->z_mid[previousBatchesArrayLength + appendCounter] = remote_batches_array->z_mid[i];
-                    let_batches_array->radius[previousBatchesArrayLength + appendCounter] = remote_batches_array->radius[i];
-                    let_batches_array->numpar[previousBatchesArrayLength + appendCounter] = remote_batches_array->numpar[i];
-                    
-                    let_batches_array->numApprox[previousBatchesArrayLength + appendCounter] = remote_batches_array->numApprox[i];
-                    let_batches_array->numDirect[previousBatchesArrayLength + appendCounter] = remote_batches_array->numDirect[i];
+            for (int i = 0; i < num_batches_on_proc[get_from]; ++i) {
                         
-                    // Set the beginning and ending particle indices for the associated nodes in the local sources list
-                    let_batches_array->ibeg[previousBatchesArrayLength + appendCounter] = let_sources_length + 1;  // These are one-index based!!!
-                    let_batches_array->iend[previousBatchesArrayLength + appendCounter] = let_sources_length + remote_batches_array->numpar[i];
-                    let_sources_length += remote_batches_array->numpar[i];
-                        
-                    // Determine displacements and lengths for getting prticles from remote sources list
-                    direct_ibeg_list[appendCounter] = remote_batches_array->ibeg[i] - 1; // These are zero-index based!!!
-                    direct_length_list[appendCounter] = remote_batches_array->numpar[i];
-                    appendCounter++;
-
-                }
+                // Set the beginning and ending particle indices for the associated nodes in the local sources list
+                remote_batches->ibeg[previous_remote_batches_counter + i] += previous_remote_sources_counter;
+                remote_batches->iend[previous_remote_batches_counter + i] += previous_remote_sources_counter;
             }
+            
+            previous_remote_sources_length[get_from] = previous_remote_sources_counter;
+            
+            previous_remote_batches_counter += num_batches_on_proc[get_from];
+            previous_remote_sources_counter += num_sources_on_proc[get_from];
 
-            new_sources_length_array[getFrom] = let_sources_length - previous_let_sources_length;
-            previous_let_sources_length_array[getFrom] = previous_let_sources_length;
-
-
-            MPI_Type_indexed(appendCounter, direct_length_list, direct_ibeg_list,
-                                          MPI_DOUBLE, &direct_type[getFrom]);
-            MPI_Type_commit(&direct_type[getFrom]);
-
-            free_vector(direct_list);
-            free_vector(direct_ibeg_list);
-            free_vector(direct_length_list);
-            Batches_Free(remote_batches_array);
         } //end loop over num_procs
 
 
@@ -280,43 +225,45 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         MPI_Win_free(&win_numpar);
         MPI_Win_free(&win_ibeg);
         MPI_Win_free(&win_iend);
+        
 
-        if (let_sources_length > 0) Particles_AllocSources(let_sources, let_sources_length);
-
+        Particles_Alloc(&remote_sources, num_remote_sources);
 
         for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
 
-            int getFrom = (num_procs+rank-proc_id) % num_procs;
+            int get_from = (num_procs+rank-proc_id) % num_procs;
 
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_x);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_y);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_z);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_q);
-            MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_w);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_sources_x);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_sources_y);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_sources_z);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_sources_q);
+            MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_sources_w);
 
-            MPI_Get(&(let_sources->x[previous_let_sources_length_array[getFrom]]),
-                    new_sources_length_array[getFrom], MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type[getFrom], win_sources_x);
-            MPI_Get(&(let_sources->y[previous_let_sources_length_array[getFrom]]),
-                    new_sources_length_array[getFrom], MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type[getFrom], win_sources_y);
-            MPI_Get(&(let_sources->z[previous_let_sources_length_array[getFrom]]),
-                    new_sources_length_array[getFrom], MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type[getFrom], win_sources_z);
-            MPI_Get(&(let_sources->q[previous_let_sources_length_array[getFrom]]),
-                    new_sources_length_array[getFrom], MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type[getFrom], win_sources_q);
-            MPI_Get(&(let_sources->w[previous_let_sources_length_array[getFrom]]),
-                    new_sources_length_array[getFrom], MPI_DOUBLE,
-                    getFrom, 0, 1, direct_type[getFrom], win_sources_w);
+            MPI_Get(&(remote_sources->x[previous_remote_sources_length[get_from]]),
+                    num_sources_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_sources_on_proc[get_from], MPI_DOUBLE, win_sources_x);
+            
+            MPI_Get(&(remote_sources->y[previous_remote_sources_length[get_from]]),
+                    num_sources_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_sources_on_proc[get_from], MPI_DOUBLE, win_sources_y);
+            
+            MPI_Get(&(remote_sources->z[previous_remote_sources_length[get_from]]),
+                    num_sources_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_sources_on_proc[get_from], MPI_DOUBLE, win_sources_z);
+            MPI_Get(&(remote_sources->q[previous_remote_sources_length[get_from]]),
+                    num_sources_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_sources_on_proc[get_from], MPI_DOUBLE, win_sources_q);
+            MPI_Get(&(remote_sources->w[previous_remote_sources_length[get_from]]),
+                    num_sources_on_proc[get_from], MPI_DOUBLE,
+                    get_from, 0, num_sources_on_proc[get_from], MPI_DOUBLE, win_sources_w);
 
-            MPI_Win_unlock(getFrom, win_sources_y);
-            MPI_Win_unlock(getFrom, win_sources_z);
-            MPI_Win_unlock(getFrom, win_sources_q);
-            MPI_Win_unlock(getFrom, win_sources_w);
+            MPI_Win_unlock(get_from, win_sources_x);
+            MPI_Win_unlock(get_from, win_sources_y);
+            MPI_Win_unlock(get_from, win_sources_z);
+            MPI_Win_unlock(get_from, win_sources_q);
+            MPI_Win_unlock(get_from, win_sources_w);
 
         } // end loop over num_procs
-
 
         MPI_Barrier(MPI_COMM_WORLD);
 
@@ -353,33 +300,32 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         InteractionLists_Free(local_interaction_list);
 
         time_tree[5] = MPI_Wtime() - time1; //time_constructlet
-        
+
 
         if (num_procs > 1) {
             time1 = MPI_Wtime();
 
             struct InteractionLists *let_interaction_list = NULL;
             
-            InteractionLists_Make(&let_interaction_list, tree_array, let_batches_array, run_params);
+            InteractionLists_Make(&let_interaction_list, tree_array, remote_batches, run_params);
 
             time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
 
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-
-            InteractionCompute_CP(tree_array, let_batches_array,
+            InteractionCompute_CP(tree_array, remote_batches,
                                     let_interaction_list,
-                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
+                                    remote_sources->x, remote_sources->y, remote_sources->z, remote_sources->q, remote_sources->w,
                                     targets->x, targets->y, targets->z, targets->q,
                                     clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                                    potential_array, let_sources->num, targets->num, clusters->num,
+                                    potential_array, remote_sources->num, targets->num, clusters->num,
                                     run_params);
             
             InteractionLists_Free(let_interaction_list);
         
-            Particles_FreeSources(let_sources);
-            Batches_Free(let_batches_array);
+            Particles_Free(remote_sources);
+            Batches_Free(remote_batches);
             
             time_tree[7] = MPI_Wtime() - time1;
         }
@@ -492,16 +438,16 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         struct CommWindows *comm_windows = NULL;
         struct tnode_array **let_tree_arrays = NULL;
 
-        struct clusters *let_clusters = malloc(sizeof(struct clusters));
-        struct particles *let_sources = malloc(sizeof(struct particles));
+        struct clusters *let_clusters = NULL;
+        struct particles *let_sources = NULL;
         
 
         CommTypesAndTrees_Construct(&comm_types, &let_tree_arrays,
                                     tree_array, batches, run_params);
 
 
-        Particles_AllocSources(let_sources, comm_types->let_sources_length);
-        Clusters_Alloc(let_clusters, comm_types->let_clusters_length,
+        Particles_Alloc(&let_sources, comm_types->let_sources_length);
+        Clusters_Alloc(&let_clusters, comm_types->let_clusters_length,
                        run_params->approximation, run_params->singularity);
                                                 
 
@@ -541,8 +487,8 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         if (run_params->verbosity > 0) {
             for (int j = 0; j < batches->numnodes; j++){
-                totalNumberApprox += batches->numApprox[j];
-                totalNumberDirect += batches->numDirect[j];
+                totalNumberApprox += local_interaction_list->num_approx[j];
+                totalNumberDirect += local_interaction_list->num_direct[j];
             }
         }
         
@@ -572,16 +518,16 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             
         for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
             time1 = MPI_Wtime();
-            int getFrom = (num_procs+rank-proc_id) % num_procs;
+            int get_from = (num_procs+rank-proc_id) % num_procs;
 
             struct InteractionLists *let_interaction_list;
-            InteractionLists_Make(&let_interaction_list, let_tree_arrays[getFrom], batches, run_params);
+            InteractionLists_Make(&let_interaction_list, let_tree_arrays[get_from], batches, run_params);
 
             // Count number of interactions
             if (run_params->verbosity > 0) {
                 for (int j = 0; j < batches->numnodes; j++) {
-                    totalNumberApprox += batches->numApprox[j];
-                    totalNumberDirect += batches->numDirect[j];
+                    totalNumberApprox += let_interaction_list->num_approx[j];
+                    totalNumberDirect += let_interaction_list->num_direct[j];
                 }
             }
             time_tree[6] += MPI_Wtime() - time1; //time_makeglobintlist
@@ -590,7 +536,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-            InteractionCompute_PC(let_tree_arrays[getFrom], batches,
+            InteractionCompute_PC(let_tree_arrays[get_from], batches,
                                    let_interaction_list,
                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                    targets->x, targets->y, targets->z, targets->q,
@@ -637,7 +583,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
         //remote pieces
         Clusters_Free(let_clusters);
-        Particles_FreeSources(let_sources);
+        Particles_Free(let_sources);
         CommTypesAndTrees_Free(comm_types, let_tree_arrays);
         
         
@@ -699,8 +645,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         Tree_AllocArray(&target_tree_array, target_numnodes);
         Tree_CreateArray(target_tree_root, target_tree_array);
-        make_vector(target_tree_array->numApprox, target_tree_array->numnodes);
-        make_vector(target_tree_array->numDirect, target_tree_array->numnodes);
 
         time_tree[1] = MPI_Wtime() - time1; //time_maketreearray
          
@@ -728,16 +672,16 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         struct CommWindows *comm_windows = NULL;
         struct tnode_array **let_tree_arrays = NULL;
 
-        struct clusters *let_clusters = malloc(sizeof(struct clusters));
-        struct particles *let_sources = malloc(sizeof(struct particles));
+        struct clusters *let_clusters = NULL;
+        struct particles *let_sources = NULL;
 
           
         CommTypesAndTrees_Construct(&comm_types, &let_tree_arrays,
                                     source_tree_array, target_tree_array, run_params);
 
 
-        Particles_AllocSources(let_sources, comm_types->let_sources_length);
-        Clusters_Alloc(let_clusters, comm_types->let_clusters_length,
+        Particles_Alloc(&let_sources, comm_types->let_sources_length);
+        Clusters_Alloc(&let_clusters, comm_types->let_clusters_length,
                        run_params->approximation, run_params->singularity);
                                                   
 
@@ -776,8 +720,8 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         if (run_params->verbosity > 0) {
             for (int j = 0; j < target_tree_array->numnodes; j++){
-                totalNumberApprox += target_tree_array->numApprox[j];
-                totalNumberDirect += target_tree_array->numDirect[j];
+                totalNumberApprox += local_interaction_list->num_approx[j];
+                totalNumberDirect += local_interaction_list->num_direct[j];
             }
         }
         
@@ -810,10 +754,10 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             
         for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
             time1 = MPI_Wtime();
-            int getFrom = (num_procs+rank-proc_id) % num_procs;
+            int get_from = (num_procs+rank-proc_id) % num_procs;
 
             struct InteractionLists *let_interaction_list;
-            InteractionLists_Make(&let_interaction_list, let_tree_arrays[getFrom], target_tree_array,  run_params);
+            InteractionLists_Make(&let_interaction_list, let_tree_arrays[get_from], target_tree_array,  run_params);
 
             time_tree[6] += MPI_Wtime() - time1; //time_makeglobintlist
              
@@ -821,8 +765,8 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             // Count number of interactions
             if (run_params->verbosity > 0) {
                 for (int j = 0; j < target_tree_array->numnodes; j++){
-                    totalNumberApprox += target_tree_array->numApprox[j];
-                    totalNumberDirect += target_tree_array->numDirect[j];
+                    totalNumberApprox += let_interaction_list->num_approx[j];
+                    totalNumberDirect += let_interaction_list->num_direct[j];
                 }
             }
            
@@ -830,7 +774,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-            InteractionCompute_CC(let_tree_arrays[getFrom], target_tree_array,
+            InteractionCompute_CC(let_tree_arrays[get_from], target_tree_array,
                                    let_interaction_list,
                                    let_sources->x, let_sources->y, let_sources->z,
                                    let_sources->q, let_sources->w,
@@ -890,9 +834,6 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         free_vector(targets->order);
         free_vector(sources->order);
 
-        free_vector(target_tree_array->numApprox);
-        free_vector(target_tree_array->numDirect);
-        
         Tree_Free(source_tree_root);
         Tree_Free(target_tree_root);
         Tree_FreeArray(source_tree_array);
@@ -903,7 +844,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
         //remote pieces
         Clusters_Free(let_clusters);
-        Particles_FreeSources(let_sources);
+        Particles_Free(let_sources);
         CommTypesAndTrees_Free(comm_types, let_tree_arrays);
         
         time_tree[10] = MPI_Wtime() - time1; //time_cleanup

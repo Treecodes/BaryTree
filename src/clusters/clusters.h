@@ -15,8 +15,8 @@ void Clusters_PC_Setup(struct clusters **clusters, struct particles *sources, in
 void Clusters_CP_Setup(struct clusters **clusters, int order, struct tnode_array *tree_array,
                        APPROXIMATION approxName, SINGULARITY singularity);
 
-void Clusters_Alloc(struct clusters *clusters, int length,
-                       APPROXIMATION approxName, SINGULARITY singularity);
+void Clusters_Alloc(struct clusters **clusters_addr, int length,
+                    APPROXIMATION approxName, SINGULARITY singularity);
 
 void Clusters_Free(struct clusters *clusters);
 

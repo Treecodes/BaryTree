@@ -183,9 +183,12 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
 
 
-void Clusters_Alloc(struct clusters *clusters, int length,
+void Clusters_Alloc(struct clusters **clusters_addr, int length,
                     APPROXIMATION approxName,  SINGULARITY singularity) 
 {
+    *clusters_addr = malloc(sizeof(struct clusters));
+    struct clusters *clusters = *clusters_addr;
+
     clusters->num = length;
     clusters->num_charges = length;
     clusters->num_weights = length;

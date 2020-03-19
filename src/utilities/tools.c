@@ -43,6 +43,18 @@ double sum(double *x, int numels)
 
 
 
+int sum_int(int *x, int numels)
+{
+    int sum = 0.0;
+
+    for (int i = 0; i < numels; ++i)
+        sum += x[i];
+
+    return sum;
+}
+
+
+
 double max3(double a, double b, double c)
 {
     double max = a;
