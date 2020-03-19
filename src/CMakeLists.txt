@@ -41,11 +41,14 @@ SET(SRCS_TREEDRIVER
     comm_windows/struct_comm_windows.h
     comm_windows/comm_windows.h
     comm_windows/comm_windows.c
+# Comm for cluster-particle
+    comm_cp/comm_cp.h
+    comm_cp/comm_cp.c
 # Kernel struct and related functions
     run_params/struct_run_params.h
     run_params/run_params.h
     run_params/run_params.c
-# Interaction list related functions
+# Interaction list and related functions
     interaction_lists/struct_interaction_lists.h
     interaction_lists/interaction_lists.h
     interaction_lists/interaction_lists.c

@@ -86,7 +86,7 @@ int main(int argc, char **argv)
     time_t t = time(NULL);
     unsigned t_hashed = (unsigned) t;
     t_hashed = mrand * t_hashed + crand;
-//    srand(t_hashed ^ rank);
+    srand(t_hashed ^ rank);
     srand(1);
 
     for (int i = 0; i < sample_size; ++i) {
@@ -447,7 +447,7 @@ int main(int argc, char **argv)
         printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                      time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree,
                      time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent_tree,
-                     time_tree_glob[1][11]/time_tree_glob[0][10]);
+                     time_tree_glob[1][11]/time_tree_glob[0][11]);
         printf("((   |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                      time_tree_glob[1][02],          time_tree_glob[1][02] * max_percent_tree,
                      time_tree_glob[2][02]/numProcs, time_tree_glob[2][02] * avg_percent_tree,

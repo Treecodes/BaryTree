@@ -118,8 +118,6 @@ int main(int argc, char **argv)
         }
     }
 
-    if (run_params->verbosity > 0) printf("Created sources.\n");
-
     /* Query functions, to provide geometry to Zoltan */
 
     Zoltan_Set_Num_Obj_Fn(zz, ztn_get_number_of_objects, &mySources);
@@ -222,8 +220,6 @@ int main(int argc, char **argv)
             myTargets.b[i] = 1.0; // dummy weighting scheme
         }
     }
-
-    if (run_params->verbosity > 0) printf("Created targets.\n");
 
     /* Query functions, to provide geometry to Zoltan */
 
@@ -529,7 +525,7 @@ int main(int argc, char **argv)
         printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                      time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree,
                      time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent_tree,
-                     time_tree_glob[1][11]/time_tree_glob[0][10]);
+                     time_tree_glob[1][11]/time_tree_glob[0][11]);
         printf("((   |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                      time_tree_glob[1][02],          time_tree_glob[1][02] * max_percent_tree,
                      time_tree_glob[2][02]/numProcs, time_tree_glob[2][02] * avg_percent_tree,
