@@ -44,7 +44,7 @@ void BaryTreeInterface(int numTargets, int numSources,
                     verbosity);
 
 
-	struct particles sources, targets;
+	struct Particles sources, targets;
 
 	targets.num = numTargets;
 	targets.x = targetX;

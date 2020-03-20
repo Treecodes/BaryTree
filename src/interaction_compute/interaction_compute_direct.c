@@ -3,11 +3,9 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-#include <mpi.h>
 
 #include "../utilities/array.h"
 
-#include "../tree/struct_nodes.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
 

@@ -16,11 +16,14 @@ SET(SRCS_TREEDRIVER
     drivers/treedriver.h
     drivers/treedriver.c
 # Tree node struct and related functions
-    tree/struct_nodes.h
+    tree/struct_tree.h
     tree/tree.h
     tree/tree.c
     tree/batches.h
     tree/batches.c
+    tree/struct_tree_linked_list_node.h
+    tree/tree_linked_list.h
+    tree/tree_linked_list.c
 # Partitioning routines for tree building
     tree/partition.h
     tree/partition.c

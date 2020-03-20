@@ -1,12 +1,12 @@
 #ifndef H_INTERACTIONCOMPUTE_H
 #define H_INTERACTIONCOMPUTE_H
 
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../run_params/struct_run_params.h"
 #include "../interaction_lists/struct_interaction_lists.h"
 
 
-void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *batches,
+void InteractionCompute_PC(struct Tree *tree, struct Tree *batches,
                            struct InteractionLists *interaction_list,
                            double *xS, double *yS, double *zS, double *qS, double *wS,
                            double *xT, double *yT, double *zT, double *qT,
@@ -16,7 +16,7 @@ void InteractionCompute_PC(struct tnode_array *tree_array, struct tnode_array *b
                            struct RunParams *run_params);
 
 
-void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *batches,
+void InteractionCompute_CP(struct Tree *tree, struct Tree *batches,
                            struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_charge, double *source_weight,
@@ -28,7 +28,7 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
                            struct RunParams *run_params);
                           
                           
-void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_array *target_tree_array,
+void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
                            struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_q, double *source_w,
@@ -42,7 +42,7 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
                            struct RunParams *run_params);
 
 
-void InteractionCompute_Downpass(struct tnode_array *tree_array,
+void InteractionCompute_Downpass(struct Tree *tree,
                            double *target_x, double *target_y, double *target_z, double *target_charge,
                            double *cluster_x, double *cluster_y, double *cluster_z,
                            double *cluster_charge, double *cluster_weight,

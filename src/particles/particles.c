@@ -10,10 +10,10 @@
 #include "particles.h"
 
 
-void Particles_Alloc(struct particles **sources_addr, int length)
+void Particles_Alloc(struct Particles **sources_addr, int length)
 {
-    *sources_addr = malloc(sizeof(struct particles));
-    struct particles *sources = *sources_addr;
+    *sources_addr = malloc(sizeof(struct Particles));
+    struct Particles *sources = *sources_addr;
 
 	sources->num = length;
     sources->x = NULL;
@@ -35,7 +35,7 @@ void Particles_Alloc(struct particles **sources_addr, int length)
 
 
 
-void Particles_Free(struct particles *sources) 
+void Particles_Free(struct Particles *sources)
 {
     if (sources != NULL) {
 	    if (sources->x != NULL) free_vector(sources->x);
@@ -51,7 +51,7 @@ void Particles_Free(struct particles *sources)
 
 
 
-void Particles_ReorderTargetsAndPotential(struct particles *targets, double *tEn)
+void Particles_ReorderTargetsAndPotential(struct Particles *targets, double *tEn)
 {
     int numpars = targets->num;
     int *reorder = targets->order;

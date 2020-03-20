@@ -47,9 +47,9 @@ int main(int argc, char **argv)
     MESH_DATA mySources, myTargets;
 
 
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
-    struct particles *targets_sample = NULL;
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
+    struct Particles *targets_sample = NULL;
     double *potential = NULL, *potential_direct = NULL;
     double potential_engy = 0, potential_engy_glob = 0;
     double potential_engy_direct = 0, potential_engy_direct_glob = 0;
@@ -168,7 +168,7 @@ int main(int argc, char **argv)
     Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, &importProcs, &importToPart);
     Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
 
-    sources = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
     sources->num = mySources.numMyPoints;
 
     //MPI-allocated source arrays for RMA use
@@ -272,7 +272,7 @@ int main(int argc, char **argv)
     Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
     Zoltan_Destroy(&zz);
 
-    targets = malloc(sizeof(struct particles));
+    targets = malloc(sizeof(struct Particles));
     targets->num = mySources.numMyPoints;
 
     //MPI-allocated source arrays for RMA use
@@ -301,7 +301,7 @@ int main(int argc, char **argv)
     /******* Initializing direct and treedriver runs ******/
     /******************************************************/
 
-    targets_sample = malloc(sizeof(struct particles));
+    targets_sample = malloc(sizeof(struct Particles));
 
     potential = malloc(sizeof(double) * mySources.numMyPoints);
     potential_direct = malloc(sizeof(double) * mySources.numMyPoints);

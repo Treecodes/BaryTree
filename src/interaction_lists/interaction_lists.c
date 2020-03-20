@@ -1,17 +1,12 @@
-/*
- *Procedures for Particle-Cluster Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
-#include <mpi.h>
 
 #include "../utilities/tools.h"
 #include "../utilities/array.h"
 
-#include "../tree/struct_nodes.h"
-#include "../particles/struct_particles.h"
+#include "../tree/struct_tree.h"
 #include "../run_params/struct_run_params.h"
 
 #include "struct_interaction_lists.h"
@@ -27,7 +22,7 @@ void pc_compute_interaction_list(int tree_node, const int *tree_numpar, const do
                 int **batch_tree_list, int **batch_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                struct RunParams *run_params);
+                const struct RunParams *run_params);
                 
 
 void cc_compute_interaction_list_1(
@@ -42,7 +37,7 @@ void cc_compute_interaction_list_1(
                 int **target_approx_list, int **target_direct_list,
                 int *sizeof_approx_list, int *sizeof_direct_list,
                 int *approx_index_counter, int *direct_index_counter,
-                struct RunParams *run_params);
+                const struct RunParams *run_params);
 
 
 void cc_compute_interaction_list_2(
@@ -57,14 +52,14 @@ void cc_compute_interaction_list_2(
                 int **target_approx_list, int **target_direct_list,
                 int *sizeof_approx_list, int *sizeof_direct_list,
                 int *approx_index_counter, int *direct_index_counter,
-                struct RunParams *run_params);
+                const struct RunParams *run_params);
                 
                 
                 
 void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
-                          const struct tnode_array *source_tree_array,
-                          const struct tnode_array *target_tree_array,
-                          struct RunParams *run_params)
+                          const struct Tree *source_tree,
+                          const struct Tree *target_tree,
+                          const struct RunParams *run_params)
 {
 
     *interaction_list_addr = malloc(sizeof(struct InteractionLists));
@@ -77,26 +72,26 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
     int **num_direct_addr = &(interaction_list->num_direct);
     
     
-   int source_tree_numnodes = source_tree_array->numnodes;
-   const int *source_tree_numpar = source_tree_array->numpar;
-   const double *source_tree_radius = source_tree_array->radius;
-   const double *source_tree_x_mid = source_tree_array->x_mid;
-   const double *source_tree_y_mid = source_tree_array->y_mid;
-   const double *source_tree_z_mid = source_tree_array->z_mid;
+   int source_tree_numnodes = source_tree->numnodes;
+   const int *source_tree_numpar = source_tree->numpar;
+   const double *source_tree_radius = source_tree->radius;
+   const double *source_tree_x_mid = source_tree->x_mid;
+   const double *source_tree_y_mid = source_tree->y_mid;
+   const double *source_tree_z_mid = source_tree->z_mid;
 
-   const int *source_tree_num_children = source_tree_array->num_children;
-   const int *source_tree_children = source_tree_array->children;
+   const int *source_tree_num_children = source_tree->num_children;
+   const int *source_tree_children = source_tree->children;
    
    
-   int target_tree_numnodes = target_tree_array->numnodes;
-   const int *target_tree_numpar = target_tree_array->numpar;
-   const double *target_tree_radius = target_tree_array->radius;
-   const double *target_tree_x_mid = target_tree_array->x_mid;
-   const double *target_tree_y_mid = target_tree_array->y_mid;
-   const double *target_tree_z_mid = target_tree_array->z_mid;
+   int target_tree_numnodes = target_tree->numnodes;
+   const int *target_tree_numpar = target_tree->numpar;
+   const double *target_tree_radius = target_tree->radius;
+   const double *target_tree_x_mid = target_tree->x_mid;
+   const double *target_tree_y_mid = target_tree->y_mid;
+   const double *target_tree_z_mid = target_tree->z_mid;
    
-   const int *target_tree_num_children = target_tree_array->num_children;
-   const int *target_tree_children = target_tree_array->children;
+   const int *target_tree_num_children = target_tree->num_children;
+   const int *target_tree_children = target_tree->children;
    
 
    make_matrix(*approx_inter_list_addr, target_tree_numnodes, 50);
@@ -186,31 +181,31 @@ void InteractionLists_Free(struct InteractionLists *interaction_list)
 
 
 
-void InteractionLists_MakeRemote(const struct tnode_array *source_tree_array,
-                                 const struct tnode_array *target_tree_array,
+void InteractionLists_MakeRemote(const struct Tree *source_tree,
+                                 const struct Tree *target_tree,
                                  int *approx_list_unpacked,int *approx_list_packed, int *direct_list,
-                                 struct RunParams *run_params)
+                                 const struct RunParams *run_params)
 {
-    int source_tree_numnodes = source_tree_array->numnodes;
-    const int *source_tree_numpar = source_tree_array->numpar;
-    const double *source_tree_radius = source_tree_array->radius;
-    const double *source_tree_x_mid = source_tree_array->x_mid;
-    const double *source_tree_y_mid = source_tree_array->y_mid;
-    const double *source_tree_z_mid = source_tree_array->z_mid;
+    int source_tree_numnodes = source_tree->numnodes;
+    const int *source_tree_numpar = source_tree->numpar;
+    const double *source_tree_radius = source_tree->radius;
+    const double *source_tree_x_mid = source_tree->x_mid;
+    const double *source_tree_y_mid = source_tree->y_mid;
+    const double *source_tree_z_mid = source_tree->z_mid;
 
-    const int *source_tree_num_children = source_tree_array->num_children;
-    const int *source_tree_children = source_tree_array->children;
+    const int *source_tree_num_children = source_tree->num_children;
+    const int *source_tree_children = source_tree->children;
     
     
-    int target_tree_numnodes = target_tree_array->numnodes;
-    const int *target_tree_numpar = target_tree_array->numpar;
-    const double *target_tree_radius = target_tree_array->radius;
-    const double *target_tree_x_mid = target_tree_array->x_mid;
-    const double *target_tree_y_mid = target_tree_array->y_mid;
-    const double *target_tree_z_mid = target_tree_array->z_mid;
+    int target_tree_numnodes = target_tree->numnodes;
+    const int *target_tree_numpar = target_tree->numpar;
+    const double *target_tree_radius = target_tree->radius;
+    const double *target_tree_x_mid = target_tree->x_mid;
+    const double *target_tree_y_mid = target_tree->y_mid;
+    const double *target_tree_z_mid = target_tree->z_mid;
     
-    const int *target_tree_num_children = target_tree_array->num_children;
-    const int *target_tree_children = target_tree_array->children;
+    const int *target_tree_num_children = target_tree->num_children;
+    const int *target_tree_children = target_tree->children;
 
 
     for (int i = 0; i < source_tree_numnodes; i++) approx_list_unpacked[i] = -1;
@@ -334,7 +329,7 @@ void pc_compute_interaction_list(
                 int **batch_tree_list, int **batch_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                struct RunParams *run_params)
+                const struct RunParams *run_params)
 {
 
     /* determine DIST for MAC test */
@@ -409,7 +404,7 @@ void cc_compute_interaction_list_1(
                 int **target_tree_list, int **target_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                struct RunParams *run_params)
+                const struct RunParams *run_params)
 {
 
     /* determine DIST for MAC test */
@@ -487,7 +482,7 @@ void cc_compute_interaction_list_2(
                 int **target_tree_list, int **target_direct_list,
                 int *sizeof_tree_list, int *sizeof_direct_list,
                 int *tree_index_counter, int *direct_index_counter,
-                struct RunParams *run_params)
+                const struct RunParams *run_params)
 {
 
     /* determine DIST for MAC test */

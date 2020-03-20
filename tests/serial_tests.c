@@ -30,13 +30,13 @@ static char *test_direct_sum_on_10_particles()
     int N = 10;
     int verbosity = 1;
 
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
     double *potential = NULL;
     double potential_engy = 0;
 
-    sources = malloc(sizeof(struct particles));
-    targets = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
+    targets = malloc(sizeof(struct Particles));
     potential = malloc(sizeof(double) * N);
 
     targets->num = N;
@@ -207,13 +207,13 @@ static char *test_treecode_on_100_particles()
     int verbosity = 1;
     int N = 100;
 
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
     double *potential = NULL;
     double potential_engy = 0;
 
-    sources = malloc(sizeof(struct particles));
-    targets = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
+    targets = malloc(sizeof(struct Particles));
     potential = malloc(sizeof(double) * N);
 
     targets->num = N;
@@ -541,14 +541,14 @@ static char *test_treecode_on_1_target_10000_sources()
     int verbosity = 1;
     int N = 10000;
 
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
     double *potential = NULL, *potential_direct = NULL;
     double potential_engy = 0;
     double potential_engy_direct = 0;
 
-    sources = malloc(sizeof(struct particles));
-    targets = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
+    targets = malloc(sizeof(struct Particles));
     potential = malloc(sizeof(double) * N);
     potential_direct = malloc(sizeof(double) * N);
 
@@ -846,14 +846,14 @@ static char *test_treecode_wrapper()
     int verbosity = 1;
     int N = 10000;
 
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
     double *potential = NULL, *potential_wrapper = NULL;
     double potential_engy = 0;
     double potential_engy_direct = 0;
 
-    sources = malloc(sizeof(struct particles));
-    targets = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
+    targets = malloc(sizeof(struct Particles));
     potential = malloc(sizeof(double) * N);
     potential_wrapper = malloc(sizeof(double) * N);
 
@@ -966,15 +966,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
     int verbosity = 1;
     int N = 10000;
 
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
     double *potential1 = NULL, *potential2 = NULL, *potential3 = NULL, *potential_direct = NULL;
     double potential_engy = 0;
     double potential_engy_direct = 0;
 
 
-    sources = malloc(sizeof(struct particles));
-    targets = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
+    targets = malloc(sizeof(struct Particles));
     potential1 = malloc(sizeof(double) * N);
     potential2 = malloc(sizeof(double) * N);
     potential3 = malloc(sizeof(double) * N);

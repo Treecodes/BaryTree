@@ -5,7 +5,7 @@
 #include "../run_params/struct_run_params.h"
 
 
-void directdriver(struct particles *sources, struct particles *targets, struct RunParams *run_params,
+void directdriver(struct Particles *sources, struct Particles *targets, struct RunParams *run_params,
                   double *potential_array, double *time_direct);
 
 

@@ -3,16 +3,16 @@
 
 #include "../utilities/array.h"
 #include "../utilities/tools.h"
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../tree/batches.h"
 #include "../particles/struct_particles.h"
 #include "../particles/particles.h"
 #include "../run_params/struct_run_params.h"
 
 
-void Comm_CP_ConstructAndGetData(struct tnode_array **remote_batches_addr, struct particles **remote_sources_addr,
-                                 const struct tnode_array *tree_array, const struct tnode_array *batches,
-                                 const struct particles *sources, const struct RunParams *run_params)
+void Comm_CP_ConstructAndGetData(struct Tree **remote_batches_addr, struct Particles **remote_sources_addr,
+                                 const struct Tree *tree, const struct Tree *batches,
+                                 const struct Particles *sources, const struct RunParams *run_params)
 {
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -37,10 +37,10 @@ void Comm_CP_ConstructAndGetData(struct tnode_array **remote_batches_addr, struc
     
     
     Batches_AllocArray(remote_batches_addr, num_remote_batches);
-    struct tnode_array *remote_batches = *remote_batches_addr;
+    struct Tree *remote_batches = *remote_batches_addr;
     
     Particles_Alloc(remote_sources_addr, num_remote_sources);
-    struct particles *remote_sources = *remote_sources_addr;
+    struct Particles *remote_sources = *remote_sources_addr;
     
     
     MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend;

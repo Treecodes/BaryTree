@@ -51,9 +51,9 @@ int main(int argc, char **argv)
     MESH_DATA mySources;
 
 
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
-    struct particles *targets_sample = NULL;
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
+    struct Particles *targets_sample = NULL;
     double *potential = NULL, *potential_direct = NULL;
     double potential_engy = 0, potential_engy_glob = 0;
     double potential_engy_direct = 0, potential_engy_direct_glob = 0;
@@ -191,15 +191,15 @@ int main(int argc, char **argv)
     if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
 
 
-    sources = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
     sources->num = N;
 
-    targets = malloc(sizeof(struct particles));
+    targets = malloc(sizeof(struct Particles));
     targets->num = M;
     potential = malloc(targets->num * sizeof(double));
     memset(potential, 0, targets->num * sizeof(double));
 
-    targets_sample = malloc(sizeof(struct particles));
+    targets_sample = malloc(sizeof(struct Particles));
     targets_sample->num = targets->num / slice;
     potential_direct = malloc(targets_sample->num * sizeof(double));
     memset(potential_direct, 0, targets_sample->num * sizeof(double));

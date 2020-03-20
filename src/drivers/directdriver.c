@@ -19,7 +19,7 @@
 #include "directdriver.h"
 
 
-void directdriver(struct particles *sources, struct particles *targets, struct RunParams *run_params,
+void directdriver(struct Particles *sources, struct Particles *targets, struct RunParams *run_params,
                   double *pointwisePotential, double *time_direct)
 {
     int rank, numProcs, ierr;
@@ -67,7 +67,7 @@ void directdriver(struct particles *sources, struct particles *targets, struct R
 
         int getFrom = (numProcs+rank-procID) % numProcs;
 
-        struct particles *remote_sources = NULL;
+        struct Particles *remote_sources = NULL;
         Particles_Alloc(&remote_sources, numSourcesOnProc[getFrom]);
 
         MPI_Barrier(MPI_COMM_WORLD);

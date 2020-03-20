@@ -2,7 +2,7 @@
 #include <mpi.h>
 
 #include "../utilities/array.h"
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../tree/tree.h"
 #include "../interaction_lists/interaction_lists.h"
 #include "../run_params/struct_run_params.h"
@@ -10,8 +10,8 @@
 #include "struct_comm_types.h"
 
 
-void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnode_array ***let_tree_arrays_addr,
-                                 struct tnode_array *tree_array, struct tnode_array *batches,
+void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree ***let_trees_addr,
+                                 struct Tree *tree, struct Tree *batches,
                                  struct RunParams *run_params)
 {
     MPI_Barrier(MPI_COMM_WORLD);
@@ -22,7 +22,7 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
         
     int *num_nodes_on_proc;
     make_vector(num_nodes_on_proc, num_procs);
-    MPI_Allgather(&(tree_array->numnodes), 1, MPI_INT, num_nodes_on_proc, 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgather(&(tree->numnodes), 1, MPI_INT, num_nodes_on_proc, 1, MPI_INT, MPI_COMM_WORLD);
 
 
     MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
@@ -49,38 +49,38 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
     make_vector(comm_types->MPI_direct_type, num_procs);
 
     
-    *let_tree_arrays_addr = malloc(num_procs * sizeof (struct tnode_array *));
-    struct tnode_array **let_tree_arrays = *let_tree_arrays_addr;
+    *let_trees_addr = malloc(num_procs * sizeof (struct Tree *));
+    struct Tree **let_trees = *let_trees_addr;
 
 
-    MPI_Win_create(tree_array->x_mid,         tree_array->numnodes*sizeof(double), sizeof(double), 
+    MPI_Win_create(tree->x_mid,         tree->numnodes*sizeof(double), sizeof(double),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_x_mid);
 
-    MPI_Win_create(tree_array->y_mid,         tree_array->numnodes*sizeof(double), sizeof(double), 
+    MPI_Win_create(tree->y_mid,         tree->numnodes*sizeof(double), sizeof(double),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_y_mid);
     
-    MPI_Win_create(tree_array->z_mid,         tree_array->numnodes*sizeof(double), sizeof(double), 
+    MPI_Win_create(tree->z_mid,         tree->numnodes*sizeof(double), sizeof(double),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_z_mid);
     
-    MPI_Win_create(tree_array->radius,        tree_array->numnodes*sizeof(double), sizeof(double),  
+    MPI_Win_create(tree->radius,        tree->numnodes*sizeof(double), sizeof(double),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_radius);
     
-    MPI_Win_create(tree_array->numpar,        tree_array->numnodes*sizeof(int),    sizeof(int),     
+    MPI_Win_create(tree->numpar,        tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_numpar);
     
-    MPI_Win_create(tree_array->ibeg,          tree_array->numnodes*sizeof(int),    sizeof(int),     
+    MPI_Win_create(tree->ibeg,          tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_ibeg);
     
-    MPI_Win_create(tree_array->iend,          tree_array->numnodes*sizeof(int),    sizeof(int),     
+    MPI_Win_create(tree->iend,          tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
     
-    MPI_Win_create(tree_array->level,         tree_array->numnodes*sizeof(int),    sizeof(int),    
+    MPI_Win_create(tree->level,         tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_level);
     
-    MPI_Win_create(tree_array->num_children,  tree_array->numnodes*sizeof(int),    sizeof(int),     
+    MPI_Win_create(tree->num_children,  tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_num_children);
     
-    MPI_Win_create(tree_array->children,    8*tree_array->numnodes*sizeof(int),    sizeof(int),     
+    MPI_Win_create(tree->children,    8*tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_children);
 
 
@@ -88,9 +88,9 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
 
         int get_from = (num_procs + rank - proc_id) % num_procs;
         
-        let_tree_arrays[get_from] = NULL;
-        Tree_AllocArray(&(let_tree_arrays[get_from]), num_nodes_on_proc[get_from]);
-        struct tnode_array *remote_tree_array = let_tree_arrays[get_from];
+        let_trees[get_from] = NULL;
+        Tree_Alloc(&(let_trees[get_from]), num_nodes_on_proc[get_from]);
+        struct Tree *remote_tree = let_trees[get_from];
 
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_x_mid);
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_y_mid);
@@ -103,34 +103,34 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_children);
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_num_children);
         
-        MPI_Get(remote_tree_array->x_mid,        num_nodes_on_proc[get_from], MPI_DOUBLE,
+        MPI_Get(remote_tree->x_mid,        num_nodes_on_proc[get_from], MPI_DOUBLE,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_DOUBLE, win_x_mid);
 
-        MPI_Get(remote_tree_array->y_mid,        num_nodes_on_proc[get_from], MPI_DOUBLE,
+        MPI_Get(remote_tree->y_mid,        num_nodes_on_proc[get_from], MPI_DOUBLE,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_DOUBLE, win_y_mid);
 
-        MPI_Get(remote_tree_array->z_mid,        num_nodes_on_proc[get_from], MPI_DOUBLE,
+        MPI_Get(remote_tree->z_mid,        num_nodes_on_proc[get_from], MPI_DOUBLE,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_DOUBLE, win_z_mid);
 
-        MPI_Get(remote_tree_array->radius,       num_nodes_on_proc[get_from], MPI_DOUBLE,
+        MPI_Get(remote_tree->radius,       num_nodes_on_proc[get_from], MPI_DOUBLE,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_DOUBLE, win_radius);
 
-        MPI_Get(remote_tree_array->numpar,       num_nodes_on_proc[get_from], MPI_INT,
+        MPI_Get(remote_tree->numpar,       num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_INT,    win_numpar);
 
-        MPI_Get(remote_tree_array->ibeg,         num_nodes_on_proc[get_from], MPI_INT,
+        MPI_Get(remote_tree->ibeg,         num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_INT,    win_ibeg);
 
-        MPI_Get(remote_tree_array->iend,         num_nodes_on_proc[get_from], MPI_INT,
+        MPI_Get(remote_tree->iend,         num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_INT,    win_iend);
 
-        MPI_Get(remote_tree_array->level,        num_nodes_on_proc[get_from], MPI_INT,
+        MPI_Get(remote_tree->level,        num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_INT,    win_level);
 
-        MPI_Get(remote_tree_array->children,   8*num_nodes_on_proc[get_from], MPI_INT,
+        MPI_Get(remote_tree->children,   8*num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, 8*num_nodes_on_proc[get_from], MPI_INT,    win_children);
 
-        MPI_Get(remote_tree_array->num_children, num_nodes_on_proc[get_from], MPI_INT,
+        MPI_Get(remote_tree->num_children, num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_INT,    win_num_children);
 
         MPI_Win_unlock(get_from, win_x_mid);
@@ -153,7 +153,7 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
         make_vector(direct_length_list, num_nodes_on_proc[get_from]);
 
 
-        InteractionLists_MakeRemote(remote_tree_array, batches, approx_list_unpacked, approx_list_packed,
+        InteractionLists_MakeRemote(remote_tree, batches, approx_list_unpacked, approx_list_packed,
                                     direct_list, run_params);
 
 
@@ -169,7 +169,7 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
 
             if (approx_list_unpacked[i] != -1) {
             
-                remote_tree_array->cluster_ind[i] = comm_types->let_clusters_num;
+                remote_tree->cluster_ind[i] = comm_types->let_clusters_num;
                 comm_types->let_clusters_length += run_params->interp_pts_per_cluster;
                 comm_types->let_clusters_num++;
                 num_remote_approx++;
@@ -178,14 +178,14 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
             if (direct_list[i] != -1) {
                  
                 // Determine displacements and lengths for getting particles from remote sources list
-                direct_ibeg_list[num_remote_direct] = remote_tree_array->ibeg[i] - 1; // zero index based
-                direct_length_list[num_remote_direct] = remote_tree_array->numpar[i];
+                direct_ibeg_list[num_remote_direct] = remote_tree->ibeg[i] - 1; // zero index based
+                direct_length_list[num_remote_direct] = remote_tree->numpar[i];
                 num_remote_direct++;
         
                 // Set beginning and ending particle indices for associated nodes in let sources list
-                remote_tree_array->ibeg[i] = comm_types->let_sources_length + 1; //one index based, for some reason
-                remote_tree_array->iend[i] = comm_types->let_sources_length + remote_tree_array->numpar[i];
-                comm_types->let_sources_length += remote_tree_array->numpar[i];
+                remote_tree->ibeg[i] = comm_types->let_sources_length + 1; //one index based, for some reason
+                remote_tree->iend[i] = comm_types->let_sources_length + remote_tree->numpar[i];
+                comm_types->let_sources_length += remote_tree->numpar[i];
             }
                  
             append_counter++;
@@ -255,7 +255,7 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct tnod
 
 
 
-void CommTypesAndTrees_Free(struct CommTypes *comm_types, struct tnode_array **let_tree_arrays)
+void CommTypesAndTrees_Free(struct CommTypes *comm_types, struct Tree **let_trees)
 {
     int rank, num_procs;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -271,7 +271,7 @@ void CommTypesAndTrees_Free(struct CommTypes *comm_types, struct tnode_array **l
         MPI_Type_free(&(comm_types->MPI_approx_weights_type[get_from]));
         MPI_Type_free(&(comm_types->MPI_direct_type[get_from]));
 
-        Tree_FreeArray(let_tree_arrays[get_from]);
+        Tree_Free(let_trees[get_from]);
     }
     
     free_vector(comm_types->num_remote_approx_array);
@@ -285,7 +285,7 @@ void CommTypesAndTrees_Free(struct CommTypes *comm_types, struct tnode_array **l
 
 
     free(comm_types);
-    free_vector(let_tree_arrays);
+    free_vector(let_trees);
 
     return;
 }

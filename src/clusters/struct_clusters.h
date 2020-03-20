@@ -2,7 +2,7 @@
 #define H_CLUSTERS_H
 
 /* declaration of struct with tag particles */
-struct clusters 
+struct Clusters
 {
         int num;
         int num_weights;
@@ -12,7 +12,8 @@ struct clusters
         double *y;
         double *z;
         double *q;
-        double *w;  // quadrature weights.  Set equal to 1 if interacting with particles, not performing convolution integral.
+        // quadrature weights.  Set = 1 if interacting particles, not performing convolution integral.
+        double *w;
 };
 
 #endif /* H_CLUSTERS_H */

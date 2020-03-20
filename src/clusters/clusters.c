@@ -11,28 +11,28 @@
 
 #include "../globvars.h"
 
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
 
 #include "struct_clusters.h"
 #include "clusters.h"
 
 
-static void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF(struct Tree *tree, int idx, int interpolationOrder,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
 
-static void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF_SS(struct Tree *tree, int idx, int interpolationOrder,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
 
-static void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF_hermite(struct Tree *tree, int idx, int interpolationOrder,
                           int totalNumberInterpolationPoints,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ,
                           double *clusterQ, double *clusterW);
 
-static void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void pc_comp_ms_modifiedF_hermite_SS(struct Tree *tree, int idx, int interpolationOrder,
                           int totalNumberInterpolationPoints,
                           double *xS, double *yS, double *zS, double *qS, double *wS,
                           double *clusterX, double *clusterY, double *clusterZ,
@@ -40,14 +40,14 @@ static void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int 
 
 
 
-void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources,
-                       int interpolationOrder, struct tnode_array *tree_array,
+void Clusters_PC_Setup(struct Clusters **new_clusters, struct Particles *sources,
+                       int interpolationOrder, struct Tree *tree,
                        APPROXIMATION approxName, SINGULARITY singularity)
 {
-    *new_clusters = malloc(sizeof(struct clusters));
-    struct clusters *clusters = *new_clusters;
+    *new_clusters = malloc(sizeof(struct Clusters));
+    struct Clusters *clusters = *new_clusters;
 
-    int tree_numnodes = tree_array->numnodes;
+    int tree_numnodes = tree->numnodes;
     int totalNumberSourcePoints = sources->num;
 
     int interpOrderLim = interpolationOrder + 1;
@@ -152,20 +152,20 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
     if ((approxName == LAGRANGE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+            pc_comp_ms_modifiedF(tree, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
     } else if ((approxName == LAGRANGE) && (singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF_SS(tree_array, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+            pc_comp_ms_modifiedF_SS(tree, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
     } else if ((approxName == HERMITE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF_hermite(tree_array, i, interpolationOrder, totalNumberInterpolationPoints,
+            pc_comp_ms_modifiedF_hermite(tree, i, interpolationOrder, totalNumberInterpolationPoints,
                                          xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
     } else if ((approxName == HERMITE) && (singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF_hermite_SS(tree_array, i, interpolationOrder, totalNumberInterpolationPoints,
+            pc_comp_ms_modifiedF_hermite_SS(tree, i, interpolationOrder, totalNumberInterpolationPoints,
                                             xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
     } else {
@@ -183,11 +183,11 @@ void Clusters_PC_Setup(struct clusters **new_clusters, struct particles *sources
 
 
 
-void Clusters_Alloc(struct clusters **clusters_addr, int length,
+void Clusters_Alloc(struct Clusters **clusters_addr, int length,
                     APPROXIMATION approxName,  SINGULARITY singularity) 
 {
-    *clusters_addr = malloc(sizeof(struct clusters));
-    struct clusters *clusters = *clusters_addr;
+    *clusters_addr = malloc(sizeof(struct Clusters));
+    struct Clusters *clusters = *clusters_addr;
 
     clusters->num = length;
     clusters->num_charges = length;
@@ -219,7 +219,7 @@ void Clusters_Alloc(struct clusters **clusters_addr, int length,
 
 
 
-void Clusters_Free(struct clusters *clusters)
+void Clusters_Free(struct Clusters *clusters)
 {    
     if (clusters != NULL) {
         if (clusters->x != NULL) free_vector(clusters->x);
@@ -236,7 +236,7 @@ void Clusters_Free(struct clusters *clusters)
 
 
 
-void Clusters_Free_Win(struct clusters *clusters)
+void Clusters_Free_Win(struct Clusters *clusters)
 {
 
     if (clusters != NULL) {
@@ -259,16 +259,16 @@ void Clusters_Free_Win(struct clusters *clusters)
 /************************************/
 
 
-void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpolationOrder,
+void pc_comp_ms_modifiedF(struct Tree *tree, int idx, int interpolationOrder,
         double *xS, double *yS, double *zS, double *qS, double *wS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
 {
 
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
-    int sourcePointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
+    int sourcePointsInCluster = tree->iend[idx] - tree->ibeg[idx] + 1;
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
-    int startingIndexInSourcesArray = tree_array->ibeg[idx]-1;
+    int startingIndexInSourcesArray = tree->ibeg[idx]-1;
 
     double weights[interpOrderLim], dj[interpOrderLim];
     double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
@@ -283,12 +283,12 @@ void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpola
     make_vector(exactIndZ, sourcePointsInCluster);
 
 
-    double x0 = tree_array->x_min[idx];
-    double x1 = tree_array->x_max[idx];
-    double y0 = tree_array->y_min[idx];
-    double y1 = tree_array->y_max[idx];
-    double z0 = tree_array->z_min[idx];
-    double z1 = tree_array->z_max[idx];
+    double x0 = tree->x_min[idx];
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
@@ -458,15 +458,15 @@ void pc_comp_ms_modifiedF(struct tnode_array *tree_array, int idx, int interpola
 }
 
 
-void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+void pc_comp_ms_modifiedF_SS(struct Tree *tree, int idx, int interpolationOrder,
         double *xS, double *yS, double *zS, double *qS, double *wS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
 {
     int interpOrderLim = interpolationOrder + 1;
     int pointsPerCluster =  interpOrderLim * interpOrderLim * interpOrderLim;
-    int pointsInNode = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
+    int pointsInNode = tree->iend[idx] - tree->ibeg[idx] + 1;
     int startingIndexInClusters = idx * pointsPerCluster;
-    int startingIndexInSources = tree_array->ibeg[idx]-1;
+    int startingIndexInSources = tree->ibeg[idx]-1;
 
     double weights[interpOrderLim], dj[interpOrderLim];
     double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
@@ -481,12 +481,12 @@ void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interp
     make_vector(exactIndZ, pointsInNode);
 
 
-    double x0 = tree_array->x_min[idx];  // 1e-15 fails for large meshes, mysteriously.
-    double x1 = tree_array->x_max[idx];
-    double y0 = tree_array->y_min[idx];
-    double y1 = tree_array->y_max[idx];
-    double z0 = tree_array->z_min[idx];
-    double z1 = tree_array->z_max[idx];
+    double x0 = tree->x_min[idx];  // 1e-15 fails for large meshes, mysteriously.
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
 
 
 #ifdef OPENACC_ENABLED
@@ -665,15 +665,15 @@ void pc_comp_ms_modifiedF_SS(struct tnode_array *tree_array, int idx, int interp
 
 
 
-void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int interpolationOrder,
+void pc_comp_ms_modifiedF_hermite(struct Tree *tree, int idx, int interpolationOrder,
         int totalNumberInterpolationPoints, double *xS, double *yS, double *zS, double *qS, double *wS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
 {
 
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster =  interpOrderLim * interpOrderLim * interpOrderLim;
-    int sourcePointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
-    int startingIndexInSourcesArray = tree_array->ibeg[idx] - 1;
+    int sourcePointsInCluster = tree->iend[idx] - tree->ibeg[idx] + 1;
+    int startingIndexInSourcesArray = tree->ibeg[idx] - 1;
 
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInClusterChargesArray = idx * interpolationPointsPerCluster * 8;
@@ -692,12 +692,12 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
 
 
     // Set the bounding box.
-    double x0 = tree_array->x_min[idx];
-    double x1 = tree_array->x_max[idx];
-    double y0 = tree_array->y_min[idx];
-    double y1 = tree_array->y_max[idx];
-    double z0 = tree_array->z_min[idx];
-    double z1 = tree_array->z_max[idx];
+    double x0 = tree->x_min[idx];
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
 
 
 #ifdef OPENACC_ENABLED
@@ -941,15 +941,15 @@ void pc_comp_ms_modifiedF_hermite(struct tnode_array *tree_array, int idx, int i
 
 
 
-void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+void pc_comp_ms_modifiedF_hermite_SS(struct Tree *tree, int idx, int interpolationOrder,
         int totalNumberInterpolationPoints, double *xS, double *yS, double *zS, double *qS, double *wS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
 {
 
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster =  interpOrderLim * interpOrderLim * interpOrderLim;
-    int sourcePointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
-    int startingIndexInSourcesArray = tree_array->ibeg[idx] - 1;
+    int sourcePointsInCluster = tree->iend[idx] - tree->ibeg[idx] + 1;
+    int startingIndexInSourcesArray = tree->ibeg[idx] - 1;
 
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInClusterWeightsArray = idx * interpolationPointsPerCluster * 8;
@@ -970,12 +970,12 @@ void pc_comp_ms_modifiedF_hermite_SS(struct tnode_array *tree_array, int idx, in
 
 
     // Set the bounding box.
-    double x0 = tree_array->x_min[idx];
-    double x1 = tree_array->x_max[idx];
-    double y0 = tree_array->y_min[idx];
-    double y1 = tree_array->y_max[idx];
-    double z0 = tree_array->z_min[idx];
-    double z1 = tree_array->z_max[idx];
+    double x0 = tree->x_min[idx];
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
 
 
 #ifdef OPENACC_ENABLED

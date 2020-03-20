@@ -9,7 +9,7 @@
 
 #include "../globvars.h"
 
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../tree/tree.h"
 #include "../tree/batches.h"
 
@@ -35,10 +35,42 @@
 
 #include "treedriver.h"
 
+//Just for the moment to put math stuff
+#include <math.h>
 
-void treedriver(struct particles *sources, struct particles *targets, struct RunParams *run_params,
+double *tt, *ww;
+
+
+void treedriver(struct Particles *sources, struct Particles *targets, struct RunParams *run_params,
                 double *potential_array, double *time_tree)
 {
+
+
+    /* changing values of our extern variables */
+    make_vector(tt, run_params->interp_order+1);
+    make_vector(ww, run_params->interp_order+1);
+
+    for (int i = 0; i < run_params->interp_order+1; i++)
+        tt[i] = cos(i * M_PI / run_params->interp_order);
+
+    ww[0] = 0.25 * (run_params->interp_order*run_params->interp_order/3.0 + 1.0/6.0);
+    ww[run_params->interp_order] = -ww[0];
+
+    for (int i = 1; i < run_params->interp_order; i++) {
+        double xx = i * M_PI / run_params->interp_order;
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
+    }
+        
+        
+    /* setting up ordering vectors */
+    make_vector(sources->order, sources->num);
+    make_vector(targets->order, targets->num);
+    for (int i = 0; i < sources->num; i++) sources->order[i] = i+1;
+    for (int i = 0; i < targets->num; i++) targets->order[i] = i+1;
+
+
+
+
     int rank, num_procs, ierr;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
@@ -67,26 +99,25 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
     /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (run_params->compute_type == CLUSTER_PARTICLE) {
     
-        struct tnode *troot = NULL;
-        struct tnode_array *tree_array = NULL;
-        double xyzminmax[6];
-        int numnodes = 0, numleaves = 0;
+        struct Tree *tree = NULL;
 
-        struct tnode_array *batches = NULL;
+        struct Tree *batches = NULL;
         double batch_lim[6];
 
-        struct clusters *clusters = NULL;
+        struct Clusters *clusters = NULL;
         
 
         time1 = MPI_Wtime();
 
+/*
         Tree_Setup(sources, targets, run_params->interp_order, xyzminmax);
         Tree_CP_Create(&troot, targets, 1, targets->num,
                        run_params->max_per_target_leaf, xyzminmax, 0, &numnodes, &numleaves);
         Tree_SetIndex(troot, 0);
-        Tree_AllocArray(&tree_array, numnodes);
-        Tree_CreateArray(troot, tree_array);
-
+        Tree_AllocArray(&tree, numnodes);
+        Tree_CreateArray(troot, tree);
+*/
+        Tree_Targets_Construct(&tree, targets, run_params);
 
         time_tree[0] = MPI_Wtime() - time1; //time_maketreearray
         
@@ -103,7 +134,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         time1 = MPI_Wtime();
 
-        Clusters_CP_Setup(&clusters, run_params->interp_order, tree_array,
+        Clusters_CP_Setup(&clusters, run_params->interp_order, tree,
                           run_params->approximation, run_params->singularity);
 
 
@@ -119,10 +150,10 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         time1 = MPI_Wtime();
         
-        struct tnode_array *remote_batches;
-        struct particles *remote_sources;
+        struct Tree *remote_batches;
+        struct Particles *remote_sources;
         
-        Comm_CP_ConstructAndGetData(&remote_batches, &remote_sources, tree_array, batches, sources, run_params);
+        Comm_CP_ConstructAndGetData(&remote_batches, &remote_sources, tree, batches, sources, run_params);
 
         time_tree[3] = MPI_Wtime() - time1;
 
@@ -132,14 +163,14 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time1 = MPI_Wtime();
 
         struct InteractionLists *local_interaction_list = NULL;
-        InteractionLists_Make(&local_interaction_list, tree_array, batches, run_params);
+        InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
 
         time1 = MPI_Wtime();
 
-        InteractionCompute_CP(tree_array, batches,
+        InteractionCompute_CP(tree, batches,
                         local_interaction_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
@@ -156,13 +187,13 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             time1 = MPI_Wtime();
 
             struct InteractionLists *let_interaction_list = NULL;
-            InteractionLists_Make(&let_interaction_list, tree_array, remote_batches, run_params);
+            InteractionLists_Make(&let_interaction_list, tree, remote_batches, run_params);
 
             time_tree[6] = MPI_Wtime() - time1; //time_makeglobintlist
 
             time1 = MPI_Wtime();
 
-            InteractionCompute_CP(tree_array, remote_batches,
+            InteractionCompute_CP(tree, remote_batches,
                                     let_interaction_list,
                                     remote_sources->x, remote_sources->y, remote_sources->z, remote_sources->q, remote_sources->w,
                                     targets->x, targets->y, targets->z, targets->q,
@@ -181,7 +212,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         time1 = MPI_Wtime();
 
-        InteractionCompute_Downpass(tree_array,
+        InteractionCompute_Downpass(tree,
                                 targets->x, targets->y, targets->z, targets->q,
                                 clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
                                 potential_array,
@@ -209,10 +240,8 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         free_vector(targets->order); // free particle order arrays
         free_vector(sources->order); // free particle order arrays
         
-        Tree_Free(troot);
-        Tree_FreeArray(tree_array);
+        Tree_Free(tree);
         
-        //I'm still not sure about deallocating the clusters and batches here.
         Clusters_Free(clusters);
         Batches_Free(batches);
         
@@ -236,24 +265,25 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
     } else if (run_params->compute_type == PARTICLE_CLUSTER) {
     
-        struct tnode *troot = NULL;
-        struct tnode_array *tree_array = NULL;
-        double xyzminmax[6];
-        int numnodes = 0, numleaves = 0;
+        struct Tree *tree = NULL;
 
-        struct tnode_array *batches = NULL;
+        struct Tree *batches = NULL;
         double batch_lim[6];
 
-        struct clusters *clusters = NULL;
+        struct Clusters *clusters = NULL;
 
         time1 = MPI_Wtime();
 
+/*
         Tree_Setup(sources, targets, run_params->interp_order, xyzminmax);
         Tree_PC_Create(&troot, sources, 1, sources->num,
                        run_params->max_per_source_leaf, xyzminmax, 0, &numnodes, &numleaves);
         Tree_SetIndex(troot, 0);
-        Tree_AllocArray(&tree_array, numnodes);
-        Tree_CreateArray(troot, tree_array);
+        Tree_AllocArray(&tree, numnodes);
+        Tree_CreateArray(troot, tree);
+*/
+
+        Tree_Sources_Construct(&tree, sources, run_params);
 
         time_tree[0] = MPI_Wtime() - time1; //time_maketreearray
         
@@ -268,7 +298,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         time1 = MPI_Wtime();
 
-        Clusters_PC_Setup(&clusters, sources, run_params->interp_order, tree_array,
+        Clusters_PC_Setup(&clusters, sources, run_params->interp_order, tree,
                           run_params->approximation, run_params->singularity);
 
         time_tree[2] = MPI_Wtime() - time1; //time_fillclusters
@@ -284,14 +314,14 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
         struct CommTypes *comm_types = NULL;
         struct CommWindows *comm_windows = NULL;
-        struct tnode_array **let_tree_arrays = NULL;
+        struct Tree **let_trees = NULL;
 
-        struct clusters *let_clusters = NULL;
-        struct particles *let_sources = NULL;
+        struct Clusters *let_clusters = NULL;
+        struct Particles *let_sources = NULL;
         
 
-        CommTypesAndTrees_Construct(&comm_types, &let_tree_arrays,
-                                    tree_array, batches, run_params);
+        CommTypesAndTrees_Construct(&comm_types, &let_trees,
+                                    tree, batches, run_params);
 
 
         Particles_Alloc(&let_sources, comm_types->let_sources_length);
@@ -328,7 +358,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
         struct InteractionLists *local_interaction_list;
         
-        InteractionLists_Make(&local_interaction_list, tree_array, batches, run_params);
+        InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
@@ -343,7 +373,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
         time1 = MPI_Wtime();
 
-        InteractionCompute_PC(tree_array, batches,
+        InteractionCompute_PC(tree, batches,
                         local_interaction_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
@@ -369,7 +399,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             int get_from = (num_procs+rank-proc_id) % num_procs;
 
             struct InteractionLists *let_interaction_list;
-            InteractionLists_Make(&let_interaction_list, let_tree_arrays[get_from], batches, run_params);
+            InteractionLists_Make(&let_interaction_list, let_trees[get_from], batches, run_params);
 
             // Count number of interactions
             if (run_params->verbosity > 0) {
@@ -384,7 +414,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-            InteractionCompute_PC(let_tree_arrays[get_from], batches,
+            InteractionCompute_PC(let_trees[get_from], batches,
                                    let_interaction_list,
                                    let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
                                    targets->x, targets->y, targets->z, targets->q,
@@ -424,15 +454,14 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         free_vector(targets->order);
         free_vector(sources->order);
         
-        Tree_Free(troot);
-        Tree_FreeArray(tree_array);
+        Tree_Free(tree);
         Clusters_Free_Win(clusters);
         Batches_Free(batches);
         
         //remote pieces
         Clusters_Free(let_clusters);
         Particles_Free(let_sources);
-        CommTypesAndTrees_Free(comm_types, let_tree_arrays);
+        CommTypesAndTrees_Free(comm_types, let_trees);
         
         
         time_tree[10] = MPI_Wtime() - time1; //time_cleanup
@@ -455,21 +484,16 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
 
     } else if (run_params->compute_type == CLUSTER_CLUSTER) {
     
-        struct tnode *source_tree_root = NULL;
-        struct tnode_array *source_tree_array = NULL;
+        struct Tree *source_tree = NULL;
+        struct Tree *target_tree = NULL;
 
-        struct tnode *target_tree_root = NULL;
-        struct tnode_array *target_tree_array = NULL;
+        struct Clusters *source_clusters = NULL;
+        struct Clusters *target_clusters = NULL;
 
-        struct clusters *source_clusters = NULL;
-        struct clusters *target_clusters = NULL;
-
-        double source_xyzminmax[6], target_xyzminmax[6];
-        int source_numnodes = 0, source_numleaves = 0;
-        int target_numnodes = 0, target_numleaves = 0;
 
         time1 = MPI_Wtime();
 
+/*
         Tree_CC_Setup(sources, targets, run_params->interp_order,
                       source_xyzminmax, target_xyzminmax);
 
@@ -478,31 +502,36 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
                        &source_numnodes, &source_numleaves);
         Tree_SetIndex(source_tree_root, 0);
 
-        Tree_AllocArray(&source_tree_array, source_numnodes);
-        Tree_CreateArray(source_tree_root, source_tree_array);
+        Tree_AllocArray(&source_tree, source_numnodes);
+        Tree_CreateArray(source_tree_root, source_tree);
+*/
+        Tree_Sources_Construct(&source_tree, sources, run_params);
 
         time_tree[0] = MPI_Wtime() - time1;
 
 
         time1 = MPI_Wtime();
 
+/*
         Tree_CP_Create(&target_tree_root, targets, 1, targets->num,
                        run_params->max_per_target_leaf, target_xyzminmax, 0,
                        &target_numnodes, &target_numleaves);
         Tree_SetIndex(target_tree_root, 0);
 
-        Tree_AllocArray(&target_tree_array, target_numnodes);
-        Tree_CreateArray(target_tree_root, target_tree_array);
+        Tree_AllocArray(&target_tree, target_numnodes);
+        Tree_CreateArray(target_tree_root, target_tree);
+*/
+        Tree_Targets_Construct(&target_tree, targets, run_params);
 
         time_tree[1] = MPI_Wtime() - time1; //time_maketreearray
          
 
         time1 = MPI_Wtime();
 
-        Clusters_PC_Setup(&source_clusters, sources, run_params->interp_order, source_tree_array,
+        Clusters_PC_Setup(&source_clusters, sources, run_params->interp_order, source_tree,
                           run_params->approximation, run_params->singularity);
 
-        Clusters_CP_Setup(&target_clusters, run_params->interp_order, target_tree_array,
+        Clusters_CP_Setup(&target_clusters, run_params->interp_order, target_tree,
                           run_params->approximation, run_params->singularity);
 
         time_tree[2] = MPI_Wtime() - time1; //time_fillclusters
@@ -518,14 +547,14 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
           
         struct CommTypes *comm_types = NULL;
         struct CommWindows *comm_windows = NULL;
-        struct tnode_array **let_tree_arrays = NULL;
+        struct Tree **let_trees = NULL;
 
-        struct clusters *let_clusters = NULL;
-        struct particles *let_sources = NULL;
+        struct Clusters *let_clusters = NULL;
+        struct Particles *let_sources = NULL;
 
           
-        CommTypesAndTrees_Construct(&comm_types, &let_tree_arrays,
-                                    source_tree_array, target_tree_array, run_params);
+        CommTypesAndTrees_Construct(&comm_types, &let_trees,
+                                    source_tree, target_tree, run_params);
 
 
         Particles_Alloc(&let_sources, comm_types->let_sources_length);
@@ -561,13 +590,13 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         time1 = MPI_Wtime();
         
         struct InteractionLists *local_interaction_list;
-        InteractionLists_Make(&local_interaction_list, source_tree_array, target_tree_array, run_params);
+        InteractionLists_Make(&local_interaction_list, source_tree, target_tree, run_params);
 
         time_tree[4] = MPI_Wtime() - time1; //time_constructlet
 
 
         if (run_params->verbosity > 0) {
-            for (int j = 0; j < target_tree_array->numnodes; j++){
+            for (int j = 0; j < target_tree->numnodes; j++){
                 totalNumberApprox += local_interaction_list->num_approx[j];
                 totalNumberDirect += local_interaction_list->num_direct[j];
             }
@@ -576,7 +605,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
         time1 = MPI_Wtime();
 
-        InteractionCompute_CC(source_tree_array, target_tree_array,
+        InteractionCompute_CC(source_tree, target_tree,
                         local_interaction_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
                         targets->x, targets->y, targets->z, targets->q,
@@ -605,14 +634,14 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             int get_from = (num_procs+rank-proc_id) % num_procs;
 
             struct InteractionLists *let_interaction_list;
-            InteractionLists_Make(&let_interaction_list, let_tree_arrays[get_from], target_tree_array,  run_params);
+            InteractionLists_Make(&let_interaction_list, let_trees[get_from], target_tree,  run_params);
 
             time_tree[6] += MPI_Wtime() - time1; //time_makeglobintlist
              
              
             // Count number of interactions
             if (run_params->verbosity > 0) {
-                for (int j = 0; j < target_tree_array->numnodes; j++){
+                for (int j = 0; j < target_tree->numnodes; j++){
                     totalNumberApprox += let_interaction_list->num_approx[j];
                     totalNumberDirect += let_interaction_list->num_direct[j];
                 }
@@ -622,7 +651,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
             // After filling LET, call interaction_list_treecode
             time1 = MPI_Wtime(); // start timer for tree evaluation
 
-            InteractionCompute_CC(let_tree_arrays[get_from], target_tree_array,
+            InteractionCompute_CC(let_trees[get_from], target_tree,
                                    let_interaction_list,
                                    let_sources->x, let_sources->y, let_sources->z,
                                    let_sources->q, let_sources->w,
@@ -648,7 +677,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         
         time1 = MPI_Wtime();
         
-        InteractionCompute_Downpass(target_tree_array,
+        InteractionCompute_Downpass(target_tree,
                                 targets->x, targets->y, targets->z, targets->q,
                                 target_clusters->x, target_clusters->y, target_clusters->z,
                                 target_clusters->q, target_clusters->w,
@@ -682,10 +711,8 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         free_vector(targets->order);
         free_vector(sources->order);
 
-        Tree_Free(source_tree_root);
-        Tree_Free(target_tree_root);
-        Tree_FreeArray(source_tree_array);
-        Tree_FreeArray(target_tree_array);
+        Tree_Free(source_tree);
+        Tree_Free(target_tree);
         
         Clusters_Free_Win(source_clusters);
         Clusters_Free(target_clusters);
@@ -693,7 +720,7 @@ void treedriver(struct particles *sources, struct particles *targets, struct Run
         //remote pieces
         Clusters_Free(let_clusters);
         Particles_Free(let_sources);
-        CommTypesAndTrees_Free(comm_types, let_tree_arrays);
+        CommTypesAndTrees_Free(comm_types, let_trees);
         
         time_tree[10] = MPI_Wtime() - time1; //time_cleanup
         time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6]; //total setup time

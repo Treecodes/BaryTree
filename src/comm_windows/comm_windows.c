@@ -10,7 +10,7 @@
 
 
 void CommWindows_Create(struct CommWindows **comm_windows_addr,
-                        struct clusters *clusters, struct particles *sources)
+                        struct Clusters *clusters, struct Particles *sources)
 {
     *comm_windows_addr = malloc(sizeof(struct CommWindows));
     struct CommWindows *comm_windows = *comm_windows_addr;
@@ -111,7 +111,7 @@ void CommWindows_Unlock(struct CommWindows *comm_windows, int get_from)
 
 
 
-void CommWindows_GetData(struct clusters *let_clusters, struct particles *let_sources,
+void CommWindows_GetData(struct Clusters *let_clusters, struct Particles *let_sources,
                          struct CommTypes *comm_types, struct CommWindows *comm_windows,
                          int get_from, struct RunParams *run_params)
 {

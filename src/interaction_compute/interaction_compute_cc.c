@@ -1,15 +1,10 @@
-
-/*
- *Procedures for Cluster-Cluster Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <float.h>
-#include <mpi.h>
 
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
 #include "../interaction_lists/struct_interaction_lists.h"
@@ -23,7 +18,7 @@
 #include "interaction_compute.h"
 
 
-void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_array *target_tree_array,
+void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
                            struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_q, double *source_w,
@@ -43,8 +38,8 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
     int *num_approx = interaction_list->num_approx;
     int *num_direct = interaction_list->num_direct;
 
-    int source_tree_numnodes = source_tree_array->numnodes;
-    int target_tree_numnodes = target_tree_array->numnodes;
+    int source_tree_numnodes = source_tree->numnodes;
+    int target_tree_numnodes = target_tree->numnodes;
     
     double *xS = source_x;
     double *yS = source_y;
@@ -69,13 +64,13 @@ void InteractionCompute_CC(struct tnode_array *source_tree_array, struct tnode_a
     double *qCT = target_cluster_q;
     double *wCT = target_cluster_w;
     
-    int *source_tree_ibeg = source_tree_array->ibeg;
-    int *source_tree_iend = source_tree_array->iend;
-    int *source_tree_cluster_ind = source_tree_array->cluster_ind;
+    int *source_tree_ibeg = source_tree->ibeg;
+    int *source_tree_iend = source_tree->iend;
+    int *source_tree_cluster_ind = source_tree->cluster_ind;
     
-    int *target_tree_ibeg = target_tree_array->ibeg;
-    int *target_tree_iend = target_tree_array->iend;
-    int *target_tree_cluster_ind = target_tree_array->cluster_ind;
+    int *target_tree_ibeg = target_tree->ibeg;
+    int *target_tree_iend = target_tree->iend;
+    int *target_tree_cluster_ind = target_tree->cluster_ind;
     
     int numSourceClusterCharges = numSourceClusterPoints;
     int numSourceClusterWeights = numSourceClusterPoints;

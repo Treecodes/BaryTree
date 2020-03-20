@@ -11,25 +11,24 @@
 
 #include "../globvars.h"
 
-#include "../tree/struct_nodes.h"
-#include "../particles/struct_particles.h"
+#include "../tree/struct_tree.h"
 
 #include "struct_clusters.h"
 #include "clusters.h"
 
 
-static void cp_comp_interp(struct tnode_array *tree_array, int idx, int interpolationOrder,
+static void cp_comp_interp(struct Tree *tree, int idx, int interpolationOrder,
                            double *clusterX, double *clusterY, double *clusterZ);
 
 
-void Clusters_CP_Setup(struct clusters **new_clusters,
-                       int interpolationOrder, struct tnode_array *tree_array,
+void Clusters_CP_Setup(struct Clusters **new_clusters,
+                       int interpolationOrder, struct Tree *tree,
                        APPROXIMATION approxName, SINGULARITY singularity)
 {
-    *new_clusters = malloc(sizeof(struct clusters));
-    struct clusters *clusters = *new_clusters;
+    *new_clusters = malloc(sizeof(struct Clusters));
+    struct Clusters *clusters = *new_clusters;
 
-    int tree_numnodes = tree_array->numnodes;
+    int tree_numnodes = tree->numnodes;
 
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
@@ -107,7 +106,7 @@ void Clusters_CP_Setup(struct clusters **new_clusters,
 #endif
 
     for (int i = 0; i < tree_numnodes; i++)
-        cp_comp_interp(tree_array, i, interpolationOrder, xC, yC, zC);
+        cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
     
 #ifdef OPENACC_ENABLED
     #pragma acc wait
@@ -124,7 +123,7 @@ void Clusters_CP_Setup(struct clusters **new_clusters,
 /************************************/
 
 
-void cp_comp_interp(struct tnode_array *tree_array, int idx, int interpolationOrder,
+void cp_comp_interp(struct Tree *tree, int idx, int interpolationOrder,
                 double *clusterX, double *clusterY, double *clusterZ)
 {
 
@@ -134,12 +133,12 @@ void cp_comp_interp(struct tnode_array *tree_array, int idx, int interpolationOr
 
     double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
 
-    double x0 = tree_array->x_min[idx];
-    double x1 = tree_array->x_max[idx];
-    double y0 = tree_array->y_min[idx];
-    double y1 = tree_array->y_max[idx];
-    double z0 = tree_array->z_min[idx];
-    double z1 = tree_array->z_max[idx];
+    double x0 = tree->x_min[idx];
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;

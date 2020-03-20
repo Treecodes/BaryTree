@@ -8,7 +8,7 @@
 
 #include "../particles/struct_particles.h"
 
-#include "struct_nodes.h"
+#include "struct_tree.h"
 #include "partition.h"
 #include "batches.h"
 
@@ -25,8 +25,8 @@ static void pc_partition_batch(double *x, double *y, double *z, double *q, doubl
 
 
 
-void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
-                   struct particles *particles, int batch_size)
+void Batches_Alloc(struct Tree **new_batches, double *batch_lim,
+                   struct Particles *particles, int batch_size)
 {
     
     /* find bounds of Cartesian box enclosing the particles */
@@ -37,8 +37,8 @@ void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
     batch_lim[4] = minval(particles->z, particles->num);
     batch_lim[5] = maxval(particles->z, particles->num);
     
-    *new_batches = malloc(sizeof(struct tnode_array));
-    struct tnode_array *batches = *new_batches;
+    *new_batches = malloc(sizeof(struct Tree));
+    struct Tree *batches = *new_batches;
 
     batches->numnodes = 0;
     // this still needs improvement!
@@ -59,22 +59,24 @@ void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
 
 
 
-void Batches_AllocArray(struct tnode_array **new_batches, int length)
+void Batches_AllocArray(struct Tree **new_batches, int length)
 {
     
-    *new_batches = malloc(sizeof(struct tnode_array));
-    struct tnode_array *batches = *new_batches;
+    *new_batches = malloc(sizeof(struct Tree));
+    struct Tree *batches = *new_batches;
 
     batches->numnodes = length;
+    
+    if (length > 0) {
+        make_vector(batches->ibeg, length);
+        make_vector(batches->iend, length);
+        make_vector(batches->numpar, length);
 
-    make_vector(batches->ibeg, length);
-    make_vector(batches->iend, length);
-    make_vector(batches->numpar, length);
-
-    make_vector(batches->x_mid, length);
-    make_vector(batches->y_mid, length);
-    make_vector(batches->z_mid, length);
-    make_vector(batches->radius, length);
+        make_vector(batches->x_mid, length);
+        make_vector(batches->y_mid, length);
+        make_vector(batches->z_mid, length);
+        make_vector(batches->radius, length);
+    }
 
     return;
     
@@ -82,7 +84,7 @@ void Batches_AllocArray(struct tnode_array **new_batches, int length)
 
 
 
-void Batches_ReallocArray(struct tnode_array *batches, int newlength)  {
+void Batches_ReallocArray(struct Tree *batches, int newlength)  {
 
     batches->numnodes = newlength;
     realloc_vector(batches->ibeg, newlength);
@@ -101,7 +103,7 @@ void Batches_ReallocArray(struct tnode_array *batches, int newlength)  {
 
 
 
-void Batches_Free(struct tnode_array *batches)
+void Batches_Free(struct Tree *batches)
 {
 
     if (batches != NULL) {
@@ -121,7 +123,7 @@ void Batches_Free(struct tnode_array *batches)
 
 
 
-void Batches_Free_Win(struct tnode_array *batches)
+void Batches_Free_Win(struct Tree *batches)
 {
 
     MPI_Free_mem(batches->iend);
@@ -139,7 +141,7 @@ void Batches_Free_Win(struct tnode_array *batches)
 
 
 
-void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *particles,
+void Batches_CreateTargetBatches(struct Tree *batches, struct Particles *particles,
                                  int ibeg, int iend, int maxparnode, double *xyzmm)
 {
 	int rank; int numProcs;	int ierr;
@@ -251,7 +253,7 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
 
 
 
-void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *particles,
+void Batches_CreateSourceBatches(struct Tree *batches, struct Particles *particles,
                                  int ibeg, int iend, int maxparnode, double *xyzmm)
 {
     double x_min, x_max, y_min, y_max, z_min, z_max;

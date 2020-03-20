@@ -1,16 +1,12 @@
-/*
- *Procedures for Cluster-Particle Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <float.h>
-#include <mpi.h>
 
 #include "../utilities/array.h"
 
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
 #include "../interaction_lists/struct_interaction_lists.h"
@@ -24,7 +20,7 @@
 #include "interaction_compute.h"
 
 
-void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *batches,
+void InteractionCompute_CP(struct Tree *tree, struct Tree *batches,
                            struct InteractionLists *interaction_list,
                            double *source_x, double *source_y, double *source_z,
                            double *source_q, double *source_w,
@@ -42,7 +38,7 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
     int *num_approx = interaction_list->num_approx;
     int *num_direct = interaction_list->num_direct;
     
-    int tree_numnodes = tree_array->numnodes;
+    int tree_numnodes = tree->numnodes;
     int batch_numnodes = batches->numnodes;
     
     double *xS = source_x;
@@ -62,9 +58,9 @@ void InteractionCompute_CP(struct tnode_array *tree_array, struct tnode_array *b
     double *qC = cluster_q;
     double *wC = cluster_w;
 
-    int *ibegs = tree_array->ibeg;
-    int *iends = tree_array->iend;
-    int *clusterInd = tree_array->cluster_ind;
+    int *ibegs = tree->ibeg;
+    int *iends = tree->iend;
+    int *clusterInd = tree->cluster_ind;
 
     int numberOfClusterCharges = totalNumberOfInterpolationPoints;
     int numberOfClusterWeights = totalNumberOfInterpolationPoints;
