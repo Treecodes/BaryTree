@@ -47,8 +47,6 @@ void Batches_Alloc(struct tnode_array **new_batches, double *batch_lim,
     make_vector(batches->ibeg, max_batch_num);
     make_vector(batches->iend, max_batch_num);
     make_vector(batches->numpar, max_batch_num);
-    make_vector(batches->numApprox, max_batch_num);
-    make_vector(batches->numDirect, max_batch_num);
 
     make_vector(batches->x_mid, max_batch_num);
     make_vector(batches->y_mid, max_batch_num);
@@ -72,8 +70,6 @@ void Batches_AllocArray(struct tnode_array **new_batches, int length)
     make_vector(batches->ibeg, length);
     make_vector(batches->iend, length);
     make_vector(batches->numpar, length);
-    make_vector(batches->numApprox, length);
-    make_vector(batches->numDirect, length);
 
     make_vector(batches->x_mid, length);
     make_vector(batches->y_mid, length);
@@ -92,9 +88,6 @@ void Batches_ReallocArray(struct tnode_array *batches, int newlength)  {
     realloc_vector(batches->ibeg, newlength);
     realloc_vector(batches->iend, newlength);
     realloc_vector(batches->numpar, newlength);
-
-    realloc_vector(batches->numApprox, newlength);
-    realloc_vector(batches->numDirect, newlength);
 
     realloc_vector(batches->x_mid, newlength);
     realloc_vector(batches->y_mid, newlength);
@@ -115,8 +108,6 @@ void Batches_Free(struct tnode_array *batches)
         free_vector(batches->iend);
         free_vector(batches->ibeg);
         free_vector(batches->numpar);
-        free_vector(batches->numApprox);
-        free_vector(batches->numDirect);
         free_vector(batches->x_mid);
         free_vector(batches->y_mid);
         free_vector(batches->z_mid);
@@ -136,8 +127,6 @@ void Batches_Free_Win(struct tnode_array *batches)
     MPI_Free_mem(batches->iend);
     MPI_Free_mem(batches->ibeg);
     MPI_Free_mem(batches->numpar);
-    MPI_Free_mem(batches->numApprox);
-    MPI_Free_mem(batches->numDirect);
     MPI_Free_mem(batches->x_mid);
     MPI_Free_mem(batches->y_mid);
     MPI_Free_mem(batches->z_mid);
@@ -247,8 +236,6 @@ void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *
         batches->ibeg[batches->numnodes-1] = ibeg;
         batches->iend[batches->numnodes-1] = iend;
         batches->numpar[batches->numnodes-1] = iend-ibeg+1;
-        batches->numApprox[batches->numnodes-1] = 0;
-        batches->numDirect[batches->numnodes-1] = 0;
         
         batches->x_mid[batches->numnodes-1] = x_mid;
         batches->y_mid[batches->numnodes-1] = y_mid;
@@ -355,8 +342,6 @@ void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *
         batches->ibeg[batches->numnodes-1] = ibeg;
         batches->iend[batches->numnodes-1] = iend;
         batches->numpar[batches->numnodes-1] = iend-ibeg+1;
-        batches->numApprox[batches->numnodes-1] = 0;
-        batches->numDirect[batches->numnodes-1] = 0;
         
         batches->x_mid[batches->numnodes-1] = x_mid;
         batches->y_mid[batches->numnodes-1] = y_mid;

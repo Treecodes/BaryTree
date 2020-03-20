@@ -1,7 +1,6 @@
 #ifndef H_TNODE_H
 #define H_TNODE_H
 
-/* declaration of struct with tag tnode */
 struct tnode
 {
     int numpar, ibeg, iend;
@@ -11,7 +10,7 @@ struct tnode
     double radius, sqradius, aspect;
     int level, num_children, exist_ms;
     double *ms, *ms2;
-    struct tnode *child[8];      //Child is ptr to array of ptrs to tnode children
+    struct tnode *child[8];
 
     int xdim, ydim, zdim;
     int xlind, ylind, zlind;
@@ -50,9 +49,6 @@ struct tnode_array
 
     int *num_children;
     int *children;
-
-    int *numApprox;
-    int *numDirect;
 };
 
 

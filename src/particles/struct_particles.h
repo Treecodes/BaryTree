@@ -9,11 +9,12 @@ struct particles
         double *y;
         double *z;
         double *q;
-        double *w;  // quadrature weights.  Set equal to 1 if interacting with particles, not performing convolution integral.
-        int *order;
+        double *w;  // quadrature weights.  Set = 1 if interacting particles, not performing convolution integral.
 
 		int *ibeg;
 		int *iend;
+  
+        int *order;
 
 };
 
