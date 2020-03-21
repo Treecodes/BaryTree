@@ -19,7 +19,7 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                      int max_per_source_leaf, int max_per_target_leaf,
                      int verbosity)
 {
-    RunParams_Free(*run_params_addr);
+    RunParams_Free(run_params_addr);
     *run_params_addr = malloc(sizeof (struct RunParams));  
     struct RunParams *run_params = *run_params_addr;
 
@@ -76,12 +76,16 @@ void RunParams_Validate(struct RunParams *run_params)
 
 
 
-void RunParams_Free(struct RunParams *run_params)
+void RunParams_Free(struct RunParams **run_params_addr)
 {
+    struct RunParams *run_params = *run_params_addr;
+
     if (run_params != NULL) {
 	    if (run_params->num_kernel_params > 0) free_vector(run_params->kernel_params);
         free(run_params);
     }
+    
+    run_params = NULL;
 
     return;
 }

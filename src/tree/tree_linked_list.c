@@ -269,7 +269,7 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
     }
 
     return;
-
+    
 } /* END of function PC_Create_Tree */
 
 
@@ -287,15 +287,19 @@ int TreeLinkedList_SetIndex(struct TreeLinkedListNode *p, int index)
 
 
 
-void TreeLinkedList_Free(struct TreeLinkedListNode *p)
+void TreeLinkedList_Free(struct TreeLinkedListNode **p_addr)
 {
+    struct TreeLinkedListNode *p = *p_addr;
+    
     if (p != NULL) {
         remove_node(p);
         free(p);
     }
+    
+    p = NULL;
 
     return;
-
+    
 } /* END function Tree_Free */
 
 
@@ -315,5 +319,5 @@ static void remove_node(struct TreeLinkedListNode *p)
     }
 
     return;
-
+    
 } /* END function remove_node */

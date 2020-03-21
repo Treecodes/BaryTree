@@ -665,7 +665,7 @@ int main(int argc, char **argv)
     free(potential);
     free(potential_direct);
 
-    RunParams_Free(run_params);
+    RunParams_Free(&run_params);
 
     MPI_Finalize();
 

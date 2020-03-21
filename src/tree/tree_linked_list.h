@@ -15,7 +15,7 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
 
 int TreeLinkedList_SetIndex(struct TreeLinkedListNode *p, int index);
 
-void TreeLinkedList_Free(struct TreeLinkedListNode *p);
+void TreeLinkedList_Free(struct TreeLinkedListNode **p_addr);
 
 
 #endif /* H_TREE_LINKED_LIST_FUNCTIONS */

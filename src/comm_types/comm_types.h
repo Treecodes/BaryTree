@@ -11,7 +11,7 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
                                  struct Tree *tree, struct Tree *batches,
                                  struct RunParams *run_params);
 
-void CommTypesAndTrees_Free(struct CommTypes *comm_types, struct Tree **let_trees);
+void CommTypesAndTrees_Free(struct CommTypes **comm_types_addr, struct Tree ***let_trees_addr);
 
 
 #endif /* H_COMM_TYPES_FUNCTIONS_H */

@@ -247,8 +247,10 @@ void Clusters_Alloc(struct Clusters **clusters_addr, int length, const struct Ru
 
 
 
-void Clusters_Free(struct Clusters *clusters)
-{    
+void Clusters_Free(struct Clusters **clusters_addr)
+{
+    struct Clusters *clusters = *clusters_addr;
+    
     if (clusters != NULL) {
         if (clusters->x != NULL) free_vector(clusters->x);
         if (clusters->y != NULL) free_vector(clusters->y);
@@ -257,6 +259,8 @@ void Clusters_Free(struct Clusters *clusters)
         if (clusters->w != NULL) free_vector(clusters->w);
         free(clusters);
     }
+    
+    clusters = NULL;
 
     return;
 }   /* END of function Clusters_Free */
@@ -264,8 +268,9 @@ void Clusters_Free(struct Clusters *clusters)
 
 
 
-void Clusters_Free_Win(struct Clusters *clusters)
+void Clusters_Free_Win(struct Clusters **clusters_addr)
 {
+    struct Clusters *clusters = *clusters_addr;
 
     if (clusters != NULL) {
         MPI_Free_mem(clusters->x);
@@ -275,6 +280,8 @@ void Clusters_Free_Win(struct Clusters *clusters)
         MPI_Free_mem(clusters->w);
         free(clusters);
     }
+
+    clusters = NULL;
 
     return;
 }   /* END of function Clusters_Free */

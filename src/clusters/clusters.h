@@ -18,9 +18,9 @@ void Clusters_Targets_Construct(struct Clusters **clusters, const struct Tree *t
 void Clusters_Alloc(struct Clusters **clusters_addr, int length,
                 const struct RunParams *run_params);
 
-void Clusters_Free(struct Clusters *clusters);
+void Clusters_Free(struct Clusters **clusters_addr);
 
-void Clusters_Free_Win(struct Clusters *clusters);
+void Clusters_Free_Win(struct Clusters **clusters_addr);
 
 
 #endif /* H_CLUSTER_FUNCTIONS_H */

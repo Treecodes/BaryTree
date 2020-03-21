@@ -255,37 +255,47 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
 
 
 
-void CommTypesAndTrees_Free(struct CommTypes *comm_types, struct Tree **let_trees)
+void CommTypesAndTrees_Free(struct CommTypes **comm_types_addr, struct Tree ***let_trees_addr)
 {
     int rank, num_procs;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+    
+    struct CommTypes *comm_types = *comm_types_addr;
+    struct Tree **let_trees = *let_trees_addr;
 
+    if (comm_types != NULL) {
+        for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
 
-    for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
+            int get_from = (num_procs + rank - proc_id) % num_procs;
 
-        int get_from = (num_procs + rank - proc_id) % num_procs;
-
-        MPI_Type_free(&(comm_types->MPI_approx_type[get_from]));
-        MPI_Type_free(&(comm_types->MPI_approx_charges_type[get_from]));
-        MPI_Type_free(&(comm_types->MPI_approx_weights_type[get_from]));
-        MPI_Type_free(&(comm_types->MPI_direct_type[get_from]));
-
-        Tree_Free(let_trees[get_from]);
+            MPI_Type_free(&(comm_types->MPI_approx_type[get_from]));
+            MPI_Type_free(&(comm_types->MPI_approx_charges_type[get_from]));
+            MPI_Type_free(&(comm_types->MPI_approx_weights_type[get_from]));
+            MPI_Type_free(&(comm_types->MPI_direct_type[get_from]));
+        }
+        
+        free_vector(comm_types->num_remote_approx_array);
+        free_vector(comm_types->previous_let_clusters_length_array);
+        free_vector(comm_types->MPI_approx_type);
+        free_vector(comm_types->MPI_approx_charges_type);
+        free_vector(comm_types->MPI_approx_weights_type);
+        free_vector(comm_types->new_sources_length_array);
+        free_vector(comm_types->previous_let_sources_length_array);
+        free_vector(comm_types->MPI_direct_type);
+        
+        free(comm_types);
+        comm_types = NULL;
     }
     
-    free_vector(comm_types->num_remote_approx_array);
-    free_vector(comm_types->previous_let_clusters_length_array);
-    free_vector(comm_types->MPI_approx_type);
-    free_vector(comm_types->MPI_approx_charges_type);
-    free_vector(comm_types->MPI_approx_weights_type);
-    free_vector(comm_types->new_sources_length_array);
-    free_vector(comm_types->previous_let_sources_length_array);
-    free_vector(comm_types->MPI_direct_type);
-
-
-    free(comm_types);
-    free_vector(let_trees);
+    if (let_trees != NULL) {
+        for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
+            Tree_Free(&let_trees[(num_procs + rank - proc_id) % num_procs]);
+        }
+        
+        free_vector(let_trees);
+        let_trees = NULL;
+    }
 
     return;
 }

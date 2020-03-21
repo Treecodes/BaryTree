@@ -122,8 +122,10 @@ void Batches_Alloc(struct Tree **batches_addr, int length)
 
 
 
-void Batches_Free(struct Tree *batches)
+void Batches_Free(struct Tree **batches_addr)
 {
+    struct Tree *batches = *batches_addr;
+    
     if (batches != NULL) {
         if (batches->ibeg   != NULL) free_vector(batches->ibeg);
         if (batches->iend   != NULL) free_vector(batches->iend);
@@ -135,14 +137,18 @@ void Batches_Free(struct Tree *batches)
         if (batches->radius != NULL) free_vector(batches->radius);
         free(batches);
     }
+    
+    batches = NULL;
 
     return;
 } /* END of function setup */
 
 
 
-void Batches_Free_Win(struct Tree *batches)
+void Batches_Free_Win(struct Tree **batches_addr)
 {
+    struct Tree *batches = *batches_addr;
+    
     if (batches != NULL) {
         if (batches->ibeg   != NULL) MPI_Free_mem(batches->ibeg);
         if (batches->iend   != NULL) MPI_Free_mem(batches->iend);
@@ -154,7 +160,9 @@ void Batches_Free_Win(struct Tree *batches)
         if (batches->radius != NULL) MPI_Free_mem(batches->radius);
         free(batches);
     }
-
+    
+    batches = NULL;
+    
     return;
 } /* END of function setup */
 

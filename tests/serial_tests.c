@@ -193,7 +193,7 @@ static char *test_direct_sum_on_10_particles()
 
     free(potential);
 
-    RunParams_Free(run_params);
+    RunParams_Free(&run_params);
 
     return 0;
 }
@@ -527,7 +527,7 @@ static char *test_treecode_on_100_particles()
 
     free(potential);
 
-    RunParams_Free(run_params);
+    RunParams_Free(&run_params);
 
     return 0;
 }
@@ -832,7 +832,7 @@ static char *test_treecode_on_1_target_10000_sources()
     free(potential);
     free(potential_direct);
 
-    RunParams_Free(run_params);
+    RunParams_Free(&run_params);
 
     return 0;
 }
@@ -952,7 +952,7 @@ static char *test_treecode_wrapper()
     free(potential);
     free(potential_wrapper);
 
-    RunParams_Free(run_params);
+    RunParams_Free(&run_params);
 
     return 0;
 }
@@ -1399,7 +1399,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
     free(potential3);
     free(potential_direct);
 
-    RunParams_Free(run_params);
+    RunParams_Free(&run_params);
 
     return 0;
 }

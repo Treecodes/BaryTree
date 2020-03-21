@@ -12,7 +12,7 @@
 void CommWindows_Create(struct CommWindows **comm_windows_addr,
                         struct Clusters *clusters, struct Particles *sources);
 
-void CommWindows_Free(struct CommWindows *comm_windows);
+void CommWindows_Free(struct CommWindows **comm_windows_addr);
 
 void CommWindows_Lock(struct CommWindows *comm_windows, int get_from);
 

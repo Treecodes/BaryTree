@@ -50,9 +50,10 @@ void CommWindows_Create(struct CommWindows **comm_windows_addr,
 
 
 
-void CommWindows_Free(struct CommWindows *comm_windows)
+void CommWindows_Free(struct CommWindows **comm_windows_addr)
 {
     MPI_Barrier(MPI_COMM_WORLD);
+    struct CommWindows *comm_windows = *comm_windows_addr;
 
     MPI_Win_free(&(comm_windows->win_clusters_x));
     MPI_Win_free(&(comm_windows->win_clusters_y));
@@ -67,6 +68,7 @@ void CommWindows_Free(struct CommWindows *comm_windows)
     MPI_Win_free(&(comm_windows->win_sources_w));
 
     free(comm_windows);
+    comm_windows = NULL;
 
     return;
 }

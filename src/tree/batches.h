@@ -13,11 +13,11 @@ void Batches_Sources_Construct(struct Tree **batches_addr, struct Particles *sou
 void Batches_Targets_Construct(struct Tree **batches_addr, struct Particles *targets,
                 struct RunParams *run_params);
 
-void Batches_Alloc(struct Tree **batches, int length);
+void Batches_Alloc(struct Tree **batches_addr, int length);
 
-void Batches_Free(struct Tree *batches);
+void Batches_Free(struct Tree **batches_addr);
 
-void Batches_Free_Win(struct Tree *batches);
+void Batches_Free_Win(struct Tree **batches_addr);
 
 
 #endif

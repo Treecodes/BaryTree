@@ -35,8 +35,10 @@ void Particles_Alloc(struct Particles **sources_addr, int length)
 
 
 
-void Particles_Free(struct Particles *sources)
+void Particles_Free(struct Particles **sources_addr)
 {
+    struct Particles *sources = *sources_addr;
+
     if (sources != NULL) {
 	    if (sources->x != NULL) free_vector(sources->x);
 	    if (sources->y != NULL) free_vector(sources->y);
@@ -45,6 +47,8 @@ void Particles_Free(struct Particles *sources)
 	    if (sources->w != NULL) free_vector(sources->w);
         free(sources);
     }
+    
+    sources = NULL;
 
     return;
 }
@@ -143,7 +147,7 @@ void Particles_ConstructOrder(struct Particles *particles)
 
 void Particles_FreeOrder(struct Particles *particles)
 {
-    free_vector(particles->order);
+    if (particles->order != NULL) free_vector(particles->order);
     
     return;
 }

@@ -47,7 +47,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 {
 
 
-    /* changing values of our extern variables */
+
     make_vector(tt, run_params->interp_order+1);
     make_vector(ww, run_params->interp_order+1);
 
@@ -86,22 +86,27 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
     int min_num_interactions = 0;
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 
+
     
 
-    //--------------------------------------
-    //--------------------------------------
-    //CLUSTER PARTICLE
-    //--------------------------------------
-    //--------------------------------------
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+// CLUSTER PARTICLE
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
     
-
-    /* call setup to allocate arrays for Taylor expansions and setup global vars */
     if (run_params->compute_type == CLUSTER_PARTICLE) {
     
         struct Tree *tree = NULL;
         struct Tree *batches = NULL;
         struct Clusters *clusters = NULL;
         
+        
+        //-------------------------------
+        //-------------------------------
+        // SETUP
+        //-------------------------------
+        //-------------------------------
 
         START_TIMER(&time_tree[0]);
         Tree_Targets_Construct(&tree, targets, run_params);
@@ -118,13 +123,17 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[2]);
         
         
-        //-------------------
-        //BEGIN COMPUTE PHASE
-        //-------------------
+        //-------------------------------
+        //-------------------------------
+        // COMPUTE
+        //-------------------------------
+        //-------------------------------
+        
+        //~~~~~~~~~~~~~~~~~~~~
+        // Local compute
+        //~~~~~~~~~~~~~~~~~~~~
         
         struct InteractionLists *local_interaction_list = NULL;
-
-        // Beginning local computation
 
         START_TIMER(&time_tree[4]);
         InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
@@ -145,10 +154,13 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                         clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
                         potential, sources->num, targets->num, clusters->num,
                         run_params);
-        InteractionLists_Free(local_interaction_list);
+        InteractionLists_Free(&local_interaction_list);
         STOP_TIMER(&time_tree[5]);
 
-
+        //~~~~~~~~~~~~~~~~~~~~
+        // Remote compute
+        //~~~~~~~~~~~~~~~~~~~~
+        
         if (num_procs > 1) {
                 
             MPI_Barrier(MPI_COMM_WORLD);
@@ -181,12 +193,18 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                   potential, remote_sources->num, targets->num, clusters->num,
                                   run_params);
                                   
-            InteractionLists_Free(let_interaction_list);
-            Particles_Free(remote_sources);
-            Batches_Free(remote_batches);
+            InteractionLists_Free(&let_interaction_list);
+            Particles_Free(&remote_sources);
+            Batches_Free(&remote_batches);
             STOP_TIMER(&time_tree[7]);
         }
-
+        
+        
+        //-------------------------------
+        //-------------------------------
+        // DOWNPASS
+        //-------------------------------
+        //-------------------------------
 
         START_TIMER(&time_tree[8]);
         InteractionCompute_Downpass(tree,
@@ -198,6 +216,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[8]);
 
 
+        //-------------------------------
+        //-------------------------------
+        // CORRECT AND REORDER
+        //-------------------------------
+        //-------------------------------
+
         START_TIMER(&time_tree[9]);
         InteractionCompute_SubtractionPotentialCorrection(potential, targets->q, targets->num, run_params);
         Particles_Targets_Reorder(targets, potential);
@@ -205,16 +229,18 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[9]);
         
         
-        //-------------------
-        //CLEANUP
-        //-------------------
+        //-------------------------------
+        //-------------------------------
+        // CLEANUP
+        //-------------------------------
+        //-------------------------------
         
         START_TIMER(&time_tree[10]);
         Particles_FreeOrder(sources);
         Particles_FreeOrder(targets);
-        Tree_Free(tree);
-        Clusters_Free(clusters);
-        Batches_Free(batches);
+        Tree_Free(&tree);
+        Clusters_Free(&clusters);
+        Batches_Free(&batches);
         STOP_TIMER(&time_tree[10]);
         
         // Total setup time
@@ -224,16 +250,15 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8];
     
         MPI_Barrier(MPI_COMM_WORLD);
-
-        return;
         
         
         
-        //--------------------------------------
-        //--------------------------------------
-        //PARTICLE CLUSTER
-        //--------------------------------------
-        //--------------------------------------
+        
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+// PARTICLE CLUSTER
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
         
     } else if (run_params->compute_type == PARTICLE_CLUSTER) {
     
@@ -241,6 +266,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         struct Tree *batches = NULL;
         struct Clusters *clusters = NULL;
 
+
+        //-------------------------------
+        //-------------------------------
+        // SETUP
+        //-------------------------------
+        //-------------------------------
 
         START_TIMER(&time_tree[0]);
         Tree_Sources_Construct(&tree, sources, run_params);
@@ -257,11 +288,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[2]);
 
 
-        //-------------------
-        //BEGIN COMPUTE PHASE
-        //-------------------
-
-        MPI_Barrier(MPI_COMM_WORLD);
+        //-------------------------------
+        //-------------------------------
+        // COMPUTE
+        //-------------------------------
+        //-------------------------------
         
         struct CommTypes *comm_types = NULL;
         struct CommWindows *comm_windows = NULL;
@@ -270,33 +301,40 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         struct Clusters *let_clusters = NULL;
         struct Particles *let_sources = NULL;
         
-        
-        START_TIMER(&time_tree[3]);
-        CommTypesAndTrees_Construct(&comm_types, &let_trees, tree, batches, run_params);
+        //~~~~~~~~~~~~~~~~~~~~
+        // Getting remote data
+        //~~~~~~~~~~~~~~~~~~~~
 
-        Particles_Alloc(&let_sources, comm_types->let_sources_length);
-        Clusters_Alloc(&let_clusters, comm_types->let_clusters_length, run_params);
-                                                
-        CommWindows_Create(&comm_windows, clusters, sources);
+        if (num_procs > 1) {
         
-        for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
-        
-            int get_from = (num_procs + rank - proc_id) % num_procs;
+            MPI_Barrier(MPI_COMM_WORLD);
             
-            CommWindows_Lock(comm_windows, get_from);
-            //This is a non-blocking call!
-            CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
-            CommWindows_Unlock(comm_windows, get_from);
+            START_TIMER(&time_tree[3]);
+            CommTypesAndTrees_Construct(&comm_types, &let_trees, tree, batches, run_params);
+
+            Particles_Alloc(&let_sources, comm_types->let_sources_length);
+            Clusters_Alloc(&let_clusters, comm_types->let_clusters_length, run_params);
+                                                    
+            CommWindows_Create(&comm_windows, clusters, sources);
+            
+            for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
+            
+                int get_from = (num_procs + rank - proc_id) % num_procs;
+                
+                CommWindows_Lock(comm_windows, get_from);
+                //This is a non-blocking call!
+                CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
+                CommWindows_Unlock(comm_windows, get_from);
+            }
+            
+            CommWindows_Free(&comm_windows);
+            STOP_TIMER(&time_tree[3]);
         }
-        
-        CommWindows_Free(comm_windows);
-        STOP_TIMER(&time_tree[3]);
 
+        //~~~~~~~~~~~~~~~~~~~~
+        // Local compute
+        //~~~~~~~~~~~~~~~~~~~~
 
-        //-------------------
-        //LOCAL COMPUTE
-        //-------------------
-        
         struct InteractionLists *local_interaction_list;
         
         START_TIMER(&time_tree[4]);
@@ -309,8 +347,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
         }
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
-        
-        START_TIMER(&time_tree[4]);
+  
+        START_TIMER(&time_tree[5]);
         InteractionCompute_PC(tree, batches,
                         local_interaction_list,
                         sources->x, sources->y, sources->z, sources->q, sources->w,
@@ -319,17 +357,16 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                         potential,
                         sources->num, targets->num, clusters->num,
                         run_params);
-        InteractionLists_Free(local_interaction_list);
-        STOP_TIMER(&time_tree[4]);
+        InteractionLists_Free(&local_interaction_list);
+        STOP_TIMER(&time_tree[5]);
 
-
-        //-------------------
-        //REMOTE COMPUTE
-        //-------------------
+        //~~~~~~~~~~~~~~~~~~~~
+        // Remote compute
+        //~~~~~~~~~~~~~~~~~~~~
         
         time_tree[6] = 0;
         time_tree[7] = 0;
-            
+
         for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
         
             int get_from = (num_procs+rank-proc_id) % num_procs;
@@ -342,8 +379,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
             if (run_params->verbosity > 0) {
-                total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
-                total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
+                total_num_approx += sum_int(let_interaction_list->num_approx, batches->numnodes);
+                total_num_direct += sum_int(let_interaction_list->num_direct, batches->numnodes);
             }
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 
@@ -356,16 +393,18 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                    potential,
                                    let_sources->num, targets->num, let_clusters->num,
                                    run_params);
-            InteractionLists_Free(let_interaction_list);
+            InteractionLists_Free(&let_interaction_list);
             STOP_TIMER(&time1);
             time_tree[7] += time1;
             
         }
             
-        
-        //-------------------
-        //CORRECT AND REORDER
-        //-------------------
+
+        //-------------------------------
+        //-------------------------------
+        // CORRECT AND REORDER
+        //-------------------------------
+        //-------------------------------
         
         time_tree[8] = 0.0;
         
@@ -375,41 +414,44 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
         
-        
-        //-------------------
-        //CLEANUP
-        //-------------------
+
+        //-------------------------------
+        //-------------------------------
+        // CLEANUP
+        //-------------------------------
+        //-------------------------------
 
         START_TIMER(&time_tree[10]);
         Particles_FreeOrder(sources);
         Particles_FreeOrder(targets);
-        Tree_Free(tree);
-        Clusters_Free_Win(clusters);
-        Batches_Free(batches);
-        
-        //remote pieces
-        Clusters_Free(let_clusters);
-        Particles_Free(let_sources);
-        CommTypesAndTrees_Free(comm_types, let_trees);
+        Tree_Free(&tree);
+        Clusters_Free_Win(&clusters);
+        Batches_Free(&batches);
+
+        // remote pieces
+        Clusters_Free(&let_clusters);
+
+        Particles_Free(&let_sources);
+
+        CommTypesAndTrees_Free(&comm_types, &let_trees);
         STOP_TIMER(&time_tree[10]);
-        
+
         // Total setup time
         time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6];
         
-        //Total compute time
+        // Total compute time
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8];
     
         MPI_Barrier(MPI_COMM_WORLD);
 
-        return;
 
 
 
-        //--------------------------------------
-        //--------------------------------------
-        //CLUSTER CLUSTER
-        //--------------------------------------
-        //--------------------------------------
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+//CLUSTER CLUSTER
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
 
     } else if (run_params->compute_type == CLUSTER_CLUSTER) {
     
@@ -419,6 +461,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         struct Clusters *source_clusters = NULL;
         struct Clusters *target_clusters = NULL;
 
+
+        //-------------------------------
+        //-------------------------------
+        // SETUP
+        //-------------------------------
+        //-------------------------------
 
         START_TIMER(&time_tree[0]);
         Tree_Sources_Construct(&source_tree, sources, run_params);
@@ -436,11 +484,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[2]);
         
         
-        //-------------------
-        //COMPUTE PHASE
-        //-------------------
-        
-        MPI_Barrier(MPI_COMM_WORLD);
+        //-------------------------------
+        //-------------------------------
+        // COMPUTE
+        //-------------------------------
+        //-------------------------------
     
         struct CommTypes *comm_types = NULL;
         struct CommWindows *comm_windows = NULL;
@@ -448,34 +496,41 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         struct Clusters *let_clusters = NULL;
         struct Particles *let_sources = NULL;
-
-
-        START_TIMER(&time_tree[3]);
-        CommTypesAndTrees_Construct(&comm_types, &let_trees,
-                                    source_tree, target_tree, run_params);
-
-        Particles_Alloc(&let_sources, comm_types->let_sources_length);
-        Clusters_Alloc(&let_clusters, comm_types->let_clusters_length, run_params);
-                                                  
-        CommWindows_Create(&comm_windows, source_clusters, sources);
         
-        for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
+        //~~~~~~~~~~~~~~~~~~~~
+        // Getting remote data
+        //~~~~~~~~~~~~~~~~~~~~
 
-            int get_from = (num_procs + rank - proc_id) % num_procs;
+        if (num_procs > 1) {
+        
+            MPI_Barrier(MPI_COMM_WORLD);
+        
+            START_TIMER(&time_tree[3]);
+            CommTypesAndTrees_Construct(&comm_types, &let_trees,
+                                        source_tree, target_tree, run_params);
+
+            Particles_Alloc(&let_sources, comm_types->let_sources_length);
+            Clusters_Alloc(&let_clusters, comm_types->let_clusters_length, run_params);
+                                                      
+            CommWindows_Create(&comm_windows, source_clusters, sources);
             
-            CommWindows_Lock(comm_windows, get_from);
-            //This is a non-blocking call!
-            CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
-            CommWindows_Unlock(comm_windows, get_from);
-        }
-        
-        CommWindows_Free(comm_windows);
-        STOP_TIMER(&time_tree[3]);
+            for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
 
-        
-        //-------------------
-        //LOCAL COMPUTE
-        //-------------------
+                int get_from = (num_procs + rank - proc_id) % num_procs;
+                
+                CommWindows_Lock(comm_windows, get_from);
+                //This is a non-blocking call!
+                CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
+                CommWindows_Unlock(comm_windows, get_from);
+            }
+            
+            CommWindows_Free(&comm_windows);
+            STOP_TIMER(&time_tree[3]);
+        }
+
+        //~~~~~~~~~~~~~~~~~~~~
+        // Local compute
+        //~~~~~~~~~~~~~~~~~~~~
 
         struct InteractionLists *local_interaction_list;
         
@@ -502,13 +557,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                         potential,
                         sources->num, targets->num, source_clusters->num, target_clusters->num,
                         run_params);
-        InteractionLists_Free(local_interaction_list);
+        InteractionLists_Free(&local_interaction_list);
         STOP_TIMER(&time_tree[5]);
         
-
-        //-------------------
-        //REMOTE COMPUTE
-        //-------------------
+        //~~~~~~~~~~~~~~~~~~~~
+        // Remote compute
+        //~~~~~~~~~~~~~~~~~~~~
         
         time_tree[6] = 0;
         time_tree[7] = 0;
@@ -525,8 +579,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
              
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
             if (run_params->verbosity > 0) {
-                total_num_approx += sum_int(local_interaction_list->num_approx, target_tree->numnodes);
-                total_num_direct += sum_int(local_interaction_list->num_direct, target_tree->numnodes);
+                total_num_approx += sum_int(let_interaction_list->num_approx, target_tree->numnodes);
+                total_num_direct += sum_int(let_interaction_list->num_direct, target_tree->numnodes);
             }
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 
@@ -543,15 +597,17 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                    potential,
                                    let_sources->num, targets->num, let_clusters->num, target_clusters->num,
                                    run_params);
-            InteractionLists_Free(let_interaction_list);
+            InteractionLists_Free(&let_interaction_list);
             STOP_TIMER(&time1);
             time_tree[7] += time1;
         }
             
-        
-        //-------------------
-        //DOWNPASS
-        //-------------------
+            
+        //-------------------------------
+        //-------------------------------
+        // DOWNPASS
+        //-------------------------------
+        //-------------------------------
         
         START_TIMER(&time_tree[8]);
         InteractionCompute_Downpass(target_tree,
@@ -564,9 +620,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[8]);
             
         
-        //-------------------
+        //-------------------------------
+        //-------------------------------
         //CORRECT AND REORDER
-        //-------------------
+        //-------------------------------
+        //-------------------------------
 
         START_TIMER(&time_tree[9]);
         InteractionCompute_SubtractionPotentialCorrection(potential, targets->q, targets->num, run_params);
@@ -575,36 +633,38 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[9]);
                
                
-        //-------------------
+        //-------------------------------
+        //-------------------------------
         //CLEANUP
-        //-------------------
+        //-------------------------------
+        //-------------------------------
 
         START_TIMER(&time_tree[10]);
         Particles_FreeOrder(sources);
         Particles_FreeOrder(targets);
-        Tree_Free(source_tree);
-        Tree_Free(target_tree);
-        Clusters_Free_Win(source_clusters);
-        Clusters_Free(target_clusters);
+        Tree_Free(&source_tree);
+        Tree_Free(&target_tree);
+        Clusters_Free_Win(&source_clusters);
+        Clusters_Free(&target_clusters);
         
-        //remote pieces
-        Clusters_Free(let_clusters);
-        Particles_Free(let_sources);
-        CommTypesAndTrees_Free(comm_types, let_trees);
+        // Remote pieces
+        Clusters_Free(&let_clusters);
+        Particles_Free(&let_sources);
+        CommTypesAndTrees_Free(&comm_types, &let_trees);
         STOP_TIMER(&time_tree[10]);
         
-        //Total setup time
+        // Total setup time
         time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6];
         
-        //Total compute time
+        // Total compute time
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8];
         
         MPI_Barrier(MPI_COMM_WORLD);
-
-        return;
     }
     
     
+    
+    return;
     
 
 //    if (run_params->verbosity > 0) {

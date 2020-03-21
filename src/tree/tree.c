@@ -39,7 +39,7 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
     Tree_Fill(*tree_addr, tree_linked_list);
     (*tree_addr)->numleaves = numleaves;
     
-    TreeLinkedList_Free(tree_linked_list);
+    TreeLinkedList_Free(&tree_linked_list);
 
     return;
 }
@@ -70,7 +70,7 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     Tree_Fill(*tree_addr, tree_linked_list);
     (*tree_addr)->numleaves = numleaves;
     
-    TreeLinkedList_Free(tree_linked_list);
+    TreeLinkedList_Free(&tree_linked_list);
 
     return;
 }
@@ -106,8 +106,10 @@ void Tree_Alloc(struct Tree **tree_addr, int length)
 
 
 
-void Tree_Free(struct Tree *tree)
+void Tree_Free(struct Tree **tree_addr)
 {
+    struct Tree *tree = *tree_addr;
+    
     if (tree != NULL) {
         free_vector(tree->ibeg);
         free_vector(tree->iend);
@@ -130,33 +132,6 @@ void Tree_Free(struct Tree *tree)
     }
 
     tree = NULL;
-
-    return;
-}   /* END of function allocate_tree */
-
-
-
-void Tree_Realloc(struct Tree *tree, int newlength)
-{
-    tree->numnodes = newlength;
-    realloc_vector(tree->ibeg, newlength);
-    realloc_vector(tree->iend, newlength);
-    realloc_vector(tree->numpar, newlength);
-    realloc_vector(tree->x_mid, newlength);
-    realloc_vector(tree->y_mid, newlength);
-    realloc_vector(tree->z_mid, newlength);
-    realloc_vector(tree->x_min, newlength);
-    realloc_vector(tree->y_min, newlength);
-    realloc_vector(tree->z_min, newlength);
-    realloc_vector(tree->x_max, newlength);
-    realloc_vector(tree->y_max, newlength);
-    realloc_vector(tree->z_max, newlength);
-    realloc_vector(tree->level, newlength);
-    realloc_vector(tree->cluster_ind, newlength);
-    realloc_vector(tree->radius, newlength);
-
-    realloc_vector(tree->num_children, newlength);
-    realloc_vector(tree->children, 8*newlength);
 
     return;
 }   /* END of function allocate_tree */

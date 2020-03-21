@@ -7,6 +7,7 @@
 
 #include "../utilities/array.h"
 #include "../utilities/tools.h"
+#include "../utilities/timers.h"
 #include "../utilities/enums.h"
 
 #include "../particles/struct_particles.h"
@@ -111,7 +112,7 @@ void directdriver(struct Particles *sources, struct Particles *targets, struct R
                                    pointwisePotential, numSources, numTargets,
                                    run_params);
 
-        Particles_Free(remote_sources);
+        Particles_Free(&remote_sources);
 
         time_direct[1] += MPI_Wtime() - time1;
     }

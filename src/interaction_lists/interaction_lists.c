@@ -168,13 +168,17 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
 
 
 
-void InteractionLists_Free(struct InteractionLists *interaction_list)
+void InteractionLists_Free(struct InteractionLists **interaction_list_addr)
 {
+    struct InteractionLists *interaction_list = *interaction_list_addr;
+
     free_matrix(interaction_list->approx_interactions);
     free_matrix(interaction_list->direct_interactions);
     free_vector(interaction_list->num_approx);
     free_vector(interaction_list->num_direct);
     free(interaction_list);
+    
+    interaction_list = NULL;
 
     return;
 }

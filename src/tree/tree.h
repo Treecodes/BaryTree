@@ -14,9 +14,7 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
 
 void Tree_Alloc(struct Tree **tree_addr, int length);
 
-void Tree_Realloc(struct Tree *tree, int newlength);
-
-void Tree_Free(struct Tree *tree);
+void Tree_Free(struct Tree **tree_addr);
 
 void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p);
 
