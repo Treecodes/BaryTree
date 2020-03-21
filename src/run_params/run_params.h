@@ -18,5 +18,7 @@ void RunParams_Validate(struct RunParams *run_params);
 
 void RunParams_Free(struct RunParams *run_params);
 
+void RunParams_Print(struct RunParams *run_params);
+
 
 #endif

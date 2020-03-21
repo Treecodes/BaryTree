@@ -51,15 +51,15 @@ void Particles_Free(struct Particles *sources)
 
 
 
-void Particles_ReorderTargetsAndPotential(struct Particles *targets, double *tEn)
+void Particles_Targets_Reorder(struct Particles *targets, double *potential)
 {
     int numpars = targets->num;
     int *reorder = targets->order;
 
     double *temp_energy;
     make_vector(temp_energy, numpars);
-    for (int i = 0; i < numpars; i++) temp_energy[i] = tEn[i];
-    for (int i = 0; i < numpars; i++) tEn[reorder[i]-1] = temp_energy[i];
+    for (int i = 0; i < numpars; i++) temp_energy[i] = potential[i];
+    for (int i = 0; i < numpars; i++) potential[reorder[i]-1] = temp_energy[i];
     free_vector(temp_energy);
 
     double *temp_x;
@@ -86,4 +86,64 @@ void Particles_ReorderTargetsAndPotential(struct Particles *targets, double *tEn
     for (int i = 0; i < numpars; i++) targets->q[reorder[i]-1] = temp_q[i];
     free_vector(temp_q);
 
+    return;
+}
+
+
+
+void Particles_Sources_Reorder(struct Particles *sources)
+{
+    int numpars = sources->num;
+    int *reorder = sources->order;
+
+    double *temp_x;
+    make_vector(temp_x, numpars);
+    for (int i = 0; i < numpars; i++) temp_x[i] = sources->x[i];
+    for (int i = 0; i < numpars; i++) sources->x[reorder[i]-1] = temp_x[i];
+    free_vector(temp_x);
+
+    double *temp_y;
+    make_vector(temp_y, numpars);
+    for (int i = 0; i < numpars; i++) temp_y[i] = sources->y[i];
+    for (int i = 0; i < numpars; i++) sources->y[reorder[i]-1] = temp_y[i];
+    free_vector(temp_y);
+
+    double *temp_z;
+    make_vector(temp_z, numpars);
+    for (int i = 0; i < numpars; i++) temp_z[i] = sources->z[i];
+    for (int i = 0; i < numpars; i++) sources->z[reorder[i]-1] = temp_z[i];
+    free_vector(temp_z);
+
+    double *temp_q;
+    make_vector(temp_q, numpars);
+    for (int i = 0; i < numpars; i++) temp_q[i] = sources->q[i];
+    for (int i = 0; i < numpars; i++) sources->q[reorder[i]-1] = temp_q[i];
+    free_vector(temp_q);
+
+    double *temp_w;
+    make_vector(temp_w, numpars);
+    for (int i = 0; i < numpars; i++) temp_w[i] = sources->w[i];
+    for (int i = 0; i < numpars; i++) sources->w[reorder[i]-1] = temp_w[i];
+    free_vector(temp_w);
+    
+    return;
+}
+
+
+
+void Particles_ConstructOrder(struct Particles *particles)
+{
+    make_vector(particles->order, particles->num);
+    for (int i = 0; i < particles->num; i++) particles->order[i] = i+1;
+    
+    return;
+}
+
+
+
+void Particles_FreeOrder(struct Particles *particles)
+{
+    free_vector(particles->order);
+    
+    return;
 }

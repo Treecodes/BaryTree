@@ -119,8 +119,8 @@ void CommWindows_GetData(struct Clusters *let_clusters, struct Particles *let_so
     int interp_weights_per_cluster = run_params->interp_weights_per_cluster;
     int interp_charges_per_cluster = run_params->interp_charges_per_cluster;
 
-    int weights_per_point = interp_charges_per_cluster / interp_pts_per_cluster;
-    int charges_per_point = interp_weights_per_cluster / interp_pts_per_cluster;
+    int weights_per_point = interp_weights_per_cluster / interp_pts_per_cluster;
+    int charges_per_point = interp_charges_per_cluster / interp_pts_per_cluster;
 
 
     MPI_Get(&(let_clusters->x[comm_types->previous_let_clusters_length_array[get_from]]),

@@ -1,5 +1,5 @@
-#ifndef H_CLUSTERFUNCTIONS_H
-#define H_CLUSTERFUNCTIONS_H
+#ifndef H_CLUSTER_FUNCTIONS_H
+#define H_CLUSTER_FUNCTIONS_H
 
 #include "../utilities/enums.h"
 
@@ -8,18 +8,19 @@
 
 #include "struct_clusters.h"
 
-void Clusters_PC_Setup(struct Clusters **clusters, struct Particles *sources, int order,
-                       struct Tree *tree_array,
-                       APPROXIMATION approxName, SINGULARITY singularity);
 
-void Clusters_CP_Setup(struct Clusters **clusters, int order, struct Tree *tree_array,
-                       APPROXIMATION approxName, SINGULARITY singularity);
+void Clusters_Sources_Construct(struct Clusters **clusters, const struct Particles *sources,
+                const struct Tree *tree, const struct RunParams *run_params);
+
+void Clusters_Targets_Construct(struct Clusters **clusters, const struct Tree *tree,
+                const struct RunParams *run_params);
 
 void Clusters_Alloc(struct Clusters **clusters_addr, int length,
-                    APPROXIMATION approxName, SINGULARITY singularity);
+                const struct RunParams *run_params);
 
 void Clusters_Free(struct Clusters *clusters);
 
 void Clusters_Free_Win(struct Clusters *clusters);
 
-#endif /* H_CLUSTERFUNCTIONS_H */
+
+#endif /* H_CLUSTER_FUNCTIONS_H */

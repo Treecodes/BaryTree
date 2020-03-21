@@ -31,7 +31,6 @@ SET(SRCS_TREEDRIVER
     clusters/struct_clusters.h
     clusters/clusters.h
     clusters/clusters.c
-    clusters/clusters_cp.c
 # Particle struct and related functions
     particles/struct_particles.h
     particles/particles.h
