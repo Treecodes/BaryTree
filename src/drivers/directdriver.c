@@ -49,8 +49,7 @@ void directdriver(struct Particles *sources, struct Particles *targets, struct R
     time_direct[3] = 0.0;
 
 
-    time1 = MPI_Wtime();
-
+    START_TIMER(&time1);
     MPI_Allgather(&numSources, 1, MPI_INT, numSourcesOnProc, 1, MPI_INT, MPI_COMM_WORLD);
     MPI_Win win_sources_x, win_sources_y, win_sources_z, win_sources_q, win_sources_w;
     MPI_Win_create(source_x, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_x);
@@ -58,19 +57,17 @@ void directdriver(struct Particles *sources, struct Particles *targets, struct R
     MPI_Win_create(source_z, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_z);
     MPI_Win_create(source_q, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_q);
     MPI_Win_create(source_w, numSources*sizeof(double), sizeof(double), MPI_INFO_NULL, MPI_COMM_WORLD, &win_sources_w);
-
-    time_direct[0] += MPI_Wtime() - time1;
-
+    STOP_TIMER(&time1);
+    time_direct[0] += time1;
 
     for (int procID = 1; procID < numProcs; ++procID) {
 
-        time1 = MPI_Wtime();
-
+        START_TIMER(&time1);
         int getFrom = (numProcs+rank-procID) % numProcs;
 
         struct Particles *remote_sources = NULL;
         Particles_Alloc(&remote_sources, numSourcesOnProc[getFrom]);
-
+        
         MPI_Barrier(MPI_COMM_WORLD);
 
         MPI_Win_lock(MPI_LOCK_SHARED, getFrom, 0, win_sources_x);
@@ -90,22 +87,19 @@ void directdriver(struct Particles *sources, struct Particles *targets, struct R
         MPI_Get(remote_sources->w, numSourcesOnProc[getFrom], MPI_DOUBLE,
                        getFrom, 0, numSourcesOnProc[getFrom], MPI_DOUBLE, win_sources_w);
 
-        MPI_Barrier(MPI_COMM_WORLD);
-
         MPI_Win_unlock(getFrom, win_sources_x);
         MPI_Win_unlock(getFrom, win_sources_y);
         MPI_Win_unlock(getFrom, win_sources_z);
         MPI_Win_unlock(getFrom, win_sources_q);
         MPI_Win_unlock(getFrom, win_sources_w);
-
+        
         MPI_Barrier(MPI_COMM_WORLD);
 
-        time_direct[0] += MPI_Wtime() - time1;
+        STOP_TIMER(&time1);
+        time_direct[0] += time1;
 
-        
-        time1 = MPI_Wtime();
-        //compute remote
 
+        START_TIMER(&time1);
         InteractionCompute_Direct(remote_sources->x, remote_sources->y, remote_sources->z,
                                    remote_sources->q, remote_sources->w,
                                    target_x, target_y, target_z, target_q,
@@ -113,26 +107,22 @@ void directdriver(struct Particles *sources, struct Particles *targets, struct R
                                    run_params);
 
         Particles_Free(&remote_sources);
-
-        time_direct[1] += MPI_Wtime() - time1;
+        STOP_TIMER(&time1);
+        time_direct[1] += time1;
     }
 
 
-    time1 = MPI_Wtime();
-    //compute local 
+    START_TIMER(&time_direct[2]);
     InteractionCompute_Direct(source_x, source_y, source_z, source_q, source_w,
                                target_x, target_y, target_z, target_q,
                                pointwisePotential, numSources, numTargets,
                                run_params);
+    STOP_TIMER(&time_direct[2]);
 
-    time_direct[2] = MPI_Wtime() - time1;
 
-
-    time1 = MPI_Wtime();
-    //add correction
+    START_TIMER(&time_direct[3]);
     InteractionCompute_SubtractionPotentialCorrection(pointwisePotential, target_q, numTargets, run_params);
-
-    time_direct[3] = MPI_Wtime() - time1;
+    STOP_TIMER(&time_direct[3]);
 
     return;
 
