@@ -1,7 +1,7 @@
 #include <mpi.h>
 
 
-void start_timer(double *time)
+void START_TIMER(double *time)
 {
     *time = MPI_Wtime();
 
@@ -9,7 +9,7 @@ void start_timer(double *time)
 }
 
 
-void stop_timer(double *time)
+void STOP_TIMER(double *time)
 {
     *time = MPI_Wtime() - *time;
 

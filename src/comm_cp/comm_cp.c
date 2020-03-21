@@ -36,7 +36,7 @@ void Comm_CP_ConstructAndGetData(struct Tree **remote_batches_addr, struct Parti
     int num_remote_sources = sum_int(num_sources_on_proc, num_procs) - num_sources_on_proc[rank];
     
     
-    Batches_AllocArray(remote_batches_addr, num_remote_batches);
+    Batches_Alloc(remote_batches_addr, num_remote_batches);
     struct Tree *remote_batches = *remote_batches_addr;
     
     Particles_Alloc(remote_sources_addr, num_remote_sources);
