@@ -55,6 +55,7 @@ SET(SRCS_TREEDRIVER
 # Interaction compute related functions
     interaction_compute/interaction_compute.h
     interaction_compute/interaction_compute_direct.c
+    interaction_compute/interaction_compute_correction.c
     interaction_compute/interaction_compute_pc.c
     interaction_compute/interaction_compute_cp.c
     interaction_compute/interaction_compute_cc.c

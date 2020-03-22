@@ -6,6 +6,7 @@
 
 #include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
+#include "../clusters/struct_clusters.h"
 #include "../run_params/struct_run_params.h"
 #include "../interaction_lists/struct_interaction_lists.h"
 
@@ -18,19 +19,13 @@
 #include "interaction_compute.h"
 
 
-void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
+void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct Tree *target_tree,
                            struct InteractionLists *interaction_list,
-                           double *source_x, double *source_y, double *source_z,
-                           double *source_q, double *source_w,
-                           double *target_x, double *target_y, double *target_z, double *target_q,
-                           double *source_cluster_x, double *source_cluster_y, double *source_cluster_z,
-                           double *source_cluster_q, double *source_cluster_w,
-                           double *target_cluster_x, double *target_cluster_y, double *target_cluster_z,
-                           double *target_cluster_q, double *target_cluster_w,
-                           double *pointwisePotential,
-                           int numSources, int numTargets, int numSourceClusterPoints, int numTargetClusterPoints,
+                           struct Particles *sources, struct Particles *targets,
+                           struct Clusters *source_clusters, struct Clusters *target_clusters,
                            struct RunParams *run_params)
 {
+    int interp_pts_per_cluster = run_params->interp_pts_per_cluster;
 
     int **approx_inter_list = interaction_list->approx_interactions;
     int **direct_inter_list = interaction_list->direct_interactions;
@@ -41,28 +36,35 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
     int source_tree_numnodes = source_tree->numnodes;
     int target_tree_numnodes = target_tree->numnodes;
     
-    double *xS = source_x;
-    double *yS = source_y;
-    double *zS = source_z;
-    double *qS = source_q;
-    double *wS = source_w;
+    int num_sources  = sources->num;
+    double *source_x = sources->x;
+    double *source_y = sources->y;
+    double *source_z = sources->z;
+    double *source_q = sources->q;
+    double *source_w = sources->w;
 
-    double *xT = target_x;
-    double *yT = target_y;
-    double *zT = target_z;
-    double *qT = target_q;
+    int num_targets  = targets->num;
+    double *target_x = targets->x;
+    double *target_y = targets->y;
+    double *target_z = targets->z;
+    double *target_q = targets->q;
 
-    double *xCS = source_cluster_x;
-    double *yCS = source_cluster_y;
-    double *zCS = source_cluster_z;
-    double *qCS = source_cluster_q;
-    double *wCS = source_cluster_w;
+    int num_source_cluster_points  = source_clusters->num;
+    int num_source_cluster_charges = source_clusters->num_charges;
+    int num_source_cluster_weights = source_clusters->num_weights;
+    double *source_cluster_x = source_clusters->x;
+    double *source_cluster_y = source_clusters->y;
+    double *source_cluster_z = source_clusters->z;
+    double *source_cluster_q = source_clusters->q;
+    double *source_cluster_w = source_clusters->w;
     
-    double *xCT = target_cluster_x;
-    double *yCT = target_cluster_y;
-    double *zCT = target_cluster_z;
-    double *qCT = target_cluster_q;
-    double *wCT = target_cluster_w;
+    int num_target_cluster_points  = target_clusters->num;
+    int num_target_cluster_charges = target_clusters->num_charges;
+    int num_target_cluster_weights = target_clusters->num_weights;
+    double *target_cluster_x = target_clusters->x;
+    double *target_cluster_y = target_clusters->y;
+    double *target_cluster_z = target_clusters->z;
+    double *target_cluster_q = target_clusters->q;
     
     int *source_tree_ibeg = source_tree->ibeg;
     int *source_tree_iend = source_tree->iend;
@@ -72,65 +74,47 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
     int *target_tree_iend = target_tree->iend;
     int *target_tree_cluster_ind = target_tree->cluster_ind;
     
-    int numSourceClusterCharges = numSourceClusterPoints;
-    int numSourceClusterWeights = numSourceClusterPoints;
-    
-    int numTargetClusterCharges = numTargetClusterPoints;
-    int numTargetClusterWeights = numTargetClusterPoints;
-
-    if (run_params->approximation == HERMITE) {
-        numSourceClusterCharges = 8 * numSourceClusterPoints;
-        numTargetClusterCharges = 8 * numTargetClusterPoints;
-    }
-
-    if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
-        numSourceClusterWeights = 8 * numSourceClusterPoints;
-        numTargetClusterWeights = 8 * numTargetClusterPoints;
-    }
+    // NOTE: Not currently setup for SS, thus the target_cluster_w array is not copied out.
+    // Additionally, not setup for Hermite either at the moment.
         
-    //for (int i = 0; i < numTargets; i++) pointwisePotential[i] = 0.0;
-
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(xS[0:numSources], yS[0:numSources], zS[0:numSources], \
-                            qS[0:numSources], wS[0:numSources], \
-                            xT[0:numTargets], yT[0:numTargets], zT[0:numTargets], \
-                            qT[0:numTargets], \
-                            xCS[0:numSourceClusterPoints], \
-                            yCS[0:numSourceClusterPoints], \
-                            zCS[0:numSourceClusterPoints], \
-                            qCS[0:numSourceClusterCharges], \
-                            wCS[0:numSourceClusterWeights], \
-                            xCT[0:numTargetClusterPoints], \
-                            yCT[0:numTargetClusterPoints], \
-                            zCT[0:numTargetClusterPoints]) \
-                       copy(qCT[0:numTargetClusterCharges], \
-                            wCT[0:numTargetClusterWeights], \
-                            pointwisePotential[0:numTargets])
+    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
+                            source_q[0:num_sources], source_w[0:num_sources], \
+                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
+                            target_q[0:num_targets], \
+                            source_cluster_x[0:num_source_cluster_points], \
+                            source_cluster_y[0:num_source_cluster_points], \
+                            source_cluster_z[0:num_source_cluster_points], \
+                            source_cluster_q[0:num_source_cluster_charges], \
+                            source_cluster_w[0:num_source_cluster_weights], \
+                            target_cluster_x[0:num_target_cluster_points], \
+                            target_cluster_y[0:num_target_cluster_points], \
+                            target_cluster_z[0:num_target_cluster_points]) \
+                       copy(target_cluster_q[0:num_target_cluster_charges], \
+                            potential[0:num_targets])
 #endif
     {
-
-    int numInterpPoints = run_params->interp_pts_per_cluster;
 
     for (int i = 0; i < target_tree_numnodes; i++) {
         int target_ibeg = target_tree_ibeg[i];
         int target_iend = target_tree_iend[i];
-        int target_cluster_start = numInterpPoints * target_tree_cluster_ind[i];
+        int target_cluster_start = interp_pts_per_cluster * target_tree_cluster_ind[i];
 
-        int numTargets = target_iend - target_ibeg + 1;
-        int targetStart =  target_ibeg - 1;
+        int num_targets_in_cluster = target_iend - target_ibeg + 1;
+        int target_start =  target_ibeg - 1;
         
-        int numClusterApprox = num_approx[i];
-        int numClusterDirect = num_direct[i];
+        int num_approx_in_cluster = num_approx[i];
+        int num_direct_in_cluster = num_direct[i];
 
 
 /**********************************************************/
 /************** POTENTIAL FROM APPROX *********************/
 /**********************************************************/
 
-        for (int j = 0; j < numClusterApprox; j++) {
+        for (int j = 0; j < num_approx_in_cluster; j++) {
             int source_node_index = approx_inter_list[i][j];
-            int source_cluster_start = numInterpPoints * source_tree_cluster_ind[source_node_index];
-            int streamID = j%3;
+            int source_cluster_start = interp_pts_per_cluster * source_tree_cluster_ind[source_node_index];
+            int stream_id = j%3;
 
 
     /***********************************************/
@@ -142,13 +126,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
             
-                        K_Coulomb_CP_Lagrange(numInterpPoints, numInterpPoints,
+                        K_Coulomb_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
                             source_cluster_q, source_cluster_w,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
-                            run_params, streamID);
+                            run_params, stream_id);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
@@ -167,13 +151,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
 
-                        //K_Coulomb_CP_Hermite(numInterpPoints, numInterpPoints,
+                        //K_Coulomb_CP_Hermite(interp_pts_per_cluster, interp_pts_per_cluster,
                         //    source_cluster_start, target_cluster_start,
                         //    source_cluster_x, source_cluster_y, source_cluster_z,
                         //    source_cluster_q, source_cluster_w,
                         //    target_cluster_x, target_cluster_y, target_cluster_z,
                         //    target_cluster_q,
-                        //    run_params, streamID);
+                        //    run_params, stream_id);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
@@ -200,13 +184,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_Yukawa_CP_Lagrange(numInterpPoints, numInterpPoints,
+                        K_Yukawa_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
                             source_cluster_q, source_cluster_w,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
-                            run_params, streamID);
+                            run_params, stream_id);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
@@ -225,13 +209,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
 
-                        //K_Yukawa_CP_Hermite(numInterpPoints, numInterpPoints,
+                        //K_Yukawa_CP_Hermite(interp_pts_per_cluster, interp_pts_per_cluster,
                         //    source_cluster_start, target_cluster_start,
                         //    source_cluster_x, source_cluster_y, source_cluster_z,
                         //    source_cluster_q, source_cluster_w,
                         //    target_cluster_x, target_cluster_y, target_cluster_z,
                         //    target_cluster_q,
-                        //    run_params, streamID);
+                        //    run_params, stream_id);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
@@ -258,13 +242,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_RegularizedCoulomb_CP_Lagrange(numInterpPoints, numInterpPoints,
+                        K_RegularizedCoulomb_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
                             source_cluster_q, source_cluster_w,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
-                            run_params, streamID);
+                            run_params, stream_id);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
@@ -283,13 +267,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
 
-                        //K_RegularizedCoulomb_CP_Hermite(numInterpPoints, numInterpPoints,
+                        //K_RegularizedCoulomb_CP_Hermite(interp_pts_per_cluster, interp_pts_per_cluster,
                         //    source_cluster_start, target_cluster_start,
                         //    source_cluster_x, source_cluster_y, source_cluster_z,
                         //    source_cluster_q, source_cluster_w,
                         //    target_cluster_x, target_cluster_y, target_cluster_z,
                         //    target_cluster_q,
-                        //    run_params, streamID);
+                        //    run_params, stream_id);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
@@ -316,13 +300,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_RegularizedYukawa_CP_Lagrange(numInterpPoints, numInterpPoints,
+                        K_RegularizedYukawa_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
                             source_cluster_q, source_cluster_w,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
-                            run_params, streamID);
+                            run_params, stream_id);
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
@@ -369,13 +353,13 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_SinOverR_CP_Lagrange(numInterpPoints, numInterpPoints,
+                        K_SinOverR_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
                             source_cluster_q, source_cluster_w,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
-                            run_params, streamID);
+                            run_params, stream_id);
                     }
                 }
 
@@ -392,15 +376,15 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 /************** POTENTIAL FROM DIRECT *********************/
 /**********************************************************/
 
-        for (int j = 0; j < numClusterDirect; j++) {
+        for (int j = 0; j < num_direct_in_cluster; j++) {
 
             int source_node_index = direct_inter_list[i][j];
             int source_ibeg = source_tree_ibeg[source_node_index];
             int source_iend = source_tree_iend[source_node_index];
             
-            int numSources = source_iend - source_ibeg + 1;
-            int sourceStart =  source_ibeg - 1;
-            int streamID = j%3;
+            int num_sources_in_cluster = source_iend - source_ibeg + 1;
+            int source_start =  source_ibeg - 1;
+            int stream_id = j%3;
 
     /***********************************************/
     /***************** Coulomb *********************/
@@ -410,19 +394,19 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_Coulomb_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_Coulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_Coulomb_SS_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_Coulomb_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -437,19 +421,19 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_Yukawa_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_Yukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_Yukawa_SS_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_Yukawa_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -464,19 +448,19 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_RegularizedCoulomb_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_RegularizedCoulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_RegularizedCoulomb_SS_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_RegularizedCoulomb_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -491,19 +475,19 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_RegularizedYukawa_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_RegularizedYukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_RegularizedYukawa_SS_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_RegularizedYukawa_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
 
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -518,11 +502,11 @@ void InteractionCompute_CC(struct Tree *source_tree, struct Tree *target_tree,
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_SinOverR_Direct(numTargets, numSources,
-                            targetStart, sourceStart,
+                    K_SinOverR_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
-                            run_params, pointwisePotential, streamID);
+                            run_params, potential, stream_id);
                 }
 
             } else {

@@ -122,13 +122,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 
         START_TIMER(&time_tree[5]);
-        InteractionCompute_CP(tree, batches,
-                        local_interaction_list,
-                        sources->x, sources->y, sources->z, sources->q, sources->w,
-                        targets->x, targets->y, targets->z, targets->q,
-                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        potential, sources->num, targets->num, clusters->num,
-                        run_params);
+        InteractionCompute_CP(potential, tree, batches, local_interaction_list,
+                              sources, targets, clusters, run_params);
         InteractionLists_Free(&local_interaction_list);
         STOP_TIMER(&time_tree[5]);
 
@@ -160,14 +155,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 
             START_TIMER(&time_tree[7]);
-            InteractionCompute_CP(tree, remote_batches,
-                                  let_interaction_list,
-                                  remote_sources->x, remote_sources->y, remote_sources->z, remote_sources->q, remote_sources->w,
-                                  targets->x, targets->y, targets->z, targets->q,
-                                  clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                                  potential, remote_sources->num, targets->num, clusters->num,
-                                  run_params);
-                                  
+            InteractionCompute_CP(potential, tree, remote_batches, let_interaction_list,
+                                  remote_sources, targets, clusters, run_params);
             InteractionLists_Free(&let_interaction_list);
             Particles_Free(&remote_sources);
             Batches_Free(&remote_batches);
@@ -182,12 +171,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //-------------------------------
 
         START_TIMER(&time_tree[8]);
-        InteractionCompute_Downpass(tree,
-                                targets->x, targets->y, targets->z, targets->q,
-                                clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                                potential,
-                                targets->num, clusters->num_charges, clusters->num_weights,
-                                run_params);
+        InteractionCompute_Downpass(potential, tree, targets, clusters, run_params);
         STOP_TIMER(&time_tree[8]);
 
 
@@ -198,7 +182,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //-------------------------------
 
         START_TIMER(&time_tree[9]);
-        InteractionCompute_SubtractionPotentialCorrection(potential, targets->q, targets->num, run_params);
+        InteractionCompute_SubtractionPotentialCorrection(potential, targets, run_params);
         Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
@@ -324,14 +308,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
   
         START_TIMER(&time_tree[5]);
-        InteractionCompute_PC(tree, batches,
-                        local_interaction_list,
-                        sources->x, sources->y, sources->z, sources->q, sources->w,
-                        targets->x, targets->y, targets->z, targets->q,
-                        clusters->x, clusters->y, clusters->z, clusters->q, clusters->w,
-                        potential,
-                        sources->num, targets->num, clusters->num,
-                        run_params);
+        InteractionCompute_PC(potential, tree, batches, local_interaction_list,
+                              sources, targets, clusters, run_params);
         InteractionLists_Free(&local_interaction_list);
         STOP_TIMER(&time_tree[5]);
 
@@ -360,14 +338,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 
             START_TIMER(&time1);
-            InteractionCompute_PC(let_trees[get_from], batches,
-                                   let_interaction_list,
-                                   let_sources->x, let_sources->y, let_sources->z, let_sources->q, let_sources->w,
-                                   targets->x, targets->y, targets->z, targets->q,
-                                   let_clusters->x, let_clusters->y, let_clusters->z, let_clusters->q, let_clusters->w,
-                                   potential,
-                                   let_sources->num, targets->num, let_clusters->num,
-                                   run_params);
+            InteractionCompute_PC(potential, let_trees[get_from], batches, let_interaction_list,
+                                  let_sources, targets, let_clusters, run_params);
             InteractionLists_Free(&let_interaction_list);
             STOP_TIMER(&time1);
             time_tree[7] += time1;
@@ -384,7 +356,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         time_tree[8] = 0.0;
         
         START_TIMER(&time_tree[9]);
-        InteractionCompute_SubtractionPotentialCorrection(potential, targets->q, targets->num, run_params);
+        InteractionCompute_SubtractionPotentialCorrection(potential, targets, run_params);
         Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
@@ -521,17 +493,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
         
         START_TIMER(&time_tree[5]);
-        InteractionCompute_CC(source_tree, target_tree,
-                        local_interaction_list,
-                        sources->x, sources->y, sources->z, sources->q, sources->w,
-                        targets->x, targets->y, targets->z, targets->q,
-                        source_clusters->x, source_clusters->y, source_clusters->z,
-                        source_clusters->q, source_clusters->w,
-                        target_clusters->x, target_clusters->y, target_clusters->z,
-                        target_clusters->q, target_clusters->w,
-                        potential,
-                        sources->num, targets->num, source_clusters->num, target_clusters->num,
-                        run_params);
+        InteractionCompute_CC(potential, source_tree, target_tree, local_interaction_list,
+                              sources, targets, source_clusters, target_clusters, run_params);
         InteractionLists_Free(&local_interaction_list);
         STOP_TIMER(&time_tree[5]);
         
@@ -560,18 +523,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 
             START_TIMER(&time1);
-            InteractionCompute_CC(let_trees[get_from], target_tree,
-                                   let_interaction_list,
-                                   let_sources->x, let_sources->y, let_sources->z,
-                                   let_sources->q, let_sources->w,
-                                   targets->x, targets->y, targets->z, targets->q,
-                                   let_clusters->x, let_clusters->y, let_clusters->z,
-                                   let_clusters->q, let_clusters->w,
-                                   target_clusters->x, target_clusters->y, target_clusters->z,
-                                   target_clusters->q, target_clusters->w,
-                                   potential,
-                                   let_sources->num, targets->num, let_clusters->num, target_clusters->num,
-                                   run_params);
+            InteractionCompute_CC(potential, let_trees[get_from], target_tree, let_interaction_list,
+                                  let_sources, targets, let_clusters, target_clusters, run_params);
             InteractionLists_Free(&let_interaction_list);
             STOP_TIMER(&time1);
             time_tree[7] += time1;
@@ -585,13 +538,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //-------------------------------
         
         START_TIMER(&time_tree[8]);
-        InteractionCompute_Downpass(target_tree,
-                                targets->x, targets->y, targets->z, targets->q,
-                                target_clusters->x, target_clusters->y, target_clusters->z,
-                                target_clusters->q, target_clusters->w,
-                                potential,
-                                targets->num, target_clusters->num_charges, target_clusters->num_weights,
-                                run_params);
+        InteractionCompute_Downpass(potential, target_tree, targets, target_clusters, run_params);
         STOP_TIMER(&time_tree[8]);
             
         
@@ -602,7 +549,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //-------------------------------
 
         START_TIMER(&time_tree[9]);
-        InteractionCompute_SubtractionPotentialCorrection(potential, targets->q, targets->num, run_params);
+        InteractionCompute_SubtractionPotentialCorrection(potential, targets, run_params);
         Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
