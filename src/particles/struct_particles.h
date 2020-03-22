@@ -2,35 +2,20 @@
 #define H_PARTICLES_H
 
 /* declaration of struct with tag particles */
-struct particles 
+struct Particles
 {
         int num;
         double *x;
         double *y;
         double *z;
         double *q;
-        double *w;  // quadrature weights.  Set equal to 1 if interacting with particles, not performing convolution integral.
-        int *order;
-
-        // for hermite only...
-        double *qx;
-        double *qy;
-        double *qz;
-        double *qxy;
-        double *qyz;
-        double *qxz;
-        double *qxyz;
-
-		double *wx;
-		double *wy;
-		double *wz;
-		double *wxy;
-		double *wyz;
-		double *wxz;
-		double *wxyz;
+        // quadrature weights.  Set = 1 if interacting particles, not performing convolution integral.
+        double *w;
 
 		int *ibeg;
 		int *iend;
+  
+        int *order;
 
 };
 

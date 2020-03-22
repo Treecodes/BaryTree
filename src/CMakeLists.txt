@@ -1,24 +1,27 @@
 SET(SRCS_TREEDRIVER
 # Auxiliary utilities
+    utilities/timers.h
+    utilities/timers.c
     utilities/tools.h
     utilities/tools.c
     utilities/xmalloc.h
     utilities/xmalloc.c
     utilities/array.h
     utilities/enums.h
-# Global variables, which will be deprecated
-    globvars.h
 # Calling functions for tree and direct calculations
     drivers/directdriver.h
     drivers/directdriver.c
     drivers/treedriver.h
     drivers/treedriver.c
 # Tree node struct and related functions
-    tree/struct_nodes.h
+    tree/struct_tree.h
     tree/tree.h
     tree/tree.c
     tree/batches.h
     tree/batches.c
+    tree/struct_tree_linked_list_node.h
+    tree/tree_linked_list.h
+    tree/tree_linked_list.c
 # Partitioning routines for tree building
     tree/partition.h
     tree/partition.c
@@ -26,23 +29,33 @@ SET(SRCS_TREEDRIVER
     clusters/struct_clusters.h
     clusters/clusters.h
     clusters/clusters.c
-    clusters/clusters_cp.c
 # Particle struct and related functions
     particles/struct_particles.h
     particles/particles.h
     particles/particles.c
+# Comm Types struct and related functions
+    comm_types/struct_comm_types.h
+    comm_types/comm_types.h
+    comm_types/comm_types.c
+# Comm Windows struct and related functions
+    comm_windows/struct_comm_windows.h
+    comm_windows/comm_windows.h
+    comm_windows/comm_windows.c
+# Comm for cluster-particle
+    comm_cp/comm_cp.h
+    comm_cp/comm_cp.c
 # Kernel struct and related functions
     run_params/struct_run_params.h
     run_params/run_params.h
     run_params/run_params.c
-# Interaction list related functions
+# Interaction list and related functions
+    interaction_lists/struct_interaction_lists.h
     interaction_lists/interaction_lists.h
     interaction_lists/interaction_lists.c
-    interaction_lists/interaction_lists_cp_remote.c
-    interaction_lists/interaction_lists_cc.c
 # Interaction compute related functions
     interaction_compute/interaction_compute.h
     interaction_compute/interaction_compute_direct.c
+    interaction_compute/interaction_compute_correction.c
     interaction_compute/interaction_compute_pc.c
     interaction_compute/interaction_compute_cp.c
     interaction_compute/interaction_compute_cc.c

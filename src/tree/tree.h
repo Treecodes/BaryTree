@@ -1,44 +1,22 @@
-#ifndef H_TREEFUNCTIONS_H
-#define H_TREEFUNCTIONS_H
+#ifndef H_TREE_FUNCTIONS_H
+#define H_TREE_FUNCTIONS_H
 
 #include "../particles/struct_particles.h"
+#include "../run_params/struct_run_params.h"
 
-#include "struct_nodes.h"
-
-
-/* declaration of treecode support functions */
-
-/* used by cluster-particle and particle-cluster */
-void Tree_Free(struct tnode *p);
-
-void Tree_Setup(struct particles *particles1, struct particles *particles2,
-                int order, double *xyzminmax);
-
-void Tree_CC_Setup(struct particles *particles1, struct particles *particles2, 
-                int order, double *par1_xyzminmax, double *par2_xyzminmax);
-
-int Tree_SetIndex(struct tnode *p, int index);
+#include "struct_tree_linked_list_node.h"
+#include "struct_tree.h"
 
 
-/* used by particle-cluster */
-void Tree_PC_Create(struct tnode **p, struct particles *sources,
-                    int ibeg, int iend, int maxparnode, double *xyzmm,
-                    int level, int *numnodes, int *numleaves);
+void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, struct RunParams *run_params);
 
+void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, struct RunParams *run_params);
 
-/* used by cluster-particle */
-void Tree_CP_Create(struct tnode **p, struct particles *targets,
-                    int ibeg, int iend, int maxparnode, double *xyzmm,
-                    int level, int *numnodes, int * numleaves);
+void Tree_Alloc(struct Tree **tree_addr, int length);
 
+void Tree_Free(struct Tree **tree_addr);
 
-/* used for tree arrays */
-void Tree_CreateArray(struct tnode *p, struct tnode_array *tree_array);
+void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p);
 
-void Tree_AllocArray(struct tnode_array **new_tree_array, int length);
-
-void Tree_ReallocArray(struct tnode_array *tree_array, int newlength);
-
-void Tree_FreeArray(struct tnode_array *tree_array);
 
 #endif /* H_TREEFUNCTIONS_H */

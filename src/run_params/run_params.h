@@ -5,7 +5,7 @@
 #include "struct_run_params.h"
 
 
-void RunParams_Setup(struct RunParams **run_params,
+void RunParams_Setup(struct RunParams **run_params_addr,
                      KERNEL kernel, int num_kernel_params, double *kernel_params,
                      APPROXIMATION approximation,
                      SINGULARITY singularity,
@@ -16,7 +16,9 @@ void RunParams_Setup(struct RunParams **run_params,
 
 void RunParams_Validate(struct RunParams *run_params);
 
-void RunParams_Free(struct RunParams *run_params);
+void RunParams_Free(struct RunParams **run_params_addr);
+
+void RunParams_Print(struct RunParams *run_params);
 
 
 #endif

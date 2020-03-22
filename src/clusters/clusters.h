@@ -1,25 +1,26 @@
-#ifndef H_CLUSTERFUNCTIONS_H
-#define H_CLUSTERFUNCTIONS_H
+#ifndef H_CLUSTER_FUNCTIONS_H
+#define H_CLUSTER_FUNCTIONS_H
 
 #include "../utilities/enums.h"
 
-#include "../tree/struct_nodes.h"
+#include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
 
 #include "struct_clusters.h"
 
-void Clusters_PC_Setup(struct clusters **clusters, struct particles *sources, int order,
-                       struct tnode_array *tree_array,
-                       APPROXIMATION approxName, SINGULARITY singularity);
 
-void Clusters_CP_Setup(struct clusters **clusters, int order, struct tnode_array *tree_array,
-                       APPROXIMATION approxName, SINGULARITY singularity);
+void Clusters_Sources_Construct(struct Clusters **clusters, const struct Particles *sources,
+                const struct Tree *tree, const struct RunParams *run_params);
 
-void Clusters_Alloc(struct clusters *clusters, int length,
-                       APPROXIMATION approxName, SINGULARITY singularity);
+void Clusters_Targets_Construct(struct Clusters **clusters, const struct Tree *tree,
+                const struct RunParams *run_params);
 
-void Clusters_Free(struct clusters *clusters);
+void Clusters_Alloc(struct Clusters **clusters_addr, int length,
+                const struct RunParams *run_params);
 
-void Clusters_Free_Win(struct clusters *clusters);
+void Clusters_Free(struct Clusters **clusters_addr);
 
-#endif /* H_CLUSTERFUNCTIONS_H */
+void Clusters_Free_Win(struct Clusters **clusters_addr);
+
+
+#endif /* H_CLUSTER_FUNCTIONS_H */

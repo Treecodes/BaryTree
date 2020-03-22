@@ -5,7 +5,7 @@
 #include "../run_params/struct_run_params.h"
 
 
-void treedriver(struct particles *sources, struct particles *targets, struct RunParams *run_params,
+void treedriver(struct Particles *sources, struct Particles *targets, struct RunParams *run_params,
                 double *potential_array, double *time_tree);
 
 

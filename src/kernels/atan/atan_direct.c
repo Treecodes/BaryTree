@@ -1,7 +1,9 @@
 #ifdef OPENACC_ENABLED
     #include <accelmath.h>
+    #define M_PI 3.14159265358979323846264338327950288
+#else
+    #include <math.h>
 #endif
-#include <math.h>
 #include <float.h>
 #include <stdio.h>
 

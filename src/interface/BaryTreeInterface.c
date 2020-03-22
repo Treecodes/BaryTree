@@ -44,7 +44,7 @@ void BaryTreeInterface(int numTargets, int numSources,
                     verbosity);
 
 
-	struct particles sources, targets;
+	struct Particles sources, targets;
 
 	targets.num = numTargets;
 	targets.x = targetX;
@@ -64,7 +64,7 @@ void BaryTreeInterface(int numTargets, int numSources,
 	MPI_Barrier(MPI_COMM_WORLD);
 
 
-    RunParams_Free(run_params);
+    RunParams_Free(&run_params);
 
 	return;
 }

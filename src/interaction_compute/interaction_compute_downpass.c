@@ -1,81 +1,80 @@
-/*
- *Procedures for Cluster-Particle Treecode
- */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <float.h>
-#include <mpi.h>
 
-#include "../globvars.h"
-
-#include "../tree/struct_nodes.h"
+#include "../utilities/array.h"
+#include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
 
 #include "interaction_compute.h"
 
 
-static void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+static void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order,
                         double *xT, double *yT, double *zT, double *qT,
                         double *clusterQ, double *clusterW);
 
-//static void cp_comp_pot_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+//static void cp_comp_pot_SS(struct Tree *tree, int idx, int interp_order,
 //                      double *xT, double *yT, double *zT, double *qT,
 //                      double *clusterQ, double *clusterW);
 
-static void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+static void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_order,
                         double *xT, double *yT, double *zT, double *qT,
                         double *clusterQ, double *clusterW);
 
-//static void cp_comp_pot_hermite_SS(struct tnode_array *tree_array, int idx, int interpolationOrder,
+//static void cp_comp_pot_hermite_SS(struct Tree *tree, int idx, int interp_order,
 //                      int totalNumberInterpolationPoints,
 //                      double *xT, double *yT, double *zT, double *qT,
 //                      double *clusterQ, double *clusterW);
 
 
-
-void InteractionCompute_Downpass(struct tnode_array *tree_array,
-                             double *target_x, double *target_y, double *target_z, double *target_q,
-                             double *cluster_x, double *cluster_y, double *cluster_z,
-                             double *cluster_q, double *cluster_w,
-                             double *pointwisePotential, int numTargets,
-                             int totalNumberInterpolationCharges, int totalNumberInterpolationWeights,
-                             struct RunParams *run_params)
+void InteractionCompute_Downpass(double *potential, struct Tree *tree,
+                                 struct Particles *targets, struct Clusters *clusters,
+                                 struct RunParams *run_params)
 {
+    int num_targets   = targets->num;
+    double *target_x  = targets->x;
+    double *target_y  = targets->y;
+    double *target_z  = targets->z;
+    double *target_q  = targets->q;
 
-    int interpOrderLim = run_params->interp_order + 1;
-    int tree_numnodes = tree_array->numnodes;
+    int total_num_interp_charges = clusters->num_charges;
+    int total_num_interp_weights = clusters->num_weights;
+    double *cluster_q = clusters->q;
+    double *cluster_w = clusters->w;
+
+    int tree_numnodes = tree->numnodes;
+    int interp_order = run_params->interp_order;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(tt[0:interpOrderLim], ww[0:interpOrderLim], \
-                            target_x[0:numTargets], target_y[0:numTargets], \
-                            target_z[0:numTargets], target_q[0:numTargets], \
-                            cluster_q[0:totalNumberInterpolationCharges], \
-                            cluster_w[0:totalNumberInterpolationWeights]) \
-                       copy(pointwisePotential[0:numTargets])
+    #pragma acc data copyin(target_x[0:num_targets], target_y[0:num_targets], \
+                            target_z[0:num_targets], target_q[0:num_targets], \
+                            cluster_q[0:total_num_interp_charges], \
+                            cluster_w[0:total_num_interp_weights]) \
+                       copy(potential[0:num_targets])
     {
 #endif
 
     if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot(tree_array, i, pointwisePotential, run_params->interp_order,
+            cp_comp_pot(tree, i, potential, interp_order,
                         target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SUBTRACTION)) {
 //        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_pot_SS(tree_array, i, pointwisePotential interpolationOrder,
+//            cp_comp_pot_SS(tree, i, potential interp_order,
 //                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot_hermite(tree_array, i, pointwisePotential, run_params->interp_order,
+            cp_comp_pot_hermite(tree, i, potential, interp_order,
                         target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
 //        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_pot_hermite_SS(tree_array, i, pointwisePotential, interpolationOrder,
+//            cp_comp_pot_hermite_SS(tree, i, potential, interp_order,
 //                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else {
@@ -91,31 +90,44 @@ void InteractionCompute_Downpass(struct tnode_array *tree_array,
 }
 
 
-void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+
+
+/************************************/
+/***** LOCAL FUNCTIONS **************/
+/************************************/
+
+void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order,
         double *target_x, double *target_y, double *target_z, double *target_q,
         double *cluster_q, double *cluster_w)
 {
-    int interpOrderLim = interpolationOrder + 1;
-    int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
-    int targetPointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
-    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
-    int startingIndexInTargetsArray = tree_array->ibeg[idx]-1;
+    int interp_order_lim       = interp_order + 1;
+    int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+
+    int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
+    int target_start           = tree->ibeg[idx] - 1;
+    int cluster_start          = idx * interp_pts_per_cluster;
     
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-    double weights[interpOrderLim], dj[interpOrderLim];
+    double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ;
+
+    make_vector(weights, interp_order_lim);
+    make_vector(dj,      interp_order_lim);
+    make_vector(tt,      interp_order_lim);
+    make_vector(nodeX,   interp_order_lim);
+    make_vector(nodeY,   interp_order_lim);
+    make_vector(nodeZ,   interp_order_lim);
     
-    double x0 = tree_array->x_min[idx];
-    double x1 = tree_array->x_max[idx];
-    double y0 = tree_array->y_min[idx];
-    double y1 = tree_array->y_max[idx];
-    double z0 = tree_array->z_min[idx];
-    double z1 = tree_array->z_max[idx];
+    double x0 = tree->x_min[idx];
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q, tt) \
-                create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
-               weights[0:interpOrderLim], dj[0:interpOrderLim])
+    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q) \
+                create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
+                       weights[0:interp_order_lim], dj[0:interp_order_lim], tt[0:interp_order_lim])
     {
 #endif
     
@@ -124,7 +136,8 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < interpOrderLim; i++) {
+    for (int i = 0; i < interp_order_lim; i++) {
+        tt[i] = cos(i * M_PI / interp_order);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -134,31 +147,31 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interpOrderLim; j++){
+    for (int j = 0; j < interp_order_lim; j++){
         dj[j] = 1.0;
         if (j == 0) dj[j] = 0.5;
-        if (j == interpolationOrder) dj[j] = 0.5;
+        if (j == interp_order) dj[j] = 0.5;
     }
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interpOrderLim; j++) {
+    for (int j = 0; j < interp_order_lim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
     }
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < targetPointsInCluster; i++) { // loop through the target points
+    for (int i = 0; i < num_targets_in_cluster; i++) { // loop through the target points
 
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
 
-        double tx = target_x[startingIndexInTargetsArray+i];
-        double ty = target_y[startingIndexInTargetsArray+i];
-        double tz = target_z[startingIndexInTargetsArray+i];
+        double tx = target_x[target_start+i];
+        double ty = target_y[target_start+i];
+        double tz = target_z[target_start+i];
 
         int eix = -1;
         int eiy = -1;
@@ -167,7 +180,7 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
-        for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
 
             double cx = tx - nodeX[j];
             double cy = ty - nodeY[j];
@@ -195,13 +208,13 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:temp)
 #endif
-        for (int j = 0; j < interpolationPointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+        for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%interpOrderLim;
-            int kk = (j-k1)/interpOrderLim;
-            int k2 = kk%interpOrderLim;
+            int k1 = j%interp_order_lim;
+            int kk = (j-k1)/interp_order_lim;
+            int k2 = kk%interp_order_lim;
             kk = kk - k2;
-            int k3 = kk / interpOrderLim;
+            int k3 = kk / interp_order_lim;
 
             double w3 = weights[k3];
             double w2 = weights[k2];
@@ -210,7 +223,7 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
             double cx = nodeX[k1];
             double cy = nodeY[k2];
             double cz = nodeZ[k3];
-            double cq = cluster_q[startingIndexInClustersArray + j];
+            double cq = cluster_q[cluster_start + j];
         
             double numerator = 1.0;
 
@@ -240,52 +253,71 @@ void cp_comp_pot(struct tnode_array *tree_array, int idx, double *pointwisePoten
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
-        pointwisePotential[i + startingIndexInTargetsArray] += temp;
+        potential[i + target_start] += temp;
     }
 #ifdef OPENACC_ENABLED
     } //end ACC kernels
 #endif
     
+    free_vector(weights);
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
+
     return;
 }
 
 
-void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointwisePotential, int interpolationOrder,
+
+void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_order,
         double *target_x, double *target_y, double *target_z, double *target_q, double *cluster_q, double *cluster_w)
 {
-    int interpOrderLim = interpolationOrder + 1;
-    int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
-    int targetPointsInCluster = tree_array->iend[idx] - tree_array->ibeg[idx] + 1;
-    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
-    int startingIndexInTargetsArray = tree_array->ibeg[idx]-1;
+    int interp_order_lim       = interp_order + 1;
+    int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+
+    int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
+    int target_start           = tree->ibeg[idx] - 1;
+    int cluster_start          = idx * interp_pts_per_cluster;
     
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-    double wx[interpOrderLim], wy[interpOrderLim], wz[interpOrderLim], dj[interpOrderLim];
+    double *dj, *tt, *ww, *wx, *wy, *wz, *nodeX, *nodeY, *nodeZ;
+
+    make_vector(dj,      interp_order_lim);
+    make_vector(tt,      interp_order_lim);
+    make_vector(ww,      interp_order_lim);
+    make_vector(wx,      interp_order_lim);
+    make_vector(wy,      interp_order_lim);
+    make_vector(wz,      interp_order_lim);
+    make_vector(nodeX,   interp_order_lim);
+    make_vector(nodeY,   interp_order_lim);
+    make_vector(nodeZ,   interp_order_lim);
     
-    double *cluster_q_     = &cluster_q[8*startingIndexInClustersArray + 0*interpolationPointsPerCluster];
-    double *cluster_q_dx   = &cluster_q[8*startingIndexInClustersArray + 1*interpolationPointsPerCluster];
-    double *cluster_q_dy   = &cluster_q[8*startingIndexInClustersArray + 2*interpolationPointsPerCluster];
-    double *cluster_q_dz   = &cluster_q[8*startingIndexInClustersArray + 3*interpolationPointsPerCluster];
-    double *cluster_q_dxy  = &cluster_q[8*startingIndexInClustersArray + 4*interpolationPointsPerCluster];
-    double *cluster_q_dyz  = &cluster_q[8*startingIndexInClustersArray + 5*interpolationPointsPerCluster];
-    double *cluster_q_dxz  = &cluster_q[8*startingIndexInClustersArray + 6*interpolationPointsPerCluster];
-    double *cluster_q_dxyz = &cluster_q[8*startingIndexInClustersArray + 7*interpolationPointsPerCluster];
+    double *cluster_q_     = &cluster_q[8*cluster_start + 0*interp_pts_per_cluster];
+    double *cluster_q_dx   = &cluster_q[8*cluster_start + 1*interp_pts_per_cluster];
+    double *cluster_q_dy   = &cluster_q[8*cluster_start + 2*interp_pts_per_cluster];
+    double *cluster_q_dz   = &cluster_q[8*cluster_start + 3*interp_pts_per_cluster];
+    double *cluster_q_dxy  = &cluster_q[8*cluster_start + 4*interp_pts_per_cluster];
+    double *cluster_q_dyz  = &cluster_q[8*cluster_start + 5*interp_pts_per_cluster];
+    double *cluster_q_dxz  = &cluster_q[8*cluster_start + 6*interp_pts_per_cluster];
+    double *cluster_q_dxyz = &cluster_q[8*cluster_start + 7*interp_pts_per_cluster];
     
-    double x0 = tree_array->x_min[idx];
-    double x1 = tree_array->x_max[idx];
-    double y0 = tree_array->y_min[idx];
-    double y1 = tree_array->y_max[idx];
-    double z0 = tree_array->z_min[idx];
-    double z1 = tree_array->z_max[idx];
+    double x0 = tree->x_min[idx];
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, \
                                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
-                                        cluster_q_dxyz, tt, ww) \
-        create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
-               wx[0:interpOrderLim], wy[0:interpOrderLim], wz[0:interpOrderLim], dj[0:interpOrderLim])
+                                        cluster_q_dxyz) \
+        create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
+               dj[0:interp_order_lim], tt[0:interp_order_lim], ww[0:interp_order_lim], \
+               wx[0:interp_order_lim], wy[0:interp_order_lim], wz[0:interp_order_lim])
     {
 #endif
     
@@ -293,37 +325,42 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < interpOrderLim; i++) {
+    for (int i = 0; i < interp_order_lim; i++) {
+        double xx = i * M_PI / interp_order;
+        tt[i] =  cos(xx);
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
     }
+    ww[0] = 0.25 * (interp_order*interp_order/3.0 + 1.0/6.0);
+    ww[interp_order] = -ww[0];
     
     // Compute weights
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interpOrderLim; j++){
+    for (int j = 0; j < interp_order_lim; j++){
         dj[j] = 1.0;
         wx[j] = -4.0 * ww[j] / (x1 - x0);
         wy[j] = -4.0 * ww[j] / (y1 - y0);
         wz[j] = -4.0 * ww[j] / (z1 - z0);
     }
     dj[0] = 0.25;
-    dj[interpolationOrder] = 0.25;
+    dj[interp_order] = 0.25;
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < targetPointsInCluster; i++) { // loop through the target points
+    for (int i = 0; i < num_targets_in_cluster; i++) { // loop through the target points
 
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
 
-        double tx = target_x[startingIndexInTargetsArray+i];
-        double ty = target_y[startingIndexInTargetsArray+i];
-        double tz = target_z[startingIndexInTargetsArray+i];
+        double tx = target_x[target_start+i];
+        double ty = target_y[target_start+i];
+        double tz = target_z[target_start+i];
 
         int eix = -1;
         int eiy = -1;
@@ -332,7 +369,7 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
-        for (int j = 0; j < interpOrderLim; j++) {  // loop through the degree
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
 
             double cx =  tx - nodeX[j];
             double cy =  ty - nodeY[j];
@@ -359,13 +396,13 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:temp)
 #endif
-        for (int j = 0; j < interpolationPointsPerCluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+        for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%interpOrderLim;
-            int kk = (j-k1)/interpOrderLim;
-            int k2 = kk%interpOrderLim;
+            int k1 = j%interp_order_lim;
+            int kk = (j-k1)/interp_order_lim;
+            int k2 = kk%interp_order_lim;
             kk = kk - k2;
-            int k3 = kk / interpOrderLim;
+            int k3 = kk / interp_order_lim;
             
             double dx = tx - nodeX[k1];
             double dy = ty - nodeY[k2];
@@ -466,11 +503,21 @@ void cp_comp_pot_hermite(struct tnode_array *tree_array, int idx, double *pointw
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
-        pointwisePotential[i + startingIndexInTargetsArray] += temp;
+        potential[i + target_start] += temp;
     }
 #ifdef OPENACC_ENABLED
     } //end ACC kernels
 #endif
     
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(ww);
+    free_vector(wx);
+    free_vector(wy);
+    free_vector(wz);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
+
     return;
 }

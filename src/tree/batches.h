@@ -1,24 +1,23 @@
-#ifndef H_BATCHFUNCTIONS_H
-#define H_BATCHFUNCTIONS_H
+#ifndef H_BATCH_FUNCTIONS_H
+#define H_BATCH_FUNCTIONS_H
 
 #include "../particles/struct_particles.h"
-#include "struct_nodes.h"
+#include "../run_params/struct_run_params.h"
 
-void Batches_Alloc(struct tnode_array **batches, double *batch_lim,
-                   struct particles *particles, int batch_size);
+#include "struct_tree.h"
 
-void Batches_AllocArray(struct tnode_array **batches, int length);
 
-void Batches_ReallocArray(struct tnode_array *batches, int length);
+void Batches_Sources_Construct(struct Tree **batches_addr, struct Particles *sources,
+                struct RunParams *run_params);
+                
+void Batches_Targets_Construct(struct Tree **batches_addr, struct Particles *targets,
+                struct RunParams *run_params);
 
-void Batches_Free(struct tnode_array *batches);
+void Batches_Alloc(struct Tree **batches_addr, int length);
 
-void Batches_Free_Win(struct tnode_array *batches);
+void Batches_Free(struct Tree **batches_addr);
 
-void Batches_CreateTargetBatches(struct tnode_array *batches, struct particles *particles,
-                   int ibeg, int iend, int maxparnode, double *xyzmm);
+void Batches_Free_Win(struct Tree **batches_addr);
 
-void Batches_CreateSourceBatches(struct tnode_array *batches, struct particles *particles,
-                   int ibeg, int iend, int maxparnode, double *xyzmm);
 
 #endif
