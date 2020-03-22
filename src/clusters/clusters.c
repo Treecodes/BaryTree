@@ -186,6 +186,11 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     double *yC = clusters->y;
     double *zC = clusters->z;
 
+    double *tt = NULL;
+    make_vector(tt, interpolationOrder);
+    for (int i = 0; i < interpOrderLim; i++) {
+        tt[i] = cos(i * M_PI / interpolationOrder);
+    }
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(tt[0:interpOrderLim]) \
@@ -349,6 +354,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
+//           tt[i] = cos(i * M_PI / interpolationOrder);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
