@@ -46,20 +46,18 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
     Particles_ConstructOrder(sources);
     Particles_ConstructOrder(targets);
     
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
     if (run_params->verbosity > 0 && rank == 0) {
-        printf("\nRunning BaryTree with %d ranks.\n", num_procs);
+        printf("[BaryTree]\n");
+        printf("[BaryTree] Running BaryTree with %d ranks.\n", num_procs);
         RunParams_Print(run_params);
     }
     
     double time1;
     int total_num_direct = 0;
     int total_num_approx = 0;
-    int total_num_interactions = 0;
-    int global_num_interactions = 0;
-    int max_num_interactions = 0;
-    int min_num_interactions = 0;
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+    int total_num_inter = 0;
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
 
     
@@ -114,12 +112,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
         STOP_TIMER(&time_tree[4]);
         
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         if (run_params->verbosity > 0) {
             total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
             total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
         }
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
         START_TIMER(&time_tree[5]);
         InteractionCompute_CP(potential, tree, batches, local_interaction_list,
@@ -147,12 +145,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             InteractionLists_Make(&let_interaction_list, tree, remote_batches, run_params);
             STOP_TIMER(&time_tree[6]);
             
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
             if (run_params->verbosity > 0) {
                 total_num_approx += sum_int(let_interaction_list->num_approx, batches->numnodes);
                 total_num_direct += sum_int(let_interaction_list->num_direct, batches->numnodes);
             }
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
             START_TIMER(&time_tree[7]);
             InteractionCompute_CP(potential, tree, remote_batches, let_interaction_list,
@@ -300,12 +298,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
         STOP_TIMER(&time_tree[4]);
 
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         if (run_params->verbosity > 0) {
             total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
             total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
         }
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
   
         START_TIMER(&time_tree[5]);
         InteractionCompute_PC(potential, tree, batches, local_interaction_list,
@@ -330,12 +328,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             STOP_TIMER(&time1);
             time_tree[6] += time1;
 
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
             if (run_params->verbosity > 0) {
                 total_num_approx += sum_int(let_interaction_list->num_approx, batches->numnodes);
                 total_num_direct += sum_int(let_interaction_list->num_direct, batches->numnodes);
             }
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
             START_TIMER(&time1);
             InteractionCompute_PC(potential, let_trees[get_from], batches, let_interaction_list,
@@ -485,12 +483,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         InteractionLists_Make(&local_interaction_list, source_tree, target_tree, run_params);
         STOP_TIMER(&time_tree[4]);
 
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         if (run_params->verbosity > 0) {
             total_num_approx += sum_int(local_interaction_list->num_approx, target_tree->numnodes);
             total_num_direct += sum_int(local_interaction_list->num_direct, target_tree->numnodes);
         }
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         
         START_TIMER(&time_tree[5]);
         InteractionCompute_CC(potential, source_tree, target_tree, local_interaction_list,
@@ -515,12 +513,13 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             STOP_TIMER(&time1);
             time_tree[6] += time1;
              
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
             if (run_params->verbosity > 0) {
                 total_num_approx += sum_int(let_interaction_list->num_approx, target_tree->numnodes);
                 total_num_direct += sum_int(let_interaction_list->num_direct, target_tree->numnodes);
             }
-//~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
 
             START_TIMER(&time1);
             InteractionCompute_CC(potential, let_trees[get_from], target_tree, let_interaction_list,
@@ -583,55 +582,56 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         
         MPI_Barrier(MPI_COMM_WORLD);
     }
+
+
+
+
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+    if (run_params->verbosity > 0) {
+       
+        int global_num_inter,  max_num_inter,  min_num_inter;
+        int global_num_direct, max_num_direct, min_num_direct;
+        int global_num_approx, max_num_approx, min_num_approx;
     
+        total_num_inter = total_num_direct + total_num_approx;
+        MPI_Reduce(&total_num_inter,   &global_num_inter, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&total_num_inter,      &max_num_inter, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&total_num_inter,      &min_num_inter, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        
+        MPI_Reduce(&total_num_direct, &global_num_direct, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&total_num_direct,    &max_num_direct, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&total_num_direct,    &min_num_direct, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        
+        MPI_Reduce(&total_num_approx, &global_num_approx, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&total_num_approx,    &max_num_approx, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&total_num_approx,    &min_num_approx, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        
+        if (rank == 0) {
+            printf("[BaryTree]\n");
+            printf("[BaryTree]        Cumulative interactions across all ranks: %d\n", global_num_inter);
+            printf("[BaryTree]           Maximum interactions across all ranks: %d\n", max_num_inter);
+            printf("[BaryTree]           Minimum interactions across all ranks: %d\n", min_num_inter);
+            printf("[BaryTree]                                           Ratio: %f\n",
+                   (double)max_num_inter / (double)min_num_inter);
+            printf("[BaryTree]\n");
+            printf("[BaryTree] Cumulative direct interactions across all ranks: %d\n", global_num_direct);
+            printf("[BaryTree]    Maximum direct interactions across all ranks: %d\n", max_num_direct);
+            printf("[BaryTree]    Minimum direct interactions across all ranks: %d\n", min_num_direct);
+            printf("[BaryTree]                                           Ratio: %f\n",
+                   (double)max_num_direct / (double)min_num_direct);
+            printf("[BaryTree]\n");
+            printf("[BaryTree] Cumulative approx interactions across all ranks: %d\n", global_num_approx);
+            printf("[BaryTree]    Maximum approx interactions across all ranks: %d\n", max_num_approx);
+            printf("[BaryTree]    Minimum approx interactions across all ranks: %d\n", min_num_approx);
+            printf("[BaryTree]                                           Ratio: %f\n",
+                   (double)max_num_approx / (double)min_num_approx);
+            printf("[BaryTree]\n");
+            printf("[BaryTree] BaryTree has finished.\n");
+            printf("[BaryTree]\n");
+        }
+    }
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
     
     
     return;
-    
-
-//    if (run_params->verbosity > 0) {
-//        printf("Tree information: \n\n");
-//
-//        printf("                      numpar: %d\n", troot->numpar);
-//        printf("                       x_mid: %e\n", troot->x_mid);
-//        printf("                       y_mid: %e\n", troot->y_mid);
-//        printf("                       z_mid: %e\n\n", troot->z_mid);
-//        printf("                      radius: %f\n\n", troot->radius);
-//        printf("                       x_len: %e\n", troot->x_max - troot->x_min);
-//        printf("                       y_len: %e\n", troot->y_max - troot->y_min);
-//        printf("                       z_len: %e\n\n", troot->z_max - troot->z_min);
-//        printf("                      torder: %d\n", interpolationOrder);
-//        printf("                       theta: %f\n", theta);
-//        printf("                  maxparnode: %d\n", maxparnode);
-//        printf("            number of leaves: %d\n", numleaves);
-//        printf("             number of nodes: %d\n", numnodes);
-//        printf("           target batch size: %d\n", batch_size);
-//        printf("           number of batches: %d\n\n", batches->numnodes);
-//    }
-
-
-
-
-//    if (run_params->verbosity > 0) {
-//        total_num_interactions=total_num_direct+total_num_approx;
-//        printf("Interaction information: \n");
-//        printf("rank %d: number of direct batch-cluster interactions: %d\n", rank, total_num_approx);
-//        printf("rank %d: number of approx batch-cluster interactions: %d\n", rank, total_num_direct);
-//        printf("rank %d:  total number of batch-cluster interactions: %d\n\n", rank, total_num_interactions);
-//        MPI_Barrier(MPI_COMM_WORLD);
-//    }
-//
-//    if (run_params -> verbosity > 0) {
-//        MPI_Reduce(&total_num_interactions,&global_num_interactions, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-//        MPI_Reduce(&total_num_interactions,&max_num_interactions, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-//        MPI_Reduce(&total_num_interactions,&min_num_interactions, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-//        if (rank==0){
-//            printf("Cumulative number of interactions across all ranks: %d\n", global_num_interactions);
-//            printf("   Maximum number of interactions across all ranks: %d\n", max_num_interactions);
-//            printf("   Minimum number of interactions across all ranks: %d\n", min_num_interactions);
-//            printf("                                             Ratio: %f\n\n", (double)max_num_interactions/(double)min_num_interactions );
-//        }
-//        MPI_Barrier(MPI_COMM_WORLD);
-//    }
-
-} /* END function treecode */
+}

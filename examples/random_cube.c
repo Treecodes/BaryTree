@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-    if (rank == 0) fprintf(stderr,"Beginning random cube example with %d ranks.\n", numProcs);
+    if (rank == 0) printf("[random cube example] Beginning random cube example with %d ranks.\n", numProcs);
 
     /* Zoltan variables */
     int rc;
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 
     /* Zoltan initialization */
     if (Zoltan_Initialize(argc, argv, &ver) != ZOLTAN_OK) {
-        if (rank == 0) printf("Zoltan failed to initialize. Exiting.\n");
+        if (rank == 0) printf("[random cube example] Zoltan failed to initialize. Exiting.\n");
         MPI_Finalize();
         exit(0);
     }
@@ -160,7 +160,7 @@ int main(int argc, char **argv)
     }
 
     if (rc != ZOLTAN_OK) {
-        printf("Error! Zoltan has failed. Exiting. \n");
+        printf("[random cube example] Error! Zoltan has failed. Exiting. \n");
         MPI_Finalize();
         Zoltan_Destroy(&zz);
         exit(1);
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
     }
 
     if (rc != ZOLTAN_OK) {
-        printf("Error! Zoltan has failed. Exiting. \n");
+        printf("[random cube example] Error! Zoltan has failed. Exiting. \n");
         MPI_Finalize();
         Zoltan_Destroy(&zz);
         exit(1);
@@ -295,7 +295,7 @@ int main(int argc, char **argv)
     free(myTargets.b);
     free(myTargets.myGlobalIDs);
 
-    if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
+    if (rank == 0) printf("[random cube example] Zoltan load balancing has finished.\n");
 
     /* Initializing direct and treedriver runs */
 
@@ -336,7 +336,7 @@ int main(int argc, char **argv)
             targets_sample->q[i] = targets->q[i*slice];
         }
 
-        if (rank == 0) fprintf(stderr, "Running direct comparison...\n");
+        if (rank == 0) printf("[random cube example] Running direct comparison...\n");
 
         START_TIMER(&time_run[1]);
         directdriver(sources, targets_sample, run_params, potential_direct, time_direct);
@@ -357,7 +357,7 @@ int main(int argc, char **argv)
     // Running treecode
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-    if (rank == 0) fprintf(stderr, "Running treedriver...\n");
+    if (rank == 0) printf("[random cube example] Running treedriver...\n");
 
     START_TIMER(&time_run[2]);
     treedriver(sources, targets, run_params, potential, time_tree);

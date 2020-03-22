@@ -20,10 +20,11 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     int max_per_target_leaf = 500; 
     double size_check_factor = 1.0;
 
-    char kernel_string[256] = "COULOMB";
-    char singularity_string[256] = "SKIPPING";
+    char kernel_string[256]        = "COULOMB";
+    char singularity_string[256]   = "SKIPPING";
     char approximation_string[256] = "LAGRANGE";
-    char compute_type_string[256] = "PARTICLE_CLUSTER";
+    char compute_type_string[256]  = "PARTICLE_CLUSTER";
+    char run_direct_string[256]    = "OFF";
 
     KERNEL kernel;
     SINGULARITY singularity;
@@ -34,8 +35,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     double kernel_params[32];
 
     *N = 10000; 
-    *M = 10000; 
-    *run_direct = 0;
+    *M = 10000;
     *slice = 1;
 
 
@@ -95,15 +95,30 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
             *M = atoi(c2);
 
         } else if (strncmp(c1, "run_direct", 10) == 0) {
-            *run_direct = atoi(c2);
+            strcpy(run_direct_string, c2);
 
         } else if (strncmp(c1, "slice", 5) == 0) {
             *slice = atoi(c2);
 
         } else {
-            fprintf(stderr, "ERROR! Undefined token \"%s\". Exiting.\n", c1);
+            printf("[random cube example] ERROR! Undefined token \"%s\". Exiting.\n", c1);
             exit(1);
         }
+    }
+    
+    
+    if ((strcasecmp(run_direct_string, "ON")  == 0)
+     || (strcasecmp(run_direct_string, "YES") == 0)
+     || (strcasecmp(run_direct_string, "1")   == 0)) {
+        *run_direct = 1;
+        
+    } else if ((strcasecmp(run_direct_string, "OFF") == 0)
+            || (strcasecmp(run_direct_string, "NO")  == 0)
+            || (strcasecmp(run_direct_string, "0")   == 0)) {
+        *run_direct = 0;
+    } else {
+        printf("[random cube example] ERROR! Undefined run direct token \"%s\". Exiting.\n", run_direct_string);
+        exit(1);
     }
 
 
@@ -137,7 +152,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     } else if (strcasecmp(kernel_string, "ATAN") == 0) {
     
     } else {
-        fprintf(stderr, "ERROR! Undefined kernel token \"%s\". Exiting.\n", kernel_string);
+        printf("[random cube example] ERROR! Undefined kernel token \"%s\". Exiting.\n", kernel_string);
         exit(1);
     }
 
@@ -149,7 +164,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         singularity = SUBTRACTION;
 
     } else {
-        fprintf(stderr, "ERROR! Undefined singularity token \"%s\". Exiting.\n", singularity_string);
+        printf("[random cube example] ERROR! Undefined singularity token \"%s\". Exiting.\n", singularity_string);
         exit(1);
     }
 
@@ -161,7 +176,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         approximation = HERMITE;
     
     } else {
-        fprintf(stderr, "ERROR! Undefined approximation token \"%s\". Exiting.\n", approximation_string);
+        printf("[random cube example] ERROR! Undefined approximation token \"%s\". Exiting.\n", approximation_string);
         exit(1);
     }
 
@@ -179,7 +194,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         compute_type = CLUSTER_CLUSTER;
 
     } else {
-        fprintf(stderr, "ERROR! Undefined compute_type token \"%s\". Exiting.\n", compute_type_string);
+        printf("[random cube example] ERROR! Undefined compute_type token \"%s\". Exiting.\n", compute_type_string);
         exit(1);
     }
 
@@ -238,47 +253,63 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
     double avg_percent_tree = 100. / time_run_glob[2][2];
 
     /* Printing direct and treecode time calculations: */
-    printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
+    printf("[random cube example]\n");
+    printf("[random cube example] ");
+    printf("Treecode timing summary (all times in seconds)...\n");
+    printf("[random cube example]\n");
+    printf("[random cube example] ");
     printf("                                       Max                           Avg                          Max/Min\n");
+    printf("[random cube example] ");
     printf("|    Total time......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
                  time_run_glob[1][3], time_run_glob[2][3]/numProcs, time_run_glob[1][3]/time_run_glob[0][3]);
+    printf("[random cube example] ");
     printf("|    |\n");
+    printf("[random cube example] ");
     printf("|    |....Pre-process................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_run_glob[1][0],          time_run_glob[1][0] * max_percent,
                  time_run_glob[2][0]/numProcs, time_run_glob[2][0] * avg_percent,
                  time_run_glob[1][0]/time_run_glob[0][0]);
 
     if (run_direct == 1) {
+    printf("[random cube example] ");
     printf("|    |....Directdriver...............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_run_glob[1][1],          time_run_glob[1][1] * max_percent,
                  time_run_glob[2][1]/numProcs, time_run_glob[2][1] * avg_percent,
                  time_run_glob[1][1]/time_run_glob[0][1]);
     }
-    printf("|    |....Treedriver.................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n\n",
+    printf("[random cube example] ");
+    printf("|    |....Treedriver.................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_run_glob[1][2],          time_run_glob[1][2] * max_percent,
                  time_run_glob[2][2]/numProcs, time_run_glob[2][2] * avg_percent,
                  time_run_glob[1][2]/time_run_glob[0][2]);
+    printf("[random cube example]\n");
+    printf("[random cube example]\n");
 
 
     if (run_direct == 1) {
+    printf("[random cube example] ");
     printf("|    Directdriver....................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
                  time_run_glob[1][1], time_run_glob[2][1]/numProcs, time_run_glob[1][1]/time_run_glob[0][1]);
 
+    printf("[random cube example] ");
     printf("|    |\n");
 
     if (numProcs > 1) {
+    printf("[random cube example] ");
     printf("|    |....Communicate................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_direct_glob[1][0],          time_direct_glob[1][0] * max_percent_direct,
                  time_direct_glob[2][0]/numProcs, time_direct_glob[2][0] * avg_percent_direct,
                  time_direct_glob[1][0]/time_direct_glob[0][0]);
     }
 
+    printf("[random cube example] ");
     printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_direct_glob[1][2],          time_direct_glob[1][2] * max_percent_direct,
                  time_direct_glob[2][2]/numProcs, time_direct_glob[2][2] * avg_percent_direct,
                  time_direct_glob[1][2]/time_direct_glob[0][2]);
 
     if (numProcs > 1) {
+    printf("[random cube example] ");
     printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_direct_glob[1][1],          time_direct_glob[1][1] * max_percent_direct,
                  time_direct_glob[2][1]/numProcs, time_direct_glob[2][1] * avg_percent_direct,
@@ -286,53 +317,66 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
     }
 
     if (run_params->singularity == SUBTRACTION) {
-    printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n\n",
+    printf("[random cube example] ");
+    printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_direct_glob[1][3],          time_direct_glob[1][3] * max_percent_direct,
                  time_direct_glob[2][3]/numProcs, time_direct_glob[2][3] * avg_percent_direct,
                  time_direct_glob[1][3]/time_direct_glob[0][3]);
+    printf("[random cube example]\n");
+    printf("[random cube example]\n");
     } else {
-    printf("\n\n");
+    printf("[random cube example]\n");
+    printf("[random cube example]\n");
     }
     }
 
-
+    printf("[random cube example] ");
     printf("|    Treedriver......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
                  time_run_glob[1][2], time_run_glob[2][2]/numProcs, time_run_glob[1][2]/time_run_glob[0][2]);
+    printf("[random cube example] ");
     printf("|    |\n");
+    printf("[random cube example] ");
     printf("|    |....Build local tree...........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][0],          time_tree_glob[1][0] * max_percent_tree,
                  time_tree_glob[2][0]/numProcs, time_tree_glob[2][0] * avg_percent_tree,
                  time_tree_glob[1][0]/time_tree_glob[0][0]);
+    printf("[random cube example] ");
     printf("|    |....Build local batches........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][1],          time_tree_glob[1][1] * max_percent_tree,
                  time_tree_glob[2][1]/numProcs, time_tree_glob[2][1] * avg_percent_tree,
                  time_tree_glob[1][1]/time_tree_glob[0][1]);
+    printf("[random cube example] ");
     printf("|    |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][2],          time_tree_glob[1][2] * max_percent_tree,
                  time_tree_glob[2][2]/numProcs, time_tree_glob[2][2] * avg_percent_tree,
                  time_tree_glob[1][2]/time_tree_glob[0][2]);
 
     if (numProcs > 1) {
+    printf("[random cube example] ");
     printf("|    |....Build LET..................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][3],          time_tree_glob[1][3] * max_percent_tree,
                  time_tree_glob[2][3]/numProcs, time_tree_glob[2][3] * avg_percent_tree,
                  time_tree_glob[1][3]/time_tree_glob[0][3]);
     }
 
+    printf("[random cube example] ");
     printf("|    |....Build local lists..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][4],          time_tree_glob[1][4] * max_percent_tree,
                  time_tree_glob[2][4]/numProcs, time_tree_glob[2][4] * avg_percent_tree,
                  time_tree_glob[1][4]/time_tree_glob[0][4]);
+    printf("[random cube example] ");
     printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][5],          time_tree_glob[1][5] * max_percent_tree,
                  time_tree_glob[2][5]/numProcs, time_tree_glob[2][5] * avg_percent_tree,
                  time_tree_glob[1][5]/time_tree_glob[0][5]);
 
     if (numProcs > 1) {
+    printf("[random cube example] ");
     printf("|    |....Build remote lists.........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][6],          time_tree_glob[1][6] * max_percent_tree,
                  time_tree_glob[2][6]/numProcs, time_tree_glob[2][6] * avg_percent_tree,
                  time_tree_glob[1][6]/time_tree_glob[0][6]);
+    printf("[random cube example] ");
     printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][7],          time_tree_glob[1][7] * max_percent_tree,
                  time_tree_glob[2][7]/numProcs, time_tree_glob[2][7] * avg_percent_tree,
@@ -340,34 +384,43 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
     }
 
     if (run_params->compute_type == CLUSTER_PARTICLE || run_params->compute_type == CLUSTER_CLUSTER) {
+    printf("[random cube example] ");
     printf("|    |....Compute cp2................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree,
                  time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent_tree,
                  time_tree_glob[1][8]/time_tree_glob[0][8]);
     }
 
+    printf("[random cube example] ");
     printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][9],          time_tree_glob[1][9] * max_percent_tree,
                  time_tree_glob[2][9]/numProcs, time_tree_glob[2][9] * avg_percent_tree,
                  time_tree_glob[1][9]/time_tree_glob[0][9]);
-    printf("|    |....Cleanup....................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n",
+    printf("[random cube example] ");
+    printf("|    |....Cleanup....................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][10],          time_tree_glob[1][10] * max_percent_tree,
                  time_tree_glob[2][10]/numProcs, time_tree_glob[2][10] * avg_percent_tree,
                  time_tree_glob[1][10]/time_tree_glob[0][10]);
+    printf("[random cube example]\n");
     
     if (numProcs > 1) {
+    printf("[random cube example] ");
     printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                  time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree,
                  time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent_tree,
                  time_tree_glob[1][11]/time_tree_glob[0][11]);
+    printf("[random cube example] ");
     printf("((   |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                  time_tree_glob[1][02],          time_tree_glob[1][02] * max_percent_tree,
                  time_tree_glob[2][02]/numProcs, time_tree_glob[2][02] * avg_percent_tree,
                  time_tree_glob[1][02]/time_tree_glob[0][02]);
-    printf("((   |....Total compute..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n\n\n",
+    printf("[random cube example] ");
+    printf("((   |....Total compute..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
                  time_tree_glob[1][12],          time_tree_glob[1][12] * max_percent_tree,
                  time_tree_glob[2][12]/numProcs, time_tree_glob[2][12] * avg_percent_tree,
                  time_tree_glob[1][12]/time_tree_glob[0][12]);
+    printf("[random cube example]\n");
+    printf("[random cube example]\n");
     }
     }
 
@@ -424,15 +477,19 @@ void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glo
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     if (rank == 0) {
-        printf("               Tree potential energy:  %f\n", potential_engy_glob);
-        printf("             Direct potential energy:  %f\n\n", potential_engy_direct_glob);
-        printf("  Absolute error for total potential:  %e\n",
+        printf("[random cube example]                Tree potential energy:  %f\n", potential_engy_glob);
+        if (slice == 1) {
+        printf("[random cube example]              Direct potential energy:  %f\n", potential_engy_direct_glob);
+        printf("[random cube example]\n");
+        printf("[random cube example]   Absolute error for total potential:  %e\n",
                fabs(potential_engy_glob-potential_engy_direct_glob));
-        printf("  Relative error for total potential:  %e\n\n",
+        printf("[random cube example]   Relative error for total potential:  %e\n",
                fabs((potential_engy_glob-potential_engy_direct_glob)/potential_engy_direct_glob));
-               
-        printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);
-        printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
+        }
+        printf("[random cube example]\n");
+        printf("[random cube example] Relative inf norm error in potential:  %e \n", glob_relinf_err);
+        printf("[random cube example]   Relative 2 norm error in potential:  %e \n", glob_reln2_err);
+        printf("[random cube example]\n");
     }
 
     return;

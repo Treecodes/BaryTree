@@ -94,25 +94,26 @@ void RunParams_Free(struct RunParams **run_params_addr)
 
 void RunParams_Print(struct RunParams *run_params)
 {
-    printf("\nRunParam struct has been set to the following:\n");
-    printf("                    kernel = %d\n", run_params->kernel);
-    printf("         num_kernel_params = %d\n", run_params->num_kernel_params);
-    printf("             kernel_params = ");
+    printf("[BaryTree]\n");
+    printf("[BaryTree] RunParams struct has been set to the following:\n");
+    printf("[BaryTree]                     kernel = %d\n", run_params->kernel);
+    printf("[BaryTree]          num_kernel_params = %d\n", run_params->num_kernel_params);
+    printf("[BaryTree]              kernel_params = ");
     for (int i = 0; i < run_params->num_kernel_params; ++i) {
         printf("%f, ", run_params->kernel_params[i]);
     }
     printf("\n");
-    printf("             approximation = %d\n", run_params->approximation);
-    printf("               singularity = %d\n", run_params->singularity);
-    printf("              compute_type = %d\n", run_params->compute_type);
-    printf("                     theta = %f\n", run_params->theta);
-    printf("         size_check_factor = %f\n", run_params->size_check_factor);
-    printf("              interp_order = %d\n", run_params->interp_order);
-    printf("    interp_pts_per_cluster = %d\n", run_params->interp_pts_per_cluster);
-    printf("interp_weights_per_cluster = %d\n", run_params->interp_weights_per_cluster);
-    printf("interp_charges_per_cluster = %d\n", run_params->interp_charges_per_cluster);
-    printf("       max_per_source_leaf = %d\n", run_params->max_per_source_leaf);
-    printf("       max_per_target_leaf = %d\n", run_params->max_per_target_leaf);
-    printf("                 verbosity = %d\n", run_params->verbosity);
-    printf("\n");
+    printf("[BaryTree]              approximation = %d\n", run_params->approximation);
+    printf("[BaryTree]                singularity = %d\n", run_params->singularity);
+    printf("[BaryTree]               compute_type = %d\n", run_params->compute_type);
+    printf("[BaryTree]                      theta = %f\n", run_params->theta);
+    printf("[BaryTree]          size_check_factor = %f\n", run_params->size_check_factor);
+    printf("[BaryTree]               interp_order = %d\n", run_params->interp_order);
+    printf("[BaryTree]     interp_pts_per_cluster = %d\n", run_params->interp_pts_per_cluster);
+    printf("[BaryTree] interp_weights_per_cluster = %d\n", run_params->interp_weights_per_cluster);
+    printf("[BaryTree] interp_charges_per_cluster = %d\n", run_params->interp_charges_per_cluster);
+    printf("[BaryTree]        max_per_source_leaf = %d\n", run_params->max_per_source_leaf);
+    printf("[BaryTree]        max_per_target_leaf = %d\n", run_params->max_per_target_leaf);
+    printf("[BaryTree]                  verbosity = %d\n", run_params->verbosity);
+    printf("[BaryTree]\n");
 }

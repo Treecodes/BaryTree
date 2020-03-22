@@ -66,7 +66,7 @@ int main(int argc, char **argv)
                       interpOrder, theta, maxPerLeaf, maxPerBatch,
                       verbosity);
 
-    printf("BaryTree has finished.\n");
+    printf("[test BaryTree interface] BaryTree has finished.\n");
 
     free(xS);
     free(yS);
