@@ -8,8 +8,6 @@ SET(SRCS_TREEDRIVER
     utilities/xmalloc.c
     utilities/array.h
     utilities/enums.h
-# Global variables, which will be deprecated
-    globvars.h
 # Calling functions for tree and direct calculations
     drivers/directdriver.h
     drivers/directdriver.c

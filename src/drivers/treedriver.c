@@ -8,8 +8,6 @@
 #include "../utilities/timers.h"
 #include "../utilities/enums.h"
 
-#include "../globvars.h"
-
 #include "../tree/struct_tree.h"
 #include "../tree/tree.h"
 #include "../tree/batches.h"
@@ -36,33 +34,10 @@
 
 #include "treedriver.h"
 
-//Just for the moment to put math stuff
-#include <math.h>
-
-double *tt, *ww;
-
 
 void treedriver(struct Particles *sources, struct Particles *targets, struct RunParams *run_params,
                 double *potential, double *time_tree)
 {
-
-
-
-    make_vector(tt, run_params->interp_order+1);
-    make_vector(ww, run_params->interp_order+1);
-
-    for (int i = 0; i < run_params->interp_order+1; i++)
-        tt[i] = cos(i * M_PI / run_params->interp_order);
-
-    ww[0] = 0.25 * (run_params->interp_order*run_params->interp_order/3.0 + 1.0/6.0);
-    ww[run_params->interp_order] = -ww[0];
-
-    for (int i = 1; i < run_params->interp_order; i++) {
-        double xx = i * M_PI / run_params->interp_order;
-        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
-    }
-    
-    
     int rank, num_procs;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
@@ -179,8 +154,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
             if (run_params->verbosity > 0) {
-                total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
-                total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
+                total_num_approx += sum_int(let_interaction_list->num_approx, batches->numnodes);
+                total_num_direct += sum_int(let_interaction_list->num_direct, batches->numnodes);
             }
 //~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@~@
 

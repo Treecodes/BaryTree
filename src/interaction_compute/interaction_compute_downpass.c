@@ -4,8 +4,7 @@
 #include <math.h>
 #include <float.h>
 
-#include "../globvars.h"
-
+#include "../utilities/array.h"
 #include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
@@ -31,7 +30,6 @@ static void cp_comp_pot_hermite(struct Tree *tree, int idx, double *pointwisePot
 //                      double *clusterQ, double *clusterW);
 
 
-
 void InteractionCompute_Downpass(struct Tree *tree,
                              double *target_x, double *target_y, double *target_z, double *target_q,
                              double *cluster_x, double *cluster_y, double *cluster_z,
@@ -45,8 +43,7 @@ void InteractionCompute_Downpass(struct Tree *tree,
     int tree_numnodes = tree->numnodes;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(tt[0:interpOrderLim], ww[0:interpOrderLim], \
-                            target_x[0:numTargets], target_y[0:numTargets], \
+    #pragma acc data copyin(target_x[0:numTargets], target_y[0:numTargets], \
                             target_z[0:numTargets], target_q[0:numTargets], \
                             cluster_q[0:totalNumberInterpolationCharges], \
                             cluster_w[0:totalNumberInterpolationWeights]) \
@@ -87,6 +84,12 @@ void InteractionCompute_Downpass(struct Tree *tree,
 }
 
 
+
+
+/************************************/
+/***** LOCAL FUNCTIONS **************/
+/************************************/
+
 void cp_comp_pot(struct Tree *tree, int idx, double *pointwisePotential, int interpolationOrder,
         double *target_x, double *target_y, double *target_z, double *target_q,
         double *cluster_q, double *cluster_w)
@@ -97,8 +100,14 @@ void cp_comp_pot(struct Tree *tree, int idx, double *pointwisePotential, int int
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInTargetsArray = tree->ibeg[idx]-1;
     
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-    double weights[interpOrderLim], dj[interpOrderLim];
+    double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ;
+
+    make_vector(weights, interpOrderLim);
+    make_vector(dj,      interpOrderLim);
+    make_vector(tt,      interpOrderLim);
+    make_vector(nodeX,   interpOrderLim);
+    make_vector(nodeY,   interpOrderLim);
+    make_vector(nodeZ,   interpOrderLim);
     
     double x0 = tree->x_min[idx];
     double x1 = tree->x_max[idx];
@@ -109,9 +118,9 @@ void cp_comp_pot(struct Tree *tree, int idx, double *pointwisePotential, int int
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q, tt) \
+    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q) \
                 create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
-               weights[0:interpOrderLim], dj[0:interpOrderLim])
+                       weights[0:interpOrderLim], dj[0:interpOrderLim], tt[0:interpOrderLim])
     {
 #endif
     
@@ -121,6 +130,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *pointwisePotential, int int
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
+        tt[i] = cos(i * M_PI / interpolationOrder);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -242,8 +252,16 @@ void cp_comp_pot(struct Tree *tree, int idx, double *pointwisePotential, int int
     } //end ACC kernels
 #endif
     
+    free_vector(weights);
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
+
     return;
 }
+
 
 
 void cp_comp_pot_hermite(struct Tree *tree, int idx, double *pointwisePotential, int interpolationOrder,
@@ -255,8 +273,17 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *pointwisePotential,
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInTargetsArray = tree->ibeg[idx]-1;
     
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-    double wx[interpOrderLim], wy[interpOrderLim], wz[interpOrderLim], dj[interpOrderLim];
+    double *dj, *tt, *ww, *wx, *wy, *wz, *nodeX, *nodeY, *nodeZ;
+
+    make_vector(dj,      interpOrderLim);
+    make_vector(tt,      interpOrderLim);
+    make_vector(ww,      interpOrderLim);
+    make_vector(wx,      interpOrderLim);
+    make_vector(wy,      interpOrderLim);
+    make_vector(wz,      interpOrderLim);
+    make_vector(nodeX,   interpOrderLim);
+    make_vector(nodeY,   interpOrderLim);
+    make_vector(nodeZ,   interpOrderLim);
     
     double *cluster_q_     = &cluster_q[8*startingIndexInClustersArray + 0*interpolationPointsPerCluster];
     double *cluster_q_dx   = &cluster_q[8*startingIndexInClustersArray + 1*interpolationPointsPerCluster];
@@ -279,9 +306,10 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *pointwisePotential,
     #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, \
                                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
-                                        cluster_q_dxyz, tt, ww) \
+                                        cluster_q_dxyz) \
         create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
-               wx[0:interpOrderLim], wy[0:interpOrderLim], wz[0:interpOrderLim], dj[0:interpOrderLim])
+               dj[0:interpOrderLim], tt[0:interpOrderLim], ww[0:interpOrderLim], \
+               wx[0:interpOrderLim], wy[0:interpOrderLim], wz[0:interpOrderLim])
     {
 #endif
     
@@ -290,10 +318,15 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *pointwisePotential,
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
+        double xx = i * M_PI / interpolationOrder;
+        tt[i] =  cos(xx);
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
     }
+    ww[0] = 0.25 * (interpolationOrder*interpolationOrder/3.0 + 1.0/6.0);
+    ww[interpolationOrder] = -ww[0];
     
     // Compute weights
 #ifdef OPENACC_ENABLED
@@ -468,5 +501,15 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *pointwisePotential,
     } //end ACC kernels
 #endif
     
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(ww);
+    free_vector(wx);
+    free_vector(wy);
+    free_vector(wz);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
+
     return;
 }

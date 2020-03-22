@@ -9,8 +9,6 @@
 #include "../utilities/tools.h"
 #include "../utilities/enums.h"
 
-#include "../globvars.h"
-
 #include "../tree/struct_tree.h"
 #include "../particles/struct_particles.h"
 #include "../run_params/struct_run_params.h"
@@ -302,17 +300,19 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInSourcesArray = tree->ibeg[idx]-1;
 
-    double weights[interpOrderLim], dj[interpOrderLim], tt[interpOrderLim];
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-    
-    double *modifiedF;
-    make_vector(modifiedF, sourcePointsInCluster);
-
+    double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ, *modifiedF;
     int *exactIndX, *exactIndY, *exactIndZ;
+
+    make_vector(weights,   interpOrderLim);
+    make_vector(dj,        interpOrderLim);
+    make_vector(tt,        interpOrderLim);
+    make_vector(nodeX,     interpOrderLim);
+    make_vector(nodeY,     interpOrderLim);
+    make_vector(nodeZ,     interpOrderLim);
+    make_vector(modifiedF, sourcePointsInCluster);
     make_vector(exactIndX, sourcePointsInCluster);
     make_vector(exactIndY, sourcePointsInCluster);
     make_vector(exactIndZ, sourcePointsInCluster);
-
 
     double x0 = tree->x_min[idx];
     double x1 = tree->x_max[idx];
@@ -347,7 +347,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
-           tt[i] = cos(i * M_PI / interpolationOrder);
+        tt[i] = cos(i * M_PI / interpolationOrder);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -481,6 +481,12 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     } //end acc kernels region
 #endif
 
+    free_vector(weights);
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
     free_vector(modifiedF);
     free_vector(exactIndX);
     free_vector(exactIndY);
@@ -501,18 +507,20 @@ void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolation
     int startingIndexInClusters = idx * pointsPerCluster;
     int startingIndexInSources = tree->ibeg[idx]-1;
 
-    double weights[interpOrderLim], dj[interpOrderLim];
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-    
-    double *modifiedF, *modifiedF2;
-    make_vector(modifiedF, pointsInNode);
-    make_vector(modifiedF2, pointsInNode);
-
+    double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ, *modifiedF, *modifiedF2;
     int *exactIndX, *exactIndY, *exactIndZ;
-    make_vector(exactIndX, pointsInNode);
-    make_vector(exactIndY, pointsInNode);
-    make_vector(exactIndZ, pointsInNode);
 
+    make_vector(weights,    interpOrderLim);
+    make_vector(dj,         interpOrderLim);
+    make_vector(tt,         interpOrderLim);
+    make_vector(nodeX,      interpOrderLim);
+    make_vector(nodeY,      interpOrderLim);
+    make_vector(nodeZ,      interpOrderLim);
+    make_vector(modifiedF,  pointsInNode);
+    make_vector(modifiedF2, pointsInNode);
+    make_vector(exactIndX,  pointsInNode);
+    make_vector(exactIndY,  pointsInNode);
+    make_vector(exactIndZ,  pointsInNode);
 
     double x0 = tree->x_min[idx];  // 1e-15 fails for large meshes, mysteriously.
     double x1 = tree->x_max[idx];
@@ -521,15 +529,14 @@ void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolation
     double z0 = tree->z_min[idx];
     double z1 = tree->z_max[idx];
 
-
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 3;
-    #pragma acc kernels async(streamID) present(tt, xS, yS, zS, qS, wS, \
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, \
                                                 clusterX, clusterY, clusterZ, clusterQ, clusterW) \
                        create(modifiedF[0:pointsInNode], modifiedF2[0:pointsInNode], exactIndX[0:pointsInNode], \
                               exactIndY[0:pointsInNode], exactIndZ[0:pointsInNode], \
                               nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
-                              weights[0:interpOrderLim], dj[0:interpOrderLim])
+                              weights[0:interpOrderLim], dj[0:interpOrderLim], tt[0:interpOrderLim])
     {
 #endif
 
@@ -549,6 +556,7 @@ void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolation
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
+        tt[i] = cos(i * M_PI / interpolationOrder);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -687,6 +695,12 @@ void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolation
     } // end acc kernels region
 #endif
 
+    free_vector(weights);
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
     free_vector(modifiedF);
     free_vector(modifiedF2);
     free_vector(exactIndX);
@@ -711,18 +725,23 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInClusterChargesArray = idx * interpolationPointsPerCluster * 8;
 
-
-    double dj[interpOrderLim], wx[interpOrderLim], wy[interpOrderLim], wz[interpOrderLim];
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-
-    double *modifiedF;
-    make_vector(modifiedF, sourcePointsInCluster);
-
+    double *dj, *tt, *ww, *wx, *wy, *wz;
+    double *nodeX, *nodeY, *nodeZ, *modifiedF;
     int *exactIndX, *exactIndY, *exactIndZ;
-    make_vector(exactIndX, sourcePointsInCluster);
-    make_vector(exactIndY, sourcePointsInCluster);
-    make_vector(exactIndZ, sourcePointsInCluster);
 
+    make_vector(dj,         interpOrderLim);
+    make_vector(tt,         interpOrderLim);
+    make_vector(ww,         interpOrderLim);
+    make_vector(wx,         interpOrderLim);
+    make_vector(wy,         interpOrderLim);
+    make_vector(wz,         interpOrderLim);
+    make_vector(nodeX,      interpOrderLim);
+    make_vector(nodeY,      interpOrderLim);
+    make_vector(nodeZ,      interpOrderLim);
+    make_vector(modifiedF,  sourcePointsInCluster);
+    make_vector(exactIndX,  sourcePointsInCluster);
+    make_vector(exactIndY,  sourcePointsInCluster);
+    make_vector(exactIndZ,  sourcePointsInCluster);
 
     // Set the bounding box.
     double x0 = tree->x_min[idx];
@@ -732,16 +751,15 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
     double z0 = tree->z_min[idx];
     double z1 = tree->z_max[idx];
 
-
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 3;
-    #pragma acc kernels async(streamID) present(tt, ww, xS, yS, zS, qS, wS, \
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, \
                                                 clusterX, clusterY, clusterZ, clusterQ) \
                        create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
                               exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
                               nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
-                              dj[0:interpOrderLim], wx[0:interpOrderLim], \
-                              wy[0:interpOrderLim], wz[0:interpOrderLim])
+                              dj[0:interpOrderLim], tt[0:interpOrderLim], ww[0:interpOrderLim], \
+                              wx[0:interpOrderLim], wy[0:interpOrderLim], wz[0:interpOrderLim])
     {
 #endif
 
@@ -760,10 +778,15 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
+        double xx = i * M_PI / interpolationOrder;
+        tt[i] =  cos(xx);
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
     }
+    ww[0] = 0.25 * (interpolationOrder*interpolationOrder/3.0 + 1.0/6.0);
+    ww[interpolationOrder] = -ww[0];
 
     // Compute weights
 #ifdef OPENACC_ENABLED
@@ -964,6 +987,15 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
     } // end acc kernels region
 #endif
 
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(ww);
+    free_vector(wx);
+    free_vector(wy);
+    free_vector(wz);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
     free_vector(modifiedF);
     free_vector(exactIndX);
     free_vector(exactIndY);
@@ -988,19 +1020,24 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
     int startingIndexInClusterWeightsArray = idx * interpolationPointsPerCluster * 8;
     int startingIndexInClusterChargesArray = idx * interpolationPointsPerCluster * 8;
 
-
-    double dj[interpOrderLim], wx[interpOrderLim], wy[interpOrderLim], wz[interpOrderLim];
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
-
-    double *modifiedF, *modifiedF2;
-    make_vector(modifiedF, sourcePointsInCluster);
-    make_vector(modifiedF2, sourcePointsInCluster);
-
+    double *dj, *tt, *ww, *wx, *wy, *wz;
+    double *nodeX, *nodeY, *nodeZ, *modifiedF, *modifiedF2;
     int *exactIndX, *exactIndY, *exactIndZ;
-    make_vector(exactIndX, sourcePointsInCluster);
-    make_vector(exactIndY, sourcePointsInCluster);
-    make_vector(exactIndZ, sourcePointsInCluster);
 
+    make_vector(dj,          interpOrderLim);
+    make_vector(tt,          interpOrderLim);
+    make_vector(ww,          interpOrderLim);
+    make_vector(wx,          interpOrderLim);
+    make_vector(wy,          interpOrderLim);
+    make_vector(wz,          interpOrderLim);
+    make_vector(nodeX,       interpOrderLim);
+    make_vector(nodeY,       interpOrderLim);
+    make_vector(nodeZ,       interpOrderLim);
+    make_vector(modifiedF,   sourcePointsInCluster);
+    make_vector(modifiedF2,  sourcePointsInCluster);
+    make_vector(exactIndX,   sourcePointsInCluster);
+    make_vector(exactIndY,   sourcePointsInCluster);
+    make_vector(exactIndZ,   sourcePointsInCluster);
 
     // Set the bounding box.
     double x0 = tree->x_min[idx];
@@ -1010,17 +1047,16 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
     double z0 = tree->z_min[idx];
     double z1 = tree->z_max[idx];
 
-
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 3;
-    #pragma acc kernels async(streamID) present(tt, ww, xS, yS, zS, qS, wS, \
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, \
                                                 clusterX, clusterY, clusterZ, clusterQ) \
                        create(modifiedF[0:sourcePointsInCluster], modifiedF2[0:sourcePointsInCluster], \
                               exactIndX[0:sourcePointsInCluster], exactIndY[0:sourcePointsInCluster], \
                               exactIndZ[0:sourcePointsInCluster], \
                               nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], nodeZ[0:interpOrderLim], \
-                              dj[0:interpOrderLim], wx[0:interpOrderLim], \
-                              wy[0:interpOrderLim], wz[0:interpOrderLim])
+                              dj[0:interpOrderLim], tt[0:interpOrderLim], ww[0:interpOrderLim], \
+                              wx[0:interpOrderLim], wy[0:interpOrderLim], wz[0:interpOrderLim])
     {
 #endif
 
@@ -1040,10 +1076,15 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
+        double xx = i * M_PI / interpolationOrder;
+        tt[i] =  cos(xx);
+        ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
     }
+    ww[0] = 0.25 * (interpolationOrder*interpolationOrder/3.0 + 1.0/6.0);
+    ww[interpolationOrder] = -ww[0];
 
     // Compute weights
 #ifdef OPENACC_ENABLED
@@ -1057,7 +1098,6 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
     }
     dj[0] = 0.25;
     dj[interpolationOrder] = 0.25;
-
 
 
 #ifdef OPENACC_ENABLED
@@ -1268,6 +1308,15 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
     } // end acc kernels region
 #endif
 
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(ww);
+    free_vector(wx);
+    free_vector(wy);
+    free_vector(wz);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
     free_vector(modifiedF);
     free_vector(modifiedF2);
     free_vector(exactIndX);
@@ -1287,7 +1336,12 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
     int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
 
-    double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
+    double *tt, *nodeX, *nodeY, *nodeZ;
+
+    make_vector(tt,    interpOrderLim);
+    make_vector(nodeX, interpOrderLim);
+    make_vector(nodeY, interpOrderLim);
+    make_vector(nodeZ, interpOrderLim);
 
     double x0 = tree->x_min[idx];
     double x1 = tree->x_max[idx];
@@ -1298,9 +1352,9 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ, tt) \
+    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ) \
                        create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
-                              nodeZ[0:interpOrderLim])
+                              nodeZ[0:interpOrderLim], tt[0:interpOrderLim])
     {
 #endif
 
@@ -1310,6 +1364,7 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
+        tt[i] = cos(i * M_PI / interpolationOrder);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -1334,6 +1389,11 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
 #ifdef OPENACC_ENABLED
     } //end acc kernels region
 #endif
+
+    free_vector(tt);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
 
     return;
 }
