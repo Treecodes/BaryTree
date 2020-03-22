@@ -101,8 +101,7 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(tt[0:interpOrderLim], ww[0:interpOrderLim], \
-                            xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
+    #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
                             zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
                             wS[0:totalNumberSourcePoints]) \
                        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
@@ -186,15 +185,9 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     double *yC = clusters->y;
     double *zC = clusters->z;
 
-    double *tt = NULL;
-    make_vector(tt, interpolationOrder);
-    for (int i = 0; i < interpOrderLim; i++) {
-        tt[i] = cos(i * M_PI / interpolationOrder);
-    }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(tt[0:interpOrderLim]) \
-                     copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+    #pragma acc data copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                              zC[0:totalNumberInterpolationPoints])
     {
 #endif
@@ -309,7 +302,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
     int startingIndexInSourcesArray = tree->ibeg[idx]-1;
 
-    double weights[interpOrderLim], dj[interpOrderLim];
+    double weights[interpOrderLim], dj[interpOrderLim], tt[interpOrderLim];
     double nodeX[interpOrderLim], nodeY[interpOrderLim], nodeZ[interpOrderLim];
     
     double *modifiedF;
@@ -330,12 +323,12 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ, tt) \
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ) \
                        create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
                               exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
-                              nodeX[0:(interpolationOrder+1)], nodeY[0:(interpolationOrder+1)], \
-                              nodeZ[0:(interpolationOrder+1)], weights[0:(interpolationOrder+1)], \
-                              dj[0:(interpolationOrder+1)])
+                              nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
+                              nodeZ[0:interpOrderLim], weights[0:interpOrderLim], \
+                              dj[0:interpOrderLim], tt[0:interpOrderLim])
     {
 #endif
 
@@ -354,7 +347,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
-//           tt[i] = cos(i * M_PI / interpolationOrder);
+           tt[i] = cos(i * M_PI / interpolationOrder);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
