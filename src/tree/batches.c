@@ -15,17 +15,9 @@
 
 static void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
                     int ibeg, int iend, int maxparnode, double *xyzmm);
-
-static void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
-                    double xl, double yl, double zl, double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid, int ind[8][2], int *reorder);
                     
 static void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
                     int ibeg, int iend, int maxparnode, double *xyzmm);
-                    
-static void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
-                    double xl, double yl, double zl, double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid, int ind[8][2], int *reorder);
                     
 static void Batches_ReallocArrays(struct Tree *batches, int newlength);
                     
@@ -242,9 +234,9 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
-        cp_partition_batch(particles->x, particles->y, particles->z, particles->q,
-                           xyzmms, xl, yl, zl, lmax, &numposchild,
-                           x_mid, y_mid, z_mid, ind, particles->order);
+        cp_partition_8(particles->x, particles->y, particles->z, particles->q,
+                       particles->order, xyzmms, xl, yl, zl, lmax, &numposchild,
+                       x_mid, y_mid, z_mid, ind);
 
         for (i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
@@ -353,9 +345,9 @@ void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
-        pc_partition_batch(particles->x, particles->y, particles->z, particles->q, particles->w,
-                           xyzmms, xl, yl, zl, lmax, &numposchild,
-                           x_mid, y_mid, z_mid, ind, particles->order);
+        pc_partition_8(particles->x, particles->y, particles->z, particles->q, particles->w,
+                       particles->order, xyzmms, xl, yl, zl, lmax, &numposchild,
+                       x_mid, y_mid, z_mid, ind);
 
         for (i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
@@ -409,148 +401,3 @@ static void Batches_ReallocArrays(struct Tree *batches, int newlength)
     
     return;
 }
-
-
-
-static void cp_partition_batch(double *x, double *y, double *z, double *q, double xyzmms[6][8],
-                    double xl, double yl, double zl, double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *reorder)
-{
-    int temp_ind, i, j;
-    double critlen;
-
-    *numposchild = 1;
-    critlen = lmax / sqrt(2.0);
-
-    if (xl >= critlen) {
-        cp_partition(x, y, z, q, reorder, ind[0][0], ind[0][1],
-                     x_mid, &temp_ind);
-
-        ind[1][0] = temp_ind + 1;
-        ind[1][1] = ind[0][1];
-        ind[0][1] = temp_ind;
-
-        for (i = 0; i < 6; i++)
-            xyzmms[i][1] = xyzmms[i][0];
-        
-        xyzmms[1][0] = x_mid;
-        xyzmms[0][1] = x_mid;
-        *numposchild = 2 * *numposchild;
-    }
-
-    if (yl >= critlen) {
-        for (i = 0; i < *numposchild; i++) {
-            cp_partition(y, x, z, q, reorder, ind[i][0], ind[i][1],
-                         y_mid, &temp_ind);
-            
-            ind[*numposchild + i][0] = temp_ind + 1;
-            ind[*numposchild + i][1] = ind[i][1];
-            ind[i][1] = temp_ind;
-
-            for (j = 0; j < 6; j++)
-                xyzmms[j][*numposchild + i] = xyzmms[j][i];
-
-            xyzmms[3][i] = y_mid;
-            xyzmms[2][*numposchild + i] = y_mid;
-        }
-        
-        *numposchild = 2 * *numposchild;
-    }
-
-    if (zl >= critlen) {
-        for (i = 0; i < *numposchild; i++) {
-            cp_partition(z, x, y, q, reorder, ind[i][0], ind[i][1],
-                         z_mid, &temp_ind);
-            
-            ind[*numposchild + i][0] = temp_ind + 1;
-            ind[*numposchild + i][1] = ind[i][1];
-            ind[i][1] = temp_ind;
-
-            for (j = 0; j < 6; j++)
-                xyzmms[j][*numposchild + i] = xyzmms[j][i];
-
-            xyzmms[5][i] = z_mid;
-            xyzmms[4][*numposchild + i] = z_mid;
-        }
-        
-        *numposchild = 2 * *numposchild;
-
-    }
-
-    return;
-
-} /* END of function cp_partition_batch */
-
-
-
-
-static void pc_partition_batch(double *x, double *y, double *z, double *q, double *w, double xyzmms[6][8],
-                    double xl, double yl, double zl, double lmax, int *numposchild,
-                    double x_mid, double y_mid, double z_mid, int ind[8][2],
-                    int *reorder)
-{
-    int temp_ind, i, j;
-    double critlen;
-
-    *numposchild = 1;
-    critlen = lmax / sqrt(2.0);
-
-    if (xl >= critlen) {
-        pc_partition(x, y, z, q, w, reorder, ind[0][0], ind[0][1],
-                     x_mid, &temp_ind);
-
-        ind[1][0] = temp_ind + 1;
-        ind[1][1] = ind[0][1];
-        ind[0][1] = temp_ind;
-
-        for (i = 0; i < 6; i++)
-            xyzmms[i][1] = xyzmms[i][0];
-        
-        xyzmms[1][0] = x_mid;
-        xyzmms[0][1] = x_mid;
-        *numposchild = 2 * *numposchild;
-    }
-
-    if (yl >= critlen) {
-        for (i = 0; i < *numposchild; i++) {
-            pc_partition(y, x, z, q, w, reorder, ind[i][0], ind[i][1],
-                         y_mid, &temp_ind);
-            
-            ind[*numposchild + i][0] = temp_ind + 1;
-            ind[*numposchild + i][1] = ind[i][1];
-            ind[i][1] = temp_ind;
-
-            for (j = 0; j < 6; j++)
-                xyzmms[j][*numposchild + i] = xyzmms[j][i];
-
-            xyzmms[3][i] = y_mid;
-            xyzmms[2][*numposchild + i] = y_mid;
-        }
-        
-        *numposchild = 2 * *numposchild;
-    }
-
-    if (zl >= critlen) {
-        for (i = 0; i < *numposchild; i++) {
-            pc_partition(z, x, y, q, w, reorder, ind[i][0], ind[i][1],
-                         z_mid, &temp_ind);
-            
-            ind[*numposchild + i][0] = temp_ind + 1;
-            ind[*numposchild + i][1] = ind[i][1];
-            ind[i][1] = temp_ind;
-
-            for (j = 0; j < 6; j++)
-                xyzmms[j][*numposchild + i] = xyzmms[j][i];
-
-            xyzmms[5][i] = z_mid;
-            xyzmms[4][*numposchild + i] = z_mid;
-        }
-        
-        *numposchild = 2 * *numposchild;
-
-    }
-
-    return;
-
-} /* END of function pc_partition_batch */
