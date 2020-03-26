@@ -312,9 +312,15 @@ void cp_partition_8(double *x, double *y, double *z, double *q, int *orderarr, d
         if (yl < xl || yl < zl) divide_y = 0;
         if (zl < xl || zl < yl) divide_z = 0;
         
-        if (divide_x + divide_y + divide_z >= 2) {
+        if (divide_x + divide_y + divide_z == 3) {
             divide_x = 0;
             divide_y = 0;
+        }
+        
+        if (divide_x + divide_y + divide_z == 2) {
+            if (divide_x == 0) divide_y = 0;
+            if (divide_y == 0) divide_z = 0;
+            if (divide_z == 0) divide_x = 0;
         }
     }
 
