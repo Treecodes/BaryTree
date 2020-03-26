@@ -96,6 +96,7 @@ void RunParams_Print(struct RunParams *run_params)
 {
     printf("[BaryTree]\n");
     printf("[BaryTree] RunParams struct has been set to the following:\n");
+    printf("[BaryTree]\n");
     printf("[BaryTree]                     kernel = %d\n", run_params->kernel);
     printf("[BaryTree]          num_kernel_params = %d\n", run_params->num_kernel_params);
     printf("[BaryTree]              kernel_params = ");

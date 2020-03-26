@@ -85,15 +85,20 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Tree_Targets_Construct(&tree, targets, run_params);
         STOP_TIMER(&time_tree[0]);
         
-        
         START_TIMER(&time_tree[1]);
         Batches_Sources_Construct(&batches, sources, run_params);
         STOP_TIMER(&time_tree[1]);
-        
 
         START_TIMER(&time_tree[2]);
         Clusters_Targets_Construct(&clusters, tree, run_params);
         STOP_TIMER(&time_tree[2]);
+        
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+        if (run_params->verbosity > 0) {
+            Tree_Print(tree);
+            Batches_Print(batches);
+        }
+//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         
         
         //-------------------------------
@@ -234,15 +239,20 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Tree_Sources_Construct(&tree, sources, run_params);
         STOP_TIMER(&time_tree[0]);
         
-
         START_TIMER(&time_tree[1]);
         Batches_Targets_Construct(&batches, targets, run_params);
         STOP_TIMER(&time_tree[1]);
         
-
         START_TIMER(&time_tree[2]);
         Clusters_Sources_Construct(&clusters, sources, tree, run_params);
         STOP_TIMER(&time_tree[2]);
+        
+        //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                if (run_params->verbosity > 0) {
+                    Tree_Print(tree);
+                    Batches_Print(batches);
+                }
+        //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
 
         //-------------------------------
@@ -417,16 +427,21 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Tree_Sources_Construct(&source_tree, sources, run_params);
         STOP_TIMER(&time_tree[0]);
 
-
         START_TIMER(&time_tree[1]);
         Tree_Targets_Construct(&target_tree, targets, run_params);
         STOP_TIMER(&time_tree[1]);
          
-
         START_TIMER(&time_tree[2]);
         Clusters_Sources_Construct(&source_clusters, sources, source_tree, run_params);
         Clusters_Targets_Construct(&target_clusters, target_tree, run_params);
         STOP_TIMER(&time_tree[2]);
+        
+        //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                if (run_params->verbosity > 0) {
+                    Tree_Print(source_tree);
+                    Tree_Print(target_tree);
+                }
+        //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         
         
         //-------------------------------
@@ -607,6 +622,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         MPI_Reduce(&total_num_approx,    &min_num_approx, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
         
         if (rank == 0) {
+            printf("[BaryTree]\n");
+            printf("[BaryTree] Interaction information: \n");
             printf("[BaryTree]\n");
             printf("[BaryTree]        Cumulative interactions across all ranks: %d\n", global_num_inter);
             printf("[BaryTree]           Maximum interactions across all ranks: %d\n", max_num_inter);

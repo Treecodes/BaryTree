@@ -19,5 +19,7 @@ void Batches_Free(struct Tree **batches_addr);
 
 void Batches_Free_Win(struct Tree **batches_addr);
 
+void Batches_Print(struct Tree *batches);
+
 
 #endif

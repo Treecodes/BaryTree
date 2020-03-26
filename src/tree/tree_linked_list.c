@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <float.h>
 
 #include "../utilities/tools.h"
 #include "../particles/struct_particles.h"
@@ -15,8 +14,8 @@ static void remove_node(struct TreeLinkedListNode *p);
 
 
 void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Particles *targets,
-                int ibeg, int iend, int maxparnode,
-                double *xyzmm, int level, int *numnodes, int *numleaves)
+                int ibeg, int iend, int maxparnode, double *xyzmm,
+                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size)
 {
     int ind[8][2];
     double xyzmms[6][8];
@@ -38,12 +37,10 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
         lxyzmm[i] = 0.0;
     }
 
+
     (*p) = malloc(sizeof(struct TreeLinkedListNode));
-
     (*numnodes)++;
-
     (*p)->numpar = iend - ibeg + 1;
-    (*p)->exist_ms = 0;
 
     (*p)->x_min = minval(targets->x + ibeg - 1, (*p)->numpar);
     (*p)->x_max = maxval(targets->x + ibeg - 1, (*p)->numpar);
@@ -53,36 +50,19 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
     (*p)->z_max = maxval(targets->z + ibeg - 1, (*p)->numpar);
     
 
-    /*compute aspect ratio*/
     double xl = (*p)->x_max - (*p)->x_min;
     double yl = (*p)->y_max - (*p)->y_min;
     double zl = (*p)->z_max - (*p)->z_min;
-        
-    double tmax = max3(xl, yl, zl);
-    double tmin = min3(xl, yl, zl);
-
-
-    if (tmin != 0.0)
-        (*p)->aspect = tmax/tmin;
-    else
-        (*p)->aspect = 0.0;
-
     
     (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
     (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
     (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
 
-    double t1 = (*p)->x_max - (*p)->x_mid;
-    double t2 = (*p)->y_max - (*p)->y_mid;
-    double t3 = (*p)->z_max - (*p)->z_mid;
-
-    (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
-    (*p)->radius = sqrt((*p)->sqradius);
+    (*p)->radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
 
     
     (*p)->ibeg = ibeg;
     (*p)->iend = iend;
-    (*p)->level = level;
 
 
     (*p)->num_children = 0;
@@ -110,10 +90,9 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
         int numposchild;
 
         cp_partition_8(targets->x, targets->y, targets->z, targets->q, targets->order,
-                       xyzmms, xl, yl, zl, tmax, &numposchild,
+                       xyzmms, xl, yl, zl, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
-        int loclev = level + 1;
 
         for (int i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
@@ -128,13 +107,18 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
 
                 TreeLinkedList_Targets_Construct(paddress,
                                targets, ind[i][0], ind[i][1],
-                               maxparnode, lxyzmm, loclev, numnodes, numleaves);
+                               maxparnode, lxyzmm, numnodes, numleaves,
+                               min_leaf_size, max_leaf_size);
             }
         }
 
     } else {
 
         (*numleaves)++;
+        
+        if ((*p)->numpar < *min_leaf_size) *min_leaf_size = (*p)->numpar;
+        if ((*p)->numpar > *max_leaf_size) *max_leaf_size = (*p)->numpar;
+        
     }
 
     return;
@@ -146,7 +130,7 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
 
 void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Particles *sources,
                 int ibeg, int iend, int maxparnode, double *xyzmm,
-                int level, int *numnodes, int *numleaves)
+                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size)
 {
     int ind[8][2];
     double xyzmms[6][8];
@@ -171,12 +155,8 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
                         
 
     (*p) = malloc(sizeof(struct TreeLinkedListNode));
-
-
     (*numnodes)++;
-
     (*p)->numpar = iend - ibeg + 1;
-    (*p)->exist_ms = 0;
     
     (*p)->x_min = minval(sources->x + ibeg - 1, (*p)->numpar);
     (*p)->x_max = maxval(sources->x + ibeg - 1, (*p)->numpar);
@@ -186,34 +166,19 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
     (*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
     
 
-    /*compute aspect ratio*/
     double xl = (*p)->x_max - (*p)->x_min;
     double yl = (*p)->y_max - (*p)->y_min;
     double zl = (*p)->z_max - (*p)->z_min;
-        
-    double tmax = max3(xl, yl, zl);
-    double tmin = min3(xl, yl, zl);
-
-
-    if (tmin != 0.0)
-        (*p)->aspect = tmax/tmin;
-    else
-        (*p)->aspect = 0.0;
 
     (*p)->x_mid = ((*p)->x_max + (*p)->x_min) / 2.0;
     (*p)->y_mid = ((*p)->y_max + (*p)->y_min) / 2.0;
     (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
 
-    double t1 = (*p)->x_max - (*p)->x_mid;
-    double t2 = (*p)->y_max - (*p)->y_mid;
-    double t3 = (*p)->z_max - (*p)->z_mid;
+    (*p)->radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
 
-    (*p)->sqradius = t1*t1 + t2*t2 + t3*t3;
-    (*p)->radius = sqrt((*p)->sqradius);
 
     (*p)->ibeg = ibeg;
     (*p)->iend = iend;
-    (*p)->level = level;
 
 
     (*p)->num_children = 0;
@@ -222,6 +187,16 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
 
     
     if ((*p)->numpar > maxparnode) {
+        
+        int max_num_children;
+        
+        if ((*p)->numpar < 2 * maxparnode) {
+            max_num_children = 2;
+        } else if ((*p)->numpar < 4 * maxparnode) {
+            max_num_children = 4;
+        } else {
+            max_num_children = 8;
+        }
     /*
      * IND array holds indices of the eight new subregions.
      */
@@ -241,10 +216,8 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
         int numposchild;
 
         pc_partition_8(sources->x, sources->y, sources->z, sources->q, sources->w, sources->order,
-                       xyzmms, xl, yl, zl, tmax, &numposchild,
+                       xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
-
-        int loclev = level + 1;
 
         for (int i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
@@ -259,13 +232,16 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
 
                 TreeLinkedList_Sources_Construct(paddress,
                                sources, ind[i][0], ind[i][1],
-                               maxparnode, lxyzmm, loclev,
-                               numnodes, numleaves);
+                               maxparnode, lxyzmm, numnodes, numleaves,
+                               min_leaf_size, max_leaf_size);
             }
         }
         
     } else {
         (*numleaves)++;
+        
+        if ((*p)->numpar < *min_leaf_size) *min_leaf_size = (*p)->numpar;
+        if ((*p)->numpar > *max_leaf_size) *max_leaf_size = (*p)->numpar;
     }
 
     return;

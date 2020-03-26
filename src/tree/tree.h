@@ -18,5 +18,7 @@ void Tree_Free(struct Tree **tree_addr);
 
 void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p);
 
+void Tree_Print(struct Tree *tree);
+
 
 #endif /* H_TREEFUNCTIONS_H */

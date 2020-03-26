@@ -160,16 +160,46 @@ void Batches_Free_Win(struct Tree **batches_addr)
 
 
 
-/*********************************/
-/******* LOCAL FUNCTIONS *********/
-/*********************************/
+void Batches_Print(struct Tree *batches)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Barrier(MPI_COMM_WORLD);
+   
+    int global_num_batches, max_num_batches, min_num_batches;
+
+    MPI_Reduce(&(batches->numnodes),   &global_num_batches, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&(batches->numnodes),      &max_num_batches, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&(batches->numnodes),      &min_num_batches, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+    
+    if (rank == 0) {
+        printf("[BaryTree]\n");
+        printf("[BaryTree] Batches information: \n");
+        printf("[BaryTree]\n");
+        printf("[BaryTree]             Cumulative batches across all ranks: %d\n", global_num_batches);
+        printf("[BaryTree]                Maximum batches across all ranks: %d\n", max_num_batches);
+        printf("[BaryTree]                Minimum batches across all ranks: %d\n", min_num_batches);
+        printf("[BaryTree]                                           Ratio: %f\n",
+               (double)max_num_batches / (double)min_num_batches);
+        printf("[BaryTree]\n");
+    }
+
+    return;
+}
+
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~//
+//~~~LOCAL FUNCTIONS~~~~~~~~//
+//~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
 void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
                           int ibeg, int iend, int maxparnode, double *xyzmm)
 {
     double x_min, x_max, y_min, y_max, z_min, z_max;
-    double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    double sqradius, radius;
+    double x_mid, y_mid, z_mid, xl, yl, zl;
+    double radius;
     int i, j, numposchild, numpar;
     
     int ind[8][2];
@@ -201,26 +231,27 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
     z_min = minval(particles->z + ibeg - 1, numpar);
     z_max = maxval(particles->z + ibeg - 1, numpar);
 
-    /*compute aspect ratio*/
     xl = x_max - x_min;
     yl = y_max - y_min;
     zl = z_max - z_min;
-    
-    lmax = max3(xl, yl, zl);
     
     x_mid = (x_max + x_min) / 2.0;
     y_mid = (y_max + y_min) / 2.0;
     z_mid = (z_max + z_min) / 2.0;
 
-    t1 = x_max - x_mid;
-    t2 = y_max - y_mid;
-    t3 = z_max - z_mid;
-
-    sqradius = t1*t1 + t2*t2 + t3*t3;
-    radius = sqrt(sqradius);
-    
+    radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
 
     if (numpar > maxparnode) {
+    
+        int max_num_children;
+        
+        if (numpar < 2 * maxparnode) {
+            max_num_children = 2;
+        } else if (numpar < 4 * maxparnode) {
+            max_num_children = 4;
+        } else {
+            max_num_children = 8;
+        }
     /*
      * IND array holds indices of the eight new subregions.
      */
@@ -235,7 +266,7 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         ind[0][1] = iend;
 
         cp_partition_8(particles->x, particles->y, particles->z, particles->q,
-                       particles->order, xyzmms, xl, yl, zl, lmax, &numposchild,
+                       particles->order, xyzmms, xl, yl, zl, &numposchild,
                        x_mid, y_mid, z_mid, ind);
 
         for (i = 0; i < numposchild; i++) {
@@ -280,8 +311,8 @@ void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
                           int ibeg, int iend, int maxparnode, double *xyzmm)
 {
     double x_min, x_max, y_min, y_max, z_min, z_max;
-    double x_mid, y_mid, z_mid, xl, yl, zl, lmax, t1, t2, t3;
-    double sqradius, radius;
+    double x_mid, y_mid, z_mid, xl, yl, zl;
+    double radius;
     int i, j, numposchild, numpar;
     
     int ind[8][2];
@@ -313,25 +344,28 @@ void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
     z_min = minval(particles->z + ibeg - 1, numpar);
     z_max = maxval(particles->z + ibeg - 1, numpar);
     
-    /*compute aspect ratio*/
     xl = x_max - x_min;
     yl = y_max - y_min;
     zl = z_max - z_min;
-    
-    lmax = max3(xl, yl, zl);
     
     x_mid = (x_max + x_min) / 2.0;
     y_mid = (y_max + y_min) / 2.0;
     z_mid = (z_max + z_min) / 2.0;
 
-    t1 = x_max - x_mid;
-    t2 = y_max - y_mid;
-    t3 = z_max - z_mid;
-
-    sqradius = t1*t1 + t2*t2 + t3*t3;
-    radius = sqrt(sqradius);
+    radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
     
     if (numpar > maxparnode) {
+    
+    int max_num_children;
+    
+    if (numpar < 2 * maxparnode) {
+        max_num_children = 2;
+    } else if (numpar < 4 * maxparnode) {
+        max_num_children = 4;
+    } else {
+        max_num_children = 8;
+    }
+    
     /*
      * IND array holds indices of the eight new subregions.
      */
@@ -346,7 +380,7 @@ void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         ind[0][1] = iend;
 
         pc_partition_8(particles->x, particles->y, particles->z, particles->q, particles->w,
-                       particles->order, xyzmms, xl, yl, zl, lmax, &numposchild,
+                       particles->order, xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
 
         for (i = 0; i < numposchild; i++) {

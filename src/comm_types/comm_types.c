@@ -25,7 +25,7 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
     MPI_Allgather(&(tree->numnodes), 1, MPI_INT, num_nodes_on_proc, 1, MPI_INT, MPI_COMM_WORLD);
 
 
-    MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend, win_level;
+    MPI_Win win_x_mid, win_y_mid, win_z_mid, win_radius, win_numpar, win_ibeg, win_iend;
     MPI_Win win_children, win_num_children;
 
 
@@ -74,9 +74,6 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
     MPI_Win_create(tree->iend,          tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_iend);
     
-    MPI_Win_create(tree->level,         tree->numnodes*sizeof(int),    sizeof(int),
-                   MPI_INFO_NULL, MPI_COMM_WORLD, &win_level);
-    
     MPI_Win_create(tree->num_children,  tree->numnodes*sizeof(int),    sizeof(int),
                    MPI_INFO_NULL, MPI_COMM_WORLD, &win_num_children);
     
@@ -99,7 +96,6 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_numpar);
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_ibeg);
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_iend);
-        MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_level);
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_children);
         MPI_Win_lock(MPI_LOCK_SHARED, get_from, 0, win_num_children);
         
@@ -124,9 +120,6 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
         MPI_Get(remote_tree->iend,         num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, num_nodes_on_proc[get_from],   MPI_INT,    win_iend);
 
-        MPI_Get(remote_tree->level,        num_nodes_on_proc[get_from], MPI_INT,
-                get_from, 0, num_nodes_on_proc[get_from],   MPI_INT,    win_level);
-
         MPI_Get(remote_tree->children,   8*num_nodes_on_proc[get_from], MPI_INT,
                 get_from, 0, 8*num_nodes_on_proc[get_from], MPI_INT,    win_children);
 
@@ -140,7 +133,6 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
         MPI_Win_unlock(get_from, win_numpar);
         MPI_Win_unlock(get_from, win_ibeg);
         MPI_Win_unlock(get_from, win_iend);
-        MPI_Win_unlock(get_from, win_level);
         MPI_Win_unlock(get_from, win_children);
         MPI_Win_unlock(get_from, win_num_children);
 
@@ -246,7 +238,6 @@ void CommTypesAndTrees_Construct(struct CommTypes **comm_types_addr, struct Tree
     MPI_Win_free(&win_numpar);
     MPI_Win_free(&win_ibeg);
     MPI_Win_free(&win_iend);
-    MPI_Win_free(&win_level);
     MPI_Win_free(&win_children);
     MPI_Win_free(&win_num_children);
 
