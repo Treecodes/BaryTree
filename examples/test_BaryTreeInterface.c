@@ -28,6 +28,7 @@ int main(int argc, char **argv)
 
     int maxPerLeaf = 500;
     int maxPerBatch = 500;
+    double sizeCheck = 1.0;
 
     int verbosity = 0;
 
@@ -64,7 +65,7 @@ int main(int argc, char **argv)
                       kernel, numParams, kernelParams,
                       singularity, approximation, compute_type,
                       interpOrder, theta, maxPerLeaf, maxPerBatch,
-                      verbosity);
+                      sizeCheck, verbosity);
 
     printf("[test BaryTree interface] BaryTree has finished.\n");
 

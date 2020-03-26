@@ -21,28 +21,20 @@ void BaryTreeInterface(int numTargets, int numSources,
 		double *outputArray,
         KERNEL kernel, int numKernelParams, double *kernelParams,
         SINGULARITY singularity, APPROXIMATION approximation, COMPUTE_TYPE compute_type,
-		int interpOrder, double theta, int maxPerSourceLeaf, int maxPerTargetLeaf, int verbosity)
+		int interpOrder, double theta, int maxPerSourceLeaf, int maxPerTargetLeaf,
+        double sizeCheck, int verbosity)
 {
 
 	double timing[12];
     memset(outputArray, 0, numTargets * sizeof(double));
 
-    double sizeCheckFactor = 1.0;
-    if (approximation == LAGRANGE) {
-        sizeCheckFactor = 1.0;
-    } else if (approximation == HERMITE) {
-        sizeCheckFactor = 4.0;
-    }
-
-
     struct RunParams *run_params = NULL;
     RunParams_Setup(&run_params,
                     kernel, numKernelParams, kernelParams,
                     approximation, singularity, compute_type,
-                    theta, sizeCheckFactor, interpOrder, 
+                    theta, sizeCheck, interpOrder, 
                     maxPerSourceLeaf, maxPerTargetLeaf,
                     verbosity);
-
 
 	struct Particles sources, targets;
 

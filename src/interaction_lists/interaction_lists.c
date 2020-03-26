@@ -419,7 +419,8 @@ void cc_compute_interaction_list_1(
 
     if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * run_params->theta)
       && (source_tree_radius[source_tree_node] != 0.00)
-      && (run_params->size_check_factor * run_params->interp_pts_per_cluster < source_tree_numpar[source_tree_node])) {
+      && (pow(run_params->size_check_factor * run_params->interp_pts_per_cluster, 2)
+          < source_tree_numpar[source_tree_node] * target_tree_numpar[target_tree_node])) {
    /*
     * If MAC is accepted and there is more than 1 particle
     * in the box, use the expansion for the approximation.
@@ -497,7 +498,8 @@ void cc_compute_interaction_list_2(
 
     if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * run_params->theta)
       && (target_tree_radius[source_tree_node] != 0.00)
-      && (run_params->size_check_factor * run_params->interp_pts_per_cluster < target_tree_numpar[target_tree_node])) {
+      && (pow(run_params->size_check_factor * run_params->interp_pts_per_cluster, 2)
+          < source_tree_numpar[source_tree_node] * target_tree_numpar[target_tree_node])) {
    /*
     * If MAC is accepted and there is more than 1 particle
     * in the box, use the expansion for the approximation.

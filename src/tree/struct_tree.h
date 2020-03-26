@@ -6,12 +6,14 @@ struct Tree
     int numnodes;
     int numleaves;
     
+    int min_leaf_size;
+    int max_leaf_size;
+    
     int *ibeg;
     int *iend;
     int *numpar;
     
     int *cluster_ind;
-    int *level;
     
     double *radius;
 

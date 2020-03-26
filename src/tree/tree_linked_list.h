@@ -6,12 +6,12 @@
 
 
 void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Particles *targets,
-                int ibeg, int iend, int maxparnode,
-                double *xyzmm, int level, int *numnodes, int *numleaves);
+                int ibeg, int iend, int maxparnode, double *xyzmm, int *numnodes, int *numleaves,
+                int *min_leaf_size, int *max_leaf_size);
 
 void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Particles *sources,
-                int ibeg, int iend, int maxparnode, double *xyzmm,
-                int level, int *numnodes, int *numleaves);
+                int ibeg, int iend, int maxparnode, double *xyzmm, int *numnodes, int *numleaves,
+                int *min_leaf_size, int *max_leaf_size);
 
 int TreeLinkedList_SetIndex(struct TreeLinkedListNode *p, int index);
 
