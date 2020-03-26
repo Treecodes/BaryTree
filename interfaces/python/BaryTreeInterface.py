@@ -62,7 +62,7 @@ try:
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), Kernel, ctypes.c_int, ctypes.POINTER(ctypes.c_double), Singularity, Approximation, ComputeType,
-            ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_int ) 
+            ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_double,  ctypes.c_int )
 except NameError:
     print("Could not set argtypes of _gpu_treecodeRoutines")
 
@@ -71,7 +71,7 @@ try:
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), Kernel, ctypes.c_int, ctypes.POINTER(ctypes.c_double),  Singularity, Approximation, ComputeType,
-            ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_int ) 
+            ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_double,  ctypes.c_int )
 except NameError:
     print("Could not set argtypes of _cpu_treecodeRoutines")
 
@@ -91,13 +91,11 @@ def callTreedriver(numTargets, numSources,
     '''
 
     c_double_p = ctypes.POINTER(ctypes.c_double)
-
     
     targetX_p = targetX.ctypes.data_as(c_double_p)
     targetY_p = targetY.ctypes.data_as(c_double_p)
     targetZ_p = targetZ.ctypes.data_as(c_double_p)
     targetValue_p = targetValue.ctypes.data_as(c_double_p)
-    
     
     sourceX_p = sourceX.ctypes.data_as(c_double_p)
     sourceY_p = sourceY.ctypes.data_as(c_double_p)
@@ -110,9 +108,9 @@ def callTreedriver(numTargets, numSources,
     resultArray = np.zeros(numTargets)
     resultArray_p = resultArray.ctypes.data_as(c_double_p)
     
-    #b_kernelName = kernelName.encode('utf-8')
-    #b_approximationName = approximationName.encode('utf-8')
-    #b_singularityHandling = singularityHandling.encode('utf-8')
+    sizeCheck = 1.0
+    if approximationName == Approximation.HERMITE:
+        sizeCheck = 4.0
     
     if GPUversion==True:
         _gpu_treecodeRoutines.BaryTreeInterface(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
@@ -120,14 +118,14 @@ def callTreedriver(numTargets, numSources,
                                                 sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
                                                 resultArray_p, kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
                                                 singularityHandling, approximationName, computeType,
-                                                ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_int(verbosity) )
+                                                ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_double(sizeCheck), ctypes.c_int(verbosity) )
     elif GPUversion==False: # No gpu present
         _cpu_treecodeRoutines.BaryTreeInterface(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
                                                 targetX_p, targetY_p, targetZ_p, targetValue_p,
                                                 sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
                                                 resultArray_p, kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
                                                 singularityHandling, approximationName, computeType,
-                                                ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_int(verbosity) )
+                                                ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_double(sizeCheck), ctypes.c_int(verbosity) )
     else: 
         print("What should GPUversion be set to in the wrapper?")
         exit(-1) 

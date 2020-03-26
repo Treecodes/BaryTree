@@ -921,7 +921,8 @@ static char *test_treecode_wrapper()
                       sources->x,sources->y,sources->z,sources->q,sources->w,
                       potential_wrapper, COULOMB, num_kernel_params, kernel_params,
                       SKIPPING, LAGRANGE, PARTICLE_CLUSTER,
-                      order, theta, max_per_source_leaf, max_per_target_leaf, verbosity);
+                      order, theta, max_per_source_leaf, max_per_target_leaf,
+                      size_check, verbosity);
 
     treedriver(sources, targets, run_params, potential, time_tree);
 
