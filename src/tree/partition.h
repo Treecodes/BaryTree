@@ -23,7 +23,7 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, int *
 
 void cp_partition_8(double *x, double *y, double *z, double *q, int *indarr,
                     double xyzmms[6][8], double xl, double yl, double zl,
-                    int *numposchild,
+                    int *numposchild, int max_num_children,
                     double x_mid, double y_mid, double z_mid,
                     int ind[8][2]);
 

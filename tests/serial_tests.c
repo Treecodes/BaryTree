@@ -651,7 +651,7 @@ static char *test_treecode_on_1_target_10000_sources()
         if (verbosity>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])
                                                          / fabs(potential_direct[i]));
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-coulomb-subtraction", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-5);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-4);
     }
 
 
@@ -705,7 +705,7 @@ static char *test_treecode_on_1_target_10000_sources()
         if (verbosity>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])
                                                          / fabs(potential_direct[i]));
         mu_assert("TEST FAILED: Treecode potential not correct for: lagrange-yukawa-subtraction", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 6e-6);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-4);
     }
 
 
@@ -732,7 +732,7 @@ static char *test_treecode_on_1_target_10000_sources()
         if (verbosity>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])
                                                          / fabs(potential_direct[i]));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-skipping", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 3e-8);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-5);
     }
 
 
@@ -759,7 +759,7 @@ static char *test_treecode_on_1_target_10000_sources()
         if (verbosity>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])
                                                          / fabs(potential_direct[i]));
         mu_assert("TEST FAILED: Treecode potential not correct for: hermite-coulomb-subtraction", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-7);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-5);
     }
 
 
@@ -786,7 +786,7 @@ static char *test_treecode_on_1_target_10000_sources()
         if (verbosity>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])
                                                          / fabs(potential_direct[i]));
         mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: hermite-yukawa-skipping", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 4e-8);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-5);
     }
 
 
@@ -813,7 +813,7 @@ static char *test_treecode_on_1_target_10000_sources()
         if (verbosity>0) printf("relative error: %1.2e\n", fabs(potential[i] - potential_direct[i])
                                                          / fabs(potential_direct[i]));
         mu_assert("TEST FAILED: TEST FAILED: Treecode potential not correct for: hermite-yukawa-subtraction", \
-                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 3e-8);
+                fabs(potential[i] - potential_direct[i])/fabs(potential_direct[i]) < 2e-5);
     }
 
     free(sources->x);
@@ -1013,8 +1013,8 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
     }
 
 
-    int max_per_source_leaf = 10;
-    int max_per_target_leaf = 10;
+    int max_per_source_leaf = 5;
+    int max_per_target_leaf = 5;
     double size_check = 0.0;
 
     int num_kernel_params = 1;

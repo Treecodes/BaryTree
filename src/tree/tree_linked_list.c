@@ -71,6 +71,16 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
     
 
     if ((*p)->numpar > maxparnode) {
+    
+        int max_num_children;
+
+        if ((*p)->numpar < 2 * maxparnode) {
+            max_num_children = 2;
+        } else if ((*p)->numpar < 4 * maxparnode) {
+            max_num_children = 4;
+        } else {
+            max_num_children = 8;
+        }
     /*
      * IND array holds indices of the eight new subregions.
      */
@@ -90,7 +100,7 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
         int numposchild;
 
         cp_partition_8(targets->x, targets->y, targets->z, targets->q, targets->order,
-                       xyzmms, xl, yl, zl, &numposchild,
+                       xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
 
 
@@ -187,9 +197,9 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
 
     
     if ((*p)->numpar > maxparnode) {
-        
+    
         int max_num_children;
-        
+    
         if ((*p)->numpar < 2 * maxparnode) {
             max_num_children = 2;
         } else if ((*p)->numpar < 4 * maxparnode) {

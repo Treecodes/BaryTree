@@ -197,54 +197,51 @@ void Batches_Print(struct Tree *batches)
 void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
                           int ibeg, int iend, int maxparnode, double *xyzmm)
 {
-    double x_min, x_max, y_min, y_max, z_min, z_max;
-    double x_mid, y_mid, z_mid, xl, yl, zl;
-    double radius;
-    int i, j, numposchild, numpar;
+    int numposchild;
     
     int ind[8][2];
     double xyzmms[6][8];
     double lxyzmm[6];
 
-    for (i = 0; i < 8; i++) {
-        for (j = 0; j < 2; j++) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 2; j++) {
             ind[i][j] = 0.0;
         }
     }
 
-    for (i = 0; i < 6; i++) {
-        for (j = 0; j < 8; j++) {
+    for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 8; j++) {
             xyzmms[i][j] = 0.0;
         }
     }
 
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         lxyzmm[i] = 0.0;
     }
     
-    numpar = iend - ibeg + 1;
+    int numpar = iend - ibeg + 1;
 
-    x_min = minval(particles->x + ibeg - 1, numpar);
-    x_max = maxval(particles->x + ibeg - 1, numpar);
-    y_min = minval(particles->y + ibeg - 1, numpar);
-    y_max = maxval(particles->y + ibeg - 1, numpar);
-    z_min = minval(particles->z + ibeg - 1, numpar);
-    z_max = maxval(particles->z + ibeg - 1, numpar);
+    double x_min = minval(particles->x + ibeg - 1, numpar);
+    double x_max = maxval(particles->x + ibeg - 1, numpar);
+    double y_min = minval(particles->y + ibeg - 1, numpar);
+    double y_max = maxval(particles->y + ibeg - 1, numpar);
+    double z_min = minval(particles->z + ibeg - 1, numpar);
+    double z_max = maxval(particles->z + ibeg - 1, numpar);
 
-    xl = x_max - x_min;
-    yl = y_max - y_min;
-    zl = z_max - z_min;
+    double xl = x_max - x_min;
+    double yl = y_max - y_min;
+    double zl = z_max - z_min;
     
-    x_mid = (x_max + x_min) / 2.0;
-    y_mid = (y_max + y_min) / 2.0;
-    z_mid = (z_max + z_min) / 2.0;
+    double x_mid = (x_max + x_min) / 2.0;
+    double y_mid = (y_max + y_min) / 2.0;
+    double z_mid = (z_max + z_min) / 2.0;
 
-    radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
+    double radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
 
     if (numpar > maxparnode) {
     
         int max_num_children;
-        
+    
         if (numpar < 2 * maxparnode) {
             max_num_children = 2;
         } else if (numpar < 4 * maxparnode) {
@@ -266,13 +263,13 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         ind[0][1] = iend;
 
         cp_partition_8(particles->x, particles->y, particles->z, particles->q,
-                       particles->order, xyzmms, xl, yl, zl, &numposchild,
+                       particles->order, xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
 
-        for (i = 0; i < numposchild; i++) {
+        for (int i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
 
-                for (j = 0; j < 6; j++)
+                for (int j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
                 
                 Batches_Targets_Fill(batches, sizeof_batch_arrays, particles, ind[i][0], ind[i][1],
@@ -310,62 +307,58 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
 void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
                           int ibeg, int iend, int maxparnode, double *xyzmm)
 {
-    double x_min, x_max, y_min, y_max, z_min, z_max;
-    double x_mid, y_mid, z_mid, xl, yl, zl;
-    double radius;
-    int i, j, numposchild, numpar;
+    int numposchild;
     
     int ind[8][2];
     double xyzmms[6][8];
     double lxyzmm[6];
 
-    for (i = 0; i < 8; i++) {
-        for (j = 0; j < 2; j++) {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 2; j++) {
             ind[i][j] = 0.0;
         }
     }
 
-    for (i = 0; i < 6; i++) {
-        for (j = 0; j < 8; j++) {
+    for (int i = 0; i < 6; i++) {
+        for (int j = 0; j < 8; j++) {
             xyzmms[i][j] = 0.0;
         }
     }
 
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
         lxyzmm[i] = 0.0;
     }
     
-    numpar = iend - ibeg + 1;
+    int numpar = iend - ibeg + 1;
 
-    x_min = minval(particles->x + ibeg - 1, numpar);
-    x_max = maxval(particles->x + ibeg - 1, numpar);
-    y_min = minval(particles->y + ibeg - 1, numpar);
-    y_max = maxval(particles->y + ibeg - 1, numpar);
-    z_min = minval(particles->z + ibeg - 1, numpar);
-    z_max = maxval(particles->z + ibeg - 1, numpar);
+    double x_min = minval(particles->x + ibeg - 1, numpar);
+    double x_max = maxval(particles->x + ibeg - 1, numpar);
+    double y_min = minval(particles->y + ibeg - 1, numpar);
+    double y_max = maxval(particles->y + ibeg - 1, numpar);
+    double z_min = minval(particles->z + ibeg - 1, numpar);
+    double z_max = maxval(particles->z + ibeg - 1, numpar);
     
-    xl = x_max - x_min;
-    yl = y_max - y_min;
-    zl = z_max - z_min;
+    double xl = x_max - x_min;
+    double yl = y_max - y_min;
+    double zl = z_max - z_min;
     
-    x_mid = (x_max + x_min) / 2.0;
-    y_mid = (y_max + y_min) / 2.0;
-    z_mid = (z_max + z_min) / 2.0;
+    double x_mid = (x_max + x_min) / 2.0;
+    double y_mid = (y_max + y_min) / 2.0;
+    double z_mid = (z_max + z_min) / 2.0;
 
-    radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
+    double radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
     
     if (numpar > maxparnode) {
     
-    int max_num_children;
+        int max_num_children;
     
-    if (numpar < 2 * maxparnode) {
-        max_num_children = 2;
-    } else if (numpar < 4 * maxparnode) {
-        max_num_children = 4;
-    } else {
-        max_num_children = 8;
-    }
-    
+        if (numpar < 2 * maxparnode) {
+            max_num_children = 2;
+        } else if (numpar < 4 * maxparnode) {
+            max_num_children = 4;
+        } else {
+            max_num_children = 8;
+        }
     /*
      * IND array holds indices of the eight new subregions.
      */
@@ -383,10 +376,10 @@ void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
                        particles->order, xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
 
-        for (i = 0; i < numposchild; i++) {
+        for (int i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
 
-                for (j = 0; j < 6; j++)
+                for (int j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
                 
                 Batches_Sources_Fill(batches, sizeof_batch_arrays, particles, ind[i][0], ind[i][1],
