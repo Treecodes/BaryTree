@@ -16,5 +16,7 @@ void Particles_ConstructOrder(struct Particles *particles);
 
 void Particles_FreeOrder(struct Particles *particles);
 
+void Particles_Validate(struct Particles *sources, struct Particles *targets);
+
 
 #endif /* H_PARTICLE_FUNCTIONS */

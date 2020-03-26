@@ -43,6 +43,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
     
     RunParams_Validate(run_params);
+    Particles_Validate(sources, targets);
     Particles_ConstructOrder(sources);
     Particles_ConstructOrder(targets);
     

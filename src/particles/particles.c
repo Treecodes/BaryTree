@@ -151,3 +151,26 @@ void Particles_FreeOrder(struct Particles *particles)
     
     return;
 }
+
+
+
+void Particles_Validate(struct Particles *sources, struct Particles *targets)
+{
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    if (sources->x == targets->x) {
+        if (rank == 0) {
+            printf("[BaryTree]\n");
+            printf("[BaryTree] ERROR! Sources and targets cannot be the same location in memory.\n");
+            printf("[BaryTree] If you are trying to run with identical sources and targets,\n");
+            printf("[BaryTree] you must duplicate the arrays.\n");
+            printf("[BaryTree]\n");
+            printf("[BaryTree] Exiting.\n");
+        }
+        
+        exit(1);
+    }
+
+    return;
+}
