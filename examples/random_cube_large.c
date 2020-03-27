@@ -1,156 +1,45 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <mpi.h>
-#include <zoltan.h>
 #include <time.h>
 #include <float.h>
+#include <mpi.h>
 
-#include "../src/treedriver.h"
-#include "../src/directdriver.h"
-#include "../src/struct_particles.h"
-#include "../src/struct_kernel.h"
-#include "../src/kernel.h"
-#include "../src/tools.h"
-#include "../src/array.h"
+#include "../src/utilities/tools.h"
+#include "../src/utilities/timers.h"
 
+#include "../src/particles/struct_particles.h"
+#include "../src/run_params/struct_run_params.h"
+#include "../src/run_params/run_params.h"
 
+#include "../src/drivers/treedriver.h"
+#include "../src/drivers/directdriver.h"
+
+#include "zoltan_fns.h"
+#include "support_fns.h"
 
 const unsigned mrand = 1664525u;
 const unsigned crand = 1013904223u;
 
-typedef struct{
-  int numGlobalPoints;
-  int numMyPoints;
-  ZOLTAN_ID_PTR myGlobalIDs;
-  double *x;
-  double *y;
-  double *z;
-  double *q;
-  double *w;
-  double *b;
-} MESH_DATA;
-
-typedef struct{
-  ZOLTAN_ID_TYPE myGlobalID;
-  double x;
-  double y;
-  double z;
-  double q;
-  double w;
-  double b;
-} SINGLE_MESH_DATA;
-
-
-/* Application defined query functions */
-static int get_number_of_objects(void *data, int *ierr);
-static void get_object_list(void *data, int sizeGID, int sizeLID,
-            ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-                  int wgt_dim, float *obj_wgts, int *ierr);
-static int get_num_geometry(void *data, int *ierr);
-static void get_geometry_list(void *data, int sizeGID, int sizeLID,
-             int num_obj, ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-             int num_dim, double *geom_vec, int *ierr);
-static void ztn_pack(void *data, int num_gid_entries, int num_lid_entries,
-              ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
-              int dest, int size, char *buf, int *ierr);
-static void ztn_unpack(void *data, int num_gid_entries,
-                ZOLTAN_ID_PTR global_id,
-                int size, char *buf, int *ierr);
-static int ztn_obj_size(void *data, int num_gid_entries, int num_lid_entries,
-    ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id, int *ierr);
-
 
 int main(int argc, char **argv)
 {
-
-    //run parameters
-    int N = 10000; 
-    int M = 10000;
-    int treeType = 1;
-    int interpOrder = 5; 
-    double theta = 0.5; 
-    int maxPerLeaf = 500;
-    int maxPerBatch = 500; 
-    int sizeCheckFactor = 1;
-
-    char kernelName[256] = "coulomb";
-    char singularityHandling[256] = "skipping";
-    char approximationName[256] = "lagrange";
-
-    int numberOfKernelParameters = 0;
-    double kernelParameters[32];
-
-    int runDirect = 0;
-    int slice = 1;
-
-    int verbosity = 0;
-
+    /* run parameters */
+    int N, M, run_direct, slice;
+    struct RunParams *run_params = NULL;
+    int sample_size = 10000;
     FILE *fp = fopen(argv[1], "r");
-    char c[256], c1[256], c2[256];
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice);
 
-    while (fgets(c, 256, fp) != NULL) {
-        sscanf(c, "%s %s", c1, c2);
-    
-        if (strncmp(c1, "num_particles", 13) == 0) {
-            N = atoi(c2);
-            M = N;
-        } else if (strncmp(c1, "num_sources", 11) == 0) {
-            N = atoi(c2);
-        } else if (strncmp(c1, "num_targets", 11) == 0) {
-            M = atoi(c2);
-        } else if (strncmp(c1, "order", 5) == 0) {
-            interpOrder = atoi(c2);
-        } else if (strncmp(c1, "theta", 5) == 0) {
-            theta = atof(c2);
-        } else if (strncmp(c1, "max_per_leaf", 12) == 0) {
-            maxPerLeaf = atoi(c2);
-        } else if (strncmp(c1, "max_per_batch", 12) == 0) {
-            maxPerBatch = atoi(c2);
-        } else if (strncmp(c1, "kernel_name", 11) == 0) {
-            strcpy(kernelName, c2);
-        } else if (strncmp(c1, "singularity", 11) == 0) {
-            strcpy(singularityHandling, c2);
-        } else if (strncmp(c1, "approximation", 13) == 0) {
-            strcpy(approximationName, c2);
-        } else if (strncmp(c1, "tree_type", 9) == 0) {
-            treeType = atoi(c2);
-        } else if (strncmp(c1, "size_check", 10) == 0) {
-            sizeCheckFactor = atof(c2);
-        } else if (strncmp(c1, "run_direct", 10) == 0) {
-            runDirect = atoi(c2);
-        } else if (strncmp(c1, "verbosity", 9) == 0) {
-            verbosity = atoi(c2);
-        } else if (strncmp(c1, "slice", 5) == 0) {
-            slice = atoi(c2);
-        } else if (strncmp(c1, "kernel_params", 13) == 0) {
-            char *k_param = strtok(c2, " ,");
-            while (k_param != NULL) {
-                kernelParameters[numberOfKernelParameters] = atof(k_param);
-                numberOfKernelParameters++;
-                k_param = strtok(NULL, " ,");
-            }
-        } else {
-            fprintf(stderr, "ERROR! Undefined token \"%s\". Exiting.\n", c1);
-            return 1;
-        }
-    }
-
-    struct kernel *kernel = malloc(sizeof (struct kernel));
-    Kernel_Allocate(kernel, numberOfKernelParameters, kernelName);
-    Kernel_SetParams(kernel, kernelParameters);
-
-
-    int rc, rank, numProcs;
+    /* MPI initialization */
+    int rank, numProcs;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+    if (rank == 0) printf("[random cube example] Beginning random cube example with %d ranks.\n", numProcs);
 
-    double timebeg = MPI_Wtime();
-
-    if (rank == 0) fprintf(stderr,"Beginning BaryTree with %d ranks.\n", numProcs);
-
-
+    /* Zoltan variables */
+    int rc;
     float ver;
     struct Zoltan_Struct *zz;
     int changes, numGidEntries, numLidEntries, numImport, numExport;
@@ -159,46 +48,56 @@ int main(int argc, char **argv)
     int *parts;
     MESH_DATA mySources;
 
-
-    struct particles *sources = NULL;
-    struct particles *targets = NULL;
-    struct particles *targets_sample = NULL;
+    /* data structures for BaryTree calculation and comparison */
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
+    struct Particles *targets_sample = NULL;
     double *potential = NULL, *potential_direct = NULL;
+    
+    /* variables for collecting accuracy info */
     double potential_engy = 0, potential_engy_glob = 0;
     double potential_engy_direct = 0, potential_engy_direct_glob = 0;
+    double glob_inf_err = 0, glob_n2_err = 0, glob_relinf_err = 0, glob_reln2_err = 0;
 
     /* variables for date-time calculation */
-    double time_run[4], time_tree[12], time_direct[4];
-    double time_run_glob[3][4], time_tree_glob[3][12], time_direct_glob[3][4];
-    double time1, time2;
+    double time_run[4], time_tree[13], time_direct[4];
+    double time_run_glob[3][4], time_tree_glob[3][13], time_direct_glob[3][4];
 
 
+    /* Beginning total runtime timer */
+    START_TIMER(&time_run[3]);
+    
+    
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Setup
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+    
+    START_TIMER(&time_run[0]);
+    
+    /* Zoltan initialization */
     if (Zoltan_Initialize(argc, argv, &ver) != ZOLTAN_OK) {
-        if (rank == 0) printf("Zoltan failed to initialize. Exiting.\n");
+        if (rank == 0) printf("[random cube example] Zoltan failed to initialize. Exiting.\n");
         MPI_Finalize();
         exit(0);
     }
-
-
-    time1 = MPI_Wtime();
-
-    mySources.numGlobalPoints = 100000 * numProcs;
-    mySources.numMyPoints = 100000;
-    mySources.x = malloc(100000 * sizeof(double));
-    mySources.y = malloc(100000 * sizeof(double));
-    mySources.z = malloc(100000 * sizeof(double));
-    mySources.q = malloc(100000 * sizeof(double));
-    mySources.w = malloc(100000 * sizeof(double));
-    mySources.b = malloc(100000 * sizeof(double)); // load balancing weights
-    mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * 100000);
+    
+    mySources.numGlobalPoints = sample_size * numProcs;
+    mySources.numMyPoints = sample_size;
+    mySources.x = malloc(sample_size * sizeof(double));
+    mySources.y = malloc(sample_size * sizeof(double));
+    mySources.z = malloc(sample_size * sizeof(double));
+    mySources.q = malloc(sample_size * sizeof(double));
+    mySources.w = malloc(sample_size * sizeof(double));
+    mySources.b = malloc(sample_size * sizeof(double)); // load balancing weights
+    mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * sample_size);
 
     time_t t = time(NULL);
     unsigned t_hashed = (unsigned) t;
-    t_hashed = mrand*t_hashed + crand;
+    t_hashed = mrand * t_hashed + crand;
     srand(t_hashed ^ rank);
-//    srand(1);
+    srand(1);
 
-    for (int i = 0; i < 100000; ++i) {
+    for (int i = 0; i < sample_size; ++i) {
         mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
         mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
         mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
@@ -230,10 +129,10 @@ int main(int argc, char **argv)
 
     /* Query functions, to provide geometry to Zoltan */
 
-    Zoltan_Set_Num_Obj_Fn(zz, get_number_of_objects, &mySources);
-    Zoltan_Set_Obj_List_Fn(zz, get_object_list, &mySources);
-    Zoltan_Set_Num_Geom_Fn(zz, get_num_geometry, &mySources);
-    Zoltan_Set_Geom_Multi_Fn(zz, get_geometry_list, &mySources);
+    Zoltan_Set_Num_Obj_Fn(zz, ztn_get_number_of_objects, &mySources);
+    Zoltan_Set_Obj_List_Fn(zz, ztn_get_object_list, &mySources);
+    Zoltan_Set_Num_Geom_Fn(zz, ztn_get_num_geometry, &mySources);
+    Zoltan_Set_Geom_Multi_Fn(zz, ztn_get_geometry_list, &mySources);
     Zoltan_Set_Obj_Size_Fn(zz, ztn_obj_size, &mySources);
     Zoltan_Set_Pack_Obj_Fn(zz, ztn_pack, &mySources);
     Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
@@ -269,7 +168,7 @@ int main(int argc, char **argv)
     }
 
     if (rc != ZOLTAN_OK) {
-        printf("Error! Zoltan has failed. Exiting. \n");
+        printf("[random cube example] Error! Zoltan has failed. Exiting. \n");
         MPI_Finalize();
         Zoltan_Destroy(&zz);
         exit(0);
@@ -282,10 +181,6 @@ int main(int argc, char **argv)
     double ymax = maxval(mySources.y, mySources.numMyPoints);
     double zmax = maxval(mySources.z, mySources.numMyPoints);
 
-    /******************************************************************
-     ** Free the arrays allocated by Zoltan_LB_Partition, and free
-     ** the storage allocated for the Zoltan structure.
-     ******************************************************************/
 
     Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
                         &importProcs, &importToPart);
@@ -293,7 +188,6 @@ int main(int argc, char **argv)
                         &exportProcs, &exportToPart);
     Zoltan_Destroy(&zz);
 
-    //Deallocating arrays used for Zoltan load balancing
     free(mySources.x);
     free(mySources.y);
     free(mySources.z);
@@ -302,31 +196,33 @@ int main(int argc, char **argv)
     free(mySources.b);
     free(mySources.myGlobalIDs);
 
-    if (rank == 0) fprintf(stderr,"Zoltan load balancing has finished.\n");
+    if (rank == 0) printf("[random cube example] Zoltan load balancing has finished.\n");
 
 
-    sources = malloc(sizeof(struct particles));
+    sources = malloc(sizeof(struct Particles));
     sources->num = N;
 
-    targets = malloc(sizeof(struct particles));
+    targets = malloc(sizeof(struct Particles));
     targets->num = M;
     potential = malloc(targets->num * sizeof(double));
     memset(potential, 0, targets->num * sizeof(double));
 
-    targets_sample = malloc(sizeof(struct particles));
+    targets_sample = malloc(sizeof(struct Particles));
     targets_sample->num = targets->num / slice;
     potential_direct = malloc(targets_sample->num * sizeof(double));
     memset(potential_direct, 0, targets_sample->num * sizeof(double));
 
 
-    //MPI-allocated source arrays for RMA use
+    /* MPI-allocated source and target arrays for RMA use */
+    
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->y));
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->z));
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->q));
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->w));
 
-    //Generating sources based on Zoltan bounding box
+    /* Generating sources and targets based on Zoltan bounding box */
+    
     for (int i = 0; i < sources->num; ++i) {
         sources->x[i] = ((double)rand()/(double)(RAND_MAX)) * (xmax-xmin) + xmin;
         sources->y[i] = ((double)rand()/(double)(RAND_MAX)) * (ymax-ymin) + ymin;
@@ -335,13 +231,15 @@ int main(int argc, char **argv)
         sources->w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
     }
 
-    //MPI-allocated target arrays for RMA use
+    /* MPI-allocated target arrays for RMA use */
+    
     MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->x));
     MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->y));
     MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->z));
     MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->q));
 
-    //Generating targets based on Zoltan bounding box
+    /* Generating targets based on Zoltan bounding box */
+    
     for (int i = 0; i < targets->num; ++i) {
         targets->x[i] = ((double)rand()/(double)(RAND_MAX)) * (xmax-xmin) + xmin;
         targets->y[i] = ((double)rand()/(double)(RAND_MAX)) * (ymax-ymin) + ymin;
@@ -349,19 +247,22 @@ int main(int argc, char **argv)
         targets->q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
     }
 
-
 #ifdef OPENACC_ENABLED
     #pragma acc set device_num(rank) device_type(acc_device_nvidia)
     #pragma acc init device_type(acc_device_nvidia)
 #endif
 
-    time_run[0] = MPI_Wtime() - time1;
-
-    /* Calling main treecode subroutine to calculate approximate energy */
-
+    STOP_TIMER(&time_run[0]);
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (runDirect == 1) {
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Running direct comparison
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    if (run_direct == 1) {
+    
+        if (rank == 0) printf("[random cube example] Running direct comparison...\n");
 
         targets_sample->x = malloc(targets_sample->num * sizeof(double));
         targets_sample->y = malloc(targets_sample->num * sizeof(double));
@@ -375,12 +276,9 @@ int main(int argc, char **argv)
             targets_sample->q[i] = targets->q[i*slice];
         }
 
-        if (rank == 0) fprintf(stderr,"Running direct comparison...\n");
-        time1 = MPI_Wtime();
-        directdriver(sources, targets_sample, kernel, singularityHandling,
-                     approximationName, potential_direct, time_direct);
-        time_run[1] = MPI_Wtime() - time1;
-        potential_engy_direct = sum(potential_direct, targets_sample->num);
+        START_TIMER(&time_run[1]);
+        directdriver(sources, targets_sample, run_params, potential_direct, time_direct);
+        STOP_TIMER(&time_run[1]);
 
         free(targets_sample->x);
         free(targets_sample->y);
@@ -390,290 +288,49 @@ int main(int argc, char **argv)
 
     }
 
-
     MPI_Barrier(MPI_COMM_WORLD);
 
-    if (rank == 0) fprintf(stderr,"Running treedriver...\n");
-    time1 = MPI_Wtime();
-    treedriver(sources, targets, interpOrder, theta, maxPerLeaf, maxPerBatch,
-               kernel, singularityHandling, approximationName, treeType,
-               potential, time_tree, sizeCheckFactor, verbosity);
-    time_run[2] = MPI_Wtime() - time1;
-    potential_engy = sum(potential, targets->num);
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Running treecode
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    if (rank == 0) printf("[random cube example] Running treedriver...\n");
+
+    START_TIMER(&time_run[2]);
+    treedriver(sources, targets, run_params, potential, time_tree);
+    STOP_TIMER(&time_run[2]);
+    
     
     MPI_Barrier(MPI_COMM_WORLD);
+    /* Ending total runtime timer */
+    STOP_TIMER(&time_run[3]);
+
+
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Calculate results
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    Timing_Calculate(time_run_glob, time_tree_glob, time_direct_glob,
+                     time_run, time_tree, time_direct);
+    Timing_Print(time_run_glob, time_tree_glob, time_direct_glob, run_direct, run_params);
     
-    time_run[3] = MPI_Wtime() - timebeg;
-
-
-    /* Reducing values to root process */
-    MPI_Reduce(time_tree, &time_tree_glob[0], 12, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[1], 12, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_tree, &time_tree_glob[2], 12, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    
-    MPI_Reduce(time_run, &time_run_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_run, &time_run_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(time_run, &time_run_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    
-    MPI_Reduce(&time_direct, &time_direct_glob[0], 4, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&time_direct, &time_direct_glob[1], 4, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&time_direct, &time_direct_glob[2], 4, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    
-    MPI_Reduce(&potential_engy, &potential_engy_glob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&potential_engy_direct, &potential_engy_direct_glob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    
-    if (rank == 0)
-    {
-    
-        double min_percent = 100. / time_run_glob[0][3];
-        double max_percent = 100. / time_run_glob[1][3];
-        double avg_percent = 100. / time_run_glob[2][3];
-
-        double min_percent_direct = 100. / time_run_glob[0][1];
-        double max_percent_direct = 100. / time_run_glob[1][1];
-        double avg_percent_direct = 100. / time_run_glob[2][1];
-
-        double min_percent_tree = 100. / time_run_glob[0][2];
-        double max_percent_tree = 100. / time_run_glob[1][2];
-        double avg_percent_tree = 100. / time_run_glob[2][2];
-
-        /* Printing direct and treecode time calculations: */
-        printf("\n\nTreecode timing summary (all times in seconds)...\n\n");
-        printf("                                       Max                           Avg                          Max/Min\n");
-        printf("|    Total time......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
-                     time_run_glob[1][3], time_run_glob[2][3]/numProcs, time_run_glob[1][3]/time_run_glob[0][3]);
-        printf("|    |\n");
-        printf("|    |....Pre-process................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_run_glob[1][0],          time_run_glob[1][0] * max_percent,
-                     time_run_glob[2][0]/numProcs, time_run_glob[2][0] * avg_percent,
-                     time_run_glob[1][0]/time_run_glob[0][0]);
-
-        if (runDirect == 1) {
-        printf("|    |....Directdriver...............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_run_glob[1][1],          time_run_glob[1][1] * max_percent,
-                     time_run_glob[2][1]/numProcs, time_run_glob[2][1] * avg_percent,
-                     time_run_glob[1][1]/time_run_glob[0][1]);
-        }
-        printf("|    |....Treedriver.................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n\n",
-                     time_run_glob[1][2],          time_run_glob[1][2] * max_percent,
-                     time_run_glob[2][2]/numProcs, time_run_glob[2][2] * avg_percent,
-                     time_run_glob[1][2]/time_run_glob[0][2]);
-
-
-        if (runDirect == 1) {
-        printf("|    Directdriver....................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
-                     time_run_glob[1][1], time_run_glob[2][1]/numProcs, time_run_glob[1][1]/time_run_glob[0][1]);
-
-        printf("|    |\n");
-
-        if (numProcs > 1) {
-        printf("|    |....Communicate................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_direct_glob[1][0],          time_direct_glob[1][0] * max_percent_direct,
-                     time_direct_glob[2][0]/numProcs, time_direct_glob[2][0] * avg_percent_direct,
-                     time_direct_glob[1][0]/time_direct_glob[0][0]);
-        }
-
-        printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_direct_glob[1][2],          time_direct_glob[1][2] * max_percent_direct,
-                     time_direct_glob[2][2]/numProcs, time_direct_glob[2][2] * avg_percent_direct,
-                     time_direct_glob[1][2]/time_direct_glob[0][2]);
-
-        if (numProcs > 1) {
-        printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_direct_glob[1][1],          time_direct_glob[1][1] * max_percent_direct,
-                     time_direct_glob[2][1]/numProcs, time_direct_glob[2][1] * avg_percent_direct,
-                     time_direct_glob[1][1]/time_direct_glob[0][1]);
-        }
-
-        if (strcmp(singularityHandling, "subtraction") == 0) {
-        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n\n",
-                     time_direct_glob[1][3],          time_direct_glob[1][3] * max_percent_direct,
-                     time_direct_glob[2][3]/numProcs, time_direct_glob[2][3] * avg_percent_direct,
-                     time_direct_glob[1][3]/time_direct_glob[0][3]);
-        } else {
-        printf("\n\n");
-        }
-        }
-
-
-        printf("|    Treedriver......................  %9.3e s    (100.00%%)      %9.3e s    (100.00%%)    %8.3f \n",
-                     time_run_glob[1][2], time_run_glob[2][2]/numProcs, time_run_glob[1][2]/time_run_glob[0][2]);
-        printf("|    |\n");
-        printf("|    |....Build local tree...........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][0],          time_tree_glob[1][0] * max_percent_tree,
-                     time_tree_glob[2][0]/numProcs, time_tree_glob[2][0] * avg_percent_tree,
-                     time_tree_glob[1][0]/time_tree_glob[0][0]);
-        printf("|    |....Build local batches........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][1],          time_tree_glob[1][1] * max_percent_tree,
-                     time_tree_glob[2][1]/numProcs, time_tree_glob[2][1] * avg_percent_tree,
-                     time_tree_glob[1][1]/time_tree_glob[0][1]);
-        printf("|    |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][2],          time_tree_glob[1][2] * max_percent_tree,
-                     time_tree_glob[2][2]/numProcs, time_tree_glob[2][2] * avg_percent_tree,
-                     time_tree_glob[1][2]/time_tree_glob[0][2]);
-
-        if (numProcs > 1) {
-        printf("|    |....Build LET..................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][3],          time_tree_glob[1][3] * max_percent_tree,
-                     time_tree_glob[2][3]/numProcs, time_tree_glob[2][3] * avg_percent_tree,
-                     time_tree_glob[1][3]/time_tree_glob[0][3]);
-        }
-
-        printf("|    |....Build local lists..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][4],          time_tree_glob[1][4] * max_percent_tree,
-                     time_tree_glob[2][4]/numProcs, time_tree_glob[2][4] * avg_percent_tree,
-                     time_tree_glob[1][4]/time_tree_glob[0][4]);
-        printf("|    |....Compute local..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][5],          time_tree_glob[1][5] * max_percent_tree,
-                     time_tree_glob[2][5]/numProcs, time_tree_glob[2][5] * avg_percent_tree,
-                     time_tree_glob[1][5]/time_tree_glob[0][5]);
-
-        if (numProcs > 1) {
-        printf("|    |....Build remote lists.........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][6],          time_tree_glob[1][6] * max_percent_tree,
-                     time_tree_glob[2][6]/numProcs, time_tree_glob[2][6] * avg_percent_tree,
-                     time_tree_glob[1][6]/time_tree_glob[0][6]);
-        printf("|    |....Compute remote.............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][7],          time_tree_glob[1][7] * max_percent_tree,
-                     time_tree_glob[2][7]/numProcs, time_tree_glob[2][7] * avg_percent_tree,
-                     time_tree_glob[1][7]/time_tree_glob[0][7]);
-        }
-
-        printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                     time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree,
-                     time_tree_glob[2][8]/numProcs, time_tree_glob[2][8] * avg_percent_tree,
-                     time_tree_glob[1][8]/time_tree_glob[0][8]);
-        printf("|    |....Cleanup....................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n\n",
-                     time_tree_glob[1][9],          time_tree_glob[1][9] * max_percent_tree,
-                     time_tree_glob[2][9]/numProcs, time_tree_glob[2][9] * avg_percent_tree,
-                     time_tree_glob[1][9]/time_tree_glob[0][9]);
-        
-        if (numProcs > 1) {
-        printf("((   |....Total setup................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
-                     time_tree_glob[1][10],          time_tree_glob[1][10] * max_percent_tree,
-                     time_tree_glob[2][10]/numProcs, time_tree_glob[2][10] * avg_percent_tree,
-                     time_tree_glob[1][10]/time_tree_glob[0][10]);
-        printf("((   |....Build local clusters.......  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n",
-                     time_tree_glob[1][02],          time_tree_glob[1][02] * max_percent_tree,
-                     time_tree_glob[2][02]/numProcs, time_tree_glob[2][02] * avg_percent_tree,
-                     time_tree_glob[1][02]/time_tree_glob[0][02]);
-        printf("((   |....Total compute..............  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f ))\n\n\n",
-                     time_tree_glob[1][11],          time_tree_glob[1][11] * max_percent_tree,
-                     time_tree_glob[2][11]/numProcs, time_tree_glob[2][11] * avg_percent_tree,
-                     time_tree_glob[1][11]/time_tree_glob[0][11]);
-        }
-        
-        printf("               Tree potential energy:  %f\n", potential_engy_glob);
-
-        if (runDirect == 1) {
-        printf("             Direct potential energy:  %f\n\n", potential_engy_direct_glob);
-        printf("  Absolute error for total potential:  %e\n",
-               fabs(potential_engy_glob-potential_engy_direct_glob));
-        printf("  Relative error for total potential:  %e\n\n",
-               fabs((potential_engy_glob-potential_engy_direct_glob)/potential_engy_direct_glob));
-        }
+    if (run_direct == 1) {
+        Accuracy_Calculate(&potential_engy_glob, &potential_engy_direct_glob,
+                           &glob_inf_err, &glob_relinf_err, &glob_n2_err, &glob_reln2_err,
+                           potential, potential_direct, targets->num, slice);
+        Accuracy_Print(potential_engy_glob, potential_engy_direct_glob,
+                           glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err, slice);
     }
-
-    double glob_reln2_err, glob_relinf_err, glob_n2_err, glob_inf_err;
-    if (runDirect == 1) {
-        double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
-        double temp;
-
-        for (int j = 0; j < targets->num / slice; j++) {
-
-            temp = fabs(potential_direct[j] - potential[j*slice]);
-
-            if (temp >= inferr) inferr = temp;
-
-            if (fabs(potential_direct[j]) >= relinferr)
-                relinferr = fabs(potential_direct[j]);
-
-            n2err = n2err + pow(potential_direct[j] - potential[j*slice], 2.0);
-            reln2err = reln2err + pow(potential_direct[j], 2.0);
-        }
-
-        MPI_Reduce(&reln2err, &glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(&n2err, &glob_n2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(&relinferr, &glob_relinf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-        MPI_Reduce(&inferr, &glob_inf_err, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     
-        if (rank == 0) {
-            glob_reln2_err = sqrt(fabs(glob_n2_err / glob_reln2_err));
-            glob_n2_err = sqrt(fabs(glob_n2_err));
-            glob_relinf_err = glob_inf_err / glob_relinf_err;
-            printf("Relative inf norm error in potential:  %e \n", glob_relinf_err);
-            printf("  Relative 2 norm error in potential:  %e \n\n", glob_reln2_err);
-        }
-    }
+    CSV_Print(N, M, run_params, time_run_glob, time_tree_glob, time_direct_glob,
+              potential_engy_glob, potential_engy_direct_glob,
+              glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err);
 
 
-    if (rank == 0) {
-        FILE *fp = fopen("out.csv", "a");
-        fprintf(fp, "%d,%d,%f,%d,%d,%s,%f,%s,%s,%d,"
-                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
-                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
-                    "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
-                    "%e,%e,%e,%e,%e,%e,%e,%e\n",
-            N, interpOrder, theta, maxPerLeaf, maxPerBatch, kernel->name,
-            singularityHandling, approximationName, numProcs, // 1 ends
-
-            time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
-            time_run_glob[2][0]/numProcs,
-
-            time_run_glob[0][1],  time_run_glob[1][1],  // min, max, avg directdriver
-            time_run_glob[2][1]/numProcs,
-
-            time_direct_glob[0][0], time_direct_glob[1][0],     // min, max, avg communicate
-            time_direct_glob[2][0]/numProcs,
-            time_direct_glob[0][1], time_direct_glob[1][1],     // min, max, avg compute local
-            time_direct_glob[2][1]/numProcs,
-            time_direct_glob[0][2], time_direct_glob[1][2],     // min, max, avg compute remote
-            time_direct_glob[2][2]/numProcs,
-            time_direct_glob[0][3], time_direct_glob[1][3],     // min, max, avg correct potential
-            time_direct_glob[2][3]/numProcs, // 2 ends
-
-            time_run_glob[0][2],  time_run_glob[1][2],  // min, max, avg treedriver
-            time_run_glob[2][2]/numProcs,
-
-            time_tree_glob[0][0], time_tree_glob[1][0],     // min, max, avg build local tree
-            time_tree_glob[2][0]/numProcs,
-            time_tree_glob[0][1], time_tree_glob[1][1],     // min, max, avg build local batches
-            time_tree_glob[2][1]/numProcs,
-            time_tree_glob[0][2], time_tree_glob[1][2],     // min, max, avg fill local clusters
-            time_tree_glob[2][2]/numProcs,
-            time_tree_glob[0][3], time_tree_glob[1][3],     // min, max, avg build LET
-            time_tree_glob[2][3]/numProcs,
-            time_tree_glob[0][4], time_tree_glob[1][4],     // min, max, avg build local lists
-            time_tree_glob[2][4]/numProcs, // 3 ends
-
-            time_tree_glob[0][5], time_tree_glob[1][5],     // min, max, avg compute local interations 
-            time_tree_glob[2][5]/numProcs,
-            time_tree_glob[0][6], time_tree_glob[1][6],     // min, max, avg build remote lists
-            time_tree_glob[2][6]/numProcs,
-            time_tree_glob[0][7], time_tree_glob[1][7],     // min, max, avg compute remote interactions
-            time_tree_glob[2][7]/numProcs,
-            time_tree_glob[0][8], time_tree_glob[1][8],     // min, max, avg correct potential
-            time_tree_glob[2][8]/numProcs,
-            time_tree_glob[0][9], time_tree_glob[1][9],     // min, max, avg cleanup
-            time_tree_glob[2][9]/numProcs,
-
-            time_tree_glob[0][10], time_tree_glob[1][10],   // min, max, avg total setup
-            time_tree_glob[2][10]/numProcs,
-            time_tree_glob[0][11], time_tree_glob[1][11],   // min, max, avg total cleanup
-            time_tree_glob[2][11]/numProcs,
-
-            time_run_glob[0][3],  time_run_glob[1][3],  // min, max, avg total time
-            time_run_glob[2][3]/numProcs, // 4 ends
-
-            potential_engy_direct_glob, potential_engy_glob,
-            fabs(potential_engy_direct_glob - potential_engy_glob),
-            fabs((potential_engy_direct_glob - potential_engy_glob) / potential_engy_direct_glob),
-            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err); // 5 ends
-        fclose(fp);
-    }
-
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Cleanup
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     MPI_Free_mem(sources->x);
     MPI_Free_mem(sources->y);
@@ -682,130 +339,18 @@ int main(int argc, char **argv)
     MPI_Free_mem(sources->w);
     free(sources);
 
-    free(targets->x);
-    free(targets->y);
-    free(targets->z);
-    free(targets->q);
+    MPI_Free_mem(targets->x);
+    MPI_Free_mem(targets->y);
+    MPI_Free_mem(targets->z);
+    MPI_Free_mem(targets->q);
     free(targets);
 
     free(potential);
     free(potential_direct);
 
-    Kernel_Free(kernel);
+    RunParams_Free(&run_params);
 
     MPI_Finalize();
 
     return 0;
-}
-
-
-static int get_number_of_objects(void *data, int *ierr)
-{
-    MESH_DATA *mesh = (MESH_DATA *)data;
-    *ierr = ZOLTAN_OK;
-    return mesh->numMyPoints;
-}
-
-static void get_object_list(void *data, int sizeGID, int sizeLID,
-                            ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-                            int wgt_dim, float *obj_wgts, int *ierr)
-{
-    int i;
-    MESH_DATA *mesh = (MESH_DATA *)data;
-    *ierr = ZOLTAN_OK;
-
-  /* In this example, return the IDs of our objects, but no weights.
-   * Zoltan will assume equally weighted objects.
-   */
-
-    for (i = 0; i < mesh->numMyPoints; i++) {
-        globalID[i] = mesh->myGlobalIDs[i];
-        localID[i] = i;
-        obj_wgts[i] = mesh->b[i];
-    }
-}
-
-static int get_num_geometry(void *data, int *ierr)
-{
-    *ierr = ZOLTAN_OK;
-    return 3;
-}
-
-static void get_geometry_list(void *data, int sizeGID, int sizeLID, int num_obj,
-                              ZOLTAN_ID_PTR globalID, ZOLTAN_ID_PTR localID,
-                              int num_dim, double *geom_vec, int *ierr)
-{
-    int i;
-
-    MESH_DATA *mesh = (MESH_DATA *)data;
-
-    if ( (sizeGID != 1) || (sizeLID != 1) || (num_dim != 3)) {
-        *ierr = ZOLTAN_FATAL;
-        return;
-    }
-
-    *ierr = ZOLTAN_OK;
-
-    for (i = 0;  i < num_obj ; i++){
-        geom_vec[3*i] = (double)mesh->x[i];
-        geom_vec[3*i + 1] = (double)mesh->y[i];
-        geom_vec[3*i + 2] = (double)mesh->z[i];
-    } 
-
-    return;
-}
-
-static void ztn_pack(void *data, int num_gid_entries, int num_lid_entries,
-              ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id,
-              int dest, int size, char *buf, int *ierr) {
-
-    SINGLE_MESH_DATA *mesh_single = (SINGLE_MESH_DATA *)buf;
-    MESH_DATA *mesh = (MESH_DATA *)data;
-
-    mesh_single->x = mesh->x[(*local_id)];
-    mesh_single->y = mesh->y[(*local_id)];
-    mesh_single->z = mesh->z[(*local_id)];
-    mesh_single->q = mesh->q[(*local_id)];
-    mesh_single->w = mesh->w[(*local_id)];
-    mesh_single->b = mesh->b[(*local_id)];
-    mesh_single->myGlobalID = mesh->myGlobalIDs[(*local_id)];
-
-    mesh->myGlobalIDs[(*local_id)] = (ZOLTAN_ID_TYPE)(-1); // Mark local particle as exported
-
-    return;
-}
-
-static void ztn_unpack(void *data, int num_gid_entries,
-                ZOLTAN_ID_PTR global_id,
-                int size, char *buf, int *ierr) {
-
-    SINGLE_MESH_DATA *mesh_single = (SINGLE_MESH_DATA *)buf;
-    MESH_DATA *mesh = (MESH_DATA *)data;
-
-    mesh->numMyPoints += 1;
-
-    mesh->myGlobalIDs = (ZOLTAN_ID_TYPE *)realloc(mesh->myGlobalIDs,
-                        sizeof(ZOLTAN_ID_TYPE) * mesh->numMyPoints);
-    mesh->x = (double *)realloc(mesh->x, sizeof(double) * mesh->numMyPoints);
-    mesh->y = (double *)realloc(mesh->y, sizeof(double) * mesh->numMyPoints);
-    mesh->z = (double *)realloc(mesh->z, sizeof(double) * mesh->numMyPoints);
-    mesh->q = (double *)realloc(mesh->q, sizeof(double) * mesh->numMyPoints);
-    mesh->w = (double *)realloc(mesh->w, sizeof(double) * mesh->numMyPoints);
-    mesh->b = (double *)realloc(mesh->b, sizeof(double) * mesh->numMyPoints);
-
-    mesh->x[mesh->numMyPoints-1] = mesh_single->x;
-    mesh->y[mesh->numMyPoints-1] = mesh_single->y;
-    mesh->z[mesh->numMyPoints-1] = mesh_single->z;
-    mesh->q[mesh->numMyPoints-1] = mesh_single->q;
-    mesh->w[mesh->numMyPoints-1] = mesh_single->w;
-    mesh->b[mesh->numMyPoints-1] = mesh_single->b;
-    mesh->myGlobalIDs[mesh->numMyPoints-1] = mesh_single->myGlobalID;
-
-    return;
-}
-
-static int ztn_obj_size(void *data, int num_gid_entries, int num_lid_entries, 
-    ZOLTAN_ID_PTR global_id, ZOLTAN_ID_PTR local_id, int *ierr)
-{
-    return sizeof(SINGLE_MESH_DATA);
 }
