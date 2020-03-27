@@ -18,25 +18,27 @@
 #include "zoltan_fns.h"
 #include "support_fns.h"
 
-const unsigned mrand = 1664525u;
-const unsigned crand = 1013904223u;
-
 
 int main(int argc, char **argv)
 {
-    /* run parameters */
-    int N, M, run_direct, slice;
-    struct RunParams *run_params = NULL;
-    int sample_size = 10000;
-    FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice);
-
     /* MPI initialization */
     int rank, numProcs;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     if (rank == 0) printf("[random cube example] Beginning random cube example with %d ranks.\n", numProcs);
+
+    /* run parameters */
+    int N, M, run_direct, slice;
+    struct RunParams *run_params = NULL;
+    FILE *fp = fopen(argv[1], "r");
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice);
+
+    if (N != M) {
+        if (rank == 0) printf("[random cube example] ERROR! This executable requires sources and targets "
+                              "be equivalent. Exiting.\n");
+        exit(1);
+    }
 
     /* Zoltan variables */
     int rc;
@@ -46,7 +48,7 @@ int main(int argc, char **argv)
     ZOLTAN_ID_PTR importGlobalGids, importLocalGids, exportGlobalGids, exportLocalGids; 
     int *importProcs, *importToPart, *exportProcs, *exportToPart;
     int *parts;
-    MESH_DATA mySources;
+    MESH_DATA mySources, myTargets;
 
     /* data structures for BaryTree calculation and comparison */
     struct Particles *sources = NULL;
@@ -73,41 +75,13 @@ int main(int argc, char **argv)
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
     
     START_TIMER(&time_run[0]);
-    
+
     /* Zoltan initialization */
     if (Zoltan_Initialize(argc, argv, &ver) != ZOLTAN_OK) {
         if (rank == 0) printf("[random cube example] Zoltan failed to initialize. Exiting.\n");
         MPI_Finalize();
         exit(0);
     }
-    
-    mySources.numGlobalPoints = sample_size * numProcs;
-    mySources.numMyPoints = sample_size;
-    mySources.x = malloc(sample_size * sizeof(double));
-    mySources.y = malloc(sample_size * sizeof(double));
-    mySources.z = malloc(sample_size * sizeof(double));
-    mySources.q = malloc(sample_size * sizeof(double));
-    mySources.w = malloc(sample_size * sizeof(double));
-    mySources.b = malloc(sample_size * sizeof(double)); // load balancing weights
-    mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * sample_size);
-
-    time_t t = time(NULL);
-    unsigned t_hashed = (unsigned) t;
-    t_hashed = mrand * t_hashed + crand;
-    srand(t_hashed ^ rank);
-    srand(1);
-
-    for (int i = 0; i < sample_size; ++i) {
-        mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
-
-        mySources.b[i] = 1.0; // dummy weighting scheme
-    }
-
 
     zz = Zoltan_Create(MPI_COMM_WORLD);
 
@@ -123,9 +97,33 @@ int main(int argc, char **argv)
 
     /* RCB parameters */
 
-    Zoltan_Set_Param(zz, "KEEP_CUTS", "1");
     Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
     Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
+
+    /* Setting up sources and load balancing */
+
+    srand(1);
+    mySources.numGlobalPoints = N * numProcs;
+    mySources.numMyPoints = N;
+    mySources.x = malloc(N*sizeof(double));
+    mySources.y = malloc(N*sizeof(double));
+    mySources.z = malloc(N*sizeof(double));
+    mySources.q = malloc(N*sizeof(double));
+    mySources.w = malloc(N*sizeof(double));
+    mySources.b = malloc(N*sizeof(double)); // load balancing weights
+    mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * N);
+
+    for (int j = 0; j < rank+1; ++j) {
+        for (int i = 0; i < N; ++i) {
+            mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.w[i] = 1.0;
+            mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+            mySources.b[i] = 1.0; // dummy weighting scheme
+        }
+    }
 
     /* Query functions, to provide geometry to Zoltan */
 
@@ -138,19 +136,19 @@ int main(int argc, char **argv)
     Zoltan_Set_Unpack_Obj_Fn(zz, ztn_unpack, &mySources);
 
     rc = Zoltan_LB_Partition(zz, /* input (all remaining fields are output) */
-        &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
-        &numGidEntries,  /* Number of integers used for a global ID */
-        &numLidEntries,  /* Number of integers used for a local ID */
-        &numImport,      /* Number of vertices to be sent to me */
-        &importGlobalGids,  /* Global IDs of vertices to be sent to me */
-        &importLocalGids,   /* Local IDs of vertices to be sent to me */
-        &importProcs,    /* Process rank for source of each incoming vertex */
-        &importToPart,   /* New partition for each incoming vertex */
-        &numExport,      /* Number of vertices I must send to other processes*/
-        &exportGlobalGids,  /* Global IDs of the vertices I must send */
-        &exportLocalGids,   /* Local IDs of the vertices I must send */
-        &exportProcs,    /* Process to which I send each of the vertices */
-        &exportToPart);  /* Partition to which each vertex will belong */
+                &changes,        /* 1 if partitioning was changed, 0 otherwise */ 
+                &numGidEntries,  /* Number of integers used for a global ID */
+                &numLidEntries,  /* Number of integers used for a local ID */
+                &numImport,      /* Number of vertices to be sent to me */
+                &importGlobalGids,  /* Global IDs of vertices to be sent to me */
+                &importLocalGids,   /* Local IDs of vertices to be sent to me */
+                &importProcs,    /* Process rank for source of each incoming vertex */
+                &importToPart,   /* New partition for each incoming vertex */
+                &numExport,      /* Number of vertices I must send to other processes*/
+                &exportGlobalGids,  /* Global IDs of the vertices I must send */
+                &exportLocalGids,   /* Local IDs of the vertices I must send */
+                &exportProcs,    /* Process to which I send each of the vertices */
+                &exportToPart);  /* Partition to which each vertex will belong */
 
     int i = 0;
     while (i < mySources.numMyPoints) {
@@ -171,23 +169,45 @@ int main(int argc, char **argv)
         printf("[random cube example] Error! Zoltan has failed. Exiting. \n");
         MPI_Finalize();
         Zoltan_Destroy(&zz);
-        exit(0);
+        exit(1);
     }
 
-    double xmin = minval(mySources.x, mySources.numMyPoints);
-    double ymin = minval(mySources.y, mySources.numMyPoints);
-    double zmin = minval(mySources.z, mySources.numMyPoints);
-    double xmax = maxval(mySources.x, mySources.numMyPoints);
-    double ymax = maxval(mySources.y, mySources.numMyPoints);
-    double zmax = maxval(mySources.z, mySources.numMyPoints);
-
-
-    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
-                        &importProcs, &importToPart);
-    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, 
-                        &exportProcs, &exportToPart);
+    Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, &importProcs, &importToPart);
+    Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
     Zoltan_Destroy(&zz);
 
+    /* Setting up sources with MPI-allocated source arrays for RMA use */
+    
+    sources = malloc(sizeof(struct Particles));
+    sources->num = mySources.numMyPoints;
+    
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->y));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->z));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->q));
+    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->w));
+    memcpy(sources->x, mySources.x, sources->num * sizeof(double));
+    memcpy(sources->y, mySources.y, sources->num * sizeof(double));
+    memcpy(sources->z, mySources.z, sources->num * sizeof(double));
+    memcpy(sources->q, mySources.q, sources->num * sizeof(double));
+    memcpy(sources->w, mySources.w, sources->num * sizeof(double));
+    
+    /* Setting up targets */
+    
+    targets = malloc(sizeof(struct Particles));
+    targets->num = mySources.numMyPoints;
+    
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->x));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->y));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->z));
+    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->q));
+    memcpy(targets->x, mySources.x, targets->num * sizeof(double));
+    memcpy(targets->y, mySources.y, targets->num * sizeof(double));
+    memcpy(targets->z, mySources.z, targets->num * sizeof(double));
+    memcpy(targets->q, mySources.q, targets->num * sizeof(double));
+
+    /* Deallocating arrays used for Zoltan load balancing */
+    
     free(mySources.x);
     free(mySources.y);
     free(mySources.z);
@@ -198,54 +218,16 @@ int main(int argc, char **argv)
 
     if (rank == 0) printf("[random cube example] Zoltan load balancing has finished.\n");
 
-
-    sources = malloc(sizeof(struct Particles));
-    sources->num = N;
-
-    targets = malloc(sizeof(struct Particles));
-    targets->num = M;
-    potential = malloc(targets->num * sizeof(double));
-    memset(potential, 0, targets->num * sizeof(double));
+    /* Initializing direct and treedriver runs */
 
     targets_sample = malloc(sizeof(struct Particles));
-    targets_sample->num = targets->num / slice;
-    potential_direct = malloc(targets_sample->num * sizeof(double));
-    memset(potential_direct, 0, targets_sample->num * sizeof(double));
 
+    potential = malloc(sizeof(double) * mySources.numMyPoints);
+    potential_direct = malloc(sizeof(double) * mySources.numMyPoints);
 
-    /* MPI-allocated source and target arrays for RMA use */
-    
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->y));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->z));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->q));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->w));
+    memset(potential, 0, targets->num * sizeof(double));
+    memset(potential_direct, 0, targets->num * sizeof(double));
 
-    /* Generating sources and targets based on Zoltan bounding box */
-    
-    for (int i = 0; i < sources->num; ++i) {
-        sources->x[i] = ((double)rand()/(double)(RAND_MAX)) * (xmax-xmin) + xmin;
-        sources->y[i] = ((double)rand()/(double)(RAND_MAX)) * (ymax-ymin) + ymin;
-        sources->z[i] = ((double)rand()/(double)(RAND_MAX)) * (zmax-zmin) + zmin;
-        sources->q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        sources->w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-    }
-
-    /* MPI-allocated target arrays for RMA use */
-    
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->x));
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->y));
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->z));
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->q));
-
-    /* Generating targets based on Zoltan bounding box */
-    
-    for (int i = 0; i < targets->num; ++i) {
-        targets->x[i] = ((double)rand()/(double)(RAND_MAX)) * (xmax-xmin) + xmin;
-        targets->y[i] = ((double)rand()/(double)(RAND_MAX)) * (ymax-ymin) + ymin;
-        targets->z[i] = ((double)rand()/(double)(RAND_MAX)) * (zmax-zmin) + zmin;
-        targets->q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-    }
 
 #ifdef OPENACC_ENABLED
     #pragma acc set device_num(rank) device_type(acc_device_nvidia)
@@ -261,9 +243,8 @@ int main(int argc, char **argv)
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     if (run_direct == 1) {
-    
-        if (rank == 0) printf("[random cube example] Running direct comparison...\n");
 
+        targets_sample->num = targets->num / slice;
         targets_sample->x = malloc(targets_sample->num * sizeof(double));
         targets_sample->y = malloc(targets_sample->num * sizeof(double));
         targets_sample->z = malloc(targets_sample->num * sizeof(double));
@@ -275,6 +256,8 @@ int main(int argc, char **argv)
             targets_sample->z[i] = targets->z[i*slice];
             targets_sample->q[i] = targets->q[i*slice];
         }
+
+        if (rank == 0) printf("[random cube example] Running direct comparison...\n");
 
         START_TIMER(&time_run[1]);
         directdriver(sources, targets_sample, run_params, potential_direct, time_direct);
@@ -289,18 +272,18 @@ int main(int argc, char **argv)
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
-
+    
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Running treecode
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+    
     if (rank == 0) printf("[random cube example] Running treedriver...\n");
 
     START_TIMER(&time_run[2]);
     treedriver(sources, targets, run_params, potential, time_tree);
     STOP_TIMER(&time_run[2]);
-    
+
     
     MPI_Barrier(MPI_COMM_WORLD);
     /* Ending total runtime timer */

@@ -4,12 +4,12 @@ Examples
 This examples folder builds six executables:
 
 1. __random_cube_cpu__ and __random_cube_gpu__
-2. __random_cube_large_cpu__ and __random_cube_large_gpu__
+2. __random_cube_reproducible_cpu__ and __random_cube_reproducible_gpu__
 3. __testBaryTreeInterface_cpu__ and __testBaryTreeInterface_gpu__
 
 - - -
 
-#### __random_cube__ and __random_cube_large__
+#### __random_cube__ and __random_cube_reproducible__
 
 All of the random cube examples demonstrate the treecode's performance
 using a cube of uniformly distributed random particles, load balanced
@@ -37,27 +37,29 @@ The parameters that can be specified in the infile are as follows:
 | `kernel_name`     | Name of interaction kernel: `yukawa` or `coulomb`.
 | `approximation`   | Type of polynomial: `lagrange` and `hermite`. 
 | `size_check`      | If the product of this parameter and the number of interpolation points in a cluster is greater than the number of particles in the cluster, then the interaction will be performed directly even if the MAC is accepted.
-| `run_direct`      | Run direct calculation for error comparison. `1` is yes, `0` is no.
+| `run_direct`      | Run direct calculation for error comparison: `on` or `off`.
 | `verbosity`       | Determines verbosity level of output. `0` is quiet, `1` is verbose.
 | `slice`           | Determines the proportion of target sites at which the direct calculation is performed for error comparison.
 | `kernel_params`   | Comma separated list of parameters for given kernel.
 
 Note the difference between these executables:
 
-- The __random_cube__ examples are designed for reproducibility
-of results. Given a total number of particles across all ranks, the
-actual random particles will be the same no matter how many ranks
-are used.
-
-- The __random_cube_large__ examples are designed to test the
+- The __random_cube__ examples are designed to test the
 problem size limits of the treecode by overcoming limits in Zoltan's
-maximum array sizes. Unlike the __random_cube__ examples, which first 
+maximum array sizes. Unlike the __random_cube_reproducible__ examples, which first 
 generate all random particles and then use Zoltan to load balance them,
 these examples generate a small number of particles, load balances
 them, determines the resulting bounding boxes, and then generates the
 specified number of random particles in those bounding boxes. The results
-produced in terms of performanc and accuracy should be very similar to
-the __random_cube__ examples.
+produced in terms of performance and accuracy should be very similar to
+the __random_cube_reproducible__ examples.
+
+- The __random_cube_reproducible__ examples are designed for reproducibility
+of results. Given a total number of particles across all ranks, the
+actual random particles will be the same no matter how many ranks
+are used (given that the executable is run on the same computational
+resource). Additionally, this example requires that the number of sources
+and targets be equal.
 
 - - -
 
