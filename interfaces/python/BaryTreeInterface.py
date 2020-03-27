@@ -53,7 +53,7 @@ except OSError:
     try:
         _gpu_treecodeRoutines = ctypes.CDLL('libBaryTree_gpu.dylib')
     except OSError:
-        print("Could not load GPU treecode library.") 
+        print("Warning: Could not load GPU BaryTree library.  Ignore if not using GPUs.") 
         
     
 """ Set argtypes of the wrappers. """
@@ -64,7 +64,7 @@ try:
             ctypes.POINTER(ctypes.c_double), Kernel, ctypes.c_int, ctypes.POINTER(ctypes.c_double), Singularity, Approximation, ComputeType,
             ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_double,  ctypes.c_int )
 except NameError:
-    print("Could not set argtypes of _gpu_treecodeRoutines")
+    print("Warning: Could not set argtypes of _gpu_treecodeRoutines.  Ignore if not using GPUs.")
 
 try:
     _cpu_treecodeRoutines.BaryTreeInterface.argtypes = ( ctypes.c_int, ctypes.c_int,
@@ -73,9 +73,7 @@ try:
             ctypes.POINTER(ctypes.c_double), Kernel, ctypes.c_int, ctypes.POINTER(ctypes.c_double),  Singularity, Approximation, ComputeType,
             ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_double,  ctypes.c_int )
 except NameError:
-    print("Could not set argtypes of _cpu_treecodeRoutines")
-
-print('_treecodeRoutines set.')
+    print("Could not set argtypes of _cpu_treecodeRoutines.")
 
 
 

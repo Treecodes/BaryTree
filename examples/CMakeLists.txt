@@ -23,7 +23,7 @@ if(BUILD_EXAMPLES)
       target_link_libraries(random_cube_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
       install(TARGETS random_cube_gpu DESTINATION bin)
    
-      add_executable(random_cube_reproducible_gpu random_cube_large.c ${AUX_SRCS})
+      add_executable(random_cube_reproducible_gpu random_cube_reproducible.c ${AUX_SRCS})
       target_link_libraries(random_cube_reproducible_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
       install(TARGETS random_cube_reproducible_gpu DESTINATION bin)
 
