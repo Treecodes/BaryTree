@@ -4,7 +4,6 @@
 #else
     #include <math.h>
 #endif
-#include <float.h>
 #include <stdio.h>
 
 #include "../../run_params/struct_run_params.h"
@@ -21,6 +20,7 @@ void K_Atan_Direct(int number_of_targets_in_batch, int number_of_source_points_i
     double domainLength = run_params->kernel_params[0];
     double delta = run_params->kernel_params[1];
     double wadj = 1. / (1. - delta / sqrt(1. + delta * delta));
+    double atan_tol = 1e-15;
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
@@ -44,8 +44,8 @@ void K_Atan_Direct(int number_of_targets_in_batch, int number_of_source_points_i
             int jj = starting_index_of_source + j;
             double dz = (tz - source_z[jj]) / domainLength;
 
-            if (fabs(dz - 0.5) > DBL_MIN) {
-                if (fabs(dz + 0.5) > DBL_MIN) {
+            if (fabs(dz - 0.5) > atan_tol) {
+                if (fabs(dz + 0.5) > atan_tol) {
 
                     double modz = fmod(0.5 - dz, 1.0);
                     modz += (0.5 - dz < 0 ? 1.0 : 0);
