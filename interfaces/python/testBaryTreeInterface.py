@@ -45,7 +45,7 @@ if __name__=="__main__":
     Z = np.random.rand(N)
     W = np.ones(N)   # W stores quadrature weights for convolution integrals.  For particle simulations, set = ones.
     
-    expectedOutput = -977.407950538299  # using seed of 1, this is expected value of first element of output array.
+    expectedOutput = 78.80837936788004  # using seed of 1, this is expected value of first element of output array.
     
 
     # call the treecode
@@ -56,9 +56,8 @@ if __name__=="__main__":
                                  kernel, numberOfKernelParameters, kernelParameters,
                                  singularity, approximation, computeType,
                                  treecodeOrder, theta, maxPerSourceLeaf, maxPerTargetLeaf,
-                                 GPUpresent, verbosity)
+                                 GPUpresent, verbosity, sizeCheck=1.0)
 
-    
     assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output."
     print("If no errors printed, then the call to the treecode wrapper worked!")
 

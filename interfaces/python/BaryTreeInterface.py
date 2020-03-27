@@ -84,7 +84,7 @@ def callTreedriver(numTargets, numSources,
                    targetX, targetY, targetZ, targetValue, 
                    sourceX, sourceY, sourceZ, sourceValue, sourceWeight,
                    kernelName, numberOfKernelParameters, kernelParameters, singularityHandling,
-                   approximationName, computeType, order, theta, maxParNode, batchSize, GPUversion, verbosity):
+                   approximationName, computeType, order, theta, maxParNode, batchSize, GPUpresent, verbosity, sizeCheck=None):
     '''
     python function which creates pointers to the arrays and calls treedriverWrapper.
     returns the results array.
@@ -108,18 +108,20 @@ def callTreedriver(numTargets, numSources,
     resultArray = np.zeros(numTargets)
     resultArray_p = resultArray.ctypes.data_as(c_double_p)
     
-    sizeCheck = 1.0
-    if approximationName == Approximation.HERMITE:
-        sizeCheck = 4.0
+    if not sizeCheck:
+        if approximationName == Approximation.LAGRANGE:
+            sizeCheck = 1.0
+        if approximationName == Approximation.HERMITE:
+            sizeCheck = 4.0
     
-    if GPUversion==True:
+    if GPUpresent==True:
         _gpu_treecodeRoutines.BaryTreeInterface(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
                                                 targetX_p, targetY_p, targetZ_p, targetValue_p,
                                                 sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
                                                 resultArray_p, kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
                                                 singularityHandling, approximationName, computeType,
                                                 ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_double(sizeCheck), ctypes.c_int(verbosity) )
-    elif GPUversion==False: # No gpu present
+    elif GPUpresent==False: # No gpu present
         _cpu_treecodeRoutines.BaryTreeInterface(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
                                                 targetX_p, targetY_p, targetZ_p, targetValue_p,
                                                 sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
@@ -127,7 +129,7 @@ def callTreedriver(numTargets, numSources,
                                                 singularityHandling, approximationName, computeType,
                                                 ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_double(sizeCheck), ctypes.c_int(verbosity) )
     else: 
-        print("What should GPUversion be set to in the wrapper?")
+        print("What should GPUpresent be set to in the wrapper?")
         exit(-1) 
     
     
