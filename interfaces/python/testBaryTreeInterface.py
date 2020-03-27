@@ -45,14 +45,14 @@ if __name__=="__main__":
     Z = np.random.rand(N)
     W = np.ones(N)   # W stores quadrature weights for convolution integrals.  For particle simulations, set = ones.
     
-    expectedOutput = 78.80837936788004  # using seed of 1, this is expected value of first element of output array.
+    expectedOutput = 588.7432483318685  # using seed of 1, this is expected value of first element of output array.
     
 
     # call the treecode
         
     output = BT.callTreedriver(  N, N,
                                  X, Y, Z, RHO,
-                                 X, Y, Z, RHO, W,
+                                 np.copy(X), np.copy(Y), np.copy(Z), np.copy(RHO), np.copy(W),
                                  kernel, numberOfKernelParameters, kernelParameters,
                                  singularity, approximation, computeType,
                                  treecodeOrder, theta, maxPerSourceLeaf, maxPerTargetLeaf,
