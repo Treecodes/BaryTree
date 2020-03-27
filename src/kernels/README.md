@@ -26,4 +26,4 @@ Steps for adding a new kernel named `custom-kernel` with support for particle-cl
 
 7. Add your files to `src/CMakeLists.txt`:
 	1. Add `custom-kernel_direct.c`, `custom-kernel_direct.h`, `custom-kernel_pc.c`, `custom-kernel_pc.h`, and `kernels/custom_kernel.h` to a new `SRCS_K_CUSTOM_KERNEL` list, following the format of the other kernels.
-	2. Add `${SRCS_K_CUSTOM_KERNEL}` to the `${SRCS_KERNELS}` list.
+	2. Add `${SRCS_K_CUSTOM_KERNEL}` to the `SRCS_KERNELS` list.
