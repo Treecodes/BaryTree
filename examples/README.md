@@ -37,7 +37,7 @@ The parameters that can be specified in the infile are as follows:
 | `kernel_name`     | Name of interaction kernel: `yukawa` or `coulomb`.
 | `approximation`   | Type of polynomial: `lagrange` and `hermite`. 
 | `size_check`      | If the product of this parameter and the number of interpolation points in a cluster is greater than the number of particles in the cluster, then the interaction will be performed directly even if the MAC is accepted.
-| `run_direct`      | Run direct calculation for error comparison: `on` or `off`
+| `run_direct`      | Run direct calculation for error comparison: `on` or `off`.
 | `verbosity`       | Determines verbosity level of output. `0` is quiet, `1` is verbose.
 | `slice`           | Determines the proportion of target sites at which the direct calculation is performed for error comparison.
 | `kernel_params`   | Comma separated list of parameters for given kernel.
