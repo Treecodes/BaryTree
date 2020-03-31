@@ -1,29 +1,35 @@
 if(BUILD_EXAMPLES)
 
-   add_executable(random_cube_cpu random_cube.c)
+   set (AUX_SRCS
+        zoltan_fns.h
+        zoltan_fns.c
+        support_fns.h
+        support_fns.c)
+
+   add_executable(random_cube_cpu random_cube.c ${AUX_SRCS})
    target_link_libraries(random_cube_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
    install(TARGETS random_cube_cpu DESTINATION bin)
    
-   add_executable(random_cube_large_cpu random_cube_large.c)
-   target_link_libraries(random_cube_large_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
-   install(TARGETS random_cube_large_cpu DESTINATION bin)
+   add_executable(random_cube_reproducible_cpu random_cube_reproducible.c ${AUX_SRCS})
+   target_link_libraries(random_cube_reproducible_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
+   install(TARGETS random_cube_reproducible_cpu DESTINATION bin)
 
-   add_executable(testBaryTreeInterface_cpu testBaryTreeInterface.c)
-   target_link_libraries(testBaryTreeInterface_cpu PRIVATE BaryTree_cpu)
-   install(TARGETS testBaryTreeInterface_cpu DESTINATION bin)
+   add_executable(test_BaryTreeInterface_cpu test_BaryTreeInterface.c)
+   target_link_libraries(test_BaryTreeInterface_cpu PRIVATE BaryTree_cpu)
+   install(TARGETS test_BaryTreeInterface_cpu DESTINATION bin)
    
    if(ENABLE_GPU_BUILD)
-      add_executable(random_cube_gpu random_cube.c)
+      add_executable(random_cube_gpu random_cube.c ${AUX_SRCS})
       target_link_libraries(random_cube_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
       install(TARGETS random_cube_gpu DESTINATION bin)
    
-      add_executable(random_cube_large_gpu random_cube_large.c)
-      target_link_libraries(random_cube_large_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
-      install(TARGETS random_cube_large_gpu DESTINATION bin)
+      add_executable(random_cube_reproducible_gpu random_cube_reproducible.c ${AUX_SRCS})
+      target_link_libraries(random_cube_reproducible_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
+      install(TARGETS random_cube_reproducible_gpu DESTINATION bin)
 
-      add_executable(testBaryTreeInterface_gpu testBaryTreeInterface.c)
-      target_link_libraries(testBaryTreeInterface_gpu PRIVATE BaryTree_gpu)
-      install(TARGETS testBaryTreeInterface_gpu DESTINATION bin)
+      add_executable(test_BaryTreeInterface_gpu test_BaryTreeInterface.c)
+      target_link_libraries(test_BaryTreeInterface_gpu PRIVATE BaryTree_gpu)
+      install(TARGETS test_BaryTreeInterface_gpu DESTINATION bin)
    endif()
 
 endif()

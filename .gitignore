@@ -4,10 +4,12 @@
 *.cproject
 *org.eclipse*
 *.settings*
-*.o
+*.tsv
+*.csv
 *.xml
 *.prefs
 build/
 .project
 .cproject
 .pydevproject
+interfaces/python/__pycache__
