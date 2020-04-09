@@ -18,6 +18,7 @@
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
+#include "../kernels/mq/mq.h"
 
 #include "interaction_compute.h"
 
@@ -374,6 +375,27 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                     }
                 }
 
+
+    /***************************************/
+    /******************* MQ ****************/
+    /***************************************/
+
+            } else if (run_params->kernel == MQ) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                        K_MQ_PC_Lagrange(num_targets_in_batch,
+                                    interp_pts_per_cluster, batch_start, cluster_start,
+                                    target_x, target_y, target_z,
+                                    cluster_x, cluster_y, cluster_z, cluster_q,
+                                    run_params, potential_approx, stream_id);
+
+                } else if (run_params->approximation == HERMITE) {
+
+                    printf("**ERROR** NOT SET UP FOR PC MQ HERMITE.  EXITING.\n");
+                    exit(1);
+                }
+
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -505,6 +527,20 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == ATAN) {
 
                 K_Atan_Direct(num_targets_in_batch, num_sources_in_cluster,
+                            batch_start, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q, source_w,
+                            run_params, potential_direct, stream_id);
+
+
+
+    /***************************************/
+    /********* MQ ************************/
+    /***************************************/
+
+            } else if (run_params->kernel == MQ) {
+
+                K_MQ_Direct(num_targets_in_batch, num_sources_in_cluster,
                             batch_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,

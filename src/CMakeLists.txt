@@ -163,13 +163,23 @@ SET(SRCS_K_SIN_OVER_R
     kernels/sin-over-r/sin-over-r_cp.h
     kernels/sin-over-r/sin-over-r_cp.c)
 
+SET(SRCS_K_MQ
+    kernels/mq/mq.h
+    kernels/mq/mq_direct.h
+    kernels/mq/mq_direct.c
+    kernels/mq/mq.h
+    kernels/mq/mq_pc.c)
+#    kernels/mq/mq_cp.h
+#    kernels/mq/mq_cp.c)
+
 
 SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_YUKAWA}
                  ${SRCS_K_REGULARIZED_COULOMB}
                  ${SRCS_K_REGULARIZED_YUKAWA}
                  ${SRCS_K_ATAN}
-                 ${SRCS_K_SIN_OVER_R})
+                 ${SRCS_K_SIN_OVER_R}
+                 ${SRCS_K_MQ})
 
 
 set(TRGT BaryTree_cpu)
