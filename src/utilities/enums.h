@@ -12,7 +12,8 @@ typedef enum KERNEL
     ATAN,
     TCF,
     DCF,
-    SIN_OVER_R
+    SIN_OVER_R,
+    MQ
 } KERNEL;
 
 

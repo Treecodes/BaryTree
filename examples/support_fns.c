@@ -146,6 +146,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     
     } else if (strcasecmp(kernel_string, "ATAN") == 0) {
         kernel = ATAN;
+
+    } else if (strcasecmp(kernel_string, "MQ") == 0) {
+        kernel = MQ;
     
     } else if (strcasecmp(kernel_string, "TCF") == 0) {
         kernel = TCF;
@@ -156,8 +159,6 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     } else if ((strcasecmp(kernel_string, "SIN_OVER_R") == 0)
             || (strcasecmp(kernel_string, "SIN-OVER-R") == 0)) {
         kernel = SIN_OVER_R;
-    
-    } else if (strcasecmp(kernel_string, "ATAN") == 0) {
     
     } else {
         if (rank == 0) {

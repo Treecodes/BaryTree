@@ -24,7 +24,6 @@ void K_RegularizedCoulomb_PC_Lagrange(int number_of_targets_in_batch, int number
     #pragma acc loop independent
 #endif	
     for (int i = 0; i < number_of_targets_in_batch; i++) {
-
         double temporary_potential = 0.0;
 
         double tx = target_x[starting_index_of_target + i];
