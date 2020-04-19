@@ -20,7 +20,7 @@ void K_Atan_Direct(int number_of_targets_in_batch, int number_of_source_points_i
     double domainLength = run_params->kernel_params[0];
     double delta = run_params->kernel_params[1];
     double wadj = 1. / (1. - delta / sqrt(1. + delta * delta));
-    double atan_tol = 1e-15;
+    double delta_factor = sqrt(1. + 1.0 / (delta * delta));
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
@@ -40,23 +40,17 @@ void K_Atan_Direct(int number_of_targets_in_batch, int number_of_source_points_i
         #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_source_points_in_cluster; j++) {
-
             int jj = starting_index_of_source + j;
             double dz = (tz - source_z[jj]) / domainLength;
 
-            if (fabs(dz - 0.5) > atan_tol) {
-                if (fabs(dz + 0.5) > atan_tol) {
-
-                    double modz = fmod(0.5 - dz, 1.0);
-                    modz += (0.5 - dz < 0 ? 1.0 : 0);
-
-                    temporary_potential += source_charge[jj] * source_weight[jj] 
-                                         * (1. / M_PI * atan(sqrt(1. + 1. / (delta * delta)) * tan(M_PI * dz))
-                                         + modz - 0.5);
-                }
+            if (dz < -0.5) {
+                dz += 1.0;
             }
-
-
+            if (dz > 0.5) {
+                dz -= 1.0;
+            }
+            temporary_potential += source_charge[jj] * source_weight[jj] 
+          			* (1.0 / M_PI * atan(delta_factor * tan(M_PI * dz)) - dz);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
