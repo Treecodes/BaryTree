@@ -444,7 +444,8 @@ void cc_compute_interaction_list_1(
 
             if (direct_index_counter[target_tree_node] >= sizeof_direct_list[target_tree_node]) {
                 sizeof_direct_list[target_tree_node] *= 1.5;
-                target_direct_list[target_tree_node] = realloc_vector(target_direct_list[target_tree_node],                                                         sizeof_direct_list[target_tree_node]);
+                target_direct_list[target_tree_node] = realloc_vector(target_direct_list[target_tree_node],
+                                                                      sizeof_direct_list[target_tree_node]);
             }
 
             target_direct_list[target_tree_node][direct_index_counter[target_tree_node]] = source_tree_node;
@@ -523,7 +524,8 @@ void cc_compute_interaction_list_2(
 
             if (direct_index_counter[target_tree_node] >= sizeof_direct_list[target_tree_node]) {
                 sizeof_direct_list[target_tree_node] *= 1.5;
-                target_direct_list[target_tree_node] = realloc_vector(target_direct_list[target_tree_node],                                                         sizeof_direct_list[target_tree_node]);
+                target_direct_list[target_tree_node] = realloc_vector(target_direct_list[target_tree_node],
+                                                                      sizeof_direct_list[target_tree_node]);
             }
 
             target_direct_list[target_tree_node][direct_index_counter[target_tree_node]] = source_tree_node;
