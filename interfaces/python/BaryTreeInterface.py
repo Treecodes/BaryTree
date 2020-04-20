@@ -21,6 +21,7 @@ class Kernel(CEnum):
     TCF = 6
     DCF = 7
     SIN_OVER_R = 8
+    MQ = 9
     
 class Singularity(CEnum):
     NO_SINGULARITY = 0

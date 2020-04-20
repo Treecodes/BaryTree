@@ -15,6 +15,7 @@
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
+#include "../kernels/mq/mq.h"
 
 #include "interaction_compute.h"
 
@@ -164,6 +165,17 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == SIN_OVER_R) {
 
             K_SinOverR_Direct(num_targets, num_sources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q, source_w,
+                        run_params, potential, 0);
+
+    /***************************************/
+    /************ MQ ***********************/
+    /***************************************/
+
+    } else if (run_params->kernel == MQ) {
+
+            K_MQ_Direct(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, potential, 0);

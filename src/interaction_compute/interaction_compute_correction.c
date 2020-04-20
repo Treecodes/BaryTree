@@ -13,6 +13,7 @@
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
+#include "../kernels/mq/mq.h"
 
 #include "interaction_compute.h"
 
