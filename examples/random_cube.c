@@ -33,10 +33,18 @@ int main(int argc, char **argv)
     
     /* run parameters */
     int N, M, run_direct, slice;
-    struct RunParams *run_params = NULL;
+    double xyz_limits[6];
+    DISTRIBUTION distribution;
     int sample_size = 10000;
+    
+    struct RunParams *run_params = NULL;
+    
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice);
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution);
+    
+    double xmin = xyz_limits[0], xmax = xyz_limits[1];
+    double ymin = xyz_limits[2], ymax = xyz_limits[3];
+    double zmin = xyz_limits[4], zmax = xyz_limits[5];
 
     /* Zoltan variables */
     int rc;
@@ -98,11 +106,9 @@ int main(int argc, char **argv)
     srand(1);
 
     for (int i = 0; i < sample_size; ++i) {
-        mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        mySources.w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        mySources.x[i] = Point_Set_Init(distribution);
+        mySources.y[i] = Point_Set_Init(distribution);
+        mySources.z[i] = Point_Set_Init(distribution);
         mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
 
         mySources.b[i] = 1.0; // dummy weighting scheme
@@ -158,8 +164,6 @@ int main(int argc, char **argv)
             mySources.x[i] = mySources.x[mySources.numMyPoints-1];
             mySources.y[i] = mySources.y[mySources.numMyPoints-1];
             mySources.z[i] = mySources.z[mySources.numMyPoints-1];
-            mySources.q[i] = mySources.q[mySources.numMyPoints-1];
-            mySources.w[i] = mySources.w[mySources.numMyPoints-1];
             mySources.myGlobalIDs[i] = mySources.myGlobalIDs[mySources.numMyPoints-1];
             mySources.numMyPoints--; 
         } else {
@@ -174,12 +178,12 @@ int main(int argc, char **argv)
         exit(0);
     }
 
-    double xmin = minval(mySources.x, mySources.numMyPoints);
-    double ymin = minval(mySources.y, mySources.numMyPoints);
-    double zmin = minval(mySources.z, mySources.numMyPoints);
-    double xmax = maxval(mySources.x, mySources.numMyPoints);
-    double ymax = maxval(mySources.y, mySources.numMyPoints);
-    double zmax = maxval(mySources.z, mySources.numMyPoints);
+    double zz_bound_x_min = minval(mySources.x, mySources.numMyPoints);
+    double zz_bound_y_min = minval(mySources.y, mySources.numMyPoints);
+    double zz_bound_z_min = minval(mySources.z, mySources.numMyPoints);
+    double zz_bound_x_max = maxval(mySources.x, mySources.numMyPoints);
+    double zz_bound_y_max = maxval(mySources.y, mySources.numMyPoints);
+    double zz_bound_z_max = maxval(mySources.z, mySources.numMyPoints);
 
 
     Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, 
@@ -224,11 +228,11 @@ int main(int argc, char **argv)
     /* Generating sources and targets based on Zoltan bounding box */
     
     for (int i = 0; i < sources->num; ++i) {
-        sources->x[i] = ((double)rand()/(double)(RAND_MAX)) * (xmax-xmin) + xmin;
-        sources->y[i] = ((double)rand()/(double)(RAND_MAX)) * (ymax-ymin) + ymin;
-        sources->z[i] = ((double)rand()/(double)(RAND_MAX)) * (zmax-zmin) + zmin;
-        sources->q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-        sources->w[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        sources->x[i] = Point_Set(distribution, zz_bound_x_min, zz_bound_x_max) * (xmax-xmin) + xmin;
+        sources->y[i] = Point_Set(distribution, zz_bound_y_min, zz_bound_y_max) * (ymax-ymin) + ymin;
+        sources->z[i] = Point_Set(distribution, zz_bound_z_min, zz_bound_z_max) * (zmax-zmin) + zmin;
+        sources->q[i] = Point_Set(UNIFORM, -1., 1.);
+        sources->w[i] = Point_Set(UNIFORM, -1., 1.);
     }
 
     /* MPI-allocated target arrays for RMA use */
@@ -241,10 +245,10 @@ int main(int argc, char **argv)
     /* Generating targets based on Zoltan bounding box */
     
     for (int i = 0; i < targets->num; ++i) {
-        targets->x[i] = ((double)rand()/(double)(RAND_MAX)) * (xmax-xmin) + xmin;
-        targets->y[i] = ((double)rand()/(double)(RAND_MAX)) * (ymax-ymin) + ymin;
-        targets->z[i] = ((double)rand()/(double)(RAND_MAX)) * (zmax-zmin) + zmin;
-        targets->q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        targets->x[i] = Point_Set(distribution, zz_bound_x_min, zz_bound_x_max) * (xmax-xmin) + xmin;
+        targets->y[i] = Point_Set(distribution, zz_bound_y_min, zz_bound_y_max) * (ymax-ymin) + ymin;
+        targets->z[i] = Point_Set(distribution, zz_bound_z_min, zz_bound_z_max) * (zmax-zmin) + zmin;
+        targets->q[i] = Point_Set(UNIFORM, -1., 1.);
     }
 
 #ifdef OPENACC_ENABLED

@@ -9,6 +9,7 @@ kernel_name           coulomb
 kernel_params         1.0
 approximation         lagrange
 compute_type          particle-cluster
+distribution          uniform
 run_direct            1
 slice                 10
 verbosity             1

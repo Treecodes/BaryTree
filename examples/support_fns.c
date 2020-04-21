@@ -10,24 +10,29 @@
 
 #include "support_fns.h"
 
+static double erfinv (double x);
 
-void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice)
+
+void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
+                  double *xyz_limits, DISTRIBUTION *distribution)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
+    /* BaryTree params */
     int verbosity = 0;
     int interp_order = 5; 
     double theta = 0.5; 
     int max_per_source_leaf = 500;
     int max_per_target_leaf = 500; 
     double size_check_factor = 1.0;
-
+    
     char kernel_string[256]        = "COULOMB";
     char singularity_string[256]   = "SKIPPING";
     char approximation_string[256] = "LAGRANGE";
     char compute_type_string[256]  = "PARTICLE_CLUSTER";
     char run_direct_string[256]    = "OFF";
+    char distribution_string[256]  = "UNIFORM";
 
     KERNEL kernel;
     SINGULARITY singularity;
@@ -37,9 +42,17 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     int num_kernel_params = 0;
     double kernel_params[32];
 
+    /* random_cube_example params */
     *N = 10000; 
     *M = 10000;
     *slice = 1;
+    
+    xyz_limits[0] = -1.;
+    xyz_limits[1] =  1.;
+    xyz_limits[2] = -1.;
+    xyz_limits[3] =  1.;
+    xyz_limits[4] = -1.;
+    xyz_limits[5] =  1.;
 
 
     char c[256], c1[256], c2[256];
@@ -47,7 +60,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     while (fgets(c, 256, fp) != NULL) {
         sscanf(c, "%s %s", c1, c2);
     
-        // Parameters for the RunParam struct
+        /* Parameters for the RunParam struct */
         if (strcmp(c1, "order") == 0) {
             interp_order = atoi(c2);
 
@@ -86,7 +99,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         } else if (strcmp(c1, "verbosity") == 0) {
             verbosity = atoi(c2);
 
-        // Other run parameters
+        /* Other run parameters */
         } else if (strcmp(c1, "num_particles") == 0) {
             *N = atoi(c2);
             *M = atoi(c2);
@@ -102,6 +115,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 
         } else if (strcmp(c1, "slice") == 0) {
             *slice = atoi(c2);
+            
+        } else if (strcmp(c1, "distribution") == 0) {
+            strcpy(distribution_string, c2);
 
         } else {
             if (rank == 0) {
@@ -111,25 +127,8 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         }
     }
     
-    
-    if ((strcasecmp(run_direct_string, "ON")  == 0)
-     || (strcasecmp(run_direct_string, "YES") == 0)
-     || (strcasecmp(run_direct_string, "1")   == 0)) {
-        *run_direct = 1;
-        
-    } else if ((strcasecmp(run_direct_string, "OFF") == 0)
-            || (strcasecmp(run_direct_string, "NO")  == 0)
-            || (strcasecmp(run_direct_string, "0")   == 0)) {
-        *run_direct = 0;
-    } else {
-        if (rank == 0) {
-            printf("[random cube example] ERROR! Undefined run direct token \"%s\". Exiting.\n",
-                   run_direct_string);
-        }
-        exit(1);
-    }
 
-
+    /* Validating tokens for RunParam struct */
     if (strcasecmp(kernel_string, "COULOMB") == 0) {
         kernel = COULOMB;
 
@@ -217,6 +216,44 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         }
         exit(1);
     }
+    
+    
+    /* Validating other tokens */
+    if ((strcasecmp(run_direct_string, "ON")  == 0)
+     || (strcasecmp(run_direct_string, "YES") == 0)
+     || (strcasecmp(run_direct_string, "1")   == 0)) {
+        *run_direct = 1;
+        
+    } else if ((strcasecmp(run_direct_string, "OFF") == 0)
+            || (strcasecmp(run_direct_string, "NO")  == 0)
+            || (strcasecmp(run_direct_string, "0")   == 0)) {
+        *run_direct = 0;
+    } else {
+        if (rank == 0) {
+            printf("[random cube example] ERROR! Undefined run direct token \"%s\". Exiting.\n",
+                   run_direct_string);
+        }
+        exit(1);
+    }
+    
+    
+    if (strcasecmp(distribution_string, "UNIFORM") == 0) {
+        *distribution = UNIFORM;
+        
+    } else if ((strcasecmp(distribution_string, "GAUSSIAN") == 0)
+            || (strcasecmp(distribution_string, "NORMAL") == 0)) {
+        *distribution = GAUSSIAN;
+        
+    } else if (strcasecmp(distribution_string, "EXPONENTIAL") == 0) {
+        *distribution = EXPONENTIAL;
+        
+    } else {
+        if (rank == 0) {
+            printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
+                   distribution_string);
+        }
+        exit(1);
+    }
 
 
     RunParams_Setup(run_params,
@@ -231,6 +268,59 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 
 
 
+/*----------------------------------------------------------------------------*/
+double Point_Set_Init(DISTRIBUTION distribution)
+{
+    if (distribution == UNIFORM) {
+        return (double)rand()/(double)(RAND_MAX);
+        
+    } else if (distribution == GAUSSIAN) {
+        double sum = 0.;
+        
+        for (int i = 0; i < 12; ++i) {
+            sum += (double)rand()/(double)(RAND_MAX);
+        }
+        
+        return sum / 12.;
+        
+    } else if (distribution == EXPONENTIAL) {
+        double u;
+        double x = 10.;
+        
+        while (x > 1.) {
+            u = (double)rand()/(1. + (double)(RAND_MAX));
+            x = -log(1. - u) / sqrt(12.);
+        }
+        
+        return x;
+    }
+}
+
+
+/*----------------------------------------------------------------------------*/
+double Point_Set(DISTRIBUTION distribution, double xmin, double xmax)
+{
+    if (distribution == UNIFORM) {
+        return (double)rand()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
+        
+    } else if (distribution == GAUSSIAN) {
+        double sigma = 1. / sqrt(12.);
+        double mu = 0.5;
+        double u = (double)rand()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
+        
+        return mu + sigma * sqrt(2.) * erfinv(2. * u - 1.);
+        
+    } else if (distribution == EXPONENTIAL) {
+        double lambda = sqrt(12.) / (xmax - xmin);
+        double u = (double)rand()/(1. + (double)(RAND_MAX)) * (xmax - xmin) + xmin;
+        
+        return -log(1. - u) / lambda;
+    }
+}
+
+
+
+/*----------------------------------------------------------------------------*/
 void Timing_Calculate(double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
                       double time_run[4], double time_tree[13], double time_direct[4])
 {
@@ -250,7 +340,7 @@ void Timing_Calculate(double time_run_glob[3][4], double time_tree_glob[3][13], 
 }
 
 
-
+/*----------------------------------------------------------------------------*/
 void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
                   int run_direct, struct RunParams *run_params)
 {
@@ -449,6 +539,7 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
 
 
 
+/*----------------------------------------------------------------------------*/
 void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_direct_glob,
                 double *glob_inf_err, double *glob_relinf_err, double *glob_n2_err, double *glob_reln2_err,
                 double *potential, double *potential_direct, int targets_num, int slice)
@@ -488,7 +579,7 @@ void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_dire
 }
 
 
-
+/*----------------------------------------------------------------------------*/
 void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glob,
                 double glob_inf_err, double glob_relinf_err, double glob_n2_err, double glob_reln2_err,
                 int slice)
@@ -517,6 +608,7 @@ void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glo
 
 
 
+/*----------------------------------------------------------------------------*/
 void CSV_Print(int N, int M, struct RunParams *run_params,
                double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
                double potential_engy_glob, double potential_engy_direct_glob,
@@ -595,4 +687,68 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
     }
 
     return;
+}
+
+
+
+/*----------------------------------------------------------------------------*/
+#define erfinv_a3 -0.140543331
+#define erfinv_a2 0.914624893
+#define erfinv_a1 -1.645349621
+#define erfinv_a0 0.886226899
+
+#define erfinv_b4 0.012229801
+#define erfinv_b3 -0.329097515
+#define erfinv_b2 1.442710462
+#define erfinv_b1 -2.118377725
+#define erfinv_b0 1
+
+#define erfinv_c3 1.641345311
+#define erfinv_c2 3.429567803
+#define erfinv_c1 -1.62490649
+#define erfinv_c0 -1.970840454
+
+#define erfinv_d2 1.637067800
+#define erfinv_d1 3.543889200
+#define erfinv_d0 1
+
+double erfinv (double x)
+{
+    double x2, r, y;
+    int  sign_x;
+
+    if (x < -1 || x > 1)
+    return NAN;
+
+    if (x == 0)
+    return 0;
+
+    if (x > 0)
+    sign_x = 1;
+    else {
+    sign_x = -1;
+    x = -x;
+    }
+
+    if (x <= 0.7) {
+
+    x2 = x * x;
+    r =
+      x * (((erfinv_a3 * x2 + erfinv_a2) * x2 + erfinv_a1) * x2 + erfinv_a0);
+    r /= (((erfinv_b4 * x2 + erfinv_b3) * x2 + erfinv_b2) * x2 +
+      erfinv_b1) * x2 + erfinv_b0;
+    }
+    else {
+    y = sqrt (-log ((1 - x) / 2));
+    r = (((erfinv_c3 * y + erfinv_c2) * y + erfinv_c1) * y + erfinv_c0);
+    r /= ((erfinv_d2 * y + erfinv_d1) * y + erfinv_d0);
+    }
+
+    r = r * sign_x;
+    x = x * sign_x;
+
+    r -= (erf (r) - x) / (2 / sqrt (M_PI) * exp (-r * r));
+    r -= (erf (r) - x) / (2 / sqrt (M_PI) * exp (-r * r));
+
+    return r;
 }

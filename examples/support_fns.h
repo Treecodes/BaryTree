@@ -6,13 +6,30 @@
 #include "../src/run_params/struct_run_params.h"
 
 
-void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice);
+typedef enum DISTRIBUTION
+{
+    NO_DISTRIBUTION,
+    UNIFORM,
+    GAUSSIAN,
+    EXPONENTIAL
+} DISTRIBUTION;
+
+
+void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
+                double *xyz_limits, DISTRIBUTION *distribution);
+
+
+double Point_Set_Init(DISTRIBUTION distribution);
+
+double Point_Set(DISTRIBUTION distribution, double xmin, double xmax);
+
 
 void Timing_Calculate(double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
                 double time_run[4], double time_tree[13], double time_direct[4]);
                       
 void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
                 int run_direct, struct RunParams *run_params);
+                  
                   
 void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_direct_glob,
                 double *glob_inf_err, double *glob_relinf_err, double *glob_n2_err, double *glob_reln2_err,
@@ -21,6 +38,7 @@ void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_dire
 void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glob,
                 double glob_inf_err, double glob_relinf_err, double glob_n2_err, double glob_reln2_err,
                 int slice);
+                
                 
 void CSV_Print(int N, int M, struct RunParams *run_params,
                 double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
