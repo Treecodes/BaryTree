@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     int N, M, run_direct, slice;
     double xyz_limits[6];
     DISTRIBUTION distribution;
-    int sample_size = 10000;
+    int sample_size = 1000000;
     
     struct RunParams *run_params = NULL;
     
@@ -103,7 +103,8 @@ int main(int argc, char **argv)
     unsigned t_hashed = (unsigned) t;
     t_hashed = mrand * t_hashed + crand;
     srand(t_hashed ^ rank);
-    srand(1);
+    srandom(t_hashed ^ rank);
+    //srand(1);
 
     for (int i = 0; i < sample_size; ++i) {
         mySources.x[i] = Point_Set_Init(distribution);
@@ -227,13 +228,24 @@ int main(int argc, char **argv)
 
     /* Generating sources and targets based on Zoltan bounding box */
     
+    printf("zz xmin and xmax: %f, %f\n", zz_bound_x_min, zz_bound_x_max);
+    
     for (int i = 0; i < sources->num; ++i) {
         sources->x[i] = Point_Set(distribution, zz_bound_x_min, zz_bound_x_max) * (xmax-xmin) + xmin;
         sources->y[i] = Point_Set(distribution, zz_bound_y_min, zz_bound_y_max) * (ymax-ymin) + ymin;
         sources->z[i] = Point_Set(distribution, zz_bound_z_min, zz_bound_z_max) * (zmax-zmin) + zmin;
+
         sources->q[i] = Point_Set(UNIFORM, -1., 1.);
         sources->w[i] = Point_Set(UNIFORM, -1., 1.);
     }
+
+    char points_file[256];
+    sprintf(points_file, "points_rank_%d.csv", rank);
+    FILE *points_fp = fopen(points_file, "w");
+    for (int i = 0; i < sources->num; ++i) {
+        fprintf(points_fp, "%e, %e, %e\n", sources->x[i], sources->y[i], sources->z[i]);
+    }
+    fclose(points_fp);
 
     /* MPI-allocated target arrays for RMA use */
     
