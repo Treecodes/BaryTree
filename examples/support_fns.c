@@ -279,6 +279,8 @@ double Point_Set_Init(DISTRIBUTION distribution)
         
         double u = (double)random()/(1.+ (double)(RAND_MAX));
         double x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+	
+	return x;
         
     } else if (distribution == EXPONENTIAL) {
         
@@ -300,17 +302,8 @@ double Point_Set(DISTRIBUTION distribution, double xmin, double xmax)
         
     } else if (distribution == GAUSSIAN) {
         
-        if (xmin < -1) {
-            cdf_min = 0;
-        } else {
-            cdf_min = 0.5 * (1. + erf((xmin) * sqrt(6.)));
-        }
-        
-        if (xmax > 1) {
-            cdf_max = 1;
-        } else {
-            cdf_max = 0.5 * (1. + erf((xmax) * sqrt(6.)));
-        }
+        cdf_min = 0.5 * (1. + erf((xmin) * sqrt(6.)));
+        cdf_max = 0.5 * (1. + erf((xmax) * sqrt(6.)));
         
         double u = (double)random()/(double)(RAND_MAX) * (cdf_max - cdf_min) + cdf_min;
         
