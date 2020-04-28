@@ -273,25 +273,19 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 double Point_Set_Init(DISTRIBUTION distribution)
 {
     if (distribution == UNIFORM) {
-        return (double)rand()/(double)(RAND_MAX);
+        return (double)random()/(double)(RAND_MAX);
         
     } else if (distribution == GAUSSIAN) {
-        double sum = 0.;
         
-        for (int i = 0; i < 12; ++i) {
-            sum += (double)rand()/(double)(RAND_MAX);
-        }
-        
-        return sum / 12.;
+        double u = (double)random()/(1.+ (double)(RAND_MAX));
+        double x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+	
+	return x;
         
     } else if (distribution == EXPONENTIAL) {
-        double u;
-        double x = 10.;
         
-        while (x > 1.) {
-            u = (double)rand()/(1. + (double)(RAND_MAX));
-            x = -log(1. - u) / sqrt(12.);
-        }
+        double u = (double)random()/(1.+ (double)(RAND_MAX));
+        double x = -log(1. - u) / sqrt(12.);
         
         return x;
     }
@@ -301,21 +295,33 @@ double Point_Set_Init(DISTRIBUTION distribution)
 /*----------------------------------------------------------------------------*/
 double Point_Set(DISTRIBUTION distribution, double xmin, double xmax)
 {
+    double cdf_min, cdf_max;
+    
     if (distribution == UNIFORM) {
-        return (double)rand()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
+        return (double)random()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
         
     } else if (distribution == GAUSSIAN) {
-        double sigma = 1. / sqrt(12.);
-        double mu = 0.5;
-        double u = (double)rand()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
         
-        return mu + sigma * sqrt(2.) * erfinv(2. * u - 1.);
+        cdf_min = 0.5 * (1. + erf((xmin) * sqrt(6.)));
+        cdf_max = 0.5 * (1. + erf((xmax) * sqrt(6.)));
+        
+        double u = (double)random()/(double)(RAND_MAX) * (cdf_max - cdf_min) + cdf_min;
+        
+        return 0.5 + 1. / sqrt(6.) * erfinv(2. * u - 1.);
         
     } else if (distribution == EXPONENTIAL) {
-        double lambda = sqrt(12.) / (xmax - xmin);
-        double u = (double)rand()/(1. + (double)(RAND_MAX)) * (xmax - xmin) + xmin;
         
-        return -log(1. - u) / lambda;
+        cdf_min = 1 - exp(-sqrt(12) * xmin);
+        if (xmax > 1) {
+            cdf_max = 1;
+        } else {
+            cdf_max = 1 - exp(-sqrt(12) * xmax);
+        }
+        
+        double u = (double)random()/(1. + (double)(RAND_MAX)) * (cdf_max - cdf_min) + cdf_min;
+                
+        return -log(1. - u) / sqrt(12.);
+        
     }
 }
 
@@ -750,6 +756,6 @@ double erfinv (double x)
 
     r -= (erf (r) - x) / (2 / sqrt (M_PI) * exp (-r * r));
     r -= (erf (r) - x) / (2 / sqrt (M_PI) * exp (-r * r));
-
+    
     return r;
 }

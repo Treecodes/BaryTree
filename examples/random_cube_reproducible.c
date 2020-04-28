@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
     /* Setting up sources and load balancing */
 
-    srand(1);
+    srandom(1);
     mySources.numGlobalPoints = N * numProcs;
     mySources.numMyPoints = N;
     mySources.x = malloc(N*sizeof(double));
@@ -119,10 +119,10 @@ int main(int argc, char **argv)
 
     for (int j = 0; j < rank+1; ++j) {
         for (int i = 0; i < N; ++i) {
-            mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+            mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
             mySources.w[i] = 1.0;
             mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
             mySources.b[i] = 1.0; // dummy weighting scheme
