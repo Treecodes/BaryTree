@@ -273,7 +273,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 double Point_Set_Init(DISTRIBUTION distribution)
 {
     if (distribution == UNIFORM) {
-        return (double)rand()/(double)(RAND_MAX);
+        return (double)random()/(double)(RAND_MAX);
         
     } else if (distribution == GAUSSIAN) {
         
@@ -298,7 +298,7 @@ double Point_Set(DISTRIBUTION distribution, double xmin, double xmax)
     double cdf_min, cdf_max;
     
     if (distribution == UNIFORM) {
-        return (double)rand()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
+        return (double)random()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
         
     } else if (distribution == GAUSSIAN) {
         

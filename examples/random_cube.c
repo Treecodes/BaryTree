@@ -102,9 +102,8 @@ int main(int argc, char **argv)
     time_t t = time(NULL);
     unsigned t_hashed = (unsigned) t;
     t_hashed = mrand * t_hashed + crand;
-    srand(t_hashed ^ rank);
     srandom(t_hashed ^ rank);
-    //srand(1);
+    //srandom(1);
 
     for (int i = 0; i < sample_size; ++i) {
         mySources.x[i] = Point_Set_Init(distribution);
