@@ -25,7 +25,7 @@ void pc_compute_interaction_list(int tree_node, const int *tree_numpar, const do
                 const struct RunParams *run_params);
                 
 
-void cc_compute_interaction_list_1(
+void cc_compute_interaction_list(
                 int source_tree_node, const int *source_tree_numpar, const double *source_tree_radius,
                 const double *source_tree_x_mid, const double *source_tree_y_mid, const double *source_tree_z_mid,
                 const int *source_tree_num_children, const int *source_tree_children,
@@ -38,22 +38,6 @@ void cc_compute_interaction_list_1(
                 int *sizeof_approx_list, int *sizeof_direct_list,
                 int *approx_index_counter, int *direct_index_counter,
                 const struct RunParams *run_params);
-
-
-void cc_compute_interaction_list_2(
-                int target_tree_node, const int *target_tree_numpar, const double *target_tree_radius,
-                const double *target_tree_x_mid, const double *target_tree_y_mid, const double *target_tree_z_mid,
-                const int *target_tree_num_children, const int *target_tree_children,
-
-                int source_tree_node, const int *source_tree_numpar, const double *source_tree_radius,
-                const double *source_tree_x_mid, const double *source_tree_y_mid, const double *source_tree_z_mid,
-                const int *source_tree_num_children, const int *source_tree_children,
-
-                int **target_approx_list, int **target_direct_list,
-                int *sizeof_approx_list, int *sizeof_direct_list,
-                int *approx_index_counter, int *direct_index_counter,
-                const struct RunParams *run_params);
-                
                 
                 
 void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
@@ -143,7 +127,7 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
     
     } else if (run_params->compute_type == CLUSTER_CLUSTER) {
     
-        cc_compute_interaction_list_1(
+        cc_compute_interaction_list(
                     0, source_tree_numpar, source_tree_radius,
                     source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
                     source_tree_num_children, source_tree_children,
@@ -264,7 +248,7 @@ void InteractionLists_MakeRemote(const struct Tree *source_tree,
 
     } else if (run_params->compute_type == CLUSTER_CLUSTER) {
     
-        cc_compute_interaction_list_1(
+        cc_compute_interaction_list(
                     0, source_tree_numpar, source_tree_radius,
                     source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
                     source_tree_num_children, source_tree_children,
@@ -396,7 +380,7 @@ void pc_compute_interaction_list(
 
 
 
-void cc_compute_interaction_list_1(
+void cc_compute_interaction_list(
                 int source_tree_node, const int *source_tree_numpar, const double *source_tree_radius,
                 const double *source_tree_x_mid, const double *source_tree_y_mid, const double *source_tree_z_mid,
                 const int *source_tree_num_children, const int *source_tree_children,
@@ -440,7 +424,8 @@ void cc_compute_interaction_list_1(
     * If MAC fails check to see if there are children. If not, perform direct
     * calculation. If there are children, call routine recursively for each.
     */
-        if (target_tree_num_children[target_tree_node] == 0) {
+        if ((target_tree_num_children[target_tree_node] == 0) &&
+            (source_tree_num_children[source_tree_node] == 0)) {
 
             if (direct_index_counter[target_tree_node] >= sizeof_direct_list[target_tree_node]) {
                 sizeof_direct_list[target_tree_node] *= 1.5;
@@ -451,89 +436,30 @@ void cc_compute_interaction_list_1(
             target_direct_list[target_tree_node][direct_index_counter[target_tree_node]] = source_tree_node;
             direct_index_counter[target_tree_node]++;
 
-        } else {
+        } else if (target_tree_num_children[target_tree_node] >
+                   source_tree_num_children[source_tree_node]) {
+                   
             for (int i = 0; i < target_tree_num_children[target_tree_node]; i++) {
-                cc_compute_interaction_list_2(target_tree_children[8*target_tree_node + i],
-                           target_tree_numpar, target_tree_radius,
-                           target_tree_x_mid, target_tree_y_mid, target_tree_z_mid,
-                           target_tree_num_children, target_tree_children,
-
+                cc_compute_interaction_list(
                            source_tree_node, source_tree_numpar, source_tree_radius,
                            source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
                            source_tree_num_children, source_tree_children,
+                           
+                           target_tree_children[8*target_tree_node + i],
+                           target_tree_numpar, target_tree_radius,
+                           target_tree_x_mid, target_tree_y_mid, target_tree_z_mid,
+                           target_tree_num_children, target_tree_children,
 
                            target_tree_list, target_direct_list,
                            sizeof_tree_list, sizeof_direct_list,
                            tree_index_counter, direct_index_counter,
                            run_params);
             }
-        }
-    }
-
-    return;
-
-}
-
-
-
-void cc_compute_interaction_list_2(
-                int target_tree_node, const int *target_tree_numpar, const double *target_tree_radius,
-                const double *target_tree_x_mid, const double *target_tree_y_mid, const double *target_tree_z_mid,
-                const int *target_tree_num_children, const int *target_tree_children,
-
-                int source_tree_node, const int *source_tree_numpar, const double *source_tree_radius,
-                const double *source_tree_x_mid, const double *source_tree_y_mid, const double *source_tree_z_mid,
-                const int *source_tree_num_children, const int *source_tree_children,
-
-                int **target_tree_list, int **target_direct_list,
-                int *sizeof_tree_list, int *sizeof_direct_list,
-                int *tree_index_counter, int *direct_index_counter,
-                const struct RunParams *run_params)
-{
-
-    /* determine DIST for MAC test */
-    double tx = target_tree_x_mid[target_tree_node] - source_tree_x_mid[source_tree_node];
-    double ty = target_tree_y_mid[target_tree_node] - source_tree_y_mid[source_tree_node];
-    double tz = target_tree_z_mid[target_tree_node] - source_tree_z_mid[source_tree_node];
-    double dist = sqrt(tx*tx + ty*ty + tz*tz);
-
-    if (((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node]) < dist * run_params->theta)
-      && (target_tree_radius[source_tree_node] != 0.00)
-      && (pow(run_params->size_check_factor * run_params->interp_pts_per_cluster, 2)
-          < source_tree_numpar[source_tree_node] * target_tree_numpar[target_tree_node])) {
-   /*
-    * If MAC is accepted and there is more than 1 particle
-    * in the box, use the expansion for the approximation.
-    */
-
-        if (tree_index_counter[target_tree_node] >= sizeof_tree_list[target_tree_node]) {
-            sizeof_tree_list[target_tree_node] *= 1.5;
-            target_tree_list[target_tree_node] = realloc_vector(target_tree_list[target_tree_node],
-                                                                sizeof_tree_list[target_tree_node]);
-        }
-
-        target_tree_list[target_tree_node][tree_index_counter[target_tree_node]] = source_tree_node;
-        tree_index_counter[target_tree_node]++;
-
-    } else {
-   /*
-    * If MAC fails check to see if there are children. If not, perform direct
-    * calculation. If there are children, call routine recursively for each.
-    */
-        if (source_tree_num_children[source_tree_node] == 0) {
-
-            if (direct_index_counter[target_tree_node] >= sizeof_direct_list[target_tree_node]) {
-                sizeof_direct_list[target_tree_node] *= 1.5;
-                target_direct_list[target_tree_node] = realloc_vector(target_direct_list[target_tree_node],
-                                                                      sizeof_direct_list[target_tree_node]);
-            }
-
-            target_direct_list[target_tree_node][direct_index_counter[target_tree_node]] = source_tree_node;
-            direct_index_counter[target_tree_node]++;
-
+            
         } else {
             for (int i = 0; i < source_tree_num_children[source_tree_node]; i++) {
-                cc_compute_interaction_list_1(source_tree_children[8*source_tree_node + i],
+                cc_compute_interaction_list(
+                           source_tree_children[8*source_tree_node + i],
                            source_tree_numpar, source_tree_radius,
                            source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
                            source_tree_num_children, source_tree_children,
