@@ -247,6 +247,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         
     } else if (strcasecmp(distribution_string, "EXPONENTIAL") == 0) {
         *distribution = EXPONENTIAL;
+
+    } else if (strcasecmp(distribution_string, "PLUMMER") == 0) {
+        *distribution = PLUMMER;
         
     } else {
         if (rank == 0) {
@@ -288,6 +291,12 @@ double Point_Set_Init(DISTRIBUTION distribution)
         double x = -log(1. - u) / sqrt(12.);
         
         return x;
+
+    } else {
+
+        printf("[random cube example] ERROR! Distribution %d undefined in this "
+               "context.  Exiting.\n", distribution);
+        exit(1);
     }
 }
 
@@ -322,7 +331,32 @@ double Point_Set(DISTRIBUTION distribution, double xmin, double xmax)
                 
         return -log(1. - u) / sqrt(12.);
         
+    } else {
+
+        printf("[random cube example] ERROR! Distribution %d undefined in this "
+               "context.  Exiting.\n", distribution);
+        exit(1);
     }
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Plummer(double R, double *x, double *y, double *z)
+{
+    double u = (double)random()/(1.+ (double)(RAND_MAX));
+    double radius = R / sqrt(pow(u, (-2.0/3.0)) - 1.0);
+
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    double theta = acos(-1 + u * 2.0);
+    
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    double phi = u * 2.0 * M_PI;
+
+    *x = radius * sin(theta) * cos(phi);
+    *y = radius * sin(theta) * sin(phi);
+    *z = radius * cos(theta);
+
+    return;
 }
 
 

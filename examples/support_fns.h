@@ -11,7 +11,8 @@ typedef enum DISTRIBUTION
     NO_DISTRIBUTION,
     UNIFORM,
     GAUSSIAN,
-    EXPONENTIAL
+    EXPONENTIAL,
+    PLUMMER
 } DISTRIBUTION;
 
 
@@ -22,6 +23,8 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 double Point_Set_Init(DISTRIBUTION distribution);
 
 double Point_Set(DISTRIBUTION distribution, double xmin, double xmax);
+
+void Point_Plummer(double R, double *x, double *y, double *z);
 
 
 void Timing_Calculate(double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
