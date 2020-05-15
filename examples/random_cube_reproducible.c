@@ -221,6 +221,7 @@ int main(int argc, char **argv)
 
     /* Output load balanced points */
 
+    /*
     char points_file[256];
     sprintf(points_file, "points_rank_%d.csv", rank);
     FILE *points_fp = fopen(points_file, "w");
@@ -228,6 +229,7 @@ int main(int argc, char **argv)
         fprintf(points_fp, "%e, %e, %e\n", sources->x[i], sources->y[i], sources->z[i]);
     }
     fclose(points_fp);
+    */
     
     /* Setting up targets */
     
