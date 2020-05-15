@@ -117,16 +117,39 @@ int main(int argc, char **argv)
     mySources.b = malloc(N*sizeof(double)); // load balancing weights
     mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * N);
 
-    for (int j = 0; j < rank+1; ++j) {
-        for (int i = 0; i < N; ++i) {
-            mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.w[i] = 1.0;
-            mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
-            mySources.b[i] = 1.0; // dummy weighting scheme
+    if (distribution == UNIFORM) {
+
+        for (int j = 0; j < rank+1; ++j) { // Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0; // dummy weighting scheme
+            }
         }
+
+    } else if (distribution == PLUMMER) {
+
+        double plummer_R = 1.0;
+        double plummer_M = 1.0;
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                Point_Plummer(plummer_R , &mySources.x[i], &mySources.y[i], &mySources.z[i]);
+                mySources.q[i] = plummer_M / N;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+        }
+
+    } else {
+        printf("[random cube example] ERROR! Distribution %d undefined in this "
+                "context.  Exiting.\n", distribution);
+        exit(1);
     }
 
     /* Query functions, to provide geometry to Zoltan */
