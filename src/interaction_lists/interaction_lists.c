@@ -177,6 +177,20 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
         int *sizeof_cc_source_approx_inter_list, *sizeof_cc_target_approx_inter_list;
         make_vector(sizeof_cc_source_approx_inter_list, target_tree_numnodes);
         make_vector(sizeof_cc_target_approx_inter_list, target_tree_numnodes);
+        
+        for (int i = 0; i < target_tree_numnodes; i++) sizeof_cc_source_approx_inter_list[i] = 50;
+        for (int i = 0; i < target_tree_numnodes; i++) sizeof_cc_target_approx_inter_list[i] = 50;
+       
+        for (int i = 0; i < target_tree_numnodes; i++)
+            for (int j = 0; j < 50; j++)
+                cc_source_approx_inter_list[i][j] = -1;
+
+        for (int i = 0; i < target_tree_numnodes; i++)
+            for (int j = 0; j < 50; j++)
+                cc_target_approx_inter_list[i][j] = -1;
+               
+        for (int i = 0; i < target_tree_numnodes; i++) num_cc_source_approx_inter[i] = 0;
+        for (int i = 0; i < target_tree_numnodes; i++) num_cc_target_approx_inter[i] = 0;
     
         /* Build CC interaction lists */
         
