@@ -9,6 +9,12 @@ struct InteractionLists
 
     int *num_approx;
     int *num_direct;
+    
+    int **cc_source_approx_interactions;
+    int **cc_target_approx_interactions;
+    
+    int *num_cc_source_approx;
+    int *num_cc_target_approx;
 };
 
 
