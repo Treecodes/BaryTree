@@ -145,6 +145,30 @@ int main(int argc, char **argv)
                 mySources.b[i] = 1.0;
             }
         }
+        
+    } else if (distribution == GAUSSIAN) {
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                Point_Gaussian(&mySources.x[i], &mySources.y[i], &mySources.z[i]);
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+        }
+
+    } else if (distribution == EXPONENTIAL) {
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                Point_Exponential(&mySources.x[i], &mySources.y[i], &mySources.z[i]);
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+        }
 
     } else {
         printf("[random cube example] ERROR! Distribution %d undefined in this "
@@ -221,7 +245,7 @@ int main(int argc, char **argv)
 
     /* Output load balanced points */
 
-    /*
+/*
     char points_file[256];
     sprintf(points_file, "points_rank_%d.csv", rank);
     FILE *points_fp = fopen(points_file, "w");
@@ -229,7 +253,7 @@ int main(int argc, char **argv)
         fprintf(points_fp, "%e, %e, %e\n", sources->x[i], sources->y[i], sources->z[i]);
     }
     fclose(points_fp);
-    */
+*/
     
     /* Setting up targets */
     

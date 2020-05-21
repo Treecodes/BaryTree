@@ -26,6 +26,10 @@ double Point_Set(DISTRIBUTION distribution, double xmin, double xmax);
 
 void Point_Plummer(double R, double *x, double *y, double *z);
 
+void Point_Gaussian(double *x, double *y, double *z);
+
+void Point_Exponential(double *x, double *y, double *z);
+
 
 void Timing_Calculate(double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],
                 double time_run[4], double time_tree[13], double time_direct[4]);

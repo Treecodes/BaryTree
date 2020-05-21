@@ -283,7 +283,7 @@ double Point_Set_Init(DISTRIBUTION distribution)
         double u = (double)random()/(1.+ (double)(RAND_MAX));
         double x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
 	
-	return x;
+        return x;
         
     } else if (distribution == EXPONENTIAL) {
         
@@ -355,6 +355,38 @@ void Point_Plummer(double R, double *x, double *y, double *z)
     *x = radius * sin(theta) * cos(phi);
     *y = radius * sin(theta) * sin(phi);
     *z = radius * cos(theta);
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Gaussian(double *x, double *y, double *z)
+{
+    double u = (double)random()/(1.+ (double)(RAND_MAX));
+    *x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *y = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+    
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *z = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Exponential(double *x, double *y, double *z)
+{
+    double u = (double)random()/(1.+ (double)(RAND_MAX));
+    *x = -log(1. - u) / sqrt(12.);
+
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *y = -log(1. - u) / sqrt(12.);
+    
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *z = -log(1. - u) / sqrt(12.);
 
     return;
 }
