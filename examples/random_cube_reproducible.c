@@ -32,11 +32,12 @@ int main(int argc, char **argv)
     int N, M, run_direct, slice;
     double xyz_limits[6];
     DISTRIBUTION distribution;
+    PARTITION partition;
     
     struct RunParams *run_params = NULL;
     
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution);
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution, &partition);
 
     if (N != M) {
         if (rank == 0) printf("[random cube example] ERROR! This executable requires sources and targets "
@@ -92,12 +93,17 @@ int main(int argc, char **argv)
     /* General parameters */
 
     Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
-    Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
     Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
     Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
     Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
     Zoltan_Set_Param(zz, "RETURN_LISTS", "ALL");
     Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE"); 
+
+    if (partition == RCB) {
+        Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
+    } else if (partition == HSFC) {
+        Zoltan_Set_Param(zz, "LB_METHOD", "HSFC");
+    }
 
     /* RCB parameters */
 

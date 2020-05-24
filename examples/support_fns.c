@@ -14,7 +14,7 @@ static double erfinv (double x);
 
 
 void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
-                  double *xyz_limits, DISTRIBUTION *distribution)
+                  double *xyz_limits, DISTRIBUTION *distribution, PARTITION *partition)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -33,6 +33,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     char compute_type_string[256]  = "PARTICLE_CLUSTER";
     char run_direct_string[256]    = "OFF";
     char distribution_string[256]  = "UNIFORM";
+    char partition_string[256]     = "RCB";
 
     KERNEL kernel;
     SINGULARITY singularity;
@@ -118,6 +119,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
             
         } else if (strcmp(c1, "distribution") == 0) {
             strcpy(distribution_string, c2);
+
+        } else if (strcmp(c1, "partition") == 0) {
+            strcpy(partition_string, c2);
 
         } else {
             if (rank == 0) {
@@ -261,6 +265,22 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         }
         exit(1);
     }
+
+
+    if (strcasecmp(partition_string, "RCB") == 0) {
+        *partition = RCB;
+        
+    } else if (strcasecmp(partition_string, "HSFC") == 0) {
+        *partition = HSFC;
+
+    } else {
+        if (rank == 0) {
+            printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
+                   distribution_string);
+        }
+        exit(1);
+    }
+
 
 
     RunParams_Setup(run_params,

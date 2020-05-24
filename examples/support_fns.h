@@ -16,9 +16,16 @@ typedef enum DISTRIBUTION
     PLUMMER_SYMMETRIC
 } DISTRIBUTION;
 
+typedef enum PARTITION
+{
+    NO_PARTITION,
+    RCB,
+    HSFC
+} PARTITION;
+
 
 void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
-                double *xyz_limits, DISTRIBUTION *distribution);
+                double *xyz_limits, DISTRIBUTION *distribution, PARTITION *partition);
 
 
 double Point_Set_Init(DISTRIBUTION distribution);
