@@ -145,6 +145,36 @@ int main(int argc, char **argv)
                 mySources.b[i] = 1.0;
             }
         }
+
+    } else if (distribution == PLUMMER_SYMMETRIC) {
+
+        double plummer_R = 1.0;
+        double plummer_M = 1.0;
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                mySources.q[i] = plummer_M / N;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+
+            for (int i = 0; i < N/8; ++i) {
+                double xx, yy, zz;
+                Point_Plummer_Octant(plummer_R , &xx, &yy, &zz);
+		
+		for (int ii = 0; ii < 2; ++ii) {
+		    for (int jj = 0; jj < 2; ++jj) {
+			for (int kk = 0; kk < 2; ++kk) {
+		    	    int index = (N/8) * (ii*4 + jj*2 + kk) + i;
+		    	    mySources.x[index] = xx * pow(-1, ii);
+		            mySources.y[index] = yy * pow(-1, jj);
+		            mySources.z[index] = zz * pow(-1, kk);
+                	}
+		    }
+		}
+            }
+        }
         
     } else if (distribution == GAUSSIAN) {
 
@@ -245,7 +275,7 @@ int main(int argc, char **argv)
 
     /* Output load balanced points */
 
-/*
+
     char points_file[256];
     sprintf(points_file, "points_rank_%d.csv", rank);
     FILE *points_fp = fopen(points_file, "w");
@@ -253,7 +283,7 @@ int main(int argc, char **argv)
         fprintf(points_fp, "%e, %e, %e\n", sources->x[i], sources->y[i], sources->z[i]);
     }
     fclose(points_fp);
-*/
+
     
     /* Setting up targets */
     

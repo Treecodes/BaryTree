@@ -251,6 +251,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     } else if (strcasecmp(distribution_string, "PLUMMER") == 0) {
         *distribution = PLUMMER;
         
+    } else if (strcasecmp(distribution_string, "PLUMMER_SYMMETRIC") == 0) {
+        *distribution = PLUMMER_SYMMETRIC;
+        
     } else {
         if (rank == 0) {
             printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
@@ -351,6 +354,26 @@ void Point_Plummer(double R, double *x, double *y, double *z)
     
     u = (double)random()/(1.+ (double)(RAND_MAX));
     double phi = u * 2.0 * M_PI;
+
+    *x = radius * sin(theta) * cos(phi);
+    *y = radius * sin(theta) * sin(phi);
+    *z = radius * cos(theta);
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Plummer_Octant(double R, double *x, double *y, double *z)
+{
+    double u = (double)random()/(1.+ (double)(RAND_MAX));
+    double radius = R / sqrt(pow(u, (-2.0/3.0)) - 1.0);
+
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    double theta = acos(u);
+    
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    double phi = u * M_PI / 2.0;
 
     *x = radius * sin(theta) * cos(phi);
     *y = radius * sin(theta) * sin(phi);

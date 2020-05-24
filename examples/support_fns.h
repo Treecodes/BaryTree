@@ -12,7 +12,8 @@ typedef enum DISTRIBUTION
     UNIFORM,
     GAUSSIAN,
     EXPONENTIAL,
-    PLUMMER
+    PLUMMER,
+    PLUMMER_SYMMETRIC
 } DISTRIBUTION;
 
 
@@ -25,6 +26,8 @@ double Point_Set_Init(DISTRIBUTION distribution);
 double Point_Set(DISTRIBUTION distribution, double xmin, double xmax);
 
 void Point_Plummer(double R, double *x, double *y, double *z);
+
+void Point_Plummer_Octant(double R, double *x, double *y, double *z);
 
 void Point_Gaussian(double *x, double *y, double *z);
 
