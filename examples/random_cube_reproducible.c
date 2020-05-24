@@ -109,6 +109,7 @@ int main(int argc, char **argv)
 
     Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
     Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
+    Zoltan_Set_Param(zz, "RCB_MAX_ASPECT_RATIO", "1000000000"); 
 
     /* Setting up sources and load balancing */
 
