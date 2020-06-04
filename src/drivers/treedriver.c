@@ -58,10 +58,14 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
     int total_num_direct = 0;
     int total_num_approx = 0;
     int total_num_inter = 0;
+    
+    // These types of interactions only occur for CC
+    int total_num_source_approx = 0;
+    int total_num_target_approx = 0;
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
 
-    
+
 
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
@@ -290,7 +294,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                 int get_from = (num_procs + rank - proc_id) % num_procs;
                 
                 CommWindows_Lock(comm_windows, get_from);
-                //This is a non-blocking call!
+                // This is a non-blocking call!
                 CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
                 CommWindows_Unlock(comm_windows, get_from);
             }
@@ -503,6 +507,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         if (run_params->verbosity > 0) {
             total_num_approx += sum_int(local_interaction_list->num_approx, target_tree->numnodes);
             total_num_direct += sum_int(local_interaction_list->num_direct, target_tree->numnodes);
+            
+            total_num_source_approx += sum_int(local_interaction_list->num_cc_source_approx,
+                                               target_tree->numnodes);
+            total_num_target_approx += sum_int(local_interaction_list->num_cc_target_approx,
+                                               target_tree->numnodes);
         }
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         
@@ -533,6 +542,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             if (run_params->verbosity > 0) {
                 total_num_approx += sum_int(let_interaction_list->num_approx, target_tree->numnodes);
                 total_num_direct += sum_int(let_interaction_list->num_direct, target_tree->numnodes);
+                
+                total_num_source_approx += sum_int(let_interaction_list->num_cc_source_approx,
+                                                   target_tree->numnodes);
+                total_num_target_approx += sum_int(let_interaction_list->num_cc_target_approx,
+                                                   target_tree->numnodes);
             }
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 
@@ -608,8 +622,13 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         int global_num_inter,  max_num_inter,  min_num_inter;
         int global_num_direct, max_num_direct, min_num_direct;
         int global_num_approx, max_num_approx, min_num_approx;
+        
+        int global_num_source_approx, max_num_source_approx, min_num_source_approx;
+        int global_num_target_approx, max_num_target_approx, min_num_target_approx;
     
-        total_num_inter = total_num_direct + total_num_approx;
+        total_num_inter = total_num_direct + total_num_approx
+                        + total_num_source_approx + total_num_target_approx;
+                        
         MPI_Reduce(&total_num_inter,   &global_num_inter, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
         MPI_Reduce(&total_num_inter,      &max_num_inter, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
         MPI_Reduce(&total_num_inter,      &min_num_inter, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
@@ -621,6 +640,17 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         MPI_Reduce(&total_num_approx, &global_num_approx, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
         MPI_Reduce(&total_num_approx,    &max_num_approx, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
         MPI_Reduce(&total_num_approx,    &min_num_approx, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        
+        // These types of interactions only occur for CC
+        if (run_params->compute_type == CLUSTER_CLUSTER) {
+            MPI_Reduce(&total_num_source_approx, &global_num_source_approx, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&total_num_source_approx,    &max_num_source_approx, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&total_num_source_approx,    &min_num_source_approx, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        
+            MPI_Reduce(&total_num_target_approx, &global_num_target_approx, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&total_num_target_approx,    &max_num_target_approx, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+            MPI_Reduce(&total_num_target_approx,    &min_num_target_approx, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        }
         
         if (rank == 0) {
             printf("[BaryTree]\n");
@@ -644,6 +674,23 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             printf("[BaryTree]                                           Ratio: %f\n",
                    (double)max_num_approx / (double)min_num_approx);
             printf("[BaryTree]\n");
+            
+            // These types of interactions only occur for CC
+            if (run_params->compute_type == CLUSTER_CLUSTER) {
+                printf("[BaryTree] Cumulative source approx inter across all ranks: %d\n", global_num_source_approx);
+                printf("[BaryTree]    Maximum source approx inter across all ranks: %d\n", max_num_source_approx);
+                printf("[BaryTree]    Minimum source approx inter across all ranks: %d\n", min_num_source_approx);
+                printf("[BaryTree]                                           Ratio: %f\n",
+                       (double)max_num_source_approx / (double)min_num_source_approx);
+                printf("[BaryTree]\n");
+                printf("[BaryTree] Cumulative target approx inter across all ranks: %d\n", global_num_target_approx);
+                printf("[BaryTree]    Maximum target approx inter across all ranks: %d\n", max_num_target_approx);
+                printf("[BaryTree]    Minimum target approx inter across all ranks: %d\n", min_num_target_approx);
+                printf("[BaryTree]                                           Ratio: %f\n",
+                       (double)max_num_target_approx / (double)min_num_target_approx);
+                printf("[BaryTree]\n");
+            }
+            
             printf("[BaryTree] BaryTree has finished.\n");
             printf("[BaryTree]\n");
         }

@@ -35,12 +35,13 @@ int main(int argc, char **argv)
     int N, M, run_direct, slice;
     double xyz_limits[6];
     DISTRIBUTION distribution;
+    PARTITION partition;
     int sample_size = 1000000;
     
     struct RunParams *run_params = NULL;
     
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution);
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution, &partition);
     
     double xmin = xyz_limits[0], xmax = xyz_limits[1];
     double ymin = xyz_limits[2], ymax = xyz_limits[3];

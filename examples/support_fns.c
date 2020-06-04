@@ -14,7 +14,7 @@ static double erfinv (double x);
 
 
 void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
-                  double *xyz_limits, DISTRIBUTION *distribution)
+                  double *xyz_limits, DISTRIBUTION *distribution, PARTITION *partition)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -33,6 +33,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     char compute_type_string[256]  = "PARTICLE_CLUSTER";
     char run_direct_string[256]    = "OFF";
     char distribution_string[256]  = "UNIFORM";
+    char partition_string[256]     = "RCB";
 
     KERNEL kernel;
     SINGULARITY singularity;
@@ -118,6 +119,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
             
         } else if (strcmp(c1, "distribution") == 0) {
             strcpy(distribution_string, c2);
+
+        } else if (strcmp(c1, "partition") == 0) {
+            strcpy(partition_string, c2);
 
         } else {
             if (rank == 0) {
@@ -251,6 +255,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     } else if (strcasecmp(distribution_string, "PLUMMER") == 0) {
         *distribution = PLUMMER;
         
+    } else if (strcasecmp(distribution_string, "PLUMMER_SYMMETRIC") == 0) {
+        *distribution = PLUMMER_SYMMETRIC;
+        
     } else {
         if (rank == 0) {
             printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
@@ -258,6 +265,22 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         }
         exit(1);
     }
+
+
+    if (strcasecmp(partition_string, "RCB") == 0) {
+        *partition = RCB;
+        
+    } else if (strcasecmp(partition_string, "HSFC") == 0) {
+        *partition = HSFC;
+
+    } else {
+        if (rank == 0) {
+            printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
+                   distribution_string);
+        }
+        exit(1);
+    }
+
 
 
     RunParams_Setup(run_params,
@@ -283,7 +306,7 @@ double Point_Set_Init(DISTRIBUTION distribution)
         double u = (double)random()/(1.+ (double)(RAND_MAX));
         double x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
 	
-	return x;
+        return x;
         
     } else if (distribution == EXPONENTIAL) {
         
@@ -355,6 +378,58 @@ void Point_Plummer(double R, double *x, double *y, double *z)
     *x = radius * sin(theta) * cos(phi);
     *y = radius * sin(theta) * sin(phi);
     *z = radius * cos(theta);
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Plummer_Octant(double R, double *x, double *y, double *z)
+{
+    double u = (double)random()/(1.+ (double)(RAND_MAX));
+    double radius = R / sqrt(pow(u, (-2.0/3.0)) - 1.0);
+
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    double theta = acos(u);
+    
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    double phi = u * M_PI / 2.0;
+
+    *x = radius * sin(theta) * cos(phi);
+    *y = radius * sin(theta) * sin(phi);
+    *z = radius * cos(theta);
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Gaussian(double *x, double *y, double *z)
+{
+    double u = (double)random()/(1.+ (double)(RAND_MAX));
+    *x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *y = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+    
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *z = 1. / sqrt(6.) * erfinv(2. * u - 1.);
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Exponential(double *x, double *y, double *z)
+{
+    double u = (double)random()/(1.+ (double)(RAND_MAX));
+    *x = -log(1. - u) / sqrt(12.);
+
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *y = -log(1. - u) / sqrt(12.);
+    
+    u = (double)random()/(1.+ (double)(RAND_MAX));
+    *z = -log(1. - u) / sqrt(12.);
 
     return;
 }
