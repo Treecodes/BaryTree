@@ -10,6 +10,8 @@ void BaryTreeInterface(int numTargets, int numSources,
 		double *outputArray,
         KERNEL kernel, int numKernelParams, double *kernelParams,
         SINGULARITY singularity, APPROXIMATION approximation, COMPUTE_TYPE compute_type,
+        BOUNDARY_CONDITION boundary_type_x, BOUNDARY_CONDITION boundary_type_y, BOUNDARY_CONDITION boundary_type_z,
+        double boundary_length_x, double boundary_length_y, double boundary_length_z,
 		int interpOrder, double theta, int maxPerSourceLeaf, int maxPerTargetLeaf,
         double sizeCheck, int verbosity);
 

@@ -20,6 +20,15 @@ int main(int argc, char **argv)
     APPROXIMATION approximation  = LAGRANGE;
     COMPUTE_TYPE compute_type    = PARTICLE_CLUSTER;
 
+    BOUNDARY_CONDITION boundary_type_x = NON_PERIODIC;
+    BOUNDARY_CONDITION boundary_type_y = NON_PERIODIC;
+    BOUNDARY_CONDITION boundary_type_z = NON_PERIODIC;
+
+    double boundary_length_x=2.0;
+    double boundary_length_y=2.0;
+    double boundary_length_z=2.0;
+
+
     int numParams = 1;
     double kernelParams[1] = {0.5};
 
@@ -64,6 +73,8 @@ int main(int argc, char **argv)
                       xS, yS, zS, qS, wS, potential,
                       kernel, numParams, kernelParams,
                       singularity, approximation, compute_type,
+                      boundary_type_x, boundary_type_y, boundary_type_z,
+                      boundary_length_x, boundary_length_y, boundary_length_z,
                       interpOrder, theta, maxPerLeaf, maxPerBatch,
                       sizeCheck, verbosity);
 

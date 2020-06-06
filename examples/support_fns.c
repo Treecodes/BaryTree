@@ -34,11 +34,22 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     char run_direct_string[256]    = "OFF";
     char distribution_string[256]  = "UNIFORM";
     char partition_string[256]     = "RCB";
+    char boundary_type_x_string[256]     = "NON_PERIODIC";
+    char boundary_type_y_string[256]     = "NON_PERIODIC";
+    char boundary_type_z_string[256]     = "NON_PERIODIC";
 
     KERNEL kernel;
     SINGULARITY singularity;
     APPROXIMATION approximation;
     COMPUTE_TYPE compute_type;
+
+    BOUNDARY_CONDITION boundary_type_x;
+    BOUNDARY_CONDITION boundary_type_y;
+    BOUNDARY_CONDITION boundary_type_z;
+
+    double boundary_length_x=0.0;
+    double boundary_length_y=0.0;
+    double boundary_length_z=0.0;
 
     int num_kernel_params = 0;
     double kernel_params[32];
@@ -93,6 +104,24 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         
         } else if (strcmp(c1, "compute_type") == 0) {
             strcpy(compute_type_string, c2);
+
+        } else if (strcmp(c1, "boundary_type_x") == 0) {
+            strcpy(boundary_type_x_string, c2);
+
+        } else if (strcmp(c1, "boundary_type_y") == 0) {
+            strcpy(boundary_type_y_string, c2);
+
+        } else if (strcmp(c1, "boundary_type_z") == 0) {
+            strcpy(boundary_type_z_string, c2);
+
+        } else if (strcmp(c1, "boundary_length_x") == 0) {
+            boundary_length_x = atof(c2);
+
+        } else if (strcmp(c1, "boundary_length_y") == 0) {
+            boundary_length_y = atof(c2);
+
+        } else if (strcmp(c1, "boundary_length_z") == 0) {
+            boundary_length_z = atof(c2);
         
         } else if (strcmp(c1, "size_check") == 0) {
             size_check_factor = atof(c2);
@@ -201,6 +230,48 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         exit(1);
     }
 
+    if (strcasecmp(boundary_type_x_string, "NON-PERIODIC") == 0) {
+        boundary_type_x = NON_PERIODIC;
+
+    } else if (strcasecmp(boundary_type_x_string, "PERIODIC") == 0) {
+        boundary_type_x = PERIODIC;
+
+    } else {
+        if (rank == 0) {
+            printf("[random cube example] ERROR! Undefined boundary_type_x token \"%s\". Exiting.\n",
+                   boundary_type_x_string);
+        }
+        exit(1);
+    }
+
+    if (strcasecmp(boundary_type_y_string, "NON-PERIODIC") == 0) {
+        boundary_type_y = NON_PERIODIC;
+
+    } else if (strcasecmp(boundary_type_y_string, "PERIODIC") == 0) {
+        boundary_type_y = PERIODIC;
+
+    } else {
+        if (rank == 0) {
+            printf("[random cube example] ERROR! Undefined boundary_type_y token \"%s\". Exiting.\n",
+                   boundary_type_y_string);
+        }
+        exit(1);
+    }
+
+        if (strcasecmp(boundary_type_z_string, "NON-PERIODIC") == 0) {
+        boundary_type_z = NON_PERIODIC;
+
+    } else if (strcasecmp(boundary_type_z_string, "PERIODIC") == 0) {
+        boundary_type_z = PERIODIC;
+
+    } else {
+        if (rank == 0) {
+            printf("[random cube example] ERROR! Undefined boundary_type_z token \"%s\". Exiting.\n",
+                   boundary_type_z_string);
+        }
+        exit(1);
+    }
+
 
     if ((strcasecmp(compute_type_string, "CLUSTER_PARTICLE") == 0)
      || (strcasecmp(compute_type_string, "CLUSTER-PARTICLE") == 0)) {
@@ -286,6 +357,8 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     RunParams_Setup(run_params,
                     kernel, num_kernel_params, kernel_params,
                     approximation, singularity, compute_type,
+                    boundary_type_x, boundary_type_y, boundary_type_z,
+                    boundary_length_x, boundary_length_y, boundary_length_z,
                     theta, size_check_factor, interp_order, 
                     max_per_source_leaf, max_per_target_leaf,
                     verbosity);

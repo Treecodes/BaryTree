@@ -13,6 +13,21 @@ void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpo
          struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
+
+
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+// NON-PERIODIC
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+
+    if (run_params->boundary_type_x == NON_PERIODIC) {
+        if (run_params->boundary_type_y == NON_PERIODIC) {
+            if (run_params->boundary_type_z == NON_PERIODIC) {
+
+//                printf("Entering non-periodic K_Coulomb_PC_Lagrange.\n");
+
+
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
                         cluster_x, cluster_y, cluster_z, cluster_charge, potential)
@@ -58,6 +73,86 @@ void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpo
 #ifdef OPENACC_ENABLED
     } // end kernel
 #endif
+
+            }
+        }
+    }
+
+
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+// PERIODIC
+//--------------------------------------------------------------------
+//--------------------------------------------------------------------
+
+    if (run_params->boundary_type_x == PERIODIC) {
+        if (run_params->boundary_type_y == PERIODIC) {
+            if (run_params->boundary_type_z == PERIODIC) {
+
+//                printf("Entering periodic K_Coulomb_PC_Lagrange.\n");
+
+                double Lx = run_params->boundary_length_x;
+                double Ly = run_params->boundary_length_y;
+                double Lz = run_params->boundary_length_z;
+
+
+#ifdef OPENACC_ENABLED
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
+                        cluster_x, cluster_y, cluster_z, cluster_charge, potential)
+    {
+#endif
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int i = 0; i < number_of_targets_in_batch; i++) {
+
+        double temporary_potential = 0.0;
+
+        double tx = target_x[starting_index_of_target + i];
+        double ty = target_y[starting_index_of_target + i];
+        double tz = target_z[starting_index_of_target + i];
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temporary_potential)
+#endif
+        for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
+#ifdef OPENACC_ENABLED
+            #pragma acc cache(cluster_x[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster], \
+                              cluster_y[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster], \
+                              cluster_z[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster], \
+                              cluster_charge[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster])
+#endif
+
+            int jj = starting_index_of_cluster + j;
+            double dx = fabs(tx - cluster_x[jj]);
+            double dy = fabs(ty - cluster_y[jj]);
+            double dz = fabs(tz - cluster_z[jj]);
+
+            // compute periodic distance
+            dx = fmin(dx, Lx-dx);
+            dy = fmin(dy, Ly-dy);
+            dz = fmin(dz, Lz-dz);
+
+            double r2  = dx*dx + dy*dy + dz*dz;
+
+            if (r2 > DBL_MIN) {
+                temporary_potential += cluster_charge[starting_index_of_cluster + j] / sqrt(r2);
+            }
+        } // end loop over interpolation points
+#ifdef OPENACC_ENABLED
+        #pragma acc atomic
+#endif
+        potential[starting_index_of_target + i] += temporary_potential;
+    }
+#ifdef OPENACC_ENABLED
+    } // end kernel
+#endif
+
+            }
+        }
+    }
+
+
     return;
 }
 

@@ -15,6 +15,12 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                      APPROXIMATION approximation,
                      SINGULARITY singularity,
                      COMPUTE_TYPE compute_type,
+                     BOUNDARY_CONDITION boundary_type_x,
+                     BOUNDARY_CONDITION boundary_type_y,
+                     BOUNDARY_CONDITION boundary_type_z,
+                     double boundary_length_x,
+                     double boundary_length_y,
+                     double boundary_length_z,
                      double theta, double size_check_factor, int interp_order,
                      int max_per_source_leaf, int max_per_target_leaf,
                      int verbosity)
@@ -33,6 +39,14 @@ void RunParams_Setup(struct RunParams **run_params_addr,
     run_params->approximation = approximation;
     run_params->singularity = singularity;
     run_params->compute_type = compute_type;
+
+    run_params->boundary_type_x = boundary_type_x;
+    run_params->boundary_type_y = boundary_type_y;
+    run_params->boundary_type_z = boundary_type_z;
+
+    run_params->boundary_length_x = boundary_length_x;
+    run_params->boundary_length_y = boundary_length_y;
+    run_params->boundary_length_z = boundary_length_z;
 
     run_params->theta = theta;
     run_params->size_check_factor = size_check_factor;
@@ -107,6 +121,12 @@ void RunParams_Print(struct RunParams *run_params)
     printf("[BaryTree]              approximation = %d\n", run_params->approximation);
     printf("[BaryTree]                singularity = %d\n", run_params->singularity);
     printf("[BaryTree]               compute_type = %d\n", run_params->compute_type);
+    printf("[BaryTree]            boundary_type_x = %d\n", run_params->boundary_type_x);
+    printf("[BaryTree]            boundary_type_y = %d\n", run_params->boundary_type_y);
+    printf("[BaryTree]            boundary_type_z = %d\n", run_params->boundary_type_z);
+    printf("[BaryTree]          boundary_length_x = %f\n", run_params->boundary_length_x);
+    printf("[BaryTree]          boundary_length_y = %f\n", run_params->boundary_length_y);
+    printf("[BaryTree]          boundary_length_z = %f\n", run_params->boundary_length_z);
     printf("[BaryTree]                      theta = %f\n", run_params->theta);
     printf("[BaryTree]          size_check_factor = %f\n", run_params->size_check_factor);
     printf("[BaryTree]               interp_order = %d\n", run_params->interp_order);

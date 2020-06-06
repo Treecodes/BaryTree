@@ -468,9 +468,26 @@ void pc_compute_interaction_list(
 {
 
     /* determine DIST for MAC test */
-    double tx = batch_x_mid - tree_x_mid[tree_node];
-    double ty = batch_y_mid - tree_y_mid[tree_node];
-    double tz = batch_z_mid - tree_z_mid[tree_node];
+
+
+    double tx = fabs(batch_x_mid - tree_x_mid[tree_node]);
+    double ty = fabs(batch_y_mid - tree_y_mid[tree_node]);
+    double tz = fabs(batch_z_mid - tree_z_mid[tree_node]);
+
+
+    if (run_params->boundary_type_x == PERIODIC) {
+        double Lx = run_params->boundary_length_x;
+        tx = fmin( tx, Lx-tx);
+    }
+    if (run_params->boundary_type_y == PERIODIC) {
+        double Ly = run_params->boundary_length_y;
+        ty = fmin( ty, Ly-ty);
+    }
+    if (run_params->boundary_type_z == PERIODIC) {
+        double Lz = run_params->boundary_length_z;
+        tz = fmin( tz, Lz-tz);
+//        printf("Using periodic consitions in interaction lists.\n");
+    }
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
 

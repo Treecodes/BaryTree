@@ -42,4 +42,11 @@ typedef enum COMPUTE_TYPE
 } COMPUTE_TYPE;
 
 
+typedef enum BOUNDARY_CONDITION
+{
+    NON_PERIODIC,
+    PERIODIC
+} BOUNDARY_CONDITION;
+
+
 #endif /* H_BARYTREE_TYPES_H */
