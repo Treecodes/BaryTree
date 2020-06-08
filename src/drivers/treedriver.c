@@ -2,6 +2,7 @@
 #include <string.h>
 #include <mpi.h>
 #include <limits.h>
+#include <unistd.h>
 
 #include "../utilities/array.h"
 #include "../utilities/tools.h"
@@ -297,10 +298,38 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             CommWindows_Lock(comm_windows, get_from);
             // This is a non-blocking call!
             CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
+
+            //~~~~~~~~~~~~~~~~~~~~
+            // Overlapping Local compute
+            //~~~~~~~~~~~~~~~~~~~~
+
+            struct InteractionLists *local_interaction_list;
+
+            START_TIMER(&time_tree[4]);
+            InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
+            STOP_TIMER(&time_tree[4]);
+
+    //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+            if (run_params->verbosity > 0) {
+                total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
+                total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
+            }
+    //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+            START_TIMER(&time_tree[5]);
+            InteractionCompute_PC(potential, tree, batches, local_interaction_list,
+                                  sources, targets, clusters, run_params);
+            InteractionLists_Free(&local_interaction_list);
+            STOP_TIMER(&time_tree[5]);
+
             CommWindows_Unlock(comm_windows, get_from);
 
 
             for (int proc_id = 2; proc_id < num_procs; ++proc_id) {
+
+                if (rank==0){
+                    sleep(0);  // increase beyond 0 to cause rank 0 to sleep, for debugging synchonization issues.
+                }
 
                 int get_from = (num_procs + rank - proc_id) % num_procs;
                 
@@ -333,33 +362,14 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
                 CommWindows_Unlock(comm_windows, get_from);
             }
-            
-            CommWindows_Free(&comm_windows);
+
+
             STOP_TIMER(&time_tree[3]);
+            CommWindows_Free(&comm_windows);
+            printf("rank %i took %f seconds in the LET + Compute overlap phase.\n", rank, time_tree[3]);
         }
 
-        //~~~~~~~~~~~~~~~~~~~~
-        // Local compute
-        //~~~~~~~~~~~~~~~~~~~~
 
-        struct InteractionLists *local_interaction_list;
-        
-        START_TIMER(&time_tree[4]);
-        InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
-        STOP_TIMER(&time_tree[4]);
-
-//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        if (run_params->verbosity > 0) {
-            total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
-            total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
-        }
-//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-  
-        START_TIMER(&time_tree[5]);
-        InteractionCompute_PC(potential, tree, batches, local_interaction_list,
-                              sources, targets, clusters, run_params);
-        InteractionLists_Free(&local_interaction_list);
-        STOP_TIMER(&time_tree[5]);
 
         //~~~~~~~~~~~~~~~~~~~~
         // Remote compute
@@ -393,6 +403,16 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             time_tree[7] += time1;
             
         }
+
+
+//        //-------------------------------
+//        //-------------------------------
+//        // Free windows after all compute finishes.  This step contains a barrier.
+//        //-------------------------------
+//        //-------------------------------
+//        if (num_procs > 1) {
+//            CommWindows_Free(&comm_windows);
+//        }
             
 
         //-------------------------------
