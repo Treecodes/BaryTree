@@ -289,13 +289,48 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                                     
             CommWindows_Create(&comm_windows, clusters, sources);
             
-            for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
             
+            int proc_id=1;
+
+            int get_from = (num_procs + rank - proc_id) % num_procs;
+
+            CommWindows_Lock(comm_windows, get_from);
+            // This is a non-blocking call!
+            CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
+            CommWindows_Unlock(comm_windows, get_from);
+
+
+            for (int proc_id = 2; proc_id < num_procs; ++proc_id) {
+
                 int get_from = (num_procs + rank - proc_id) % num_procs;
                 
                 CommWindows_Lock(comm_windows, get_from);
                 // This is a non-blocking call!
                 CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
+
+                int get_from_compute = (num_procs+rank-(proc_id-1)) % num_procs;
+                struct InteractionLists *let_interaction_list;
+
+                START_TIMER(&time1);
+                InteractionLists_Make(&let_interaction_list, let_trees[get_from_compute], batches, run_params);
+                STOP_TIMER(&time1);
+                time_tree[6] += time1;
+
+    //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+                if (run_params->verbosity > 0) {
+                    total_num_approx += sum_int(let_interaction_list->num_approx, batches->numnodes);
+                    total_num_direct += sum_int(let_interaction_list->num_direct, batches->numnodes);
+                }
+    //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+                START_TIMER(&time1);
+                InteractionCompute_PC(potential, let_trees[get_from_compute], batches, let_interaction_list,
+                                      let_sources, targets, let_clusters, run_params);
+                InteractionLists_Free(&let_interaction_list);
+                STOP_TIMER(&time1);
+                time_tree[7] += time1;
+
+
                 CommWindows_Unlock(comm_windows, get_from);
             }
             
@@ -333,7 +368,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         time_tree[6] = 0;
         time_tree[7] = 0;
 
-        for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
+        for (int proc_id = num_procs-1; proc_id < num_procs; ++proc_id) {
         
             int get_from = (num_procs+rank-proc_id) % num_procs;
             struct InteractionLists *let_interaction_list;
