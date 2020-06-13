@@ -558,8 +558,8 @@ void cc_compute_interaction_list(
     if ((source_tree_radius[source_tree_node] + target_tree_radius[target_tree_node])
          < dist * run_params->theta) {
     
-        if ((source_tree_numpar[source_tree_node] < size_check) &&
-            (target_tree_numpar[target_tree_node] < size_check)) {
+        if ((source_tree_numpar[source_tree_node] <= size_check) &&
+            (target_tree_numpar[target_tree_node] <= size_check)) {
             
             /* add to direct list */
             
@@ -571,7 +571,7 @@ void cc_compute_interaction_list(
             direct_list[target_tree_node][direct_index_counter[target_tree_node]] = source_tree_node;
             direct_index_counter[target_tree_node]++;
             
-        } else if (source_tree_numpar[source_tree_node] < size_check) {
+        } else if (source_tree_numpar[source_tree_node] <= size_check) {
         
             /* add to CP approx list */
             
@@ -583,7 +583,7 @@ void cc_compute_interaction_list(
             target_approx_list[target_tree_node][target_approx_index_counter[target_tree_node]] = source_tree_node;
             target_approx_index_counter[target_tree_node]++;
             
-        } else if (target_tree_numpar[target_tree_node] < size_check) {
+        } else if (target_tree_numpar[target_tree_node] <= size_check) {
         
             /* add to PC approx list */
             
