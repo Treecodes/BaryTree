@@ -14,9 +14,9 @@ if(BUILD_EXAMPLES)
    target_link_libraries(random_cube_reproducible_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
    install(TARGETS random_cube_reproducible_cpu DESTINATION bin)
 
-   add_executable(run_readin_cpu run_readin.c ${AUX_SRCS})
-   target_link_libraries(run_readin_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
-   install(TARGETS run_readin_cpu DESTINATION bin)
+   add_executable(run_readin_rism_cpu run_readin_rism.c ${AUX_SRCS})
+   target_link_libraries(run_readin_rism_cpu PRIVATE BaryTree_cpu Zoltan_Interface)
+   install(TARGETS run_readin_rism_cpu DESTINATION bin)
 
    add_executable(test_BaryTreeInterface_cpu test_BaryTreeInterface.c)
    target_link_libraries(test_BaryTreeInterface_cpu PRIVATE BaryTree_cpu)
@@ -34,6 +34,10 @@ if(BUILD_EXAMPLES)
       add_executable(run_readin_gpu run_readin.c ${AUX_SRCS})
       target_link_libraries(run_readin_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
       install(TARGETS run_readin_gpu DESTINATION bin)
+
+      add_executable(run_readin_rism_gpu run_readin_rism.c ${AUX_SRCS})
+      target_link_libraries(run_readin_rism_gpu PRIVATE BaryTree_gpu Zoltan_Interface)
+      install(TARGETS run_readin_rism_gpu DESTINATION bin)
 
       add_executable(test_BaryTreeInterface_gpu test_BaryTreeInterface.c)
       target_link_libraries(test_BaryTreeInterface_gpu PRIVATE BaryTree_gpu)
