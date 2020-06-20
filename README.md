@@ -78,3 +78,8 @@ References
 License
 -------
 Copyright © 2019-2020, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).
+
+
+Disclaimer
+----------
+This material is based upon work supported by the National Science Foundation under grant DMS-1819094, and by the Extreme Science and Engineering Discovery Environment (XSEDE) under grants ACI-1548562 and ASC-190062. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
