@@ -17,6 +17,13 @@ struct RunParams
     double theta;
     double size_check_factor;
 
+    double xmin;
+    double xmax;
+    double ymin;
+    double ymax;
+    double zmin;
+    double zmax;
+
     int interp_order;
     int interp_pts_per_cluster;
     int interp_charges_per_cluster;

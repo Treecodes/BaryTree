@@ -15,6 +15,7 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                      APPROXIMATION approximation,
                      SINGULARITY singularity,
                      COMPUTE_TYPE compute_type,
+                     double xmin, double xmax, double ymin, double ymax, double zmin, double zmax,
                      double theta, double size_check_factor, int interp_order,
                      int max_per_source_leaf, int max_per_target_leaf,
                      int verbosity)
@@ -36,6 +37,13 @@ void RunParams_Setup(struct RunParams **run_params_addr,
 
     run_params->theta = theta;
     run_params->size_check_factor = size_check_factor;
+
+    run_params->xmin = xmin;
+    run_params->xmax = xmax;
+    run_params->ymin = ymin;
+    run_params->ymax = ymax;
+    run_params->zmin = zmin;
+    run_params->zmax = zmax;
 
     run_params->interp_order = interp_order;
     run_params->interp_pts_per_cluster = (interp_order+1) * (interp_order+1) * (interp_order+1);
@@ -109,6 +117,12 @@ void RunParams_Print(struct RunParams *run_params)
     printf("[BaryTree]               compute_type = %d\n", run_params->compute_type);
     printf("[BaryTree]                      theta = %f\n", run_params->theta);
     printf("[BaryTree]          size_check_factor = %f\n", run_params->size_check_factor);
+    printf("[BaryTree]                       xmin = %f\n", run_params->xmin);
+    printf("[BaryTree]                       xmax = %f\n", run_params->xmax);
+    printf("[BaryTree]                       ymin = %f\n", run_params->ymin);
+    printf("[BaryTree]                       ymax = %f\n", run_params->ymax);
+    printf("[BaryTree]                       zmin = %f\n", run_params->zmin);
+    printf("[BaryTree]                       zmax = %f\n", run_params->zmax);
     printf("[BaryTree]               interp_order = %d\n", run_params->interp_order);
     printf("[BaryTree]     interp_pts_per_cluster = %d\n", run_params->interp_pts_per_cluster);
     printf("[BaryTree] interp_weights_per_cluster = %d\n", run_params->interp_weights_per_cluster);

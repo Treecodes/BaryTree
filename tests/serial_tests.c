@@ -74,6 +74,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     COULOMB, numKernelParams, kernelParams, NO_APPROX, SKIPPING, NO_COMPUTE_TYPE,
+                    -1,1,-1,1,-1,1,
                     0, 0, 0, 0, 0, verbosity);
 
     directdriver(sources, targets, run_params, potential, time_tree);
@@ -101,6 +102,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     COULOMB, numKernelParams, kernelParams, NO_APPROX, SUBTRACTION, NO_COMPUTE_TYPE,
+                    -1,1,-1,1,-1,1,
                     0, 0, 0, 0, 0, verbosity);
     fprintf(stderr, "I'm here 3.\n");
 
@@ -130,6 +132,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     YUKAWA, numKernelParams, kernelParams, NO_APPROX, SKIPPING, NO_COMPUTE_TYPE,
+                    -1,1,-1,1,-1,1,
                     0, 0, 0, 0, 0, verbosity);
 
     directdriver(sources, targets, run_params, potential, time_tree);
@@ -157,6 +160,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     YUKAWA, numKernelParams, kernelParams, NO_APPROX, SUBTRACTION, NO_COMPUTE_TYPE,
+                    -1,1,-1,1,-1,1,
                     0, 0, 0, 0, 0, verbosity);
 
     directdriver(sources, targets, run_params, potential, time_tree);
@@ -257,6 +261,7 @@ static char *test_treecode_on_100_particles()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
+                    -1,1,-1,1,-1,1,
                     theta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 
@@ -598,6 +603,7 @@ static char *test_treecode_on_1_target_10000_sources()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
+                    -1,1,-1,1,-1,1,
                     theta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 
@@ -902,6 +908,7 @@ static char *test_treecode_wrapper()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
+                    -1,1,-1,1,-1,1,
                     theta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 
@@ -919,7 +926,9 @@ static char *test_treecode_wrapper()
     BaryTreeInterface(targets->num, sources->num,
                       targets->x,targets->y,targets->z,targets->q,
                       sources->x,sources->y,sources->z,sources->q,sources->w,
-                      potential_wrapper, COULOMB, num_kernel_params, kernel_params,
+                      potential_wrapper,
+                      -1,1,-1,1,-1,1,
+                      COULOMB, num_kernel_params, kernel_params,
                       SKIPPING, LAGRANGE, PARTICLE_CLUSTER,
                       order, theta, max_per_source_leaf, max_per_target_leaf,
                       size_check, verbosity);
@@ -1023,6 +1032,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
+                    -1,1,-1,1,-1,1,
                     0, size_check, 0, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 

@@ -236,17 +236,18 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
                        xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
 
-        for (int i = 0; i < 8; i++) {
-//        for (int i = 0; i < numposchild; i++) {
+//        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < numposchild; i++) {
             if (ind[i][0] <= ind[i][1]) {
 
                 (*p)->num_children = (*p)->num_children + 1;
-//                int idx = (*p)->num_children - 1;
+                int idx = (*p)->num_children - 1;
 
                 for (int j = 0; j < 6; j++)
                     lxyzmm[j] = xyzmms[j][i];
 
-                struct TreeLinkedListNode **paddress = &((*p)->child[i]);
+//                struct TreeLinkedListNode **paddress = &((*p)->child[i]);
+                struct TreeLinkedListNode **paddress = &((*p)->child[idx]);
 
                 TreeLinkedList_Sources_Construct(paddress,
                                sources, ind[i][0], ind[i][1],

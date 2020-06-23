@@ -14,7 +14,7 @@ static double erfinv (double x);
 
 
 void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
-                  double *xyz_limits, DISTRIBUTION *distribution, PARTITION *partition)
+                  DISTRIBUTION *distribution, PARTITION *partition)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -23,6 +23,12 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     int verbosity = 0;
     int interp_order = 5; 
     double theta = 0.5; 
+    double xmin;
+    double xmax;
+    double ymin;
+    double ymax;
+    double zmin;
+    double zmax;
     int max_per_source_leaf = 500;
     int max_per_target_leaf = 500; 
     double size_check_factor = 1.0;
@@ -48,12 +54,12 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     *M = 10000;
     *slice = 1;
     
-    xyz_limits[0] = -1.;
-    xyz_limits[1] =  1.;
-    xyz_limits[2] = -1.;
-    xyz_limits[3] =  1.;
-    xyz_limits[4] = -1.;
-    xyz_limits[5] =  1.;
+//    xyz_limits[0] = -1.;
+//    xyz_limits[1] =  1.;
+//    xyz_limits[2] = -1.;
+//    xyz_limits[3] =  1.;
+//    xyz_limits[4] = -1.;
+//    xyz_limits[5] =  1.;
 
 
     char c[256], c1[256], c2[256];
@@ -67,6 +73,24 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 
         } else if (strcmp(c1, "theta") == 0) {
             theta = atof(c2);
+
+        } else if (strcmp(c1, "xmin") == 0) {
+            xmin = atof(c2);
+
+        } else if (strcmp(c1, "xmax") == 0) {
+            xmax = atof(c2);
+
+        } else if (strcmp(c1, "ymin") == 0) {
+            ymin = atof(c2);
+
+        } else if (strcmp(c1, "ymax") == 0) {
+            ymax = atof(c2);
+
+        } else if (strcmp(c1, "zmin") == 0) {
+            zmin = atof(c2);
+
+        } else if (strcmp(c1, "zmax") == 0) {
+            zmax = atof(c2);
 
         } else if (strcmp(c1, "max_per_source_leaf") == 0) {
             max_per_source_leaf = atoi(c2);
@@ -286,7 +310,8 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     RunParams_Setup(run_params,
                     kernel, num_kernel_params, kernel_params,
                     approximation, singularity, compute_type,
-                    theta, size_check_factor, interp_order, 
+                    xmin, xmax, ymin, ymax, zmin, zmax,
+                    theta, size_check_factor, interp_order,
                     max_per_source_leaf, max_per_target_leaf,
                     verbosity);
 

@@ -25,7 +25,7 @@ typedef enum PARTITION
 
 
 void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
-                double *xyz_limits, DISTRIBUTION *distribution, PARTITION *partition);
+                DISTRIBUTION *distribution, PARTITION *partition);
 
 
 double Point_Set_Init(DISTRIBUTION distribution);

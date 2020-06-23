@@ -27,12 +27,20 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
     int min_leaf_size = INT_MAX;
     int max_leaf_size = 0;
     
-    xyzminmax[0] = minval(sources->x, sources->num);
-    xyzminmax[1] = maxval(sources->x, sources->num);
-    xyzminmax[2] = minval(sources->y, sources->num);
-    xyzminmax[3] = maxval(sources->y, sources->num);
-    xyzminmax[4] = minval(sources->z, sources->num);
-    xyzminmax[5] = maxval(sources->z, sources->num);
+//    xyzminmax[0] = minval(sources->x, sources->num);
+//    xyzminmax[1] = maxval(sources->x, sources->num);
+//    xyzminmax[2] = minval(sources->y, sources->num);
+//    xyzminmax[3] = maxval(sources->y, sources->num);
+//    xyzminmax[4] = minval(sources->z, sources->num);
+//    xyzminmax[5] = maxval(sources->z, sources->num);
+
+
+    xyzminmax[0] = run_params->xmin;
+    xyzminmax[1] = run_params->xmax;
+    xyzminmax[2] = run_params->ymin;
+    xyzminmax[3] = run_params->ymax;
+    xyzminmax[4] = run_params->zmin;
+    xyzminmax[5] = run_params->zmax;
     
     TreeLinkedList_Sources_Construct(&tree_linked_list, sources, 1, sources->num,
                     run_params->max_per_source_leaf, xyzminmax, &numnodes, &numleaves,
@@ -204,7 +212,19 @@ void Tree_Print(struct Tree *tree)
     MPI_Reduce(&(tree->max_leaf_size),    &global_max_leaf_size, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&(tree->min_leaf_size),    &global_min_leaf_size, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
     
+    printf("rank %i, root bounding box: %f, %f, %f, %f, %f, %f, num children = %i, children = %i\n",rank,tree->x_min[0],tree->x_max[0],tree->y_min[0],tree->y_max[0],tree->z_min[0],tree->z_max[0],tree->num_children[0],tree->children[0]);
+    if (rank == 1) {
+//        printf("rank %i, root bounding box: %f, %f, %f, %f, %f, %f, num children = %i\n",rank,tree->x_min[0],tree->x_max[0],tree->y_min[0],tree->y_max[0],tree->z_min[0],tree->z_max[0],tree->num_children[0]);
+        int idx = 1;
+        for (int i=0;i<tree->num_children[0];i++){
+
+            printf("child %i, idx %i, root bounding box: %f, %f, %f, %f, %f, %f, num par =%i, num children = %i\n",i,idx,tree->x_min[idx],tree->x_max[idx],tree->y_min[idx],tree->y_max[idx],tree->z_min[idx],tree->z_max[idx],tree->numpar[idx],tree->num_children[idx]);
+            idx = idx+tree->num_children[idx]+1;
+        }
+    }
     if (rank == 0) {
+
+
         printf("[BaryTree]\n");
         printf("[BaryTree] Tree information: \n");
         printf("[BaryTree]\n");

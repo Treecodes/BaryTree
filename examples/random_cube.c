@@ -33,7 +33,6 @@ int main(int argc, char **argv)
     
     /* run parameters */
     int N, M, run_direct, slice;
-    double xyz_limits[6];
     DISTRIBUTION distribution;
     PARTITION partition;
     int sample_size = 1000000;
@@ -41,11 +40,7 @@ int main(int argc, char **argv)
     struct RunParams *run_params = NULL;
     
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution, &partition);
-    
-    double xmin = xyz_limits[0], xmax = xyz_limits[1];
-    double ymin = xyz_limits[2], ymax = xyz_limits[3];
-    double zmin = xyz_limits[4], zmax = xyz_limits[5];
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, &distribution, &partition);
 
     /* Zoltan variables */
     int rc;
@@ -227,11 +222,11 @@ int main(int argc, char **argv)
     MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->w));
 
     /* Generating sources and targets based on Zoltan bounding box */
-    
+
     for (int i = 0; i < sources->num; ++i) {
-        sources->x[i] = Point_Set(distribution, zz_bound_x_min, zz_bound_x_max) * (xmax-xmin) + xmin;
-        sources->y[i] = Point_Set(distribution, zz_bound_y_min, zz_bound_y_max) * (ymax-ymin) + ymin;
-        sources->z[i] = Point_Set(distribution, zz_bound_z_min, zz_bound_z_max) * (zmax-zmin) + zmin;
+        sources->x[i] = Point_Set(distribution, zz_bound_x_min, zz_bound_x_max) * (run_params->xmax-run_params->xmin) + run_params->xmin;
+        sources->y[i] = Point_Set(distribution, zz_bound_y_min, zz_bound_y_max) * (run_params->ymax-run_params->ymin) + run_params->ymin;
+        sources->z[i] = Point_Set(distribution, zz_bound_z_min, zz_bound_z_max) * (run_params->zmax-run_params->zmin) + run_params->zmin;
 
         sources->q[i] = Point_Set(UNIFORM, -1., 1.);
         sources->w[i] = Point_Set(UNIFORM, -1., 1.);
@@ -257,9 +252,9 @@ int main(int argc, char **argv)
     /* Generating targets based on Zoltan bounding box */
     
     for (int i = 0; i < targets->num; ++i) {
-        targets->x[i] = Point_Set(distribution, zz_bound_x_min, zz_bound_x_max) * (xmax-xmin) + xmin;
-        targets->y[i] = Point_Set(distribution, zz_bound_y_min, zz_bound_y_max) * (ymax-ymin) + ymin;
-        targets->z[i] = Point_Set(distribution, zz_bound_z_min, zz_bound_z_max) * (zmax-zmin) + zmin;
+        targets->x[i] = Point_Set(distribution, zz_bound_x_min, zz_bound_x_max) * (run_params->xmax-run_params->xmin) + run_params->xmin;
+        targets->y[i] = Point_Set(distribution, zz_bound_y_min, zz_bound_y_max) * (run_params->ymax-run_params->ymin) + run_params->ymin;
+        targets->z[i] = Point_Set(distribution, zz_bound_z_min, zz_bound_z_max) * (run_params->zmax-run_params->zmin) + run_params->zmin;
         targets->q[i] = Point_Set(UNIFORM, -1., 1.);
     }
 

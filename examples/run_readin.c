@@ -30,14 +30,14 @@ int main(int argc, char **argv)
 
     /* run parameters */
     int N, M, run_direct, slice;
-    double xyz_limits[6];
+//    double xyz_limits[6];
     DISTRIBUTION distribution;
     PARTITION partition;
     
     struct RunParams *run_params = NULL;
     
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution, &partition);
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, &distribution, &partition);
 
     if (N != M) {
         if (rank == 0) printf("[random cube example] ERROR! This executable requires sources and targets "

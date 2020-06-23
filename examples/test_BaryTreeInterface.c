@@ -60,8 +60,16 @@ int main(int argc, char **argv)
         qT[i] =  1.;
     }
 
+    double xmin=-1;
+    double xmax= 1;
+    double ymin=-1;
+    double ymax= 1;
+    double zmin=-1;
+    double zmax= 1;
+
     BaryTreeInterface(numTargets, numSources, xT, yT, zT, qT,
                       xS, yS, zS, qS, wS, potential,
+                      xmin, xmax, ymin, ymax, zmin, zmax,
                       kernel, numParams, kernelParams,
                       singularity, approximation, compute_type,
                       interpOrder, theta, maxPerLeaf, maxPerBatch,

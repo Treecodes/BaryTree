@@ -10,6 +10,7 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                      APPROXIMATION approximation,
                      SINGULARITY singularity,
                      COMPUTE_TYPE compute_type,
+                     double xmin, double xmax, double ymin, double ymax, double zmin, double zmax,
                      double theta, double size_check_factor, int interp_order,
                      int max_per_source_leaf, int max_per_target_leaf,
                      int verbosity);

@@ -30,14 +30,13 @@ int main(int argc, char **argv)
 
     /* run parameters */
     int N, M, run_direct, slice;
-    double xyz_limits[6];
     DISTRIBUTION distribution;
     PARTITION partition;
     
     struct RunParams *run_params = NULL;
     
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution, &partition);
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, &distribution, &partition);
 
     if (N != M) {
         if (rank == 0) printf("[random cube example] ERROR! This executable requires sources and targets "
@@ -128,15 +127,16 @@ int main(int argc, char **argv)
 
         for (int j = 0; j < rank+1; ++j) { // Cycle to generate same particle no matter num ranks
             for (int i = 0; i < N; ++i) {
-                mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
-                mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
-                mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * (run_params->xmax-run_params->xmin) + run_params->xmin;
+                mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * (run_params->ymax-run_params->ymin) + run_params->ymin;
+                mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * (run_params->zmax-run_params->zmin) + run_params->zmin;
                 mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
-                mySources.w[i] = 1.0;
+                mySources.w[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
                 mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
                 mySources.b[i] = 1.0; // dummy weighting scheme
             }
         }
+
 
     } else if (distribution == PLUMMER) {
 
