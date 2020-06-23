@@ -168,12 +168,19 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
     (*numnodes)++;
     (*p)->numpar = iend - ibeg + 1;
     
-    (*p)->x_min = minval(sources->x + ibeg - 1, (*p)->numpar);
-    (*p)->x_max = maxval(sources->x + ibeg - 1, (*p)->numpar);
-    (*p)->y_min = minval(sources->y + ibeg - 1, (*p)->numpar);
-    (*p)->y_max = maxval(sources->y + ibeg - 1, (*p)->numpar);
-    (*p)->z_min = minval(sources->z + ibeg - 1, (*p)->numpar);
-    (*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
+//    (*p)->x_min = minval(sources->x + ibeg - 1, (*p)->numpar); // xyzmm[0]
+//    (*p)->x_max = maxval(sources->x + ibeg - 1, (*p)->numpar); // xyzmm[1]
+//    (*p)->y_min = minval(sources->y + ibeg - 1, (*p)->numpar);
+//    (*p)->y_max = maxval(sources->y + ibeg - 1, (*p)->numpar);
+//    (*p)->z_min = minval(sources->z + ibeg - 1, (*p)->numpar);
+//    (*p)->z_max = maxval(sources->z + ibeg - 1, (*p)->numpar);
+
+    (*p)->x_min = xyzmm[0];
+    (*p)->x_max = xyzmm[1];
+    (*p)->y_min = xyzmm[2];
+    (*p)->y_max = xyzmm[3];
+    (*p)->z_min = xyzmm[4];
+    (*p)->z_max = xyzmm[5];
     
 
     double xl = (*p)->x_max - (*p)->x_min;
