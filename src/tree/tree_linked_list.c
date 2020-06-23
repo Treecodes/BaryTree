@@ -205,15 +205,15 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
     
     if ((*p)->numpar > maxparnode) {
     
-        int max_num_children;
+        int max_num_children=8;
     
-        if ((*p)->numpar < 2 * maxparnode) {
-            max_num_children = 2;
-        } else if ((*p)->numpar < 4 * maxparnode) {
-            max_num_children = 4;
-        } else {
-            max_num_children = 8;
-        }
+//        if ((*p)->numpar < 2 * maxparnode) {
+//            max_num_children = 2;
+//        } else if ((*p)->numpar < 4 * maxparnode) {
+//            max_num_children = 4;
+//        } else {
+//            max_num_children = 8;
+//        }
     /*
      * IND array holds indices of the eight new subregions.
      */
