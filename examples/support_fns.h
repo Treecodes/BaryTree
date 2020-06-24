@@ -28,7 +28,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
                 double *xyz_limits, DISTRIBUTION *distribution, PARTITION *partition);
 
 void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *file_pqr,
-                         int *run_direct, int *slice, double *xyz_limits, int *grid_dim)
+                         int *run_direct, int *slice, double *xyz_limits, int *grid_dim);
 
 
 double Point_Set_Init(DISTRIBUTION distribution);

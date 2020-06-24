@@ -148,8 +148,8 @@ int main(int argc, char **argv)
 
     targets_sample = malloc(sizeof(struct Particles));
 
-    potential = malloc(sizeof(double) * N);
-    potential_direct = malloc(sizeof(double) * N);
+    potential = malloc(sizeof(double) * targets->num);
+    potential_direct = malloc(sizeof(double) * targets->num);
 
     memset(potential, 0, targets->num * sizeof(double));
     memset(potential_direct, 0, targets->num * sizeof(double));
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
                            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err, slice);
     }
     
-    CSV_Print(N, M, run_params, time_run_glob, time_tree_glob, time_direct_glob,
+    CSV_Print(N, targets->num, run_params, time_run_glob, time_tree_glob, time_direct_glob,
               potential_engy_glob, potential_engy_direct_glob,
               glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err);
 
