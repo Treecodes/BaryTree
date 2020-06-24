@@ -80,8 +80,6 @@ SET(SRCS_K_COULOMB
     kernels/coulomb/coulomb_ss_correction.c
     kernels/coulomb/coulomb_ss_pc.h
     kernels/coulomb/coulomb_ss_pc.c)
-#   kernels/coulomb/coulomb_ss_cp.h
-#   kernels/coulomb/coulomb_ss_cp.c)
 
 
 SET(SRCS_K_YUKAWA
@@ -100,8 +98,6 @@ SET(SRCS_K_YUKAWA
     kernels/yukawa/yukawa_ss_correction.c
     kernels/yukawa/yukawa_ss_pc.h
     kernels/yukawa/yukawa_ss_pc.c)
-#   kernels/yukawa/yukawa_ss_cp.h
-#   kernels/yukawa/yukawa_ss_cp.c)
 
 
 SET(SRCS_K_REGULARIZED_COULOMB
@@ -120,8 +116,6 @@ SET(SRCS_K_REGULARIZED_COULOMB
     kernels/regularized-coulomb/regularized-coulomb_ss_correction.c
     kernels/regularized-coulomb/regularized-coulomb_ss_pc.h
     kernels/regularized-coulomb/regularized-coulomb_ss_pc.c)
-#   kernels/regularized-coulomb/regularized-coulomb_ss_cp.h
-#   kernels/regularized-coulomb/regularized-coulomb_ss_cp.c)
 
 
 SET(SRCS_K_REGULARIZED_YUKAWA
@@ -140,8 +134,6 @@ SET(SRCS_K_REGULARIZED_YUKAWA
     kernels/regularized-yukawa/regularized-yukawa_ss_correction.c
     kernels/regularized-yukawa/regularized-yukawa_ss_pc.h
     kernels/regularized-yukawa/regularized-yukawa_ss_pc.c)
-#   kernels/regularized-yukawa/regularized-yukawa_ss_cp.h
-#   kernels/regularized-yukawa/regularized-yukawa_ss_cp.c)
 
 
 SET(SRCS_K_ATAN
@@ -150,8 +142,6 @@ SET(SRCS_K_ATAN
     kernels/atan/atan_direct.c
     kernels/atan/atan_pc.h
     kernels/atan/atan_pc.c)
-#   kernels/atan/atan_cp.h
-#   kernels/atan/atan_cp.c)
 
 
 SET(SRCS_K_SIN_OVER_R
@@ -163,14 +153,33 @@ SET(SRCS_K_SIN_OVER_R
     kernels/sin-over-r/sin-over-r_cp.h
     kernels/sin-over-r/sin-over-r_cp.c)
 
+
 SET(SRCS_K_MQ
     kernels/mq/mq.h
     kernels/mq/mq_direct.h
     kernels/mq/mq_direct.c
-    kernels/mq/mq.h
+    kernels/mq/mq_pc.h
     kernels/mq/mq_pc.c)
-#    kernels/mq/mq_cp.h
-#    kernels/mq/mq_cp.c)
+
+
+SET(SRCS_K_TCF
+    kernels/tcf/tcf.h
+    kernels/tcf/tcf_direct.h
+    kernels/tcf/tcf_direct.c
+    kernels/tcf/tcf_pc.h
+    kernels/tcf/tcf_pc.c
+    kernels/tcf/tcf_cp.h
+    kernels/tcf/tcf_cp.c)
+
+
+SET(SRCS_K_DCF
+    kernels/dcf/dcf.h
+    kernels/dcf/dcf_direct.h
+    kernels/dcf/dcf_direct.c
+    kernels/dcf/dcf_pc.h
+    kernels/dcf/dcf_pc.c
+    kernels/dcf/dcf_cp.h
+    kernels/dcf/dcf_cp.c)
 
 
 SET(SRCS_KERNELS ${SRCS_K_COULOMB}
@@ -179,7 +188,9 @@ SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_REGULARIZED_YUKAWA}
                  ${SRCS_K_ATAN}
                  ${SRCS_K_SIN_OVER_R}
-                 ${SRCS_K_MQ})
+                 ${SRCS_K_MQ}
+                 ${SRCS_K_TCF}
+                 ${SRCS_K_DCF})
 
 
 set(TRGT BaryTree_cpu)

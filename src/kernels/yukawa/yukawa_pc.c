@@ -111,25 +111,24 @@ void K_Yukawa_PC_Hermite(int number_of_targets_in_batch, int number_of_interpola
             double dz = tz - cluster_z[jj];
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            double r2 = r*r;
-            double r3 = r2*r;
-            double r4 = r2*r2;
-            double rinv = 1 / r;
-            double r3inv = rinv*rinv*rinv;
-            double r5inv = r3inv*rinv*rinv;
-            double r7inv = r5inv*rinv*rinv;
+            double r2 = r  * r;
+            double r3 = r2 * r;
+            double rinv = 1. / r;
+            double r3inv = rinv  * rinv * rinv;
+            double r5inv = r3inv * rinv * rinv;
+            double r7inv = r5inv * rinv * rinv;
 
             if (r > DBL_MIN) {
 
                 temporary_potential += exp(-kernel_parameter * r) 
                          * (rinv * (cluster_charge_[j])
-                         + r3inv * (1 + kernel_parameter * r)
+                         + r3inv * (1. + kernel_parameter * r)
                                  * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
                                   + cluster_charge_delta_z[j]*dz)
-                         + r5inv * (3 + 3 * kernel_parameter * r + kernel_parameter2 * r2) 
+                         + r5inv * (3. + 3. * kernel_parameter * r + kernel_parameter2 * r2)
                                  * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
                                   + cluster_charge_delta_xz[j]*dx*dz)
-                         + r7inv * (15 + 15 * kernel_parameter * r + 6 * kernel_parameter2 * r2 + kernel_parameter3 * r3)
+                         + r7inv * (15. + 15. * kernel_parameter * r + 6. * kernel_parameter2 * r2 + kernel_parameter3 * r3)
                                  * cluster_charge_delta_xyz[j]*dx*dy*dz);
 
 

@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <float.h>
 #include <mpi.h>
@@ -232,7 +233,7 @@ int main(int argc, char **argv)
                            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err, slice);
     }
     
-    CSV_Print(N, M, run_params, time_run_glob, time_tree_glob, time_direct_glob,
+    CSV_Print(N, targets->num, run_params, time_run_glob, time_tree_glob, time_direct_glob,
               potential_engy_glob, potential_engy_direct_glob,
               glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err);
 

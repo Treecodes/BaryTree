@@ -16,6 +16,8 @@
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
+#include "../kernels/tcf/tcf.h"
+#include "../kernels/dcf/dcf.h"
 
 #include "interaction_compute.h"
 
@@ -88,9 +90,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
         int batch_start =  batch_ibeg - 1;
 
 
-/**********************************************************/
-/************** POTENTIAL FROM APPROX *********************/
-/**********************************************************/
+/* * ********************************************************/
+/* * ************ POTENTIAL FROM APPROX *********************/
+/* * ********************************************************/
 
         for (int j = 0; j < num_approx_in_batch; j++) {
 
@@ -100,9 +102,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int stream_id = j%3;
 
 
-    /***********************************************/
-    /***************** Coulomb *********************/
-    /***********************************************/
+    /* * *********************************************/
+    /* * *************** Coulomb *********************/
+    /* * *********************************************/
             if (run_params->kernel == COULOMB) {
 
                 if (run_params->approximation == LAGRANGE) {
@@ -150,9 +152,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     exit(1);
                 }
 
-    /***********************************************/
-    /***************** Yukawa **********************/
-    /***********************************************/
+
+    /* * *********************************************/
+    /* * *************** Yukawa **********************/
+    /* * *********************************************/
 
             } else if (run_params->kernel == YUKAWA) {
 
@@ -201,9 +204,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     exit(1);
                 }
 
-    /***************************************/
-    /********* Regularized Coulomb *********/
-    /***************************************/
+
+    /* * *************************************/
+    /* * ******* Regularized Coulomb *********/
+    /* * *************************************/
 
             } else if (run_params->kernel == REGULARIZED_COULOMB) {
 
@@ -252,9 +256,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     exit(1);
                 }
 
-    /***************************************/
-    /********* Regularized Yukawa **********/
-    /***************************************/
+
+    /* * *************************************/
+    /* * ******* Regularized Yukawa **********/
+    /* * *************************************/
 
             } else if (run_params->kernel == REGULARIZED_YUKAWA) {
 
@@ -301,9 +306,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 }
 
 
-    /***************************************/
-    /********* Sin Over R ******************/
-    /***************************************/
+    /* * *************************************/
+    /* * ******* Sin Over R ******************/
+    /* * *************************************/
 
             } else if (run_params->kernel == SIN_OVER_R) {
 
@@ -330,6 +335,66 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     }
                 }
 
+
+    /* * *************************************/
+    /* * ******* TCF *************************/
+    /* * *************************************/
+
+            } else if (run_params->kernel == TCF) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_TCF_CP_Lagrange(num_sources_in_batch,
+                            interp_pts_per_cluster, batch_start, cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, stream_id);
+                    }
+
+                } else if (run_params->approximation == HERMITE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_TCF_CP_Hermite(num_sources_in_batch,
+                            interp_pts_per_cluster, batch_start, cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+
+
+    /* * *************************************/
+    /* * ******* DCF *************************/
+    /* * *************************************/
+
+            } else if (run_params->kernel == DCF) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_DCF_CP_Lagrange(num_sources_in_batch,
+                            interp_pts_per_cluster, batch_start, cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, stream_id);
+                    }
+
+                } else if (run_params->approximation == HERMITE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_DCF_CP_Hermite(num_sources_in_batch,
+                            interp_pts_per_cluster, batch_start, cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+                
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -339,9 +404,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
 
 
-/**********************************************************/
-/************** POTENTIAL FROM DIRECT *********************/
-/**********************************************************/
+/* * ********************************************************/
+/* * ************ POTENTIAL FROM DIRECT *********************/
+/* * ********************************************************/
 
         for (int j = 0; j < num_direct_in_batch; j++) {
 
@@ -352,9 +417,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             int num_targets_in_cluster = target_end-target_start;
             int stream_id = j%3;
 
-    /***********************************************/
-    /***************** Coulomb *********************/
-    /***********************************************/
+
+    /* * *********************************************/
+    /* * *************** Coulomb *********************/
+    /* * *********************************************/
 
             if (run_params->kernel == COULOMB) {
 
@@ -379,9 +445,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     exit(1);
                 }
 
-    /***********************************************/
-    /***************** Yukawa **********************/
-    /***********************************************/
+
+    /* * *********************************************/
+    /* * *************** Yukawa **********************/
+    /* * *********************************************/
 
             } else if (run_params->kernel == YUKAWA) {
 
@@ -406,9 +473,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     exit(1);
                 }
 
-    /***********************************************/
-    /*********** Regularized Coulomb ***************/
-    /***********************************************/
+
+    /* * *********************************************/
+    /* * ********* Regularized Coulomb ***************/
+    /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_COULOMB) {
 
@@ -433,9 +501,10 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     exit(1);
                 }
 
-    /***********************************************/
-    /*********** Regularized Yukawa ****************/
-    /***********************************************/
+
+    /* * *********************************************/
+    /* * ********* Regularized Yukawa ****************/
+    /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_YUKAWA) {
 
@@ -461,9 +530,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 }
 
 
-    /***********************************************/
-    /*********** Sin Over R ************************/
-    /***********************************************/
+    /* * *********************************************/
+    /* * ********* Sin Over R ************************/
+    /* * *********************************************/
 
             } else if (run_params->kernel == SIN_OVER_R) {
 
@@ -476,6 +545,38 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                             run_params, potential, stream_id);
                 }
 
+
+    /* * *********************************************/
+    /* * ********* TCF *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == TCF) {
+
+                if (run_params->singularity == SKIPPING) {
+
+                    K_TCF_Direct(num_targets_in_cluster, num_sources_in_batch,
+                            target_start, batch_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q, source_w,
+                            run_params, potential, stream_id);
+                }
+
+
+    /* * *********************************************/
+    /* * ********* DCF *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == DCF) {
+
+                if (run_params->singularity == SKIPPING) {
+
+                    K_DCF_Direct(num_targets_in_cluster, num_sources_in_batch,
+                            target_start, batch_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q, source_w,
+                            run_params, potential, stream_id);
+                }
+                
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
