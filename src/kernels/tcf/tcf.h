@@ -1,18 +1,16 @@
 /* Interaction Kernels */
-#ifndef H_TCF_H
-#define H_TCF_H
+#ifndef H_K_TCF_H
+#define H_K_TCF_H
  
+#include "tcf_direct.h"
+#include "tcf_pc.h"
+#include "tcf_cp.h"
+#include "tcf_cc_hermite.h"
 
-void tcfDirect(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
-        int starting_index_of_target, int starting_index_of_cluster,
-        double *target_x, double *target_y, double *target_z,
-        double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
-        double kernel_parameter1, double kernel_parameter2, double *potential, int gpu_async_stream_id);
+//#include "tcf_ss_direct.h"
+//#include "tcf_ss_correction.h"
+//#include "tcf_ss_pc.h"
+//#include "tcf_ss_cp.h"
 
-void tcfApproximationLagrange(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
-        int starting_index_of_target, int starting_index_of_cluster,
-        double *target_x, double *target_y, double *target_z,
-        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-        double kernel_parameter1, double kernel_parameter2, double *potential, int gpu_async_stream_id);
 
-#endif /* H_TCF_H */
+#endif /* H_K_TCF_H */

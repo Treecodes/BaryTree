@@ -16,6 +16,8 @@
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
 #include "../kernels/mq/mq.h"
+#include "../kernels/tcf/tcf.h"
+#include "../kernels/dcf/dcf.h"
 
 #include "interaction_compute.h"
 
@@ -46,14 +48,14 @@ void InteractionCompute_Direct(double *potential,
 #endif
     {
 
-/**********************************************************/
-/**************** COMPLETE DIRECT SUM *********************/
-/**********************************************************/
+/* * ********************************************************/
+/* * ************** COMPLETE DIRECT SUM *********************/
+/* * ********************************************************/
 
 
-    /***************************************/
-    /********* Coulomb *********************/
-    /***************************************/
+    /* * *************************************/
+    /* * ******* Coulomb *********************/
+    /* * *************************************/
 
     if (run_params->kernel == COULOMB) {
 
@@ -76,9 +78,9 @@ void InteractionCompute_Direct(double *potential,
             exit(1);
         }
 
-    /***************************************/
-    /********* Yukawa **********************/
-    /***************************************/
+    /* * *************************************/
+    /* * ******* Yukawa **********************/
+    /* * *************************************/
 
     } else if (run_params->kernel == YUKAWA) {
 
@@ -101,9 +103,9 @@ void InteractionCompute_Direct(double *potential,
             exit(1);
         }
 
-    /***************************************/
-    /********* Regularized-Coulomb *********/
-    /***************************************/
+    /* * *************************************/
+    /* * ******* Regularized-Coulomb *********/
+    /* * *************************************/
 
     } else if (run_params->kernel == REGULARIZED_COULOMB) {
 
@@ -124,9 +126,9 @@ void InteractionCompute_Direct(double *potential,
         }
 
 
-    /***************************************/
-    /********* Regularized-Yukawa **********/
-    /***************************************/
+    /* * *************************************/
+    /* * ******* Regularized-Yukawa **********/
+    /* * *************************************/
 
     } else if (run_params->kernel == REGULARIZED_YUKAWA) {
 
@@ -146,9 +148,9 @@ void InteractionCompute_Direct(double *potential,
         }
 
 
-    /***************************************/
-    /********* Atan ************************/
-    /***************************************/
+    /* * *************************************/
+    /* * ******* Atan ************************/
+    /* * *************************************/
 
     } else if (run_params->kernel == ATAN) {
 
@@ -156,11 +158,11 @@ void InteractionCompute_Direct(double *potential,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, potential, 0);
+                        
 
-
-    /***************************************/
-    /********* Sin Over R ******************/
-    /***************************************/
+    /* * *************************************/
+    /* * ******* Sin Over R ******************/
+    /* * *************************************/
 
     } else if (run_params->kernel == SIN_OVER_R) {
 
@@ -169,9 +171,10 @@ void InteractionCompute_Direct(double *potential,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, potential, 0);
 
-    /***************************************/
-    /************ MQ ***********************/
-    /***************************************/
+
+    /* * *************************************/
+    /* * ********** MQ ***********************/
+    /* * *************************************/
 
     } else if (run_params->kernel == MQ) {
 
@@ -180,6 +183,30 @@ void InteractionCompute_Direct(double *potential,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, potential, 0);
 
+
+    /* * *************************************/
+    /* * ******* TCF *************************/
+    /* * *************************************/
+
+    } else if (run_params->kernel == TCF) {
+
+            K_TCF_Direct(num_targets, num_sources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q, source_w,
+                        run_params, potential, 0);
+                        
+                        
+    /* * *************************************/
+    /* * ******* DCF *************************/
+    /* * *************************************/
+
+    } else if (run_params->kernel == DCF) {
+
+            K_DCF_Direct(num_targets, num_sources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q, source_w,
+                        run_params, potential, 0);
+                        
     } else {
         printf("**ERROR** INVALID KERNEL. EXITING.\n");
         exit(1);
