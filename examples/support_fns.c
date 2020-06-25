@@ -23,6 +23,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     int verbosity = 0;
     int interp_order = 5; 
     double theta = 0.5; 
+    double beta = -1.0;
     int max_per_source_leaf = 500;
     int max_per_target_leaf = 500; 
     double size_check_factor = 1.0;
@@ -67,6 +68,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 
         } else if (strcmp(c1, "theta") == 0) {
             theta = atof(c2);
+
+        } else if (strcmp(c1, "beta") == 0) {
+            beta = atof(c2);
 
         } else if (strcmp(c1, "max_per_source_leaf") == 0) {
             max_per_source_leaf = atoi(c2);
@@ -279,6 +283,18 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
                    distribution_string);
         }
         exit(1);
+    }
+
+
+
+    if (beta!=-1.0){
+        if (rank==0){
+            printf("beta            = %f\n", beta);
+            theta = 0.9 - 0.4*pow(beta,2);
+            interp_order = (int) (12 - 11*pow(1-beta,3) );
+            printf("computed theta  = %f\n", theta);
+            printf("computed degree = %i\n", interp_order);
+        }
     }
 
 
