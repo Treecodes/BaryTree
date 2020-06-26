@@ -400,7 +400,7 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
 
         } else if (strcmp(c1, "xyz_limits") == 0) {
             char *xyz_limits_string = strtok(c2, " ,");
-            int num_xyz_limits;
+            int num_xyz_limits = 0;
             while (xyz_limits_string != NULL) {
                 xyz_limits[num_xyz_limits] = atof(xyz_limits_string);
                 num_xyz_limits++;
@@ -409,7 +409,7 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
 
         } else if (strcmp(c1, "grid_dim") == 0) {
             char *grid_dim_string = strtok(c2, " ,");
-            int num_grid_dim;
+            int num_grid_dim = 0;
             while (grid_dim_string != NULL) {
                 grid_dim[num_grid_dim] = atoi(grid_dim_string);
                 num_grid_dim++;

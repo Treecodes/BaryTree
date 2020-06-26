@@ -133,7 +133,7 @@ void K_TCF_PC_Hermite(int number_of_targets_in_batch, int number_of_interpolatio
             double r7inv = r5inv * rinv * rinv;
 
             if (r > DBL_MIN) {
-                temporary_potential += 2. * exp(-kappa * r)
+                temporary_potential += -2. * exp(-kappa * r)
                     * (rinv * (cluster_q_[j])
                     + r3inv * (1. + kappa * r)
                             * (cluster_q_dx[j]*dx + cluster_q_dy[j]*dy
