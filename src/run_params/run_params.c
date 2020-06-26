@@ -15,7 +15,7 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                      APPROXIMATION approximation,
                      SINGULARITY singularity,
                      COMPUTE_TYPE compute_type,
-                     double theta, double size_check_factor, int interp_order,
+                     double theta, double beta, double size_check_factor, int interp_order,
                      int max_per_source_leaf, int max_per_target_leaf,
                      int verbosity)
 {
@@ -35,6 +35,7 @@ void RunParams_Setup(struct RunParams **run_params_addr,
     run_params->compute_type = compute_type;
 
     run_params->theta = theta;
+    run_params->beta = beta;
     run_params->size_check_factor = size_check_factor;
 
     run_params->interp_order = interp_order;

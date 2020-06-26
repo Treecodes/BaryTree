@@ -287,22 +287,22 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 
 
 
-    if (beta!=-1.0){
-        if (rank==0){
-            printf("beta            = %f\n", beta);
-            theta = 0.9 - 0.4*pow(beta,2);
-            interp_order = (int) (12 - 11*pow(1-beta,3) );
-            printf("computed theta  = %f\n", theta);
-            printf("computed degree = %i\n", interp_order);
-        }
-    }
+//    if (beta>=0.0){
+//        if (rank==0){
+//            printf("beta            = %f\n", beta);
+//            theta = 0.9 - 0.4*pow(beta,2);
+//            interp_order = (int) (12 - 11*pow(1-beta,3) );
+//            printf("computed theta  = %f\n", theta);
+//            printf("computed degree = %i\n", interp_order);
+//        }
+//    }
 
 
 
     RunParams_Setup(run_params,
                     kernel, num_kernel_params, kernel_params,
                     approximation, singularity, compute_type,
-                    theta, size_check_factor, interp_order, 
+                    theta, beta, size_check_factor, interp_order,
                     max_per_source_leaf, max_per_target_leaf,
                     verbosity);
 
@@ -751,13 +751,16 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     
     if (rank == 0) {
+        printf("ABOUT TO WRITE CSV.  THETA = %f, ORDER = %d, MAX LEAF = %d\n", run_params->theta, run_params->interp_order, run_params->max_per_source_leaf);
+
+        RunParams_Print(run_params);
         FILE *fp = fopen("out.csv", "a");
-        fprintf(fp, "%d,%d,%d,%f,%d,%d,%d,%d,%d,%d,"
+        fprintf(fp, "%d,%d,%d,%f,%f,%d,%d,%d,%d,%d,%d,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
-            N, M, run_params->interp_order, run_params->theta,
+            N, M, run_params->interp_order, run_params->theta, run_params->beta,
             run_params->max_per_source_leaf, run_params->max_per_target_leaf, run_params->kernel,
             run_params->singularity, run_params->approximation, numProcs, // 1 ends
 

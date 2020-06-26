@@ -74,7 +74,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     COULOMB, numKernelParams, kernelParams, NO_APPROX, SKIPPING, NO_COMPUTE_TYPE,
-                    0, 0, 0, 0, 0, verbosity);
+                    0, 0, 0, 0, 0, 0, verbosity);
 
     directdriver(sources, targets, run_params, potential, time_tree);
 
@@ -101,7 +101,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     COULOMB, numKernelParams, kernelParams, NO_APPROX, SUBTRACTION, NO_COMPUTE_TYPE,
-                    0, 0, 0, 0, 0, verbosity);
+                    0, 0, 0, 0, 0, 0, verbosity);
     fprintf(stderr, "I'm here 3.\n");
 
     directdriver(sources, targets, run_params, potential, time_tree);
@@ -130,7 +130,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     YUKAWA, numKernelParams, kernelParams, NO_APPROX, SKIPPING, NO_COMPUTE_TYPE,
-                    0, 0, 0, 0, 0, verbosity);
+                    0, 0, 0, 0, 0, 0, verbosity);
 
     directdriver(sources, targets, run_params, potential, time_tree);
 
@@ -157,7 +157,7 @@ static char *test_direct_sum_on_10_particles()
 
     RunParams_Setup(&run_params,
                     YUKAWA, numKernelParams, kernelParams, NO_APPROX, SUBTRACTION, NO_COMPUTE_TYPE,
-                    0, 0, 0, 0, 0, verbosity);
+                    0, 0, 0, 0, 0, 0, verbosity);
 
     directdriver(sources, targets, run_params, potential, time_tree);
 
@@ -206,6 +206,8 @@ static char *test_treecode_on_100_particles()
 
     int verbosity = 1;
     int N = 100;
+
+    double beta = -1.0;
 
     struct Particles *sources = NULL;
     struct Particles *targets = NULL;
@@ -257,7 +259,7 @@ static char *test_treecode_on_100_particles()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
-                    theta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
+                    theta, beta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 
     /***********************************************/
@@ -541,6 +543,8 @@ static char *test_treecode_on_1_target_10000_sources()
     int verbosity = 1;
     int N = 10000;
 
+    double beta = -1.0;
+
     struct Particles *sources = NULL;
     struct Particles *targets = NULL;
     double *potential = NULL, *potential_direct = NULL;
@@ -598,7 +602,7 @@ static char *test_treecode_on_1_target_10000_sources()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
-                    theta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
+                    theta, beta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 
     /***********************************************/
@@ -895,6 +899,7 @@ static char *test_treecode_wrapper()
 
     int order = 4;
     double theta = 0.8;
+    double beta = -1.0;
     double size_check = 1.0;
 
     int num_kernel_params = 1;
@@ -902,7 +907,7 @@ static char *test_treecode_wrapper()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
-                    theta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
+                    theta, beta, size_check, order, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 
     /***********************************************/
@@ -921,7 +926,7 @@ static char *test_treecode_wrapper()
                       sources->x,sources->y,sources->z,sources->q,sources->w,
                       potential_wrapper, COULOMB, num_kernel_params, kernel_params,
                       SKIPPING, LAGRANGE, PARTICLE_CLUSTER,
-                      order, theta, max_per_source_leaf, max_per_target_leaf,
+                      order, theta, beta, max_per_source_leaf, max_per_target_leaf,
                       size_check, verbosity);
 
     treedriver(sources, targets, run_params, potential, time_tree);
@@ -966,6 +971,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     int verbosity = 1;
     int N = 10000;
+    double beta = -1.0;
 
     struct Particles *sources = NULL;
     struct Particles *targets = NULL;
@@ -1021,9 +1027,10 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
     int num_kernel_params = 1;
     double kernel_params[1] = {0.5};
 
+
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
-                    0, size_check, 0, max_per_source_leaf, max_per_target_leaf, verbosity);
+                    0, beta, size_check, 0, max_per_source_leaf, max_per_target_leaf, verbosity);
 
 
     // 3 parameter sets.  Set 2 increases order, set 3 reduces MAC.  Both should be more accurate than set 1.
