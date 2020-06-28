@@ -287,15 +287,15 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 
 
 
-//    if (beta>=0.0){
-//        if (rank==0){
-//            printf("beta            = %f\n", beta);
-//            theta = 0.9 - 0.4*pow(beta,2);
-//            interp_order = (int) (12 - 11*pow(1-beta,3) );
-//            printf("computed theta  = %f\n", theta);
-//            printf("computed degree = %i\n", interp_order);
-//        }
-//    }
+    if (beta>=0.0){
+        if (rank==0){
+            printf("beta            = %f\n", beta);
+            theta = 0.95 - 0.4*pow(beta,1.75);
+            interp_order = (int) (12 - 11*pow(1-beta,3) );
+            printf("computed theta  = %f\n", theta);
+            printf("computed degree = %i\n", interp_order);
+        }
+    }
 
 
 
@@ -751,7 +751,7 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     
     if (rank == 0) {
-        printf("ABOUT TO WRITE CSV.  THETA = %f, ORDER = %d, MAX LEAF = %d\n", run_params->theta, run_params->interp_order, run_params->max_per_source_leaf);
+        printf("ABOUT TO WRITE CSV.  BETA = %f, THETA = %f, ORDER = %d, MAX LEAF = %d\n", run_params->beta, run_params->theta, run_params->interp_order, run_params->max_per_source_leaf);
 
         RunParams_Print(run_params);
         FILE *fp = fopen("out.csv", "a");
