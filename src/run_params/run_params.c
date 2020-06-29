@@ -58,6 +58,8 @@ void RunParams_Setup(struct RunParams **run_params_addr,
         
         if (compute_type == PARTICLE_CLUSTER || compute_type == CLUSTER_PARTICLE) {
             if (approximation == LAGRANGE) {
+                run_params->size_check_factor = 1.0;
+                
                 theta_min = 0.55;
                 theta_max = 0.95;
                 exp_s = 2;
@@ -67,6 +69,8 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                 exp_t = 3;
                 
             } else { // HERMITE
+                run_params->size_check_factor = 4.0;
+                
                 theta_min = 0.55;
                 theta_max = 0.95;
                 exp_s = 2;
@@ -77,6 +81,8 @@ void RunParams_Setup(struct RunParams **run_params_addr,
             }
         
         } else { // CLUSTER_CLUSTER
+            run_params->size_check_factor = 1.0;
+            
             theta_min = 0.55;
             theta_max = 0.95;
             exp_s = 1.75;
@@ -96,6 +102,7 @@ void RunParams_Setup(struct RunParams **run_params_addr,
         #ifdef OPENACC_ENABLED
             run_params->max_per_source_leaf = 2000;
             run_params->max_per_target_leaf = 2000;
+            
         #else // CPU
             if (compute_type == PARTICLE_CLUSTER) {
                 run_params->max_per_source_leaf = 50;
