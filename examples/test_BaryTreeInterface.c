@@ -65,8 +65,8 @@ int main(int argc, char **argv)
                       xS, yS, zS, qS, wS, potential,
                       kernel, numParams, kernelParams,
                       singularity, approximation, compute_type,
-                      interpOrder, theta, beta, maxPerLeaf, maxPerBatch,
-                      sizeCheck, verbosity);
+                      theta, interpOrder, maxPerLeaf, maxPerBatch,
+                      sizeCheck, beta, verbosity);
 
     printf("[test BaryTree interface] BaryTree has finished.\n");
 

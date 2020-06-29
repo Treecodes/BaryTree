@@ -25,6 +25,7 @@ if __name__=="__main__":
     GPUpresent = False
     theta = 0.8
     treecodeOrder = 4
+    beta = -1
     gaussianAlpha = 1.0
     verbosity = 0
     
@@ -55,8 +56,8 @@ if __name__=="__main__":
                                  np.copy(X), np.copy(Y), np.copy(Z), np.copy(RHO), np.copy(W),
                                  kernel, numberOfKernelParameters, kernelParameters,
                                  singularity, approximation, computeType,
-                                 treecodeOrder, theta, maxPerSourceLeaf, maxPerTargetLeaf,
-                                 GPUpresent, verbosity, sizeCheck=1.0)
+                                 theta, treecodeOrder, maxPerSourceLeaf, maxPerTargetLeaf,
+                                 beta, GPUpresent, verbosity, sizeCheck=1.0)
 
     assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output."
     print("If no errors printed, then the call to the treecode wrapper worked!")

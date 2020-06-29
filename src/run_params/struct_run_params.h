@@ -24,9 +24,10 @@ struct RunParams
 
     int max_per_source_leaf;
     int max_per_target_leaf;
+    
+    double beta;
 
     int verbosity;
-    double beta;
 };
 
 
