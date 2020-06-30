@@ -99,9 +99,9 @@ SET(SRCS_K_YUKAWA
     kernels/yukawa/yukawa_ss_correction.h
     kernels/yukawa/yukawa_ss_correction.c
     kernels/yukawa/yukawa_ss_pc.h
-    kernels/yukawa/yukawa_ss_pc.c)
-#   kernels/yukawa/yukawa_ss_cp.h
-#   kernels/yukawa/yukawa_ss_cp.c)
+    kernels/yukawa/yukawa_ss_pc.c
+    kernels/yukawa/yukawa_ss_cp.h
+    kernels/yukawa/yukawa_ss_cp.c)
 
 
 SET(SRCS_K_REGULARIZED_COULOMB

@@ -1,6 +1,6 @@
 /* Interaction Kernels */
-#ifndef H_K_YUKAWA_CP_H
-#define H_K_YUKAWA_CP_H
+#ifndef H_K_YUKAWA_SS_CP_H
+#define H_K_YUKAWA_SS_CP_H
  
 #include "../../run_params/struct_run_params.h"
 
@@ -12,4 +12,4 @@ void K_Yukawa_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_inter
         struct RunParams *run_params, int gpu_async_stream_id);
 
 
-#endif /* H_K_YUKAWA_CP_H */
+#endif /* H_K_YUKAWA_SS_CP_H */

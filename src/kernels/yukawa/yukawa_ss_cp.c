@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "../../run_params/struct_run_params.h"
-#include "yukawa_cp.h"
+#include "yukawa_ss_cp.h"
 
 
 void K_Yukawa_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
