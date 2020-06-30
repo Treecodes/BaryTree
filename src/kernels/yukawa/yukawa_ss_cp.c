@@ -30,6 +30,7 @@ void K_Yukawa_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_inter
         double cx = cluster_x[starting_index_of_cluster + i];
         double cy = cluster_y[starting_index_of_cluster + i];
         double cz = cluster_z[starting_index_of_cluster + i];
+        double cw = cluster_w[starting_index_of_cluster + i];
 
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:temporary_potential)
@@ -49,9 +50,7 @@ void K_Yukawa_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_inter
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
             if (r > DBL_MIN) {
-                temporary_potential += source_q[jj] * source_w[jj] * exp(-kernel_parameter * r) / r;
-                temporary_potential += (source_q[jj] - cluster_q * cluster_w[jj]) * exp(-kernel_parameter*r) /r;
-
+                temporary_potential += (source_q[jj] - cw) * source_w[jj] * exp(-kernel_parameter*r) /r;
             }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
