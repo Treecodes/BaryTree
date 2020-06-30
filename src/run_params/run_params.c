@@ -100,8 +100,8 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                                            * (run_params->interp_order + 1);
     
         #ifdef OPENACC_ENABLED
-            run_params->max_per_source_leaf = 2000;
-            run_params->max_per_target_leaf = 2000;
+            run_params->max_per_source_leaf = 3000;
+            run_params->max_per_target_leaf = 3000;
             
         #else // CPU
             if (compute_type == PARTICLE_CLUSTER) {
