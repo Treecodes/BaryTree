@@ -10,5 +10,6 @@
 #include "yukawa_ss_correction.h"
 #include "yukawa_ss_pc.h"
 #include "yukawa_ss_cp.h"
+#include "yukawa_ss_cc.h"
 
 #endif /* H_K_YUKAWA_H */

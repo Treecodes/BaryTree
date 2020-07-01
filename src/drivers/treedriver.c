@@ -199,7 +199,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             STOP_TIMER(&time_tree[7]);
         }
         
-        
+
         //-------------------------------
         //-------------------------------
         // DOWNPASS
@@ -213,7 +213,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         //-------------------------------
         //-------------------------------
-        // CORRECT AND REORDER
+        // CORRECT AND REORDER POTENTIAL AT TARGETS
         //-------------------------------
         //-------------------------------
 
