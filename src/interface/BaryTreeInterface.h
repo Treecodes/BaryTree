@@ -10,8 +10,8 @@ void BaryTreeInterface(int numTargets, int numSources,
 		double *outputArray,
         KERNEL kernel, int numKernelParams, double *kernelParams,
         SINGULARITY singularity, APPROXIMATION approximation, COMPUTE_TYPE compute_type,
-		int interpOrder, double theta, int maxPerSourceLeaf, int maxPerTargetLeaf,
-        double sizeCheck, int verbosity);
+		double theta, int interpOrder, int maxPerSourceLeaf, int maxPerTargetLeaf,
+        double sizeCheck, double beta, int verbosity);
 
 
 #endif /* H_BARYTREE_INTERFACE_H */

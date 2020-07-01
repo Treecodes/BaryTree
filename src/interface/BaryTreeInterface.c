@@ -21,8 +21,8 @@ void BaryTreeInterface(int numTargets, int numSources,
 		double *outputArray,
         KERNEL kernel, int numKernelParams, double *kernelParams,
         SINGULARITY singularity, APPROXIMATION approximation, COMPUTE_TYPE compute_type,
-		int interpOrder, double theta, int maxPerSourceLeaf, int maxPerTargetLeaf,
-        double sizeCheck, int verbosity)
+		double theta, int interpOrder, int maxPerSourceLeaf, int maxPerTargetLeaf,
+        double sizeCheck, double beta, int verbosity)
 {
 
 	double timing[12];
@@ -32,9 +32,9 @@ void BaryTreeInterface(int numTargets, int numSources,
     RunParams_Setup(&run_params,
                     kernel, numKernelParams, kernelParams,
                     approximation, singularity, compute_type,
-                    theta, sizeCheck, interpOrder, 
-                    maxPerSourceLeaf, maxPerTargetLeaf,
-                    verbosity);
+                    theta, interpOrder,
+                    maxPerSourceLeaf, maxPerTargetLeaf, sizeCheck,
+                    beta, verbosity);
 
 	struct Particles sources, targets;
 

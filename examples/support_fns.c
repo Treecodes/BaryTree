@@ -23,6 +23,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     int verbosity = 0;
     int interp_order = 5; 
     double theta = 0.5; 
+    double beta = -1.0;
     int max_per_source_leaf = 500;
     int max_per_target_leaf = 500; 
     double size_check_factor = 1.0;
@@ -67,6 +68,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
 
         } else if (strcmp(c1, "theta") == 0) {
             theta = atof(c2);
+
+        } else if (strcmp(c1, "beta") == 0) {
+            beta = atof(c2);
 
         } else if (strcmp(c1, "max_per_source_leaf") == 0) {
             max_per_source_leaf = atoi(c2);
@@ -280,15 +284,14 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         }
         exit(1);
     }
-
-
+    
 
     RunParams_Setup(run_params,
                     kernel, num_kernel_params, kernel_params,
                     approximation, singularity, compute_type,
-                    theta, size_check_factor, interp_order, 
+                    theta, interp_order,
                     max_per_source_leaf, max_per_target_leaf,
-                    verbosity);
+                    size_check_factor, beta, verbosity);
 
     return;
 }
@@ -735,15 +738,17 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     
     if (rank == 0) {
+        RunParams_Print(run_params);
         FILE *fp = fopen("out.csv", "a");
-        fprintf(fp, "%d,%d,%d,%f,%d,%d,%d,%d,%d,%d,"
+        fprintf(fp, "%d,%d,%d,%d,%d,%d,%d,%f,%d,%d,%d,%d,%f,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
-            N, M, run_params->interp_order, run_params->theta,
-            run_params->max_per_source_leaf, run_params->max_per_target_leaf, run_params->kernel,
-            run_params->singularity, run_params->approximation, numProcs, // 1 ends
+            N, M, numProcs, run_params->kernel, run_params->approximation, run_params->singularity,
+            run_params->compute_type, run_params->theta, run_params->interp_order,
+            run_params->max_per_source_leaf, run_params->max_per_target_leaf,
+            run_params->size_check_factor, run_params->beta, // 1 ends
 
             time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
             time_run_glob[2][0]/numProcs,

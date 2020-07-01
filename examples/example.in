@@ -2,6 +2,7 @@ num_sources           20000
 num_targets           20000
 order                 2
 theta                 0.9
+beta                 -1.0
 size_check            0.0
 max_per_source_leaf   100
 max_per_target_leaf   100
