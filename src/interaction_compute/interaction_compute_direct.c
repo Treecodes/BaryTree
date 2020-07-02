@@ -59,14 +59,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_Coulomb_Direct(num_targets, num_sources, 0, 0,
+            K_Coulomb_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_Coulomb_SS_Direct(num_targets, num_sources, 0, 0,
+            K_Coulomb_SS_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
@@ -84,14 +84,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_Yukawa_Direct(num_targets, num_sources, 0, 0,
+            K_Yukawa_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_Yukawa_SS_Direct(num_targets, num_sources, 0, 0,
+            K_Yukawa_SS_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
@@ -109,14 +109,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_RegularizedCoulomb_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedCoulomb_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_RegularizedCoulomb_SS_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedCoulomb_SS_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
@@ -132,14 +132,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_RegularizedYukawa_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedYukawa_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_RegularizedYukawa_SS_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedYukawa_SS_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z, target_q,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, potential, 0);
