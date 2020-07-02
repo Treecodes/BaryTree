@@ -17,8 +17,8 @@ void K_Coulomb_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inte
     double kernel_parameter2 = kernel_parameter * kernel_parameter;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q, \
-                        target_cluster_x, target_cluster_y, target_cluster_z, target_cluster_q)
+    #pragma acc kernels async(gpu_async_stream_id) present(source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q, source_cluster_w, \
+                        target_cluster_x, target_cluster_y, target_cluster_z, target_cluster_q, target_cluster_w)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -34,14 +34,15 @@ void K_Coulomb_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inte
         double cz = target_cluster_z[starting_index_of_cluster + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temporary_potential)
+        #pragma acc loop independent reduction(+:temporary_potential) reduction(+:temporary_weight)
 #endif
         for (int j = 0; j < number_of_sources_in_batch; j++) {
 #ifdef OPENACC_ENABLED
             #pragma acc cache(source_cluster_x[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_cluster_y[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_cluster_z[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_cluster_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
+                              source_cluster_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
+                              source_cluster_w[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
 #endif
 
             int jj = starting_index_of_sources + j;
@@ -50,10 +51,9 @@ void K_Coulomb_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inte
             double dz = cz - source_cluster_z[jj];
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential +=                               source_cluster_q[jj] / r;
-                temporary_weight    += exp(-r*r/kernel_parameter2) * source_cluster_w[jj] / r;
-            }
+            temporary_potential +=                               source_cluster_q[jj] / r;
+            temporary_weight    += exp(-r*r/kernel_parameter2) * source_cluster_w[jj] / r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

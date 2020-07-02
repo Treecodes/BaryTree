@@ -17,8 +17,8 @@ void K_Coulomb_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_inte
     double kernel_parameter2 = kernel_parameter * kernel_parameter;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, \
-                        cluster_x, cluster_y, cluster_z, cluster_q)
+    #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, source_w, \
+                        cluster_x, cluster_y, cluster_z, cluster_q, cluster_w)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -34,14 +34,15 @@ void K_Coulomb_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_inte
         double cz = cluster_z[starting_index_of_cluster + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temporary_potential)
+        #pragma acc loop independent reduction(+:temporary_potential) reduction(+:temporary_weight)
 #endif
         for (int j = 0; j < number_of_sources_in_batch; j++) {
 #ifdef OPENACC_ENABLED
             #pragma acc cache(source_x[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_y[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_z[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
+                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
+                              source_w[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
 #endif
 
             int jj = starting_index_of_sources + j;
@@ -50,10 +51,9 @@ void K_Coulomb_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_inte
             double dz = cz - source_z[jj];
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential +=                source_q[jj] * source_w[jj] / r;
-                temporary_weight    += exp(-r*r/kernel_parameter2) * source_w[jj] / r;
-            }
+            temporary_potential +=                source_q[jj] * source_w[jj] / r;
+            temporary_weight    += exp(-r*r/kernel_parameter2) * source_w[jj] / r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
