@@ -59,6 +59,9 @@ void K_Coulomb_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inte
         #pragma acc atomic
 #endif
         target_cluster_q[starting_index_of_cluster + i] += temporary_potential;
+#ifdef OPENACC_ENABLED
+        #pragma acc atomic
+#endif
         target_cluster_w[starting_index_of_cluster + i] += temporary_weight;
     }
 #ifdef OPENACC_ENABLED
