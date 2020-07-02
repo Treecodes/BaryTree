@@ -3,10 +3,10 @@
 #include <stdio.h>
 
 #include "../../run_params/struct_run_params.h"
-#include "yukawa_ss_cc.h"
+#include "coulomb_ss_cc.h"
 
 
-void K_Yukawa_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
+void K_Coulomb_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
          int starting_index_of_sources, int starting_index_of_cluster,
          double *source_cluster_x, double *source_cluster_y, double *source_cluster_z, double *source_cluster_q, double *source_cluster_w,
          double *target_cluster_x, double *target_cluster_y, double *target_cluster_z, double *target_cluster_q, double *target_cluster_w,
@@ -14,10 +14,11 @@ void K_Yukawa_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inter
 {
 
     double kernel_parameter = run_params->kernel_params[0];
+    double kernel_parameter2 = kernel_parameter * kernel_parameter;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q, source_cluster_w, \
-                        target_cluster_x, target_cluster_y, target_cluster_z, target_cluster_q, target_cluster_w)
+    #pragma acc kernels async(gpu_async_stream_id) present(source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q, \
+                        target_cluster_x, target_cluster_y, target_cluster_z, target_cluster_q)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -26,14 +27,14 @@ void K_Yukawa_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inter
     for (int i = 0; i < number_of_interpolation_points_in_cluster; i++) {
 
         double temporary_potential = 0.0;
-        double temporary_weight = 0.0;
+        double temporary_weight    = 0.0;
 
         double cx = target_cluster_x[starting_index_of_cluster + i];
         double cy = target_cluster_y[starting_index_of_cluster + i];
         double cz = target_cluster_z[starting_index_of_cluster + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temporary_potential, +:temporary_weight)
+        #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_sources_in_batch; j++) {
 #ifdef OPENACC_ENABLED
@@ -50,8 +51,8 @@ void K_Yukawa_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inter
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
             if (r > DBL_MIN) {
-                temporary_potential += source_cluster_q[jj] * exp(-kernel_parameter*r) /r; // source_cluster_q already has source_q * source_w
-                temporary_weight    += source_cluster_w[jj] * exp(-kernel_parameter*r) /r;
+                temporary_potential +=                               source_cluster_q[jj] / r;
+                temporary_weight    += exp(-r*r/kernel_parameter2) * source_cluster_w[jj] / r;
             }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
@@ -65,5 +66,6 @@ void K_Yukawa_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inter
 #endif
     return;
 }
+
 
 

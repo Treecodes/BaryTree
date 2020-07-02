@@ -133,7 +133,6 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     for (int i=0; i<totalNumberInterpolationCharges;i++){
         if (qC[i]==0.0) numZeros++;
     }
-    printf("Number of zeros in clusters->q:  %i of %i\n", numZeros, totalNumberInterpolationCharges);
 
 
 

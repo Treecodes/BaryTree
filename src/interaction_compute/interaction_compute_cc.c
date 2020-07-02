@@ -146,8 +146,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
+                        K_Coulomb_SS_CC_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+                            source_cluster_start, target_cluster_start,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q, source_cluster_w,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q, target_cluster_w,
+                            run_params, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -390,8 +395,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
+                        K_Coulomb_SS_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
+                            target_start, source_cluster_start,
+                            target_x, target_y, target_z, target_q,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q, source_cluster_w,
+                            run_params, potential, stream_id);
+
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -634,8 +644,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
+                        K_Coulomb_SS_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                            source_start, target_cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q, target_cluster_w,
+                            run_params, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");

@@ -426,7 +426,7 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
                 if (eiz != k3) numerator *= 0;
             }
 
-            temp += numerator * denominator * (cq-tq*cw);
+            temp += numerator * denominator * (cq-tq*cw);  // subtract target_q*cluster_w for singularity subtraction
         }
         
 #ifdef OPENACC_ENABLED

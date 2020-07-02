@@ -117,8 +117,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CP COULOMB SS.  EXITING.\n");
-                        exit(1);
+                        K_Coulomb_SS_CP_Lagrange(num_sources_in_batch,
+                            interp_pts_per_cluster, batch_start, cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
+                            run_params, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
