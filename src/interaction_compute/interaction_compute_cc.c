@@ -96,7 +96,8 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             target_cluster_x[0:num_target_cluster_points], \
                             target_cluster_y[0:num_target_cluster_points], \
                             target_cluster_z[0:num_target_cluster_points]) \
-                       copy(target_cluster_q[0:num_target_cluster_charges], target_cluster_w[0:num_target_cluster_charges], \
+                       copy(target_cluster_q[0:num_target_cluster_charges], \
+                            target_cluster_w[0:num_target_cluster_charges], \
                             potential[0:num_targets])
 #endif
     {

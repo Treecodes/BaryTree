@@ -58,6 +58,9 @@ void K_Yukawa_SS_CP_Lagrange(int number_of_sources_in_batch, int number_of_inter
         #pragma acc atomic
 #endif
         cluster_q[starting_index_of_cluster + i] += temporary_potential;
+#ifdef OPENACC_ENABLED
+        #pragma acc atomic
+#endif
         cluster_w[starting_index_of_cluster + i] += temporary_weight;
     }
 #ifdef OPENACC_ENABLED

@@ -33,7 +33,7 @@ void K_Yukawa_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inter
         double cz = target_cluster_z[starting_index_of_cluster + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temporary_potential) reduction(+:temporary_weight)
+        #pragma acc loop independent reduction(+:temporary_potential,temporary_weight)
 #endif
         for (int j = 0; j < number_of_sources_in_batch; j++) {
 #ifdef OPENACC_ENABLED
@@ -58,6 +58,9 @@ void K_Yukawa_SS_CC_Lagrange(int number_of_sources_in_batch, int number_of_inter
         #pragma acc atomic
 #endif
         target_cluster_q[starting_index_of_cluster + i] += temporary_potential;
+#ifdef OPENACC_ENABLED
+        #pragma acc atomic
+#endif
         target_cluster_w[starting_index_of_cluster + i] += temporary_weight;
     }
 #ifdef OPENACC_ENABLED

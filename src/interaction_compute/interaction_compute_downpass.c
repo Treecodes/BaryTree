@@ -302,7 +302,7 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q) \
+    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q, cluster_w) \
                 create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
                        weights[0:interp_order_lim], dj[0:interp_order_lim], tt[0:interp_order_lim])
     {
