@@ -8,7 +8,7 @@ SET(SRCS_TREEDRIVER
     utilities/xmalloc.c
     utilities/array.h
     utilities/enums.h
-# Calling functions for tree and direct calculations
+# Calling functions for tree and pp calculations
     drivers/directdriver.h
     drivers/directdriver.c
     drivers/treedriver.h
@@ -150,8 +150,8 @@ SET(SRCS_K_REGULARIZED_YUKAWA
 
 SET(SRCS_K_ATAN
     kernels/atan/atan.h
-    kernels/atan/atan_direct.h
-    kernels/atan/atan_direct.c
+    kernels/atan/atan_pp.h
+    kernels/atan/atan_pp.c
     kernels/atan/atan_pc.h
     kernels/atan/atan_pc.c)
 #   kernels/atan/atan_cp.h
@@ -160,8 +160,8 @@ SET(SRCS_K_ATAN
 
 SET(SRCS_K_SIN_OVER_R
     kernels/sin-over-r/sin-over-r.h
-    kernels/sin-over-r/sin-over-r_direct.h
-    kernels/sin-over-r/sin-over-r_direct.c
+    kernels/sin-over-r/sin-over-r_pp.h
+    kernels/sin-over-r/sin-over-r_pp.c
     kernels/sin-over-r/sin-over-r_pc.h
     kernels/sin-over-r/sin-over-r_pc.c
     kernels/sin-over-r/sin-over-r_cp.h
@@ -169,8 +169,8 @@ SET(SRCS_K_SIN_OVER_R
 
 SET(SRCS_K_MQ
     kernels/mq/mq.h
-    kernels/mq/mq_direct.h
-    kernels/mq/mq_direct.c
+    kernels/mq/mq_pp.h
+    kernels/mq/mq_pp.c
     kernels/mq/mq.h
     kernels/mq/mq_pc.c)
 #    kernels/mq/mq_cp.h

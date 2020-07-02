@@ -991,7 +991,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_SinOverR_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_SinOverR_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,

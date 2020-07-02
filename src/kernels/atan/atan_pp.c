@@ -7,10 +7,10 @@
 #include <stdio.h>
 
 #include "../../run_params/struct_run_params.h"
-#include "atan_direct.h"
+#include "atan_pp.h"
 
 
-void K_Atan_Direct(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
+void K_Atan_PP(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
         int starting_index_of_target, int starting_index_of_source,
         double *target_x, double *target_y, double *target_z,
         double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,

@@ -526,7 +526,7 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 
             } else if (run_params->kernel == ATAN) {
 
-                K_Atan_Direct(num_targets_in_batch, num_sources_in_cluster,
+                K_Atan_PP(num_targets_in_batch, num_sources_in_cluster,
                             batch_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
@@ -540,7 +540,7 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 
             } else if (run_params->kernel == MQ) {
 
-                K_MQ_Direct(num_targets_in_batch, num_sources_in_cluster,
+                K_MQ_PP(num_targets_in_batch, num_sources_in_cluster,
                             batch_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
@@ -553,7 +553,7 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 
             } else if (run_params->kernel == SIN_OVER_R) {
 
-                K_SinOverR_Direct(num_targets_in_batch, num_sources_in_cluster,
+                K_SinOverR_PP(num_targets_in_batch, num_sources_in_cluster,
                             batch_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
