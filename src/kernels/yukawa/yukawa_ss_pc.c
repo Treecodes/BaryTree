@@ -43,9 +43,8 @@ void K_Yukawa_SS_PC_Lagrange(int number_of_targets_in_batch,
             double dz = tz - cluster_z[jj];
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj]) * exp(-kernel_parameter*r) /r;
-            }
+            temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj] ) * exp(-kernel_parameter*r) /r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

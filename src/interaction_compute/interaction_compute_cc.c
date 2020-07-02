@@ -71,6 +71,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     double *target_cluster_y = target_clusters->y;
     double *target_cluster_z = target_clusters->z;
     double *target_cluster_q = target_clusters->q;
+    double *target_cluster_w = target_clusters->w;
     
     int *source_tree_ibeg = source_tree->ibeg;
     int *source_tree_iend = source_tree->iend;
@@ -80,7 +81,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     int *target_tree_iend = target_tree->iend;
     int *target_tree_cluster_ind = target_tree->cluster_ind;
     
-    // NOTE: Not currently setup for SS, thus the target_cluster_w array is not copied out.
     // Additionally, not setup for Hermite either at the moment.
         
 #ifdef OPENACC_ENABLED
@@ -97,6 +97,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             target_cluster_y[0:num_target_cluster_points], \
                             target_cluster_z[0:num_target_cluster_points]) \
                        copy(target_cluster_q[0:num_target_cluster_charges], \
+                            target_cluster_w[0:num_target_cluster_charges], \
                             potential[0:num_targets])
 #endif
     {
@@ -120,6 +121,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 /* * ************ POTENTIAL FROM APPROX *********************/
 /* * ********************************************************/
 
+//        printf("cluster %i, CC = %i, CP = %i, PC = %i, PP = %i\n",i,num_approx_in_cluster,num_target_approx_in_cluster,num_source_approx_in_cluster,num_direct_in_cluster);
         for (int j = 0; j < num_approx_in_cluster; j++) {
             int source_node_index = approx_inter_list[i][j];
             int source_cluster_start = interp_pts_per_cluster * source_tree_cluster_ind[source_node_index];
@@ -145,8 +147,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
+                        K_Coulomb_SS_CC_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+                            source_cluster_start, target_cluster_start,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q, source_cluster_w,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q, target_cluster_w,
+                            run_params, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -195,8 +202,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
+                        K_Yukawa_SS_CC_Lagrange(interp_pts_per_cluster,
+                            interp_pts_per_cluster, source_cluster_start, target_cluster_start,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q, source_cluster_w,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q, target_cluster_w,
+                            run_params, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -384,8 +396,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
+                        K_Coulomb_SS_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
+                            target_start, source_cluster_start,
+                            target_x, target_y, target_z, target_q,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q, source_cluster_w,
+                            run_params, potential, stream_id);
+
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -433,8 +450,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
+                        K_Yukawa_SS_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
+                            target_start, source_cluster_start,
+                            target_x, target_y, target_z, target_q,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q, source_cluster_w,
+                            run_params, potential, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -624,8 +645,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
+                        K_Coulomb_SS_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                            source_start, target_cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q, target_cluster_w,
+                            run_params, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -673,8 +698,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     } else if (run_params->singularity == SUBTRACTION) {
 
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
+                        K_Yukawa_SS_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                            source_start, target_cluster_start,
+                            source_x, source_y, source_z, source_q, source_w,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q, target_cluster_w,
+                            run_params, stream_id);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");

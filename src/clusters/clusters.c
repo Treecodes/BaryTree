@@ -19,7 +19,7 @@
 
 static void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrder,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
+                double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 static void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolationOrder,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
@@ -28,8 +28,7 @@ static void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interp
 static void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpolationOrder,
                 int totalNumberInterpolationPoints,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *clusterX, double *clusterY, double *clusterZ,
-                double *clusterQ, double *clusterW);
+                double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 static void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int interpolationOrder,
                 int totalNumberInterpolationPoints,
@@ -110,7 +109,7 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF(tree, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+            pc_comp_ms_modifiedF(tree, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC);
 
     } else if ((approximation == LAGRANGE) && (singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++)
@@ -119,7 +118,7 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     } else if ((approximation == HERMITE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
             pc_comp_ms_modifiedF_hermite(tree, i, interpolationOrder, totalNumberInterpolationPoints,
-                                         xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+                                         xS, yS, zS, qS, wS, xC, yC, zC, qC);
 
     } else if ((approximation == HERMITE) && (singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++)
@@ -130,6 +129,13 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
         exit(1);
     }
     
+    int numZeros=0;
+    for (int i=0; i<totalNumberInterpolationCharges;i++){
+        if (qC[i]==0.0) numZeros++;
+    }
+
+
+
 #ifdef OPENACC_ENABLED
     #pragma acc wait
     } // end ACC DATA REGION
@@ -141,15 +147,17 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
 
 
-void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tree *tree,
-                                const struct RunParams *run_params)
+void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Particles *targets,
+                                const struct Tree *tree, const struct RunParams *run_params)
 {
     *clusters_addr = malloc(sizeof(struct Clusters));
     struct Clusters *clusters = *clusters_addr;
 
     SINGULARITY singularity = run_params->singularity;
+    APPROXIMATION approximation = run_params->approximation;
 
     int tree_numnodes = tree->numnodes;
+    int totalNumberTargetPoints = targets->num;
 
     int interpolationOrder = run_params->interp_order;
     int interpOrderLim = interpolationOrder + 1;
@@ -183,7 +191,6 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     double *yC = clusters->y;
     double *zC = clusters->z;
 
-
 #ifdef OPENACC_ENABLED
     #pragma acc data copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                              zC[0:totalNumberInterpolationPoints])
@@ -193,12 +200,12 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     for (int i = 0; i < tree_numnodes; i++) {
         cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
     }
-    
+
 #ifdef OPENACC_ENABLED
     #pragma acc wait
     } // end ACC DATA REGION
 #endif
-
+//    }
     return;
 }
 
@@ -291,7 +298,7 @@ void Clusters_Free_Win(struct Clusters **clusters_addr)
 
 void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrder,
         double *xS, double *yS, double *zS, double *qS, double *wS,
-        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
+        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
 
     int interpOrderLim = interpolationOrder + 1;
@@ -714,7 +721,7 @@ void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolation
 
 void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpolationOrder,
         int totalNumberInterpolationPoints, double *xS, double *yS, double *zS, double *qS, double *wS,
-        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
+        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
 
     int interpOrderLim = interpolationOrder + 1;

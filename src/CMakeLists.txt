@@ -79,9 +79,11 @@ SET(SRCS_K_COULOMB
     kernels/coulomb/coulomb_ss_correction.h
     kernels/coulomb/coulomb_ss_correction.c
     kernels/coulomb/coulomb_ss_pc.h
-    kernels/coulomb/coulomb_ss_pc.c)
-#   kernels/coulomb/coulomb_ss_cp.h
-#   kernels/coulomb/coulomb_ss_cp.c)
+    kernels/coulomb/coulomb_ss_pc.c
+    kernels/coulomb/coulomb_ss_cp.h
+    kernels/coulomb/coulomb_ss_cp.c
+    kernels/coulomb/coulomb_ss_cc.h
+    kernels/coulomb/coulomb_ss_cc.c)
 
 
 SET(SRCS_K_YUKAWA
@@ -99,9 +101,11 @@ SET(SRCS_K_YUKAWA
     kernels/yukawa/yukawa_ss_correction.h
     kernels/yukawa/yukawa_ss_correction.c
     kernels/yukawa/yukawa_ss_pc.h
-    kernels/yukawa/yukawa_ss_pc.c)
-#   kernels/yukawa/yukawa_ss_cp.h
-#   kernels/yukawa/yukawa_ss_cp.c)
+    kernels/yukawa/yukawa_ss_pc.c
+    kernels/yukawa/yukawa_ss_cp.h
+    kernels/yukawa/yukawa_ss_cp.c
+    kernels/yukawa/yukawa_ss_cc.h
+    kernels/yukawa/yukawa_ss_cc.c)
 
 
 SET(SRCS_K_REGULARIZED_COULOMB

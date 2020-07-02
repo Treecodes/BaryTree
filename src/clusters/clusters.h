@@ -12,8 +12,8 @@
 void Clusters_Sources_Construct(struct Clusters **clusters, const struct Particles *sources,
                 const struct Tree *tree, const struct RunParams *run_params);
 
-void Clusters_Targets_Construct(struct Clusters **clusters, const struct Tree *tree,
-                const struct RunParams *run_params);
+void Clusters_Targets_Construct(struct Clusters **clusters, const struct Particles *targets,
+                const struct Tree *tree, const struct RunParams *run_params);
 
 void Clusters_Alloc(struct Clusters **clusters_addr, int length,
                 const struct RunParams *run_params);
