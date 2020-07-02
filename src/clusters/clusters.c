@@ -190,60 +190,10 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Pa
     double *xC = clusters->x;
     double *yC = clusters->y;
     double *zC = clusters->z;
-    double *wC = clusters->w;
-
-
-
-    /*
-     * If using singularity subtraction, compute the modified charges on the target cluster, store in clusters->w
-     */
-
-//    if ((approximation == LAGRANGE) && (singularity == SUBTRACTION)) { // doing Lagrange SS, need to both construct interpolation points and anterpolate target charge.
-//        double *xT = targets->x;
-//        double *yT = targets->y;
-//        double *zT = targets->z;
-//        double *qT = targets->q;
-//        double *wT = targets->w;
-//
-//        double *ones; // initialize an array of ones, needed in the call to pc_comp_ms_modifiedF below.
-//        make_vector(ones,totalNumberTargetPoints);
-//        for (int i=0;i<totalNumberTargetPoints;i++){
-//            ones[i] = 1.0;
-//        }
-//
-//
-//#ifdef OPENACC_ENABLED
-//    #pragma acc data copyin(xT[0:totalNumberTargetPoints], yT[0:totalNumberTargetPoints], \
-//                            zT[0:totalNumberTargetPoints], qT[0:totalNumberTargetPoints]) \
-//                       copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-//                            zC[0:totalNumberInterpolationPoints], wC[0:totalNumberInterpolationWeights])
-//    {
-//#endif
-//
-//        // compute modified weights for target cluster, store in clusters->w
-//        for (int i = 0; i < tree_numnodes; i++){
-//            pc_comp_ms_modifiedF(tree, i, interpolationOrder, xT, yT, zT, qT, ones, xC, yC, zC, wC); // note the final input is w not q array.
-//        }
-//        free_vector(ones);
-//
-//        int numZeros=0;
-//        for (int i=0; i<totalNumberInterpolationCharges;i++){
-//            if (wC[i]==0.0) numZeros++;
-//        }
-//        printf("Number of zeros in clusters->w:  %i of %i\n", numZeros, totalNumberInterpolationCharges);
-//
-//
-//
-//#ifdef OPENACC_ENABLED
-//    #pragma acc wait
-//    } // end ACC DATA REGION
-//#endif
-//
-//    } else { // not doing Lagrange singularity subtraction, just need to construct interpolation points
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                             zC[0:totalNumberInterpolationPoints], wC[0:totalNumberInterpolationPoints])
+                             zC[0:totalNumberInterpolationPoints])
     {
 #endif
 
