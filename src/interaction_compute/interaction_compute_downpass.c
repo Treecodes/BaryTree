@@ -12,19 +12,19 @@
 #include "interaction_compute.h"
 
 
-static void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order,
+static void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_degree,
                         double *xT, double *yT, double *zT, double *qT,
                         double *clusterQ);
 
-static void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_order,
+static void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_degree,
                         double *xT, double *yT, double *zT, double *qT,
                         double *clusterQ, double *clusterW);
 
-static void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_order,
+static void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_degree,
                         double *xT, double *yT, double *zT, double *qT,
                         double *clusterQ, double *clusterW);
 
-//static void cp_comp_pot_hermite_SS(struct Tree *tree, int idx, int interp_order,
+//static void cp_comp_pot_hermite_SS(struct Tree *tree, int idx, int interp_degree,
 //                      int totalNumberInterpolationPoints,
 //                      double *xT, double *yT, double *zT, double *qT,
 //                      double *clusterQ, double *clusterW);
@@ -46,7 +46,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     double *cluster_w = clusters->w;
 
     int tree_numnodes = tree->numnodes;
-    int interp_order = run_params->interp_order;
+    int interp_degree = run_params->interp_degree;
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(target_x[0:num_targets], target_y[0:num_targets], \
@@ -59,25 +59,25 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
     if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot(tree, i, potential, interp_order,
+            cp_comp_pot(tree, i, potential, interp_degree,
                         target_x, target_y, target_z, target_q, cluster_q);
 
     } else if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++){
-            cp_comp_pot_SS(tree, i, potential, interp_order,
+            cp_comp_pot_SS(tree, i, potential, interp_degree,
                        target_x, target_y, target_z, target_q, cluster_q, cluster_w);
         }
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot_hermite(tree, i, potential, interp_order,
+            cp_comp_pot_hermite(tree, i, potential, interp_degree,
                         target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
         printf("Not set up to do Hermite SS downpass.\n");
         exit(-1);
 //        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_pot_hermite_SS(tree, i, potential, interp_order,
+//            cp_comp_pot_hermite_SS(tree, i, potential, interp_degree,
 //                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else {
@@ -99,12 +99,12 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 /***** LOCAL FUNCTIONS **************/
 /************************************/
 
-void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order,
+void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_degree,
         double *target_x, double *target_y, double *target_z, double *target_q,
         double *cluster_q)
 {
-    int interp_order_lim       = interp_order + 1;
-    int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+    int interp_degree_lim       = interp_degree + 1;
+    int interp_pts_per_cluster = interp_degree_lim * interp_degree_lim * interp_degree_lim;
 
     int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
     int target_start           = tree->ibeg[idx] - 1;
@@ -112,12 +112,12 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 
     double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ;
 
-    make_vector(weights, interp_order_lim);
-    make_vector(dj,      interp_order_lim);
-    make_vector(tt,      interp_order_lim);
-    make_vector(nodeX,   interp_order_lim);
-    make_vector(nodeY,   interp_order_lim);
-    make_vector(nodeZ,   interp_order_lim);
+    make_vector(weights, interp_degree_lim);
+    make_vector(dj,      interp_degree_lim);
+    make_vector(tt,      interp_degree_lim);
+    make_vector(nodeX,   interp_degree_lim);
+    make_vector(nodeY,   interp_degree_lim);
+    make_vector(nodeZ,   interp_degree_lim);
 
     double x0 = tree->x_min[idx];
     double x1 = tree->x_max[idx];
@@ -129,8 +129,8 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q) \
-                create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
-                       weights[0:interp_order_lim], dj[0:interp_order_lim], tt[0:interp_order_lim])
+                create(nodeX[0:interp_degree_lim], nodeY[0:interp_degree_lim], nodeZ[0:interp_degree_lim], \
+                       weights[0:interp_degree_lim], dj[0:interp_degree_lim], tt[0:interp_degree_lim])
     {
 #endif
 
@@ -139,8 +139,8 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < interp_order_lim; i++) {
-        tt[i] = cos(i * M_PI / interp_order);
+    for (int i = 0; i < interp_degree_lim; i++) {
+        tt[i] = cos(i * M_PI / interp_degree);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -150,16 +150,16 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interp_order_lim; j++){
+    for (int j = 0; j < interp_degree_lim; j++){
         dj[j] = 1.0;
         if (j == 0) dj[j] = 0.5;
-        if (j == interp_order) dj[j] = 0.5;
+        if (j == interp_degree) dj[j] = 0.5;
     }
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interp_order_lim; j++) {
+    for (int j = 0; j < interp_degree_lim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
     }
 
@@ -183,7 +183,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
-        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+        for (int j = 0; j < interp_degree_lim; j++) {  // loop through the degree
 
             double cx = tx - nodeX[j];
             double cy = ty - nodeY[j];
@@ -213,11 +213,11 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 #endif
         for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%interp_order_lim;
-            int kk = (j-k1)/interp_order_lim;
-            int k2 = kk%interp_order_lim;
+            int k1 = j%interp_degree_lim;
+            int kk = (j-k1)/interp_degree_lim;
+            int k2 = kk%interp_degree_lim;
             kk = kk - k2;
-            int k3 = kk / interp_order_lim;
+            int k3 = kk / interp_degree_lim;
 
             double w3 = weights[k3];
             double w2 = weights[k2];
@@ -273,12 +273,12 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 }
 
 
-void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_order,
+void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_degree,
         double *target_x, double *target_y, double *target_z, double *target_q,
         double *cluster_q, double *cluster_w)
 {
-    int interp_order_lim       = interp_order + 1;
-    int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+    int interp_degree_lim       = interp_degree + 1;
+    int interp_pts_per_cluster = interp_degree_lim * interp_degree_lim * interp_degree_lim;
 
     int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
     int target_start           = tree->ibeg[idx] - 1;
@@ -286,12 +286,12 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
     
     double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ;
 
-    make_vector(weights, interp_order_lim);
-    make_vector(dj,      interp_order_lim);
-    make_vector(tt,      interp_order_lim);
-    make_vector(nodeX,   interp_order_lim);
-    make_vector(nodeY,   interp_order_lim);
-    make_vector(nodeZ,   interp_order_lim);
+    make_vector(weights, interp_degree_lim);
+    make_vector(dj,      interp_degree_lim);
+    make_vector(tt,      interp_degree_lim);
+    make_vector(nodeX,   interp_degree_lim);
+    make_vector(nodeY,   interp_degree_lim);
+    make_vector(nodeZ,   interp_degree_lim);
     
     double x0 = tree->x_min[idx];
     double x1 = tree->x_max[idx];
@@ -303,8 +303,8 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q, cluster_w) \
-                create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
-                       weights[0:interp_order_lim], dj[0:interp_order_lim], tt[0:interp_order_lim])
+                create(nodeX[0:interp_degree_lim], nodeY[0:interp_degree_lim], nodeZ[0:interp_degree_lim], \
+                       weights[0:interp_degree_lim], dj[0:interp_degree_lim], tt[0:interp_degree_lim])
     {
 #endif
     
@@ -313,8 +313,8 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < interp_order_lim; i++) {
-        tt[i] = cos(i * M_PI / interp_order);
+    for (int i = 0; i < interp_degree_lim; i++) {
+        tt[i] = cos(i * M_PI / interp_degree);
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
@@ -324,16 +324,16 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interp_order_lim; j++){
+    for (int j = 0; j < interp_degree_lim; j++){
         dj[j] = 1.0;
         if (j == 0) dj[j] = 0.5;
-        if (j == interp_order) dj[j] = 0.5;
+        if (j == interp_degree) dj[j] = 0.5;
     }
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interp_order_lim; j++) {
+    for (int j = 0; j < interp_degree_lim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
     }
 
@@ -358,7 +358,7 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
-        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+        for (int j = 0; j < interp_degree_lim; j++) {  // loop through the degree
 
             double cx = tx - nodeX[j];
             double cy = ty - nodeY[j];
@@ -388,11 +388,11 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
 #endif
         for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%interp_order_lim;
-            int kk = (j-k1)/interp_order_lim;
-            int k2 = kk%interp_order_lim;
+            int k1 = j%interp_degree_lim;
+            int kk = (j-k1)/interp_degree_lim;
+            int k2 = kk%interp_degree_lim;
             kk = kk - k2;
-            int k3 = kk / interp_order_lim;
+            int k3 = kk / interp_degree_lim;
 
             double w3 = weights[k3];
             double w2 = weights[k2];
@@ -450,11 +450,11 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_or
 
 
 
-void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_order,
+void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_degree,
         double *target_x, double *target_y, double *target_z, double *target_q, double *cluster_q, double *cluster_w)
 {
-    int interp_order_lim       = interp_order + 1;
-    int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+    int interp_degree_lim       = interp_degree + 1;
+    int interp_pts_per_cluster = interp_degree_lim * interp_degree_lim * interp_degree_lim;
 
     int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
     int target_start           = tree->ibeg[idx] - 1;
@@ -462,15 +462,15 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
     
     double *dj, *tt, *ww, *wx, *wy, *wz, *nodeX, *nodeY, *nodeZ;
 
-    make_vector(dj,      interp_order_lim);
-    make_vector(tt,      interp_order_lim);
-    make_vector(ww,      interp_order_lim);
-    make_vector(wx,      interp_order_lim);
-    make_vector(wy,      interp_order_lim);
-    make_vector(wz,      interp_order_lim);
-    make_vector(nodeX,   interp_order_lim);
-    make_vector(nodeY,   interp_order_lim);
-    make_vector(nodeZ,   interp_order_lim);
+    make_vector(dj,      interp_degree_lim);
+    make_vector(tt,      interp_degree_lim);
+    make_vector(ww,      interp_degree_lim);
+    make_vector(wx,      interp_degree_lim);
+    make_vector(wy,      interp_degree_lim);
+    make_vector(wz,      interp_degree_lim);
+    make_vector(nodeX,   interp_degree_lim);
+    make_vector(nodeY,   interp_degree_lim);
+    make_vector(nodeZ,   interp_degree_lim);
     
     double *cluster_q_     = &cluster_q[8*cluster_start + 0*interp_pts_per_cluster];
     double *cluster_q_dx   = &cluster_q[8*cluster_start + 1*interp_pts_per_cluster];
@@ -494,9 +494,9 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
                                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                                         cluster_q_dxyz) \
-        create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
-               dj[0:interp_order_lim], tt[0:interp_order_lim], ww[0:interp_order_lim], \
-               wx[0:interp_order_lim], wy[0:interp_order_lim], wz[0:interp_order_lim])
+        create(nodeX[0:interp_degree_lim], nodeY[0:interp_degree_lim], nodeZ[0:interp_degree_lim], \
+               dj[0:interp_degree_lim], tt[0:interp_degree_lim], ww[0:interp_degree_lim], \
+               wx[0:interp_degree_lim], wy[0:interp_degree_lim], wz[0:interp_degree_lim])
     {
 #endif
     
@@ -504,29 +504,29 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < interp_order_lim; i++) {
-        double xx = i * M_PI / interp_order;
+    for (int i = 0; i < interp_degree_lim; i++) {
+        double xx = i * M_PI / interp_degree;
         tt[i] =  cos(xx);
         ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
         nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
         nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
         nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
     }
-    ww[0] = 0.25 * (interp_order*interp_order/3.0 + 1.0/6.0);
-    ww[interp_order] = -ww[0];
+    ww[0] = 0.25 * (interp_degree*interp_degree/3.0 + 1.0/6.0);
+    ww[interp_degree] = -ww[0];
     
     // Compute weights
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < interp_order_lim; j++){
+    for (int j = 0; j < interp_degree_lim; j++){
         dj[j] = 1.0;
         wx[j] = -4.0 * ww[j] / (x1 - x0);
         wy[j] = -4.0 * ww[j] / (y1 - y0);
         wz[j] = -4.0 * ww[j] / (z1 - z0);
     }
     dj[0] = 0.25;
-    dj[interp_order] = 0.25;
+    dj[interp_degree] = 0.25;
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
@@ -548,7 +548,7 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
-        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+        for (int j = 0; j < interp_degree_lim; j++) {  // loop through the degree
 
             double cx =  tx - nodeX[j];
             double cy =  ty - nodeY[j];
@@ -577,11 +577,11 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
 #endif
         for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%interp_order_lim;
-            int kk = (j-k1)/interp_order_lim;
-            int k2 = kk%interp_order_lim;
+            int k1 = j%interp_degree_lim;
+            int kk = (j-k1)/interp_degree_lim;
+            int k2 = kk%interp_degree_lim;
             kk = kk - k2;
-            int k3 = kk / interp_order_lim;
+            int k3 = kk / interp_degree_lim;
             
             double dx = tx - nodeX[k1];
             double dy = ty - nodeY[k2];

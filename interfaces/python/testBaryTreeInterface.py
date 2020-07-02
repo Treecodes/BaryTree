@@ -24,7 +24,7 @@ if __name__=="__main__":
     maxPerTargetLeaf = 10
     GPUpresent = False
     theta = 0.8
-    treecodeOrder = 4
+    treecodeDegree = 4
     beta = -1
     gaussianAlpha = 1.0
     verbosity = 0
@@ -56,7 +56,7 @@ if __name__=="__main__":
                                  np.copy(X), np.copy(Y), np.copy(Z), np.copy(RHO), np.copy(W),
                                  kernel, numberOfKernelParameters, kernelParameters,
                                  singularity, approximation, computeType,
-                                 theta, treecodeOrder, maxPerSourceLeaf, maxPerTargetLeaf,
+                                 theta, treecodeDegree, maxPerSourceLeaf, maxPerTargetLeaf,
                                  beta, GPUpresent, verbosity, sizeCheck=1.0)
 
     assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output."

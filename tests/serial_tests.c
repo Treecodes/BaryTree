@@ -247,7 +247,7 @@ static char *test_treecode_on_100_particles()
     int max_per_source_leaf = 3;
     int max_per_target_leaf = 3;
 
-    int order = 2;
+    int degree = 2;
     double theta = 0.7;
     double size_check = 1.0;
 
@@ -257,7 +257,7 @@ static char *test_treecode_on_100_particles()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
-                    theta, order, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
+                    theta, degree, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
 
 
     /***********************************************/
@@ -591,7 +591,7 @@ static char *test_treecode_on_1_target_10000_sources()
     int max_per_source_leaf = 100;
     int max_per_target_leaf = 100;
 
-    int order = 4;
+    int degree = 4;
     double theta = 0.8;
     double size_check = 0.0;
 
@@ -600,7 +600,7 @@ static char *test_treecode_on_1_target_10000_sources()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
-                    theta, order, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
+                    theta, degree, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
 
 
     /***********************************************/
@@ -895,7 +895,7 @@ static char *test_treecode_wrapper()
     int max_per_source_leaf = 100;
     int max_per_target_leaf = 100;
 
-    int order = 4;
+    int degree = 4;
     double theta = 0.8;
     double beta = -1.0;
     double size_check = 1.0;
@@ -905,7 +905,7 @@ static char *test_treecode_wrapper()
 
     RunParams_Setup(&run_params,
                     NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, PARTICLE_CLUSTER,
-                    theta, order, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
+                    theta, degree, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
 
 
     /***********************************************/
@@ -924,7 +924,7 @@ static char *test_treecode_wrapper()
                       sources->x,sources->y,sources->z,sources->q,sources->w,
                       potential_wrapper, COULOMB, num_kernel_params, kernel_params,
                       SKIPPING, LAGRANGE, PARTICLE_CLUSTER,
-                      theta, order, max_per_source_leaf, max_per_target_leaf,
+                      theta, degree, max_per_source_leaf, max_per_target_leaf,
                       size_check, beta, verbosity);
 
     treedriver(sources, targets, run_params, potential, time_tree);
@@ -1031,14 +1031,14 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
                     0, 0, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
 
 
-    // 3 parameter sets.  Set 2 increases order, set 3 reduces MAC.  Both should be more accurate than set 1.
-    int order1=3;
+    // 3 parameter sets.  Set 2 increases degree, set 3 reduces MAC.  Both should be more accurate than set 1.
+    int degree1=3;
     double theta1=0.9;
 
-    int order2=6;
+    int degree2=6;
     double theta2=0.9;
 
-    int order3=3;
+    int degree3=3;
     double theta3=0.4;
 
     /***********************************************/
@@ -1057,15 +1057,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1078,7 +1078,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err1 = %1.4e\n", err1);
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-coulomb-skipping", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: lagrange-coulomb-skipping", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-coulomb-skipping", \
                 err3 < err1);
@@ -1101,15 +1101,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1121,7 +1121,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err1 = %1.4e\n", err1);
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-coulomb-subtraction", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: lagrange-coulomb-subtraction", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-coulomb-subtraction", \
                 err3 < err1);
@@ -1144,15 +1144,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1164,7 +1164,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err1 = %1.4e\n", err1);
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-yukawa-skipping", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: lagrange-yukawa-skipping", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-yukawa-skipping", \
                 err3 < err1);
@@ -1187,15 +1187,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1207,7 +1207,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err1 = %1.4e\n", err1);
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: lagrange-yukawa-subtraction", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: lagrange-yukawa-subtraction", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: lagrange-yukawa-subtraction", \
                 err3 < err1);
@@ -1230,15 +1230,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1252,7 +1252,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
         verbosity=0;
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-coulomb-skipping", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: hermite-coulomb-skipping", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-coulomb-skipping", \
                 err3 < err1);
@@ -1275,15 +1275,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1295,7 +1295,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err1 = %1.4e\n", err1);
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-coulomb-subtraction", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: hermite-coulomb-subtraction", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-coulomb-subtraction", \
                 err3 < err1);
@@ -1318,15 +1318,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1338,7 +1338,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err1 = %1.4e\n", err1);
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-yukawa-skipping", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: hermite-yukawa-skipping", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-yukawa-skipping", \
                 err3 < err1);
@@ -1361,15 +1361,15 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
     directdriver(sources, targets, run_params, potential_direct, time_tree);
 
-    run_params->interp_order = order1;
+    run_params->interp_degree = degree1;
     run_params->theta = theta1;
     treedriver(sources, targets, run_params, potential1, time_tree);
 
-    run_params->interp_order = order2;
+    run_params->interp_degree = degree2;
     run_params->theta = theta2;
     treedriver(sources, targets, run_params, potential2, time_tree);
 
-    run_params->interp_order = order3;
+    run_params->interp_degree = degree3;
     run_params->theta = theta3;
     treedriver(sources, targets, run_params, potential3, time_tree);
 
@@ -1381,7 +1381,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
         if (verbosity>0) printf("err1 = %1.4e\n", err1);
         if (verbosity>0) printf("err2 = %1.4e\n", err2);
         if (verbosity>0) printf("err3 = %1.4e\n", err3);
-        mu_assert("TEST FAILED: increasing order didn't improve accuracy for: hermite-yukawa-subtraction", \
+        mu_assert("TEST FAILED: increasing degree didn't improve accuracy for: hermite-yukawa-subtraction", \
                 err2 < err1);
         mu_assert("TEST FAILED: decreasing theta didn't improve accuracy for: hermite-yukawa-subtraction", \
                 err3 < err1);
