@@ -48,9 +48,8 @@ void K_Yukawa_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpol
             double dz = cz - source_z[jj];
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential += source_q[jj] * source_w[jj] * exp(-kernel_parameter * r) / r;
-            }
+            temporary_potential += source_q[jj] * source_w[jj] * exp(-kernel_parameter * r) / r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -134,29 +133,28 @@ void K_Yukawa_CP_Hermite(int number_of_sources_in_batch, int number_of_interpola
             double dz = source_z[jj] - cz;
             double r2 = dx*dx + dy*dy + dz*dz;
             
-            if (r2 > DBL_MIN) {
-                double r  = sqrt(r2);
-                double r3 = r2 * r;
+            double r  = sqrt(r2);
+            double r3 = r2 * r;
 
-                double r2inv = 1 / r2;
-                double rinvq = source_q[jj] * source_w[jj] / r * exp(-kernel_parameter * r);
-                double r3inv = rinvq * r2inv;
-                double r5inv = r3inv * r2inv;
-                double r7inv = r5inv * r2inv;
-                
-                double term_d1 = r3inv * (1 + kernel_parameter * r);
-                double term_d2 = r5inv * (3 + 3 * kernel_parameter * r + kernel_parameter2 * r2);
-                double term_d3 = r7inv * (15 + 15 * kernel_parameter * r + 6 * kernel_parameter2 * r2 + kernel_parameter3 * r3);
+            double r2inv = 1 / r2;
+            double rinvq = source_q[jj] * source_w[jj] / r * exp(-kernel_parameter * r);
+            double r3inv = rinvq * r2inv;
+            double r5inv = r3inv * r2inv;
+            double r7inv = r5inv * r2inv;
 
-                temp_pot_     += rinvq;
-                temp_pot_dx   += term_d1 * dx;
-                temp_pot_dy   += term_d1 * dy;
-                temp_pot_dz   += term_d1 * dz;
-                temp_pot_dxy  += term_d2 * dx * dy;
-                temp_pot_dyz  += term_d2 * dy * dz;
-                temp_pot_dxz  += term_d2 * dx * dz;
-                temp_pot_dxyz += term_d3 * dx * dy * dz;
-            }
+            double term_d1 = r3inv * (1 + kernel_parameter * r);
+            double term_d2 = r5inv * (3 + 3 * kernel_parameter * r + kernel_parameter2 * r2);
+            double term_d3 = r7inv * (15 + 15 * kernel_parameter * r + 6 * kernel_parameter2 * r2 + kernel_parameter3 * r3);
+
+            temp_pot_     += rinvq;
+            temp_pot_dx   += term_d1 * dx;
+            temp_pot_dy   += term_d1 * dy;
+            temp_pot_dz   += term_d1 * dz;
+            temp_pot_dxy  += term_d2 * dx * dy;
+            temp_pot_dyz  += term_d2 * dy * dz;
+            temp_pot_dxz  += term_d2 * dx * dz;
+            temp_pot_dxyz += term_d3 * dx * dy * dz;
+
 
         } // end loop over interpolation points
         

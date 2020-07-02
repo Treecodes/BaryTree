@@ -46,9 +46,8 @@ void K_Coulomb_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpo
             double dz = cz - source_z[jj];
             double r2 = dx*dx + dy*dy + dz*dz;
 
-            if (r2 > DBL_MIN) {
-                temporary_potential += source_q[jj] * source_w[jj] / sqrt(r2);
-            }
+            temporary_potential += source_q[jj] * source_w[jj] / sqrt(r2);
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -138,16 +137,15 @@ void K_Coulomb_CP_Hermite(int number_of_sources_in_batch, int number_of_interpol
             
             r5inv *= 3.0;
 
-            if (r2 > DBL_MIN) {
-                temp_pot_     += rinvq;
-                temp_pot_dx   += r3inv * dx;
-                temp_pot_dy   += r3inv * dy;
-                temp_pot_dz   += r3inv * dz;
-                temp_pot_dxy  += r5inv * dx * dy;
-                temp_pot_dyz  += r5inv * dy * dz;
-                temp_pot_dxz  += r5inv * dx * dz;
-                temp_pot_dxyz += r7inv * dx * dy * dz * 15.0;
-            }
+            temp_pot_     += rinvq;
+            temp_pot_dx   += r3inv * dx;
+            temp_pot_dy   += r3inv * dy;
+            temp_pot_dz   += r3inv * dz;
+            temp_pot_dxy  += r5inv * dx * dy;
+            temp_pot_dyz  += r5inv * dy * dz;
+            temp_pot_dxz  += r5inv * dx * dz;
+            temp_pot_dxyz += r7inv * dx * dy * dz * 15.0;
+
         } // end loop over interpolation points
         
 #ifdef OPENACC_ENABLED

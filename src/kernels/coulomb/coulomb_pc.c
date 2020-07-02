@@ -46,9 +46,8 @@ void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpo
             double dz = tz - cluster_z[jj];
             double r2  = dx*dx + dy*dy + dz*dz;
 
-            if (r2 > DBL_MIN) {
                 temporary_potential += cluster_charge[starting_index_of_cluster + j] / sqrt(r2);
-            }
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -119,16 +118,13 @@ void K_Coulomb_PC_Hermite(int number_of_targets_in_batch, int number_of_interpol
             double r5inv = r3inv*rinv*rinv;
             double r7inv = r5inv*rinv*rinv;
 
-            if (r > DBL_MIN) {
+            temporary_potential +=  rinv  * (cluster_charge_[j])
+                             +      r3inv * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
+                                           + cluster_charge_delta_z[j]*dz)
+                             +  3 * r5inv * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
+                                           + cluster_charge_delta_xz[j]*dx*dz)
+                             + 15 * r7inv *  cluster_charge_delta_xyz[j]*dx*dy*dz;
 
-                temporary_potential +=  rinv  * (cluster_charge_[j])
-                                 +      r3inv * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
-                                               + cluster_charge_delta_z[j]*dz)
-                                 +  3 * r5inv * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
-                                               + cluster_charge_delta_xz[j]*dx*dz)
-                                 + 15 * r7inv *  cluster_charge_delta_xyz[j]*dx*dy*dz;
-
-            }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

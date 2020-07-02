@@ -48,9 +48,8 @@ void K_SinOverR_PC_Lagrange(int number_of_targets_in_batch, int number_of_interp
             double dz = tz - cluster_z[jj];
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential += cluster_charge[starting_index_of_cluster + j] * sin(kernel_parameter * r) / r;
-            }
+            temporary_potential += cluster_charge[starting_index_of_cluster + j] * sin(kernel_parameter * r) / r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
