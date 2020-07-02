@@ -1,22 +1,29 @@
-#include <math.h>
-#include <float.h>
+#ifdef OPENACC_ENABLED
+    #include <accelmath.h>
+    #define M_PI 3.14159265358979323846264338327950288
+#else
+    #include <math.h>
+#endif
 #include <stdio.h>
 
 #include "../../run_params/struct_run_params.h"
-#include "regularized-coulomb_ss_direct.h"
+#include "atan_pp.h"
 
 
-void K_RegularizedCoulomb_SS_Direct(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
+void K_Atan_PP(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
         int starting_index_of_target, int starting_index_of_source,
-        double *target_x, double *target_y, double *target_z, double *target_charge,
+        double *target_x, double *target_y, double *target_z,
         double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
-    double alpha2   = run_params->kernel_params[0] * run_params->kernel_params[0];
-    double epsilon2 = run_params->kernel_params[1] * run_params->kernel_params[1];
+
+    double domainLength = run_params->kernel_params[0];
+    double delta = run_params->kernel_params[1];
+    double wadj = 1. / (1. - delta / sqrt(1. + delta * delta));
+    double delta_factor = sqrt(1. + 1.0 / (delta * delta));
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, target_charge, \
+    #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
                         source_x, source_y, source_z, source_charge, source_weight, potential)
     {
 #endif
@@ -27,30 +34,28 @@ void K_RegularizedCoulomb_SS_Direct(int number_of_targets_in_batch, int number_o
 
         int ii = starting_index_of_target + i;
         double temporary_potential = 0.0;
-
-        double tx = target_x[ii];
-        double ty = target_y[ii];
         double tz = target_z[ii];
-        double tq = target_charge[ii];
 
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_source_points_in_cluster; j++) {
-
             int jj = starting_index_of_source + j;
-            double dx = tx - source_x[jj];
-            double dy = ty - source_y[jj];
-            double dz = tz - source_z[jj];
-            double r2 = dx*dx + dy*dy + dz*dz;
+            double dz = (tz - source_z[jj]) / domainLength;
 
-                temporary_potential += (source_charge[jj] - tq * exp(-r2 / alpha2))
-                                      * source_weight[jj] / sqrt(r2 + epsilon2);
+            if (dz < -0.5) {
+                dz += 1.0;
+            }
+            if (dz > 0.5) {
+                dz -= 1.0;
+            }
+            temporary_potential += source_charge[jj] * source_weight[jj] 
+          			* (1.0 / M_PI * atan(delta_factor * tan(M_PI * dz)) - dz);
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
-        potential[ii] += temporary_potential;
+        potential[ii] += wadj * temporary_potential;
     }
 #ifdef OPENACC_ENABLED
     } // end kernel

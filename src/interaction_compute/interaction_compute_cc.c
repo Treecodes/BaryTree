@@ -883,7 +883,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_Coulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_Coulomb_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
@@ -891,7 +891,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_Coulomb_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_Coulomb_SS_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
@@ -910,7 +910,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_Yukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_Yukawa_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
@@ -918,7 +918,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_Yukawa_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_Yukawa_SS_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
@@ -937,7 +937,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_RegularizedCoulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_RegularizedCoulomb_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
@@ -945,7 +945,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_RegularizedCoulomb_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_RegularizedCoulomb_SS_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
@@ -964,7 +964,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_RegularizedYukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_RegularizedYukawa_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,
@@ -972,7 +972,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 } else if (run_params->singularity == SUBTRACTION) {
 
-                    K_RegularizedYukawa_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_RegularizedYukawa_SS_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z, target_q,
                             source_x, source_y, source_z, source_q, source_w,
@@ -991,7 +991,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                 if (run_params->singularity == SKIPPING) {
 
-                    K_SinOverR_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                    K_SinOverR_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q, source_w,

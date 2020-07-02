@@ -3,11 +3,11 @@
 #define H_K_REGULARIZED_COULOMB_H
  
 
-#include "regularized-coulomb_direct.h"
+#include "regularized-coulomb_pp.h"
 #include "regularized-coulomb_pc.h"
 #include "regularized-coulomb_cp.h"
 
-#include "regularized-coulomb_ss_direct.h"
+#include "regularized-coulomb_ss_pp.h"
 #include "regularized-coulomb_ss_correction.h"
 #include "regularized-coulomb_ss_pc.h"
 //#include "regularized-coulomb_ss_cp.h"
