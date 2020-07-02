@@ -21,7 +21,7 @@ void BaryTreeInterface(int numTargets, int numSources,
 		double *outputArray,
         KERNEL kernel, int numKernelParams, double *kernelParams,
         SINGULARITY singularity, APPROXIMATION approximation, COMPUTE_TYPE compute_type,
-		double theta, int interpOrder, int maxPerSourceLeaf, int maxPerTargetLeaf,
+		double theta, int interpDegree, int maxPerSourceLeaf, int maxPerTargetLeaf,
         double sizeCheck, double beta, int verbosity)
 {
 
@@ -32,7 +32,7 @@ void BaryTreeInterface(int numTargets, int numSources,
     RunParams_Setup(&run_params,
                     kernel, numKernelParams, kernelParams,
                     approximation, singularity, compute_type,
-                    theta, interpOrder,
+                    theta, interpDegree,
                     maxPerSourceLeaf, maxPerTargetLeaf, sizeCheck,
                     beta, verbosity);
 

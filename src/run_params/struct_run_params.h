@@ -17,7 +17,7 @@ struct RunParams
     double theta;
     double size_check_factor;
 
-    int interp_order;
+    int interp_degree;
     int interp_pts_per_cluster;
     int interp_charges_per_cluster;
     int interp_weights_per_cluster;

@@ -21,7 +21,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     
     /* BaryTree params */
     int verbosity = 0;
-    int interp_order = 5; 
+    int interp_degree = 5;
     double theta = 0.5; 
     double beta = -1.0;
     int max_per_source_leaf = 500;
@@ -63,8 +63,8 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
         sscanf(c, "%s %s", c1, c2);
     
         /* Parameters for the RunParam struct */
-        if (strcmp(c1, "order") == 0) {
-            interp_order = atoi(c2);
+        if (strcmp(c1, "degree") == 0) {
+            interp_degree = atoi(c2);
 
         } else if (strcmp(c1, "theta") == 0) {
             theta = atof(c2);
@@ -289,7 +289,7 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     RunParams_Setup(run_params,
                     kernel, num_kernel_params, kernel_params,
                     approximation, singularity, compute_type,
-                    theta, interp_order,
+                    theta, interp_degree,
                     max_per_source_leaf, max_per_target_leaf,
                     size_check_factor, beta, verbosity);
 
@@ -746,7 +746,7 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                     "%e,%e,%e,%e,%e,%e,%e,%e\n",
             N, M, numProcs, run_params->kernel, run_params->approximation, run_params->singularity,
-            run_params->compute_type, run_params->theta, run_params->interp_order,
+            run_params->compute_type, run_params->theta, run_params->interp_degree,
             run_params->max_per_source_leaf, run_params->max_per_target_leaf,
             run_params->size_check_factor, run_params->beta, // 1 ends
 

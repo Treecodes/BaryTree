@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     int numParams = 1;
     double kernelParams[1] = {0.5};
 
-    int interpOrder = 5;
+    int interpDegree = 5;
     double theta = 0.8;
     double beta = 1.0;
 
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
                       xS, yS, zS, qS, wS, potential,
                       kernel, numParams, kernelParams,
                       singularity, approximation, compute_type,
-                      theta, interpOrder, maxPerLeaf, maxPerBatch,
+                      theta, interpDegree, maxPerLeaf, maxPerBatch,
                       sizeCheck, beta, verbosity);
 
     printf("[test BaryTree interface] BaryTree has finished.\n");

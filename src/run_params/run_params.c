@@ -15,7 +15,7 @@ void RunParams_Setup(struct RunParams **run_params_addr,
                      APPROXIMATION approximation,
                      SINGULARITY singularity,
                      COMPUTE_TYPE compute_type,
-                     double theta, int interp_order,
+                     double theta, int interp_degree,
                      int max_per_source_leaf, int max_per_target_leaf,
                      double size_check_factor, double beta, int verbosity)
 {
@@ -40,13 +40,13 @@ void RunParams_Setup(struct RunParams **run_params_addr,
         run_params->beta = -1;
         
         run_params->theta = theta;
-        run_params->interp_order = interp_order;
+        run_params->interp_degree = interp_degree;
         run_params->size_check_factor = size_check_factor;
         
         run_params->max_per_source_leaf = max_per_source_leaf;
         run_params->max_per_target_leaf = max_per_target_leaf;
     
-        run_params->interp_pts_per_cluster = (interp_order+1) * (interp_order+1) * (interp_order+1);
+        run_params->interp_pts_per_cluster = (interp_degree+1) * (interp_degree+1) * (interp_degree+1);
     
     } else {
     
@@ -93,11 +93,11 @@ void RunParams_Setup(struct RunParams **run_params_addr,
         }
         
         run_params->theta = theta_max - (theta_max - theta_min) * pow(beta, exp_s);
-        run_params->interp_order = (int) (n_max - (n_max - n_min) * pow(1. - beta, exp_t));
+        run_params->interp_degree = (int) (n_max - (n_max - n_min) * pow(1. - beta, exp_t));
         
-        run_params->interp_pts_per_cluster = (run_params->interp_order + 1)
-                                           * (run_params->interp_order + 1)
-                                           * (run_params->interp_order + 1);
+        run_params->interp_pts_per_cluster = (run_params->interp_degree + 1)
+                                           * (run_params->interp_degree + 1)
+                                           * (run_params->interp_degree + 1);
     
         #ifdef OPENACC_ENABLED
             run_params->max_per_source_leaf = 3000;
@@ -134,8 +134,8 @@ void RunParams_Setup(struct RunParams **run_params_addr,
 
 void RunParams_Validate(struct RunParams *run_params)
 {
-    int interp_order_lim = run_params->interp_order + 1;
-    run_params->interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+    int interp_degree_lim = run_params->interp_degree + 1;
+    run_params->interp_pts_per_cluster = interp_degree_lim * interp_degree_lim * interp_degree_lim;
 
     run_params->interp_weights_per_cluster = run_params->interp_pts_per_cluster;
     run_params->interp_charges_per_cluster = run_params->interp_pts_per_cluster;
@@ -182,7 +182,7 @@ void RunParams_Print(struct RunParams *run_params)
     printf("[BaryTree]                singularity = %d\n", run_params->singularity);
     printf("[BaryTree]               compute_type = %d\n", run_params->compute_type);
     printf("[BaryTree]                      theta = %f\n", run_params->theta);
-    printf("[BaryTree]               interp_order = %d\n", run_params->interp_order);
+    printf("[BaryTree]               interp_degree = %d\n", run_params->interp_degree);
     printf("[BaryTree]     interp_pts_per_cluster = %d\n", run_params->interp_pts_per_cluster);
     printf("[BaryTree] interp_weights_per_cluster = %d\n", run_params->interp_weights_per_cluster);
     printf("[BaryTree] interp_charges_per_cluster = %d\n", run_params->interp_charges_per_cluster);
