@@ -13,8 +13,8 @@
 static void remove_node(struct TreeLinkedListNode *p);
 
 
-void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Particles *targets,
-                int ibeg, int iend, int maxparnode, double *xyzmm,
+void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p,
+                int maxparnode, double *xyzmm, int *xyzdim, int *xyzind,
                 int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size)
 {
     int ind[8][2];
@@ -40,14 +40,25 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
 
     (*p) = malloc(sizeof(struct TreeLinkedListNode));
     (*numnodes)++;
-    (*p)->numpar = iend - ibeg + 1;
+    (*p)->numpar = xyzdim[0]*xyzdim[1]*xyzdim[2];
 
-    (*p)->x_min = minval(targets->x + ibeg - 1, (*p)->numpar);
-    (*p)->x_max = maxval(targets->x + ibeg - 1, (*p)->numpar);
-    (*p)->y_min = minval(targets->y + ibeg - 1, (*p)->numpar);
-    (*p)->y_max = maxval(targets->y + ibeg - 1, (*p)->numpar);
-    (*p)->z_min = minval(targets->z + ibeg - 1, (*p)->numpar);
-    (*p)->z_max = maxval(targets->z + ibeg - 1, (*p)->numpar);
+    (*p)->x_min = xyzmm[0];
+    (*p)->x_max = xyzmm[1];
+    (*p)->y_min = xyzmm[2];
+    (*p)->y_max = xyzmm[3];
+    (*p)->z_min = xyzmm[4];
+    (*p)->z_max = xyzmm[5];
+
+    (*p)->x_dim = xyzdim[0];
+    (*p)->y_dim = xyzdim[1];
+    (*p)->z_dim = xyzdim[2];
+    
+    (*p)->x_high_ind = xyzind[0];
+    (*p)->x_low_ind  = xyzind[1];
+    (*p)->y_high_ind = xyzind[2];
+    (*p)->y_low_ind  = xyzind[3];
+    (*p)->z_high_ind = xyzind[4];
+    (*p)->z_low_ind  = xyzind[5];
     
 
     double xl = (*p)->x_max - (*p)->x_min;
@@ -59,10 +70,6 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
     (*p)->z_mid = ((*p)->z_max + (*p)->z_min) / 2.0;
 
     (*p)->radius = sqrt(xl*xl + yl*yl + zl*zl) / 2.0;
-
-    
-    (*p)->ibeg = ibeg;
-    (*p)->iend = iend;
 
 
     (*p)->num_children = 0;
@@ -81,6 +88,20 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
         } else {
             max_num_children = 8;
         }
+
+        int ind[8][2];
+        double xyzmms[6][8], lxyzmm[6];
+    
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 2; j++)
+                ind[i][j] = 0.0;
+    
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 8; j++)
+                xyzmms[i][j] = 0.0;
+    
+        for (int i = 0; i < 6; i++)
+            lxyzmm[i] = 0.0;
     /*
      * IND array holds indices of the eight new subregions.
      */
@@ -99,9 +120,9 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
         double z_mid = (*p)->z_mid;
         int numposchild;
 
-        cp_partition_8(targets->x, targets->y, targets->z, targets->q, targets->order,
+        cp_partition_8(
                        xyzmms, xl, yl, zl, &numposchild, max_num_children,
-                       x_mid, y_mid, z_mid, ind);
+                       x_mid, y_mid, z_mid);
 
 
         for (int i = 0; i < numposchild; i++) {

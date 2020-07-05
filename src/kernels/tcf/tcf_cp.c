@@ -49,13 +49,14 @@ void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolati
             double dz = cz - source_z[jj];
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
+            //if (r > DBL_MIN) {
                 double kap_r = kap * r;
                 double r_eta = r / eta;
-                temporary_potential += source_q[jj] / r
-                                     * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
-                                     -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
-            }
+                //temporary_potential += source_q[jj] / r
+                //                     * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
+                //                     -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
+                temporary_potential += source_q[jj] / r * 2. * exp(-kap * r);
+            //}
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

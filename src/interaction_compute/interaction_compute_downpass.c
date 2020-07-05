@@ -58,9 +58,12 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 #endif
 
     if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
-        for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot(tree, i, potential, interp_order,
-                        target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+        for (int i = 0; i < tree_numnodes; i++) {
+            if (tree->used[i] == 1) {
+                cp_comp_pot(tree, i, potential, interp_order,
+                            target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+            }
+        }
 
     } else if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SUBTRACTION)) {
 //        for (int i = 0; i < tree_numnodes; i++)
@@ -68,9 +71,12 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 //                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
-        for (int i = 0; i < tree_numnodes; i++)
-            cp_comp_pot_hermite(tree, i, potential, interp_order,
-                        target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+        for (int i = 0; i < tree_numnodes; i++) {
+            if (tree->used[i] == 1) {
+                cp_comp_pot_hermite(tree, i, potential, interp_order,
+                            target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+            }
+        }
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
 //        for (int i = 0; i < tree_numnodes; i++)

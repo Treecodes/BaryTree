@@ -15,7 +15,7 @@
 
 void pc_compute_interaction_list(int tree_node, const int *tree_numpar, const double *tree_radius,
                 const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
-                const int *tree_num_children, const int *tree_children,     
+                const int *tree_num_children, const int *tree_children, int *tree_used,
 
                 double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
@@ -101,7 +101,7 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
    
     const int *target_tree_num_children = target_tree->num_children;
     const int *target_tree_children = target_tree->children;
-   
+
 
    /* Allocate and initialize interaction lists common to PC, CP, and CC */
 
@@ -137,6 +137,9 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
     
     
     if (run_params->compute_type == PARTICLE_CLUSTER || run_params->compute_type == CLUSTER_PARTICLE) {
+
+        int *source_tree_used = source_tree->used;
+        for (int i = 0; i < source_tree_numnodes; i++) source_tree->used[i] = 0;
     
         /* Build PC and CP interaction lists */
     
@@ -144,7 +147,7 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
             pc_compute_interaction_list(
                     0, source_tree_numpar, source_tree_radius,
                     source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
-                    source_tree_num_children, source_tree_children,
+                    source_tree_num_children, source_tree_children, source_tree_used,
 
                     target_tree_radius[i], target_tree_x_mid[i], target_tree_y_mid[i], target_tree_z_mid[i],
 
@@ -155,6 +158,9 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
         }
     
     } else if (run_params->compute_type == CLUSTER_CLUSTER) {
+
+        int *target_tree_used = target_tree->used;
+        for (int i = 0; i < target_tree_numnodes; i++) target_tree->used[i] = 0;
     
         /* Allocate interaction lists exclusive to CC */
         
@@ -212,6 +218,12 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
                     num_cc_source_approx_inter, num_cc_target_approx_inter,
                     
                     run_params);
+
+        for (int i = 0; i < target_tree_numnodes; i++) {
+            if (num_approx_inter[i] != 0 || num_cc_target_approx_inter[i] != 0) {
+                target_tree_used[i] = 1;
+            }
+        }
                     
         free_vector(sizeof_cc_source_approx_inter_list);
         free_vector(sizeof_cc_target_approx_inter_list);
@@ -283,6 +295,10 @@ void InteractionLists_MakeRemote(const struct Tree *source_tree,
     for (int i = 0; i < source_tree_numnodes; i++) direct_list[i] = -1;
 
 
+    int *source_tree_used;
+    make_vector(source_tree_used, source_tree_numnodes);
+
+
     int **temp_approx_inter_list, **temp_direct_inter_list;
     int *sizeof_approx_inter_list, *sizeof_direct_inter_list;
     int *num_approx_inter, *num_direct_inter;
@@ -313,12 +329,15 @@ void InteractionLists_MakeRemote(const struct Tree *source_tree,
 
 
     if (run_params->compute_type == PARTICLE_CLUSTER) {
+
+        int *source_tree_used;
+        make_vector(source_tree_used, source_tree_numnodes);
         
         for (int i = 0; i < target_tree_numnodes; i++) {
             pc_compute_interaction_list(
                     0, source_tree_numpar, source_tree_radius,
                     source_tree_x_mid, source_tree_y_mid, source_tree_z_mid,
-                    source_tree_num_children, source_tree_children,
+                    source_tree_num_children, source_tree_children, source_tree_used,
 
                     target_tree_radius[i], target_tree_x_mid[i], target_tree_y_mid[i], target_tree_z_mid[i],
 
@@ -327,6 +346,8 @@ void InteractionLists_MakeRemote(const struct Tree *source_tree,
                     &(num_approx_inter[i]), &(num_direct_inter[i]),
                     run_params);
         }
+
+        free_vector(source_tree_used);
 
     } else if (run_params->compute_type == CLUSTER_CLUSTER) {
     
@@ -457,7 +478,7 @@ void InteractionLists_MakeRemote(const struct Tree *source_tree,
 void pc_compute_interaction_list(
                 int tree_node, const int *tree_numpar, const double *tree_radius,
                 const double *tree_x_mid, const double *tree_y_mid, const double *tree_z_mid,
-                const int *tree_num_children, const int *tree_children,     
+                const int *tree_num_children, const int *tree_children, int *tree_used,
 
                 double batch_radius, double batch_x_mid, double batch_y_mid, double batch_z_mid,
 
@@ -488,6 +509,7 @@ void pc_compute_interaction_list(
 
         (*batch_approx_list)[*approx_index_counter] = tree_node;
         (*approx_index_counter)++;
+        tree_used[tree_node] = 1;
 
     } else {
     /*
@@ -509,7 +531,7 @@ void pc_compute_interaction_list(
                 pc_compute_interaction_list(tree_children[8*tree_node + i],
                            tree_numpar, tree_radius,
                            tree_x_mid, tree_y_mid, tree_z_mid,
-                           tree_num_children, tree_children,     
+                           tree_num_children, tree_children, tree_used,
 
                            batch_radius, batch_x_mid, batch_y_mid, batch_z_mid,
 

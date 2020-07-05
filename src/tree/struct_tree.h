@@ -14,6 +14,7 @@ struct Tree
     int *numpar;
     
     int *cluster_ind;
+    int *used;
     
     double *radius;
 
@@ -31,6 +32,18 @@ struct Tree
 
     int *num_children;
     int *children;
+
+    int *x_dim;
+    int *y_dim;
+    int *z_dim;
+
+    int *x_low_ind;
+    int *y_low_ind;
+    int *z_low_ind;
+
+    int *x_high_ind;
+    int *y_high_ind;
+    int *z_high_ind;
 };
 
 #endif /* H_STRUCT_TREE_H */

@@ -17,6 +17,18 @@ struct Particles
   
         int *order;
 
+        double xmin;
+        double xmax;
+        double ymin;
+
+        double ymax;
+        double zmin;
+        double zmax;
+
+        int xdim;
+        int ydim;
+        int zdim;
+
 };
 
 #endif /* H_PARTICLES_H */

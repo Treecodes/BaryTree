@@ -59,22 +59,35 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     struct TreeLinkedListNode *tree_linked_list = NULL;
     
     double xyzminmax[6];
+    int xyzdim[3], xyzind[6];
+
     int numnodes = 0;
     int numleaves = 0;
     
     int min_leaf_size = INT_MAX;
     int max_leaf_size = 0;
     
-    xyzminmax[0] = minval(targets->x, targets->num);
-    xyzminmax[1] = maxval(targets->x, targets->num);
-    xyzminmax[2] = minval(targets->y, targets->num);
-    xyzminmax[3] = maxval(targets->y, targets->num);
-    xyzminmax[4] = minval(targets->z, targets->num);
-    xyzminmax[5] = maxval(targets->z, targets->num);
+    xyzminmax[0] = targets->xmin;
+    xyzminmax[1] = targets->xmax;
+    xyzminmax[2] = targets->ymin;
+    xyzminmax[3] = targets->ymax;
+    xyzminmax[4] = targets->zmin;
+    xyzminmax[5] = targets->zmax;
+
+    xyzdim[0] = targets->xdim;
+    xyzdim[1] = targets->xdim;
+    xyzdim[2] = targets->ydim;
     
-    TreeLinkedList_Targets_Construct(&tree_linked_list, targets, 1, targets->num,
-                    run_params->max_per_source_leaf, xyzminmax, &numnodes, &numleaves,
-                    &min_leaf_size, &max_leaf_size);
+    xyzind[0] = 0;
+    xyzind[1] = targets->xdim-1;
+    xyzind[2] = 0;
+    xyzind[3] = targets->ydim-1;
+    xyzind[4] = 0;
+    xyzind[5] = targets->zdim-1;
+    
+    TreeLinkedList_Targets_Construct(&tree_linked_list,
+                    run_params->max_per_target_leaf, xyzminmax, xyzdim, xyzind,
+                    &numnodes, &numleaves, &min_leaf_size, &max_leaf_size);
     
     TreeLinkedList_SetIndex(tree_linked_list, 0);
     
@@ -111,9 +124,22 @@ void Tree_Alloc(struct Tree **tree_addr, int length)
     make_vector(tree->y_max, length);
     make_vector(tree->z_max, length);
     make_vector(tree->cluster_ind, length);
+    make_vector(tree->used, length);
     make_vector(tree->radius, length);
     make_vector(tree->num_children, length);
     make_vector(tree->children, 8*length);
+
+    make_vector(tree->x_dim, length);
+    make_vector(tree->y_dim, length);
+    make_vector(tree->z_dim, length);
+
+    make_vector(tree->x_low_ind, length);
+    make_vector(tree->y_low_ind, length);
+    make_vector(tree->z_low_ind, length);
+
+    make_vector(tree->x_high_ind, length);
+    make_vector(tree->y_high_ind, length);
+    make_vector(tree->z_high_ind, length);
     
     return;
 }   /* END of function allocate_tree */
@@ -138,9 +164,15 @@ void Tree_Free(struct Tree **tree_addr)
         free_vector(tree->y_max);
         free_vector(tree->z_max);
         free_vector(tree->cluster_ind);
+        free_vector(tree->used);
         free_vector(tree->radius);
         free_vector(tree->num_children);
         free_vector(tree->children);
+
+        free_vector(tree->x_dim);
+        free_vector(tree->y_dim);
+        free_vector(tree->z_dim);
+
         free(tree);
     }
 
@@ -172,6 +204,10 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p)
     tree->cluster_ind[p->node_index] = p->node_index;
 
     tree->num_children[p->node_index] = p->num_children;
+
+    tree->x_dim[p->node_index] = p->x_dim;
+    tree->y_dim[p->node_index] = p->y_dim;
+    tree->z_dim[p->node_index] = p->z_dim;
 
     for (int i = 0; i < p->num_children; i++) {
         tree->children[8*p->node_index+i] = (p->child[i])->node_index;

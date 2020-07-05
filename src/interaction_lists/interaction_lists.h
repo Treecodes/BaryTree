@@ -7,7 +7,7 @@
 
 
 void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
-                          const struct Tree *source_tree, const struct Tree *target_tree,
+                          const struct Tree *source_tree, struct Tree *target_tree,
                           const struct RunParams *run_params);
                           
 void InteractionLists_Free(struct InteractionLists **interaction_list_addr);

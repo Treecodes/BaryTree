@@ -90,25 +90,25 @@ int main(int argc, char **argv)
 
     FILE *points_fp = fopen(file_pqr, "r");
 
-    while (fgets(c, sizeof(c), points_fp)) {
-        sscanf(c, "%s %s %s %s %s %lf %lf %lf %lf %lf",
-               c1, c2, c3, c4, c5, &a1, &a2, &a3, &b1, &b2);
+//    while (fgets(c, sizeof(c), points_fp)) {
+//        sscanf(c, "%s %s %s %s %s %lf %lf %lf %lf %lf",
+//               c1, c2, c3, c4, c5, &a1, &a2, &a3, &b1, &b2);
+//
+//        if (strncmp(c1, "ATOM", 4) == 0) {
+//            sources->x[atom_ctr] = a1;
+//            sources->y[atom_ctr] = a2;
+//            sources->z[atom_ctr] = a3;
+//            sources->q[atom_ctr] = b2;
+//            sources->w[atom_ctr] = 1.0;
+//            atom_ctr++;
+//        }
+//    }
 
-        if (strncmp(c1, "ATOM", 4) == 0) {
-            sources->x[atom_ctr] = a1;
-            sources->y[atom_ctr] = a2;
-            sources->z[atom_ctr] = a3;
-            sources->q[atom_ctr] = b2;
-            sources->w[atom_ctr] = 1.0;
-            atom_ctr++;
-        }
+    for (int i = 0; i < N; ++i) {
+        fscanf(points_fp, "%lf %lf %lf %lf", &(sources->x[i]), &(sources->y[i]), &(sources->z[i]), &(sources->q[i]));
+        sources->w[i] = 1.0;
     }
     fclose(points_fp);
-
-//    for (int i = 0; i < N; ++i) {
-//        fscanf(points_fp, "%lf %lf %lf %lf", &(sources->x[i]), &(sources->y[i]), &(sources->z[i]), &(sources->q[i]));
-//        sources->w[i] = 1.0;
-//    }
 
     
     /* Setting up targets */
