@@ -15,6 +15,10 @@ struct TreeLinkedListNode
     struct TreeLinkedListNode *child[8];
 
     int node_index;
+
+    int x_dim, y_dim, z_dim;
+    int x_low_ind, y_low_ind, z_low_ind;
+    int x_high_ind, y_high_ind, z_high_ind;
 };
 
 #endif /* H_STRUCT_TREE_LINKED_LIST_NODE_H */

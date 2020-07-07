@@ -21,11 +21,13 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, int *
                     double x_mid, double y_mid, double z_mid,
                     int ind[8][2]);
 
-void cp_partition_8(double *x, double *y, double *z, double *q, int *indarr,
-                    double xyzmms[6][8], double xl, double yl, double zl,
-                    int *numposchild, int max_num_children,
-                    double x_mid, double y_mid, double z_mid,
-                    int ind[8][2]);
+//void cp_partition_8(double *x, double *y, double *z, double *q, int *indarr,
+//                    double xyzmms[6][8], double xl, double yl, double zl,
+//                    int *numposchild, int max_num_children,
+//                    double x_mid, double y_mid, double z_mid,
+//                    int ind[8][2]);
 
+void cp_partition_8(double xyzmms[6][8], int xyzdims[3][8], int xyzinds[6][8],
+                    double xl, double yl, double zl, int *numposchild, int max_num_children);
 
 #endif /* H_PARTITION_H */

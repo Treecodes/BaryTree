@@ -10,13 +10,13 @@
 #include "../run_params/struct_run_params.h"
 #include "../interaction_lists/struct_interaction_lists.h"
 
-#include "../kernels/coulomb/coulomb.h"
-#include "../kernels/yukawa/yukawa.h"
-#include "../kernels/regularized-coulomb/regularized-coulomb.h"
-#include "../kernels/regularized-yukawa/regularized-yukawa.h"
-#include "../kernels/sin-over-r/sin-over-r.h"
+//#include "../kernels/coulomb/coulomb.h"
+//#include "../kernels/yukawa/yukawa.h"
+//#include "../kernels/regularized-coulomb/regularized-coulomb.h"
+//#include "../kernels/regularized-yukawa/regularized-yukawa.h"
+//#include "../kernels/sin-over-r/sin-over-r.h"
 #include "../kernels/tcf/tcf.h"
-#include "../kernels/dcf/dcf.h"
+//#include "../kernels/dcf/dcf.h"
 
 #include "interaction_compute.h"
 
@@ -40,61 +40,69 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     
     int *num_source_approx = interaction_list->num_cc_source_approx;
     int *num_target_approx = interaction_list->num_cc_target_approx;
-
-    int source_tree_numnodes = source_tree->numnodes;
-    int target_tree_numnodes = target_tree->numnodes;
+    
     
     int num_sources  = sources->num;
     double *source_x = sources->x;
     double *source_y = sources->y;
     double *source_z = sources->z;
     double *source_q = sources->q;
-    double *source_w = sources->w;
 
-    int num_targets  = targets->num;
-    double *target_x = targets->x;
-    double *target_y = targets->y;
-    double *target_z = targets->z;
-    double *target_q = targets->q;
 
     int num_source_cluster_points  = source_clusters->num;
     int num_source_cluster_charges = source_clusters->num_charges;
-    int num_source_cluster_weights = source_clusters->num_weights;
     double *source_cluster_x = source_clusters->x;
     double *source_cluster_y = source_clusters->y;
     double *source_cluster_z = source_clusters->z;
     double *source_cluster_q = source_clusters->q;
-    double *source_cluster_w = source_clusters->w;
     
     int num_target_cluster_points  = target_clusters->num;
     int num_target_cluster_charges = target_clusters->num_charges;
-    int num_target_cluster_weights = target_clusters->num_weights;
     double *target_cluster_x = target_clusters->x;
     double *target_cluster_y = target_clusters->y;
     double *target_cluster_z = target_clusters->z;
     double *target_cluster_q = target_clusters->q;
     
+    
     int *source_tree_ibeg = source_tree->ibeg;
     int *source_tree_iend = source_tree->iend;
     int *source_tree_cluster_ind = source_tree->cluster_ind;
     
-    int *target_tree_ibeg = target_tree->ibeg;
-    int *target_tree_iend = target_tree->iend;
+
     int *target_tree_cluster_ind = target_tree->cluster_ind;
+    
+    int *target_tree_x_low_ind = target_tree->x_low_ind;
+    int *target_tree_y_low_ind = target_tree->y_low_ind;
+    int *target_tree_z_low_ind = target_tree->z_low_ind;
+    
+    int *target_tree_x_high_ind = target_tree->x_high_ind;
+    int *target_tree_y_high_ind = target_tree->y_high_ind;
+    int *target_tree_z_high_ind = target_tree->z_high_ind;
+    
+    double *target_tree_x_min = target_tree->x_min;
+    double *target_tree_y_min = target_tree->y_min;
+    double *target_tree_z_min = target_tree->z_min;
+    
+    
+    int target_x_dim_glob = targets->xdim;
+    int target_y_dim_glob = targets->ydim;
+    int target_z_dim_glob = targets->zdim;
+    
+    double target_xdd = targets->xdd;
+    double target_ydd = targets->ydd;
+    double target_zdd = targets->zdd;
+    
     
     // NOTE: Not currently setup for SS, thus the target_cluster_w array is not copied out.
     // Additionally, not setup for Hermite either at the moment.
         
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources], source_w[0:num_sources], \
-                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
-                            target_q[0:num_targets], \
+                            source_q[0:num_sources], \
                             source_cluster_x[0:num_source_cluster_points], \
                             source_cluster_y[0:num_source_cluster_points], \
                             source_cluster_z[0:num_source_cluster_points], \
                             source_cluster_q[0:num_source_cluster_charges], \
-                            source_cluster_w[0:num_source_cluster_weights], \
                             target_cluster_x[0:num_target_cluster_points], \
                             target_cluster_y[0:num_target_cluster_points], \
                             target_cluster_z[0:num_target_cluster_points]) \
@@ -103,19 +111,28 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 #endif
     {
 
-    for (int i = 0; i < target_tree_numnodes; i++) {
-        int target_ibeg = target_tree_ibeg[i];
-        int target_iend = target_tree_iend[i];
-        int target_cluster_start = interp_pts_per_cluster * target_tree_cluster_ind[i];
+    for (int i = 0; i < target_tree->numnodes; i++) {
 
-        int num_targets_in_cluster = target_iend - target_ibeg + 1;
-        int target_start =  target_ibeg - 1;
+        int target_cluster_start = interp_pts_per_cluster * target_tree_cluster_ind[i];
         
         int num_approx_in_cluster = num_approx[i];
         int num_direct_in_cluster = num_direct[i];
         
         int num_source_approx_in_cluster = num_source_approx[i];
         int num_target_approx_in_cluster = num_target_approx[i];
+        
+        
+        int target_x_low_ind = target_tree_x_low_ind[i];
+        int target_y_low_ind = target_tree_y_low_ind[i];
+        int target_z_low_ind = target_tree_z_low_ind[i];
+    
+        int target_x_high_ind = target_tree_x_high_ind[i];
+        int target_y_high_ind = target_tree_y_high_ind[i];
+        int target_z_high_ind = target_tree_z_high_ind[i];
+    
+        double target_x_min = target_tree_x_min[i];
+        double target_y_min = target_tree_y_min[i];
+        double target_z_min = target_tree_z_min[i];
 
 
 /* * ********************************************************/
@@ -132,7 +149,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *************** Coulomb *********************/
     /* * *********************************************/
             if (run_params->kernel == COULOMB) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -176,14 +193,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * *************** Yukawa **********************/
     /* * *********************************************/
 
             } else if (run_params->kernel == YUKAWA) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -227,14 +244,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Regularized Coulomb *****************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_COULOMB) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -278,14 +295,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Regularized Yukawa ******************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -332,14 +349,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Sin Over R **************************/
     /* * *********************************************/
 
             } else if (run_params->kernel == SIN_OVER_R) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -353,7 +370,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             run_params, stream_id);
                     }
                 }
-            
+*/
             
     /* * *********************************************/
     /* * ******* TCF *********************************/
@@ -368,7 +385,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                         K_TCF_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
+                            source_cluster_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -381,7 +398,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
 
             } else if (run_params->kernel == DCF) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -395,7 +412,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             run_params, stream_id);
                     }
                 }
-
+*/
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -419,7 +436,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *************** Coulomb *********************/
     /* * *********************************************/
             if (run_params->kernel == COULOMB) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -462,14 +479,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * *************** Yukawa **********************/
     /* * *********************************************/
 
             } else if (run_params->kernel == YUKAWA) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -512,14 +529,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Regularized Coulomb *****************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_COULOMB) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -562,14 +579,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Regularized Yukawa ******************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -615,14 +632,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Sin Over R **************************/
     /* * *********************************************/
 
             } else if (run_params->kernel == SIN_OVER_R) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -635,7 +652,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             run_params, potential, stream_id);
                     }
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* TCF *********************************/
@@ -646,13 +663,19 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
+                            
+                        K_TCF_PC_Lagrange(target_x_low_ind, target_x_high_ind,
+                                          target_y_low_ind, target_y_high_ind,
+                                          target_z_low_ind, target_z_high_ind,
+                                          target_x_min,       target_y_min,       target_z_min,
+                                          
+                                          target_xdd,        target_ydd,        target_zdd,
+                                          target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
 
-                        K_TCF_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
-                            target_start, source_cluster_start,
-                            target_x, target_y, target_z,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q,
-                            run_params, potential, stream_id);
+                                          interp_pts_per_cluster, source_cluster_start,
+                                          source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q,
+
+                                          run_params, potential, stream_id);
                     }
                 }
     
@@ -662,7 +685,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
 
             } else if (run_params->kernel == DCF) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -675,7 +698,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             run_params, potential, stream_id);
                     }
                 }
-                
+*/
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -704,7 +727,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *************** Coulomb *********************/
     /* * *********************************************/
             if (run_params->kernel == COULOMB) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -747,14 +770,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * *************** Yukawa **********************/
     /* * *********************************************/
 
             } else if (run_params->kernel == YUKAWA) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -797,14 +820,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Regularized Coulomb *****************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_COULOMB) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -847,14 +870,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Regularized Yukawa ******************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -900,14 +923,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* Sin Over R **************************/
     /* * *********************************************/
 
             } else if (run_params->kernel == SIN_OVER_R) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -920,7 +943,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             run_params, stream_id);
                     }
                 }
-
+*/
 
     /* * *********************************************/
     /* * ******* TCF *********************************/
@@ -934,7 +957,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                         K_TCF_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
                             source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -947,7 +970,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
 
             } else if (run_params->kernel == DCF) {
-
+/*
                 if (run_params->approximation == LAGRANGE) {
 
                     if (run_params->singularity == SKIPPING) {
@@ -960,6 +983,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             run_params, stream_id);
                     }
                 }
+*/
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -989,7 +1013,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
 
             if (run_params->kernel == COULOMB) {
-
+/*
                 if (run_params->singularity == SKIPPING) {
 
                     K_Coulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
@@ -1010,14 +1034,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * *************** Yukawa **********************/
     /* * *********************************************/
 
             } else if (run_params->kernel == YUKAWA) {
-
+/*
                 if (run_params->singularity == SKIPPING) {
 
                     K_Yukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
@@ -1038,14 +1062,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ********** Regularized Coulomb **************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_COULOMB) {
-
+/*
                 if (run_params->singularity == SKIPPING) {
 
                     K_RegularizedCoulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
@@ -1066,14 +1090,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ********** Regularized Yukawa ***************/
     /* * *********************************************/
 
             } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-
+/*
                 if (run_params->singularity == SKIPPING) {
 
                     K_RegularizedYukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
@@ -1094,14 +1118,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ********** Sin Over R ***********************/
     /* * *********************************************/
 
             } else if (run_params->kernel == SIN_OVER_R) {
-
+/*
                 if (run_params->singularity == SKIPPING) {
 
                     K_SinOverR_Direct(num_targets_in_cluster, num_sources_in_cluster,
@@ -1110,7 +1134,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             source_x, source_y, source_z, source_q, source_w,
                             run_params, potential, stream_id);
                 }
-
+*/
 
     /* * *********************************************/
     /* * ********** TCF ******************************/
@@ -1119,12 +1143,19 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
             } else if (run_params->kernel == TCF) {
 
                 if (run_params->singularity == SKIPPING) {
+                
+                    K_TCF_Direct(target_x_low_ind, target_x_high_ind,
+                                 target_y_low_ind, target_y_high_ind,
+                                 target_z_low_ind, target_z_high_ind,
+                                 target_x_min,       target_y_min,       target_z_min,
 
-                    K_TCF_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
+                                 target_xdd,        target_ydd,        target_zdd,
+                                 target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
+
+                                 num_sources_in_cluster, source_start,
+                                 source_x, source_y, source_z, source_q,
+
+                                 run_params, potential, stream_id);
                 }
                 
                 
@@ -1133,7 +1164,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
 
             } else if (run_params->kernel == DCF) {
-
+/*
                 if (run_params->singularity == SKIPPING) {
 
                     K_DCF_Direct(num_targets_in_cluster, num_sources_in_cluster,
@@ -1142,6 +1173,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             source_x, source_y, source_z, source_q, source_w,
                             run_params, potential, stream_id);
                 }
+*/
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);

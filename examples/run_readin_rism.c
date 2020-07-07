@@ -40,6 +40,9 @@ int main(int argc, char **argv)
     
     FILE *fp = fopen(argv[1], "r");
     Params_Parse_Readin(fp, &run_params, &N, file_pqr, &run_direct, &slice, xyz_limits, grid_dim);
+    
+    //Slicing currently doesn't work! So I set it to 1.
+    slice = 1;
 
     grid_dd[0] = (xyz_limits[1] - xyz_limits[0]) / (grid_dim[0] - 1);
     grid_dd[1] = (xyz_limits[3] - xyz_limits[2]) / (grid_dim[1] - 1);
@@ -49,7 +52,7 @@ int main(int argc, char **argv)
     /* data structures for BaryTree calculation and comparison */
     struct Particles *sources = NULL;
     struct Particles *targets = NULL;
-    struct Particles *targets_sample = NULL;
+    //struct Particles *targets_sample = NULL;
     double *potential = NULL, *potential_direct = NULL;
     
     /* variables for collecting accuracy info */
@@ -116,6 +119,23 @@ int main(int argc, char **argv)
     targets = malloc(sizeof(struct Particles));
     targets->num = grid_dim[0] * grid_dim[1] * grid_dim[2];
     
+    targets->xmin = xyz_limits[0];
+    targets->ymin = xyz_limits[2];
+    targets->zmin = xyz_limits[4];
+
+    targets->xmax = xyz_limits[1];
+    targets->ymax = xyz_limits[3];
+    targets->zmax = xyz_limits[5];
+
+    targets->xdim = grid_dim[0];
+    targets->ydim = grid_dim[1];
+    targets->zdim = grid_dim[2];
+
+    targets->xdd = grid_dd[0];
+    targets->ydd = grid_dd[1];
+    targets->zdd = grid_dd[2];
+
+/*
     MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->x));
     MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->y));
     MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->z));
@@ -139,15 +159,14 @@ int main(int argc, char **argv)
             }
         }
     }
-               
-
+*/
 
 
     if (rank == 0) printf("[random cube example] Setup has finished.\n");
 
     /* Initializing direct and treedriver runs */
 
-    targets_sample = malloc(sizeof(struct Particles));
+    //targets_sample = malloc(sizeof(struct Particles));
 
     potential = malloc(sizeof(double) * targets->num);
     potential_direct = malloc(sizeof(double) * targets->num);
@@ -171,30 +190,32 @@ int main(int argc, char **argv)
 
     if (run_direct == 1) {
 
-        targets_sample->num = targets->num / slice;
-        targets_sample->x = malloc(targets_sample->num * sizeof(double));
-        targets_sample->y = malloc(targets_sample->num * sizeof(double));
-        targets_sample->z = malloc(targets_sample->num * sizeof(double));
-        targets_sample->q = malloc(targets_sample->num * sizeof(double));
+// Currently I haven't set up sampling here. So I have to run the whole thing.
 
-        for (int i = 0; i < targets_sample->num; i++) {
-            targets_sample->x[i] = targets->x[i*slice];
-            targets_sample->y[i] = targets->y[i*slice];
-            targets_sample->z[i] = targets->z[i*slice];
-            targets_sample->q[i] = targets->q[i*slice];
-        }
+//        targets_sample->num = targets->num / slice;
+//        targets_sample->x = malloc(targets_sample->num * sizeof(double));
+//        targets_sample->y = malloc(targets_sample->num * sizeof(double));
+//        targets_sample->z = malloc(targets_sample->num * sizeof(double));
+//        targets_sample->q = malloc(targets_sample->num * sizeof(double));
+//
+//        for (int i = 0; i < targets_sample->num; i++) {
+//            targets_sample->x[i] = targets->x[i*slice];
+//            targets_sample->y[i] = targets->y[i*slice];
+//            targets_sample->z[i] = targets->z[i*slice];
+//            targets_sample->q[i] = targets->q[i*slice];
+//        }
 
         if (rank == 0) printf("[random cube example] Running direct comparison...\n");
 
         START_TIMER(&time_run[1]);
-        directdriver(sources, targets_sample, run_params, potential_direct, time_direct);
+        directdriver(sources, targets, run_params, potential_direct, time_direct);
         STOP_TIMER(&time_run[1]);
 
-        free(targets_sample->x);
-        free(targets_sample->y);
-        free(targets_sample->z);
-        free(targets_sample->q);
-        free(targets_sample);
+        //free(targets_sample->x);
+        //free(targets_sample->y);
+        //free(targets_sample->z);
+        //free(targets_sample->q);
+        //free(targets_sample);
 
     }
 

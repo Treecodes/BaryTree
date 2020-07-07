@@ -76,12 +76,10 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                        source_q[0:num_sources], source_w[0:num_sources], \
-                        target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
-                        target_q[0:num_targets], \
+                        source_q[0:num_sources], \
                         cluster_x[0:total_num_interp_pts], cluster_y[0:total_num_interp_pts], \
                         cluster_z[0:total_num_interp_pts], \
-                        cluster_q[0:total_num_interp_charges], cluster_w[0:total_num_interp_weights]) \
+                        cluster_q[0:total_num_interp_charges]) \
                         copy(potential_approx[0:num_targets], potential_direct[0:num_targets])
 #endif
     {
@@ -413,22 +411,22 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_TCF_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
+//                        K_TCF_PC_Lagrange(num_targets_in_batch,
+//                                    interp_pts_per_cluster, batch_start, cluster_start,
+//                                    target_x, target_y, target_z,
+//                                    cluster_x, cluster_y, cluster_z, cluster_q,
+//                                    run_params, potential_approx, stream_id);
                     }
 
                 } else if (run_params->approximation == HERMITE) {
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_TCF_PC_Hermite(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    total_num_interp_pts, target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
+//                        K_TCF_PC_Hermite(num_targets_in_batch,
+//                                    interp_pts_per_cluster, batch_start, cluster_start,
+//                                    total_num_interp_pts, target_x, target_y, target_z,
+//                                    cluster_x, cluster_y, cluster_z, cluster_q,
+//                                    run_params, potential_approx, stream_id);
                     }
                 }
 
@@ -633,11 +631,11 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 
             } else if (run_params->kernel == TCF) {
 
-                K_TCF_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
+//                K_TCF_Direct(num_targets_in_batch, num_sources_in_cluster,
+//                            batch_start, source_start,
+//                            target_x, target_y, target_z,
+//                            source_x, source_y, source_z, source_q, source_w,
+//                            run_params, potential_direct, stream_id);
 
 
     /* * *************************************/

@@ -13,8 +13,8 @@
 #include "batches.h"
 
 
-static void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
-                    int ibeg, int iend, int maxparnode, double *xyzmm);
+static void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays,
+                    int maxparnode, double *xyzmm, int *xyzdim, int *xyzind);
                     
 static void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
                     int ibeg, int iend, int maxparnode, double *xyzmm);
@@ -59,6 +59,7 @@ void Batches_Sources_Construct(struct Tree **batches_addr, struct Particles *sou
 void Batches_Targets_Construct(struct Tree **batches_addr, struct Particles *targets, struct RunParams *run_params)
 {
     double xyzminmax[6];
+    int xyzdim[3], xyzind[6];
     
     xyzminmax[0] = minval(targets->x, targets->num);
     xyzminmax[1] = maxval(targets->x, targets->num);
@@ -66,6 +67,18 @@ void Batches_Targets_Construct(struct Tree **batches_addr, struct Particles *tar
     xyzminmax[3] = maxval(targets->y, targets->num);
     xyzminmax[4] = minval(targets->z, targets->num);
     xyzminmax[5] = maxval(targets->z, targets->num);
+    
+    xyzdim[0] = targets->xdim;
+    xyzdim[1] = targets->xdim;
+    xyzdim[2] = targets->ydim;
+    
+    xyzind[0] = 0;
+    xyzind[1] = targets->xdim-1;
+    xyzind[2] = 0;
+    xyzind[3] = targets->ydim-1;
+    xyzind[4] = 0;
+    xyzind[5] = targets->zdim-1;
+    
     
     *batches_addr = malloc(sizeof(struct Tree));
     struct Tree *batches = *batches_addr;
@@ -83,8 +96,28 @@ void Batches_Targets_Construct(struct Tree **batches_addr, struct Particles *tar
     make_vector(batches->z_mid, init_sizeof_arrays);
     make_vector(batches->radius, init_sizeof_arrays);
     
-    Batches_Targets_Fill(batches, &init_sizeof_arrays, targets, 1, targets->num,
-                         run_params->max_per_target_leaf, xyzminmax);
+    make_vector(batches->x_min, init_sizeof_arrays);
+    make_vector(batches->y_min, init_sizeof_arrays);
+    make_vector(batches->z_min, init_sizeof_arrays);
+    
+    make_vector(batches->x_max, init_sizeof_arrays);
+    make_vector(batches->y_max, init_sizeof_arrays);
+    make_vector(batches->z_max, init_sizeof_arrays);
+
+    make_vector(batches->x_dim, init_sizeof_arrays);
+    make_vector(batches->y_dim, init_sizeof_arrays);
+    make_vector(batches->z_dim, init_sizeof_arrays);
+
+    make_vector(batches->x_low_ind, init_sizeof_arrays);
+    make_vector(batches->y_low_ind, init_sizeof_arrays);
+    make_vector(batches->z_low_ind, init_sizeof_arrays);
+
+    make_vector(batches->x_high_ind, init_sizeof_arrays);
+    make_vector(batches->y_high_ind, init_sizeof_arrays);
+    make_vector(batches->z_high_ind, init_sizeof_arrays);
+    
+    Batches_Targets_Fill(batches, &init_sizeof_arrays,
+                         run_params->max_per_target_leaf, xyzminmax, xyzdim, xyzind);
 
     return;
 }
@@ -107,6 +140,26 @@ void Batches_Alloc(struct Tree **batches_addr, int length)
         make_vector(batches->y_mid, length);
         make_vector(batches->z_mid, length);
         make_vector(batches->radius, length);
+
+        make_vector(batches->x_min, length);
+        make_vector(batches->y_min, length);
+        make_vector(batches->z_min, length);
+        
+        make_vector(batches->x_max, length);
+        make_vector(batches->y_max, length);
+        make_vector(batches->z_max, length);
+
+        make_vector(batches->x_dim, length);
+        make_vector(batches->y_dim, length);
+        make_vector(batches->z_dim, length);
+
+        make_vector(batches->x_low_ind, length);
+        make_vector(batches->y_low_ind, length);
+        make_vector(batches->z_low_ind, length);
+
+        make_vector(batches->x_high_ind, length);
+        make_vector(batches->y_high_ind, length);
+        make_vector(batches->z_high_ind, length);
     }
 
     return;
@@ -127,6 +180,27 @@ void Batches_Free(struct Tree **batches_addr)
         if (batches->y_mid  != NULL) free_vector(batches->y_mid);
         if (batches->z_mid  != NULL) free_vector(batches->z_mid);
         if (batches->radius != NULL) free_vector(batches->radius);
+        
+        if (batches->x_min  != NULL) free_vector(batches->x_min);
+        if (batches->y_min  != NULL) free_vector(batches->y_min);
+        if (batches->z_min  != NULL) free_vector(batches->z_min);
+        
+        if (batches->x_max  != NULL) free_vector(batches->x_max);
+        if (batches->y_max  != NULL) free_vector(batches->y_max);
+        if (batches->z_max  != NULL) free_vector(batches->z_max);
+        
+        if (batches->x_low_ind != NULL) free_vector(batches->x_low_ind);
+        if (batches->y_low_ind != NULL) free_vector(batches->y_low_ind);
+        if (batches->z_low_ind != NULL) free_vector(batches->z_low_ind);
+
+        if (batches->x_high_ind != NULL) free_vector(batches->x_high_ind);
+        if (batches->y_high_ind != NULL) free_vector(batches->y_high_ind);
+        if (batches->z_high_ind != NULL) free_vector(batches->z_high_ind);
+
+        if (batches->x_dim != NULL) free_vector(batches->x_dim);
+        if (batches->y_dim != NULL) free_vector(batches->y_dim);
+        if (batches->z_dim != NULL) free_vector(batches->z_dim);
+
         free(batches);
     }
     
@@ -150,6 +224,27 @@ void Batches_Free_Win(struct Tree **batches_addr)
         if (batches->y_mid  != NULL) MPI_Free_mem(batches->y_mid);
         if (batches->z_mid  != NULL) MPI_Free_mem(batches->z_mid);
         if (batches->radius != NULL) MPI_Free_mem(batches->radius);
+
+        if (batches->x_min  != NULL) MPI_Free_mem(batches->x_min);
+        if (batches->y_min  != NULL) MPI_Free_mem(batches->y_min);
+        if (batches->z_min  != NULL) MPI_Free_mem(batches->z_min);
+        
+        if (batches->x_max  != NULL) MPI_Free_mem(batches->x_max);
+        if (batches->y_max  != NULL) MPI_Free_mem(batches->y_max);
+        if (batches->z_max  != NULL) MPI_Free_mem(batches->z_max);
+        
+        if (batches->x_low_ind != NULL) MPI_Free_mem(batches->x_low_ind);
+        if (batches->y_low_ind != NULL) MPI_Free_mem(batches->y_low_ind);
+        if (batches->z_low_ind != NULL) MPI_Free_mem(batches->z_low_ind);
+
+        if (batches->x_high_ind != NULL) MPI_Free_mem(batches->x_high_ind);
+        if (batches->y_high_ind != NULL) MPI_Free_mem(batches->y_high_ind);
+        if (batches->z_high_ind != NULL) MPI_Free_mem(batches->z_high_ind);
+
+        if (batches->x_dim != NULL) MPI_Free_mem(batches->x_dim);
+        if (batches->y_dim != NULL) MPI_Free_mem(batches->y_dim);
+        if (batches->z_dim != NULL) MPI_Free_mem(batches->z_dim);
+
         free(batches);
     }
     
@@ -194,39 +289,17 @@ void Batches_Print(struct Tree *batches)
 //~~~LOCAL FUNCTIONS~~~~~~~~//
 //~~~~~~~~~~~~~~~~~~~~~~~~~~//
 
-void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct Particles *particles,
-                          int ibeg, int iend, int maxparnode, double *xyzmm)
+void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays,
+                          int maxparnode, double *xyzmm, int *xyzdim, int *xyzind)
 {
-    int numposchild;
+    int numpar = xyzdim[0]*xyzdim[1]*xyzdim[2];
     
-    int ind[8][2];
-    double xyzmms[6][8];
-    double lxyzmm[6];
-
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 2; j++) {
-            ind[i][j] = 0.0;
-        }
-    }
-
-    for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 8; j++) {
-            xyzmms[i][j] = 0.0;
-        }
-    }
-
-    for (int i = 0; i < 6; i++) {
-        lxyzmm[i] = 0.0;
-    }
-    
-    int numpar = iend - ibeg + 1;
-
-    double x_min = minval(particles->x + ibeg - 1, numpar);
-    double x_max = maxval(particles->x + ibeg - 1, numpar);
-    double y_min = minval(particles->y + ibeg - 1, numpar);
-    double y_max = maxval(particles->y + ibeg - 1, numpar);
-    double z_min = minval(particles->z + ibeg - 1, numpar);
-    double z_max = maxval(particles->z + ibeg - 1, numpar);
+    double x_min = xyzmm[0];
+    double x_max = xyzmm[1];
+    double y_min = xyzmm[2];
+    double y_max = xyzmm[3];
+    double z_min = xyzmm[4];
+    double z_max = xyzmm[5];
 
     double xl = x_max - x_min;
     double yl = y_max - y_min;
@@ -249,6 +322,20 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         } else {
             max_num_children = 8;
         }
+        
+        int xyzdims[3][8], xyzinds[6][8];
+        double xyzmms[6][8];
+    
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 8; j++)
+                xyzdims[i][j] = 0;
+    
+        for (int i = 0; i < 6; i++) {
+            for (int j = 0; j < 8; j++) {
+                xyzmms[i][j] = 0.0;
+                xyzinds[i][j] = 0;
+            }
+        }
     /*
      * IND array holds indices of the eight new subregions.
      */
@@ -259,22 +346,40 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         xyzmms[4][0] = z_min;
         xyzmms[5][0] = z_max;
 
-        ind[0][0] = ibeg;
-        ind[0][1] = iend;
+        xyzdims[0][0] = xyzdim[0];
+        xyzdims[1][0] = xyzdim[1];
+        xyzdims[2][0] = xyzdim[2];
+        
+        xyzinds[0][0] = xyzind[0];
+        xyzinds[1][0] = xyzind[1];
+        xyzinds[2][0] = xyzind[2];
+        xyzinds[3][0] = xyzind[3];
+        xyzinds[4][0] = xyzind[4];
+        xyzinds[5][0] = xyzind[5];
 
-        cp_partition_8(particles->x, particles->y, particles->z, particles->q,
-                       particles->order, xyzmms, xl, yl, zl, &numposchild, max_num_children,
-                       x_mid, y_mid, z_mid, ind);
+        int numposchild;
+        
+        cp_partition_8(xyzmms, xyzdims, xyzinds, xl, yl, zl, &numposchild, max_num_children);
 
         for (int i = 0; i < numposchild; i++) {
-            if (ind[i][0] <= ind[i][1]) {
+            if (xyzinds[0][i] <= xyzinds[1][i] &&
+                xyzinds[2][i] <= xyzinds[3][i] &&
+                xyzinds[4][i] <= xyzinds[5][i]) {
 
-                for (int j = 0; j < 6; j++)
+                double lxyzmm[6];
+                int lxyzind[6], lxyzdim[3];
+
+                for (int j = 0; j < 6; j++) {
                     lxyzmm[j] = xyzmms[j][i];
-                
-                Batches_Targets_Fill(batches, sizeof_batch_arrays, particles, ind[i][0], ind[i][1],
-                                    maxparnode, lxyzmm);
+                    lxyzind[j] = xyzinds[j][i];
+                }
 
+                for (int j = 0; j < 3; j++) {
+                    lxyzdim[j] = xyzdims[j][i];
+                }
+                               
+                Batches_Targets_Fill(batches, sizeof_batch_arrays,
+                                     maxparnode, lxyzmm, lxyzdim, lxyzind);
             }
         }
 
@@ -285,15 +390,34 @@ void Batches_Targets_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
             Batches_ReallocArrays(batches, *sizeof_batch_arrays);
         }
         
-        batches->ibeg[batches->numnodes] = ibeg;
-        batches->iend[batches->numnodes] = iend;
-        batches->numpar[batches->numnodes] = iend-ibeg+1;
+        batches->numpar[batches->numnodes] = numpar;
         
         batches->x_mid[batches->numnodes] = x_mid;
         batches->y_mid[batches->numnodes] = y_mid;
         batches->z_mid[batches->numnodes] = z_mid;
         
         batches->radius[batches->numnodes] = radius;
+        
+        
+        batches->x_min[batches->numnodes] = x_min;
+        batches->y_min[batches->numnodes] = y_min;
+        batches->z_min[batches->numnodes] = z_min;
+        
+        batches->x_max[batches->numnodes] = x_max;
+        batches->y_max[batches->numnodes] = y_max;
+        batches->z_max[batches->numnodes] = z_max;
+    
+        batches->x_dim[batches->numnodes] = xyzdim[0];
+        batches->y_dim[batches->numnodes] = xyzdim[1];
+        batches->z_dim[batches->numnodes] = xyzdim[2];
+    
+        batches->x_low_ind[batches->numnodes] = xyzind[0];
+        batches->y_low_ind[batches->numnodes] = xyzind[2];
+        batches->z_low_ind[batches->numnodes] = xyzind[4];
+    
+        batches->x_high_ind[batches->numnodes] = xyzind[1];
+        batches->y_high_ind[batches->numnodes] = xyzind[3];
+        batches->z_high_ind[batches->numnodes] = xyzind[5];
         
         batches->numnodes++;
     }
@@ -424,6 +548,26 @@ static void Batches_ReallocArrays(struct Tree *batches, int newlength)
         realloc_vector(batches->y_mid, newlength);
         realloc_vector(batches->z_mid, newlength);
         realloc_vector(batches->radius, newlength);
+
+        realloc_vector(batches->x_min, newlength);
+        realloc_vector(batches->y_min, newlength);
+        realloc_vector(batches->z_min, newlength);
+
+        realloc_vector(batches->x_max, newlength);
+        realloc_vector(batches->y_max, newlength);
+        realloc_vector(batches->z_max, newlength);
+
+        realloc_vector(batches->x_dim, newlength);
+        realloc_vector(batches->y_dim, newlength);
+        realloc_vector(batches->z_dim, newlength);
+
+        realloc_vector(batches->x_low_ind, newlength);
+        realloc_vector(batches->y_low_ind, newlength);
+        realloc_vector(batches->z_low_ind, newlength);
+
+        realloc_vector(batches->x_high_ind, newlength);
+        realloc_vector(batches->y_high_ind, newlength);
+        realloc_vector(batches->z_high_ind, newlength);
     }
     
     return;

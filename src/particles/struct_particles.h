@@ -19,9 +19,10 @@ struct Particles
 
         double xmin;
         double xmax;
+        
         double ymin;
-
         double ymax;
+        
         double zmin;
         double zmax;
 
@@ -29,6 +30,9 @@ struct Particles
         int ydim;
         int zdim;
 
+        double xdd;
+        double ydd;
+        double zdd;
 };
 
 #endif /* H_PARTICLES_H */

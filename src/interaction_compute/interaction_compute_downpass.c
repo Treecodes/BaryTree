@@ -11,48 +11,72 @@
 
 #include "interaction_compute.h"
 
-
 static void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order,
-                        double *xT, double *yT, double *zT, double *qT,
-                        double *clusterQ, double *clusterW);
-
-//static void cp_comp_pot_SS(struct Tree *tree, int idx, int interp_order,
-//                      double *xT, double *yT, double *zT, double *qT,
-//                      double *clusterQ, double *clusterW);
-
+        
+        int target_x_low_ind,  int target_x_high_ind,
+        int target_y_low_ind,  int target_y_high_ind,
+        int target_z_low_ind,  int target_z_high_ind,
+        double target_xmin,    double target_ymin,    double target_zmin,
+        double target_xmax,    double target_ymax,    double target_zmax,
+                    
+        double target_xdd,     double target_ydd,     double target_zdd,
+        int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
+        
+        double *cluster_q);
+        
 static void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_order,
-                        double *xT, double *yT, double *zT, double *qT,
-                        double *clusterQ, double *clusterW);
-
-//static void cp_comp_pot_hermite_SS(struct Tree *tree, int idx, int interp_order,
-//                      int totalNumberInterpolationPoints,
-//                      double *xT, double *yT, double *zT, double *qT,
-//                      double *clusterQ, double *clusterW);
+                
+        int target_x_low_ind,  int target_x_high_ind,
+        int target_y_low_ind,  int target_y_high_ind,
+        int target_z_low_ind,  int target_z_high_ind,
+        double target_xmin,    double target_ymin,    double target_zmin,
+        double target_xmax,    double target_ymax,    double target_zmax,
+                    
+        double target_xdd,     double target_ydd,     double target_zdd,
+        int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
+        
+        double *cluster_q);
 
 
 void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                                  struct Particles *targets, struct Clusters *clusters,
                                  struct RunParams *run_params)
 {
-    int num_targets   = targets->num;
-    double *target_x  = targets->x;
-    double *target_y  = targets->y;
-    double *target_z  = targets->z;
-    double *target_q  = targets->q;
-
     int total_num_interp_charges = clusters->num_charges;
-    int total_num_interp_weights = clusters->num_weights;
     double *cluster_q = clusters->q;
-    double *cluster_w = clusters->w;
 
     int tree_numnodes = tree->numnodes;
     int interp_order = run_params->interp_order;
+    
+    
+    int *target_tree_x_low_ind = tree->x_low_ind;
+    int *target_tree_y_low_ind = tree->y_low_ind;
+    int *target_tree_z_low_ind = tree->z_low_ind;
+    
+    int *target_tree_x_high_ind = tree->x_high_ind;
+    int *target_tree_y_high_ind = tree->y_high_ind;
+    int *target_tree_z_high_ind = tree->z_high_ind;
+    
+    double *target_tree_x_min = tree->x_min;
+    double *target_tree_y_min = tree->y_min;
+    double *target_tree_z_min = tree->z_min;
+    
+    double *target_tree_x_max = tree->x_max;
+    double *target_tree_y_max = tree->y_max;
+    double *target_tree_z_max = tree->z_max;
+    
+    
+    int target_x_dim_glob = targets->xdim;
+    int target_y_dim_glob = targets->ydim;
+    int target_z_dim_glob = targets->zdim;
+    
+    double target_xdd = targets->xdd;
+    double target_ydd = targets->ydd;
+    double target_zdd = targets->zdd;
+
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(target_x[0:num_targets], target_y[0:num_targets], \
-                            target_z[0:num_targets], target_q[0:num_targets], \
-                            cluster_q[0:total_num_interp_charges], \
-                            cluster_w[0:total_num_interp_weights]) \
+    #pragma acc data copyin(cluster_q[0:total_num_interp_charges]) \
                        copy(potential[0:num_targets])
     {
 #endif
@@ -60,8 +84,35 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++) {
             if (tree->used[i] == 1) {
+                
+                int target_x_low_ind = target_tree_x_low_ind[i];
+                int target_y_low_ind = target_tree_y_low_ind[i];
+                int target_z_low_ind = target_tree_z_low_ind[i];
+    
+                int target_x_high_ind = target_tree_x_high_ind[i];
+                int target_y_high_ind = target_tree_y_high_ind[i];
+                int target_z_high_ind = target_tree_z_high_ind[i];
+    
+                double target_x_min = target_tree_x_min[i];
+                double target_y_min = target_tree_y_min[i];
+                double target_z_min = target_tree_z_min[i];
+                
+                double target_x_max = target_tree_x_max[i];
+                double target_y_max = target_tree_y_max[i];
+                double target_z_max = target_tree_z_max[i];
+        
                 cp_comp_pot(tree, i, potential, interp_order,
-                            target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+                
+                            target_x_low_ind, target_x_high_ind,
+                            target_y_low_ind, target_y_high_ind,
+                            target_z_low_ind, target_z_high_ind,
+                            target_x_min,       target_y_min,       target_z_min,
+                            target_x_max,       target_y_max,       target_z_max,
+                                          
+                            target_xdd,        target_ydd,        target_zdd,
+                            target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
+                            
+                            cluster_q);
             }
         }
 
@@ -73,8 +124,35 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++) {
             if (tree->used[i] == 1) {
+            
+                int target_x_low_ind = target_tree_x_low_ind[i];
+                int target_y_low_ind = target_tree_y_low_ind[i];
+                int target_z_low_ind = target_tree_z_low_ind[i];
+    
+                int target_x_high_ind = target_tree_x_high_ind[i];
+                int target_y_high_ind = target_tree_y_high_ind[i];
+                int target_z_high_ind = target_tree_z_high_ind[i];
+    
+                double target_x_min = target_tree_x_min[i];
+                double target_y_min = target_tree_y_min[i];
+                double target_z_min = target_tree_z_min[i];
+                
+                double target_x_max = target_tree_x_max[i];
+                double target_y_max = target_tree_y_max[i];
+                double target_z_max = target_tree_z_max[i];
+                        
                 cp_comp_pot_hermite(tree, i, potential, interp_order,
-                            target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+                                                        
+                            target_x_low_ind, target_x_high_ind,
+                            target_y_low_ind, target_y_high_ind,
+                            target_z_low_ind, target_z_high_ind,
+                            target_x_min,       target_y_min,       target_z_min,
+                            target_x_max,       target_y_max,       target_z_max,
+                                          
+                            target_xdd,        target_ydd,        target_zdd,
+                            target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
+                            
+                            cluster_q);
             }
         }
 
@@ -103,14 +181,25 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 /************************************/
 
 void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order,
-        double *target_x, double *target_y, double *target_z, double *target_q,
-        double *cluster_q, double *cluster_w)
+        
+        int target_x_low_ind,  int target_x_high_ind,
+        int target_y_low_ind,  int target_y_high_ind,
+        int target_z_low_ind,  int target_z_high_ind,
+        double target_xmin,    double target_ymin,    double target_zmin,
+        double target_xmax,    double target_ymax,    double target_zmax,
+                    
+        double target_xdd,     double target_ydd,     double target_zdd,
+        int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
+        
+        double *cluster_q)
 {
     int interp_order_lim       = interp_order + 1;
     int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+    
+    int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
 
-    int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
-    int target_start           = tree->ibeg[idx] - 1;
+    //int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
+    //int target_start           = tree->ibeg[idx] - 1;
     int cluster_start          = idx * interp_pts_per_cluster;
     
     double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ;
@@ -122,16 +211,9 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     make_vector(nodeY,   interp_order_lim);
     make_vector(nodeZ,   interp_order_lim);
     
-    double x0 = tree->x_min[idx];
-    double x1 = tree->x_max[idx];
-    double y0 = tree->y_min[idx];
-    double y1 = tree->y_max[idx];
-    double z0 = tree->z_min[idx];
-    double z1 = tree->z_max[idx];
-    
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q) \
+    #pragma acc kernels async(streamID) present(cluster_q) \
                 create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
                        weights[0:interp_order_lim], dj[0:interp_order_lim], tt[0:interp_order_lim])
     {
@@ -144,9 +226,9 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 #endif
     for (int i = 0; i < interp_order_lim; i++) {
         tt[i] = cos(i * M_PI / interp_order);
-        nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
-        nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
-        nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+        nodeX[i] = target_xmin + (tt[i] + 1.0)/2.0 * (target_xmax - target_xmin);
+        nodeY[i] = target_ymin + (tt[i] + 1.0)/2.0 * (target_ymax - target_ymin);
+        nodeZ[i] = target_zmin + (tt[i] + 1.0)/2.0 * (target_zmax - target_zmin);
     }
     
     // Compute weights
@@ -167,99 +249,105 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop gang worker collapse(3) independent
 #endif
-    for (int i = 0; i < num_targets_in_cluster; i++) { // loop through the target points
+    for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
+        for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
+            for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
 
-        double sumX = 0.0;
-        double sumY = 0.0;
-        double sumZ = 0.0;
+                int ii = (ix * target_yz_dim) + (iy * target_z_dim_glob) + iz;
 
-        double tx = target_x[target_start+i];
-        double ty = target_y[target_start+i];
-        double tz = target_z[target_start+i];
+                double tx = target_xmin + (ix - target_x_low_ind) * target_xdd;
+                double ty = target_ymin + (iy - target_y_low_ind) * target_ydd;
+                double tz = target_zmin + (iz - target_z_low_ind) * target_zdd;
 
-        int eix = -1;
-        int eiy = -1;
-        int eiz = -1;
+                double sumX = 0.0;
+                double sumY = 0.0;
+                double sumZ = 0.0;
+
+                int eix = -1;
+                int eiy = -1;
+                int eiz = -1;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
+                #pragma acc loop vector independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
-        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+                for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
 
-            double cx = tx - nodeX[j];
-            double cy = ty - nodeY[j];
-            double cz = tz - nodeZ[j];
+                    double cx = tx - nodeX[j];
+                    double cy = ty - nodeY[j];
+                    double cz = tz - nodeZ[j];
 
-            if (fabs(cx)<DBL_MIN) eix = j;
-            if (fabs(cy)<DBL_MIN) eiy = j;
-            if (fabs(cz)<DBL_MIN) eiz = j;
+                    if (fabs(cx)<DBL_MIN) eix = j;
+                    if (fabs(cy)<DBL_MIN) eiy = j;
+                    if (fabs(cz)<DBL_MIN) eiz = j;
 
-            // Increment the sums
-            double w = weights[j];
-            sumX += w / cx;
-            sumY += w / cy;
-            sumZ += w / cz;
+                    // Increment the sums
+                    double w = weights[j];
+                    sumX += w / cx;
+                    sumY += w / cy;
+                    sumZ += w / cz;
 
-        }
+                }
 
-        double denominator = 1.0;
-        if (eix==-1) denominator /= sumX;
-        if (eiy==-1) denominator /= sumY;
-        if (eiz==-1) denominator /= sumZ;
+                double denominator = 1.0;
+                if (eix==-1) denominator /= sumX;
+                if (eiy==-1) denominator /= sumY;
+                if (eiz==-1) denominator /= sumZ;
         
-        double temp = 0.0;
+                double temp = 0.0;
         
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
+                #pragma acc loop vector independent reduction(+:temp)
 #endif
-        for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+                for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%interp_order_lim;
-            int kk = (j-k1)/interp_order_lim;
-            int k2 = kk%interp_order_lim;
-            kk = kk - k2;
-            int k3 = kk / interp_order_lim;
+                    int k1 = j%interp_order_lim;
+                    int kk = (j-k1)/interp_order_lim;
+                    int k2 = kk%interp_order_lim;
+                    kk = kk - k2;
+                    int k3 = kk / interp_order_lim;
 
-            double w3 = weights[k3];
-            double w2 = weights[k2];
-            double w1 = weights[k1];
+                    double w3 = weights[k3];
+                    double w2 = weights[k2];
+                    double w1 = weights[k1];
             
-            double cx = nodeX[k1];
-            double cy = nodeY[k2];
-            double cz = nodeZ[k3];
-            double cq = cluster_q[cluster_start + j];
+                    double cx = nodeX[k1];
+                    double cy = nodeY[k2];
+                    double cz = nodeZ[k3];
+                    double cq = cluster_q[cluster_start + j];
         
-            double numerator = 1.0;
+                    double numerator = 1.0;
 
-            // If exactInd[i] == -1, then no issues.
-            // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
-            if (eix == -1) {
-                numerator *= w1 / (tx - cx);
-            } else {
-                if (eix != k1) numerator *= 0;
-            }
+                    // If exactInd[i] == -1, then no issues.
+                    // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
+                    if (eix == -1) {
+                        numerator *= w1 / (tx - cx);
+                    } else {
+                        if (eix != k1) numerator *= 0;
+                    }
 
-            if (eiy == -1) {
-                numerator *= w2 / (ty - cy);
-            } else {
-                if (eiy != k2) numerator *= 0;
-            }
+                    if (eiy == -1) {
+                        numerator *= w2 / (ty - cy);
+                    } else {
+                        if (eiy != k2) numerator *= 0;
+                    }
 
-            if (eiz == -1) {
-                numerator *= w3 / (tz - cz);
-            } else {
-                if (eiz != k3) numerator *= 0;
-            }
+                    if (eiz == -1) {
+                        numerator *= w3 / (tz - cz);
+                    } else {
+                        if (eiz != k3) numerator *= 0;
+                    }
 
-            temp += numerator * denominator * cq;
-        }
+                    temp += numerator * denominator * cq;
+                }
         
 #ifdef OPENACC_ENABLED
-        #pragma acc atomic
+                #pragma acc atomic
 #endif
-        potential[i + target_start] += temp;
+                potential[ii] += temp;
+            }
+        }
     }
 #ifdef OPENACC_ENABLED
     } //end ACC kernels
@@ -278,10 +366,21 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 
 
 void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_order,
-        double *target_x, double *target_y, double *target_z, double *target_q, double *cluster_q, double *cluster_w)
+                
+        int target_x_low_ind,  int target_x_high_ind,
+        int target_y_low_ind,  int target_y_high_ind,
+        int target_z_low_ind,  int target_z_high_ind,
+        double target_xmin,    double target_ymin,    double target_zmin,
+        double target_xmax,    double target_ymax,    double target_zmax,
+                    
+        double target_xdd,     double target_ydd,     double target_zdd,
+        int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
+        
+        double *cluster_q)
 {
     int interp_order_lim       = interp_order + 1;
     int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+    int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
 
     int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
     int target_start           = tree->ibeg[idx] - 1;
@@ -307,17 +406,10 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
     double *cluster_q_dyz  = &cluster_q[8*cluster_start + 5*interp_pts_per_cluster];
     double *cluster_q_dxz  = &cluster_q[8*cluster_start + 6*interp_pts_per_cluster];
     double *cluster_q_dxyz = &cluster_q[8*cluster_start + 7*interp_pts_per_cluster];
-    
-    double x0 = tree->x_min[idx];
-    double x1 = tree->x_max[idx];
-    double y0 = tree->y_min[idx];
-    double y1 = tree->y_max[idx];
-    double z0 = tree->z_min[idx];
-    double z1 = tree->z_max[idx];
-    
+
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, \
+    #pragma acc kernels async(streamID) present( \
                                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                                         cluster_q_dxyz) \
@@ -335,9 +427,9 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
         double xx = i * M_PI / interp_order;
         tt[i] =  cos(xx);
         ww[i] = -cos(xx) / (2 * sin(xx) * sin(xx));
-        nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
-        nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
-        nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+        nodeX[i] = target_xmin + (tt[i] + 1.0)/2.0 * (target_xmax - target_xmin);
+        nodeY[i] = target_ymin + (tt[i] + 1.0)/2.0 * (target_ymax - target_ymin);
+        nodeZ[i] = target_zmin + (tt[i] + 1.0)/2.0 * (target_zmax - target_zmin);
     }
     ww[0] = 0.25 * (interp_order*interp_order/3.0 + 1.0/6.0);
     ww[interp_order] = -ww[0];
@@ -348,168 +440,174 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
 #endif
     for (int j = 0; j < interp_order_lim; j++){
         dj[j] = 1.0;
-        wx[j] = -4.0 * ww[j] / (x1 - x0);
-        wy[j] = -4.0 * ww[j] / (y1 - y0);
-        wz[j] = -4.0 * ww[j] / (z1 - z0);
+        wx[j] = -4.0 * ww[j] / (target_xmax - target_xmin);
+        wy[j] = -4.0 * ww[j] / (target_ymax - target_ymin);
+        wz[j] = -4.0 * ww[j] / (target_zmax - target_zmin);
     }
     dj[0] = 0.25;
     dj[interp_order] = 0.25;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop gang worker collapse(3) independent
 #endif
-    for (int i = 0; i < num_targets_in_cluster; i++) { // loop through the target points
+    for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
+        for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
+            for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
 
-        double sumX = 0.0;
-        double sumY = 0.0;
-        double sumZ = 0.0;
+                int ii = (ix * target_yz_dim) + (iy * target_z_dim_glob) + iz;
 
-        double tx = target_x[target_start+i];
-        double ty = target_y[target_start+i];
-        double tz = target_z[target_start+i];
+                double tx = target_xmin + (ix - target_x_low_ind) * target_xdd;
+                double ty = target_ymin + (iy - target_y_low_ind) * target_ydd;
+                double tz = target_zmin + (iz - target_z_low_ind) * target_zdd;
 
-        int eix = -1;
-        int eiy = -1;
-        int eiz = -1;
+                double sumX = 0.0;
+                double sumY = 0.0;
+                double sumZ = 0.0;
+
+                int eix = -1;
+                int eiy = -1;
+                int eiz = -1;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
+                #pragma acc loop vector independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
-        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+                for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
 
-            double cx =  tx - nodeX[j];
-            double cy =  ty - nodeY[j];
-            double cz =  tz - nodeZ[j];
+                    double cx =  tx - nodeX[j];
+                    double cy =  ty - nodeY[j];
+                    double cz =  tz - nodeZ[j];
 
-            if (fabs(cx)<DBL_MIN) eix = j;
-            if (fabs(cy)<DBL_MIN) eiy = j;
-            if (fabs(cz)<DBL_MIN) eiz = j;
+                    if (fabs(cx)<DBL_MIN) eix = j;
+                    if (fabs(cy)<DBL_MIN) eiy = j;
+                    if (fabs(cz)<DBL_MIN) eiz = j;
 
-            // Increment the sums
-            sumX += dj[j] / (cx*cx) + wx[j] / cx;
-            sumY += dj[j] / (cy*cy) + wy[j] / cy;
-            sumZ += dj[j] / (cz*cz) + wz[j] / cz;
+                    // Increment the sums
+                    sumX += dj[j] / (cx*cx) + wx[j] / cx;
+                    sumY += dj[j] / (cy*cy) + wy[j] / cy;
+                    sumZ += dj[j] / (cz*cz) + wz[j] / cz;
 
-        }
+                }
 
-        double denominator = 1.0;
-        if (eix==-1) denominator /= sumX;
-        if (eiy==-1) denominator /= sumY;
-        if (eiz==-1) denominator /= sumZ;
+                double denominator = 1.0;
+                if (eix==-1) denominator /= sumX;
+                if (eiy==-1) denominator /= sumY;
+                if (eiz==-1) denominator /= sumZ;
         
-        double temp = 0.0;
+                double temp = 0.0;
         
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
+                #pragma acc loop vector independent reduction(+:temp)
 #endif
-        for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+                for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
-            int k1 = j%interp_order_lim;
-            int kk = (j-k1)/interp_order_lim;
-            int k2 = kk%interp_order_lim;
-            kk = kk - k2;
-            int k3 = kk / interp_order_lim;
+                    int k1 = j%interp_order_lim;
+                    int kk = (j-k1)/interp_order_lim;
+                    int k2 = kk%interp_order_lim;
+                    kk = kk - k2;
+                    int k3 = kk / interp_order_lim;
             
-            double dx = tx - nodeX[k1];
-            double dy = ty - nodeY[k2];
-            double dz = tz - nodeZ[k3];
+                    double dx = tx - nodeX[k1];
+                    double dy = ty - nodeY[k2];
+                    double dz = tz - nodeZ[k3];
             
-            double cq     = cluster_q_[j];
-            double cqdx   = cluster_q_dx[j];
-            double cqdy   = cluster_q_dy[j];
-            double cqdz   = cluster_q_dz[j];
-            double cqdxy  = cluster_q_dxy[j];
-            double cqdyz  = cluster_q_dyz[j];
-            double cqdxz  = cluster_q_dxz[j];
-            double cqdxyz = cluster_q_dxyz[j];
-        
-            double numerator0 = 1.0, numerator1 = 1.0, numerator2 = 1.0, numerator3 = 1.0;
-            double numerator4 = 1.0, numerator5 = 1.0, numerator6 = 1.0, numerator7 = 1.0;
-
-            double Ax = dj[k1] / (dx*dx) + wx[k1] / dx;
-            double Ay = dj[k2] / (dy*dy) + wy[k2] / dy;
-            double Az = dj[k3] / (dz*dz) + wz[k3] / dz;
-            double Bx = dj[k1] / dx;
-            double By = dj[k2] / dy;
-            double Bz = dj[k3] / dz;
-
-            // If exactInd[i] == -1, then no issues.
-            // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
-            if (eix == -1) {
-                numerator0 *=  Ax;                     // Aaa
-
-                numerator1 *=  Bx;                     // Baa
-                numerator2 *=  Ax;                     // Aba
-                numerator3 *=  Ax;                     // Aab
-
-                numerator4 *=  Bx;                     // Bba
-                numerator5 *=  Ax;                     // Abb
-                numerator6 *=  Bx;                     // Bab
-
-                numerator7 *=  Bx;                     // Bbb
+                    double cq     = cluster_q_[j];
+                    double cqdx   = cluster_q_dx[j];
+                    double cqdy   = cluster_q_dy[j];
+                    double cqdz   = cluster_q_dz[j];
+                    double cqdxy  = cluster_q_dxy[j];
+                    double cqdyz  = cluster_q_dyz[j];
+                    double cqdxz  = cluster_q_dxz[j];
+                    double cqdxyz = cluster_q_dxyz[j];
                 
-            } else {
-                if (eix != k1) {
-                    numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                    numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                } else {
-                    numerator1 *= 0; numerator4 *= 0; numerator6 *= 0; numerator7 *= 0;
+                    double numerator0 = 1.0, numerator1 = 1.0, numerator2 = 1.0, numerator3 = 1.0;
+                    double numerator4 = 1.0, numerator5 = 1.0, numerator6 = 1.0, numerator7 = 1.0;
+
+                    double Ax = dj[k1] / (dx*dx) + wx[k1] / dx;
+                    double Ay = dj[k2] / (dy*dy) + wy[k2] / dy;
+                    double Az = dj[k3] / (dz*dz) + wz[k3] / dz;
+                    double Bx = dj[k1] / dx;
+                    double By = dj[k2] / dy;
+                    double Bz = dj[k3] / dz;
+
+                    // If exactInd[i] == -1, then no issues.
+                    // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
+                    if (eix == -1) {
+                        numerator0 *=  Ax;                     // Aaa
+
+                        numerator1 *=  Bx;                     // Baa
+                        numerator2 *=  Ax;                     // Aba
+                        numerator3 *=  Ax;                     // Aab
+
+                        numerator4 *=  Bx;                     // Bba
+                        numerator5 *=  Ax;                     // Abb
+                        numerator6 *=  Bx;                     // Bab
+
+                        numerator7 *=  Bx;                     // Bbb
+                        
+                    } else {
+                        if (eix != k1) {
+                            numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                            numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                        } else {
+                            numerator1 *= 0; numerator4 *= 0; numerator6 *= 0; numerator7 *= 0;
+                        }
+                    }
+
+                    if (eiy == -1) {
+                        numerator0 *=  Ay;                     // aAa
+
+                        numerator1 *=  Ay;                     // bAa
+                        numerator2 *=  By;                     // aBa
+                        numerator3 *=  Ay;                     // aAb
+
+                        numerator4 *=  By;                     // bBa
+                        numerator5 *=  By;                     // aBb
+                        numerator6 *=  Ay;                     // bAb
+
+                        numerator7 *=  By;                     // bBb
+                        
+                    } else {
+                        if (eiy != k2) {
+                            numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                            numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                        }  else {
+                            numerator2 *= 0; numerator4 *= 0; numerator5 *= 0; numerator7 *= 0;
+                        }
+                    }
+
+                    if (eiz == -1) {
+                        numerator0 *=  Az;                    // aaA
+
+                        numerator1 *=  Az;                    // baA
+                        numerator2 *=  Az;                    // abA
+                        numerator3 *=  Bz;                    // aaB
+
+                        numerator4 *=  Az;                    // bbA
+                        numerator5 *=  Bz;                    // abB
+                        numerator6 *=  Bz;                    // baB
+                        
+                        numerator7 *=  Bz;                    // bbB
+                        
+                    } else {
+                        if (eiz != k3) {
+                            numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
+                            numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                        } else {
+                            numerator3 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
+                        }
+                    }
+
+                    temp += denominator * (numerator0 * cq     +  numerator1 * cqdx   +  numerator2 * cqdy
+                                        +  numerator3 * cqdz   +  numerator4 * cqdxy  +  numerator5 * cqdyz
+                                        +  numerator6 * cqdxz  +  numerator7 * cqdxyz);
                 }
-            }
-
-            if (eiy == -1) {
-                numerator0 *=  Ay;                     // aAa
-
-                numerator1 *=  Ay;                     // bAa
-                numerator2 *=  By;                     // aBa
-                numerator3 *=  Ay;                     // aAb
-
-                numerator4 *=  By;                     // bBa
-                numerator5 *=  By;                     // aBb
-                numerator6 *=  Ay;                     // bAb
-
-                numerator7 *=  By;                     // bBb
                 
-            } else {
-                if (eiy != k2) {
-                    numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                    numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                }  else {
-                    numerator2 *= 0; numerator4 *= 0; numerator5 *= 0; numerator7 *= 0;
-                }
+        #ifdef OPENACC_ENABLED
+                #pragma acc atomic
+        #endif
+                potential[ii] += temp;
             }
-
-            if (eiz == -1) {
-                numerator0 *=  Az;                    // aaA
-
-                numerator1 *=  Az;                    // baA
-                numerator2 *=  Az;                    // abA
-                numerator3 *=  Bz;                    // aaB
-
-                numerator4 *=  Az;                    // bbA
-                numerator5 *=  Bz;                    // abB
-                numerator6 *=  Bz;                    // baB
-                
-                numerator7 *=  Bz;                    // bbB
-                
-            } else {
-                if (eiz != k3) {
-                    numerator0 *= 0; numerator1 *= 0; numerator2 *= 0; numerator3 *= 0;
-                    numerator4 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                } else {
-                    numerator3 *= 0; numerator5 *= 0; numerator6 *= 0; numerator7 *= 0;
-                }
-            }
-
-            temp += denominator * (numerator0 * cq     +  numerator1 * cqdx   +  numerator2 * cqdy
-                                +  numerator3 * cqdz   +  numerator4 * cqdxy  +  numerator5 * cqdyz
-                                +  numerator6 * cqdxz  +  numerator7 * cqdxyz);
         }
-        
-#ifdef OPENACC_ENABLED
-        #pragma acc atomic
-#endif
-        potential[i + target_start] += temp;
     }
 #ifdef OPENACC_ENABLED
     } //end ACC kernels

@@ -173,6 +173,14 @@ void Tree_Free(struct Tree **tree_addr)
         free_vector(tree->y_dim);
         free_vector(tree->z_dim);
 
+        free_vector(tree->x_low_ind);
+        free_vector(tree->y_low_ind);
+        free_vector(tree->z_low_ind);
+
+        free_vector(tree->x_high_ind);
+        free_vector(tree->y_high_ind);
+        free_vector(tree->z_high_ind);
+
         free(tree);
     }
 
@@ -208,6 +216,14 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p)
     tree->x_dim[p->node_index] = p->x_dim;
     tree->y_dim[p->node_index] = p->y_dim;
     tree->z_dim[p->node_index] = p->z_dim;
+
+    tree->x_low_ind[p->node_index] = p->x_low_ind;
+    tree->y_low_ind[p->node_index] = p->y_low_ind;
+    tree->z_low_ind[p->node_index] = p->z_low_ind;
+
+    tree->x_high_ind[p->node_index] = p->x_high_ind;
+    tree->y_high_ind[p->node_index] = p->y_high_ind;
+    tree->z_high_ind[p->node_index] = p->z_high_ind;
 
     for (int i = 0; i < p->num_children; i++) {
         tree->children[8*p->node_index+i] = (p->child[i])->node_index;

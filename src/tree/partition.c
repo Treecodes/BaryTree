@@ -286,9 +286,8 @@ void pc_partition_8(double *x, double *y, double *z, double *q, double *w, int *
 } /* END of function partition_8 */
 
 
-void cp_partition_8(double *x, double *y, double *z, double *q, int *orderarr, double xyzmms[6][8],
-                    double xl, double yl, double zl, int *numposchild, int max_num_children,
-                    double x_mid, double y_mid, double z_mid, int ind[8][2])
+void cp_partition_8(double xyzmms[6][8], int xyzdims[3][8], int xyzinds[6][8],
+                    double xl, double yl, double zl, int *numposchild, int max_num_children)
 {
     int temp_ind;
 
@@ -302,7 +301,15 @@ void cp_partition_8(double *x, double *y, double *z, double *q, int *orderarr, d
     if (xl >= critlen) divide_x = 1;
     if (yl >= critlen) divide_y = 1;
     if (zl >= critlen) divide_z = 1;
-    
+
+    int xdim = xyzdims[0][0];
+    int ydim = xyzdims[1][0];
+    int zdim = xyzdims[2][0];
+
+    int xn = xdim / 2;
+    int yn = ydim / 2;
+    int zn = zdim / 2;
+
     if (max_num_children == 4) {
         if (xl < yl && xl < zl) divide_x = 0;
         if (yl < xl && yl < zl) divide_y = 0;
@@ -333,58 +340,79 @@ void cp_partition_8(double *x, double *y, double *z, double *q, int *orderarr, d
     }
 
     if (divide_x) {
-        cp_partition(x, y, z, q, orderarr, ind[0][0], ind[0][1],
-                     x_mid, &temp_ind);
+        double xdd = xl / (xdim-1);
+        double xlowmid  = xyzmms[0][0] + (xn-1) * xdd;
+        double xhighmid = xyzmms[1][0] - (xdim-xn-1) * xdd;
 
-        ind[1][0] = temp_ind + 1;
-        ind[1][1] = ind[0][1];
-        ind[0][1] = temp_ind;
+        int xlowind  = xyzinds[0][0] + (xn-1);
+        int xhighind = xyzinds[1][0] - (xdim-xn-1);
 
-        for (int i = 0; i < 6; i++)
-            xyzmms[i][1] = xyzmms[i][0];
+        for (int i = 0; i < 6; i++) {
+            xyzmms[i][1]  = xyzmms[i][0];
+            xyzinds[i][1] = xyzinds[i][0];
+        }
 
-        xyzmms[1][0] = x_mid;
-        xyzmms[0][1] = x_mid;
+        xyzmms[1][0] = xlowmid;
+        xyzmms[0][1] = xhighmid;
+
+        xyzinds[1][0] = xlowind;
+        xyzinds[0][1] = xhighind;
+
         *numposchild = 2 * *numposchild;
     }
 
     if (divide_y) {
+        double ydd = yl / (ydim-1);
+        double ylowmid  = xyzmms[2][0] + (yn-1) * ydd;
+        double yhighmid = xyzmms[3][0] - (ydim-yn-1) * ydd;
+
+        int ylowind  = xyzinds[2][0] + (yn-1);
+        int yhighind = xyzinds[3][0] - (ydim-yn-1);
+
         for (int i = 0; i < *numposchild; i++) {
-            cp_partition(y, x, z, q, orderarr, ind[i][0], ind[i][1],
-                         y_mid, &temp_ind);
+            for (int j = 0; j < 6; j++) {
+                xyzmms[j][*numposchild + i]  = xyzmms[j][i];
+                xyzinds[j][*numposchild + i] = xyzinds[j][i];
+            }
 
-            ind[*numposchild + i][0] = temp_ind + 1;
-            ind[*numposchild + i][1] = ind[i][1];
-            ind[i][1] = temp_ind;
+            xyzmms[3][i]               = ylowmid;
+            xyzmms[2][*numposchild + i] = yhighmid;
 
-            for (int j = 0; j < 6; j++)
-                xyzmms[j][*numposchild + i] = xyzmms[j][i];
-
-            xyzmms[3][i] = y_mid;
-            xyzmms[2][*numposchild + i] = y_mid;
+            xyzinds[3][i]               = ylowind;
+            xyzinds[2][*numposchild + i] = yhighind;
         }
 
         *numposchild = 2 * *numposchild;
     }
 
     if (divide_z) {
+        double zdd = zl / (zdim-1);
+        double zlowmid  = xyzmms[4][0] + (zn-1) * zdd;
+        double zhighmid = xyzmms[5][0] - (zdim-zn-1) * zdd;
+
+        int zlowind  = xyzinds[4][0] + (zn-1);
+        int zhighind = xyzinds[5][0] - (zdim-zn-1);
+
         for (int i = 0; i < *numposchild; i++) {
-            cp_partition(z, x, y, q, orderarr, ind[i][0], ind[i][1],
-                         z_mid, &temp_ind);
+            for (int j = 0; j < 6; j++) {
+                xyzmms[j][*numposchild + i]  = xyzmms[j][i];
+                xyzinds[j][*numposchild + i] = xyzinds[j][i];
+            }
 
-            ind[*numposchild + i][0] = temp_ind + 1;
-            ind[*numposchild + i][1] = ind[i][1];
-            ind[i][1] = temp_ind;
+            xyzmms[4][i]               = zlowmid;
+            xyzmms[5][*numposchild + i] = zhighmid;
 
-            for (int j = 0; j < 6; j++)
-                xyzmms[j][*numposchild + i] = xyzmms[j][i];
-
-            xyzmms[5][i] = z_mid;
-            xyzmms[4][*numposchild + i] = z_mid;
+            xyzinds[4][i]               = zlowind;
+            xyzinds[5][*numposchild + i] = zhighind;
         }
 
         *numposchild = 2 * *numposchild;
+    }
 
+    for (int i = 0; i < 8; i++) {
+        xyzdims[0][i] = xyzinds[1][i] - xyzinds[0][i] + 1;
+        xyzdims[1][i] = xyzinds[3][i] - xyzinds[2][i] + 1;
+        xyzdims[2][i] = xyzinds[5][i] - xyzinds[4][i] + 1;
     }
 
     return;

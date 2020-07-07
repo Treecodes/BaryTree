@@ -17,27 +17,6 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p,
                 int maxparnode, double *xyzmm, int *xyzdim, int *xyzind,
                 int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size)
 {
-    int ind[8][2];
-    double xyzmms[6][8];
-    double lxyzmm[6];
-
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 2; j++) {
-            ind[i][j] = 0.0;
-        }
-    }
-
-    for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 8; j++) {
-            xyzmms[i][j] = 0.0;
-        }
-    }
-
-    for (int i = 0; i < 6; i++) {
-        lxyzmm[i] = 0.0;
-    }
-
-
     (*p) = malloc(sizeof(struct TreeLinkedListNode));
     (*numnodes)++;
     (*p)->numpar = xyzdim[0]*xyzdim[1]*xyzdim[2];
@@ -53,12 +32,12 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p,
     (*p)->y_dim = xyzdim[1];
     (*p)->z_dim = xyzdim[2];
     
-    (*p)->x_high_ind = xyzind[0];
-    (*p)->x_low_ind  = xyzind[1];
-    (*p)->y_high_ind = xyzind[2];
-    (*p)->y_low_ind  = xyzind[3];
-    (*p)->z_high_ind = xyzind[4];
-    (*p)->z_low_ind  = xyzind[5];
+    (*p)->x_low_ind  = xyzind[0];
+    (*p)->x_high_ind = xyzind[1];
+    (*p)->y_low_ind  = xyzind[2];
+    (*p)->y_high_ind = xyzind[3];
+    (*p)->z_low_ind  = xyzind[4];
+    (*p)->z_high_ind = xyzind[5];
     
 
     double xl = (*p)->x_max - (*p)->x_min;
@@ -89,56 +68,70 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p,
             max_num_children = 8;
         }
 
-        int ind[8][2];
-        double xyzmms[6][8], lxyzmm[6];
+        int xyzdims[3][8], xyzinds[6][8];
+        double xyzmms[6][8];
     
-        for (int i = 0; i < 8; i++)
-            for (int j = 0; j < 2; j++)
-                ind[i][j] = 0.0;
+        for (int i = 0; i < 3; i++)
+            for (int j = 0; j < 8; j++)
+                xyzdims[i][j] = 0;
     
         for (int i = 0; i < 6; i++) {
-            for (int j = 0; j < 8; j++)
+            for (int j = 0; j < 8; j++) {
                 xyzmms[i][j] = 0.0;
+                xyzinds[i][j] = 0;
+            }
+        }
     
-        for (int i = 0; i < 6; i++)
-            lxyzmm[i] = 0.0;
     /*
      * IND array holds indices of the eight new subregions.
      */
-        xyzmms[0][0] = (*p)->x_min;
-        xyzmms[1][0] = (*p)->x_max;
-        xyzmms[2][0] = (*p)->y_min;
-        xyzmms[3][0] = (*p)->y_max;
-        xyzmms[4][0] = (*p)->z_min;
-        xyzmms[5][0] = (*p)->z_max;
+        xyzmms[0][0] = xyzmm[0];
+        xyzmms[1][0] = xyzmm[1];
+        xyzmms[2][0] = xyzmm[2];
+        xyzmms[3][0] = xyzmm[3];
+        xyzmms[4][0] = xyzmm[4];
+        xyzmms[5][0] = xyzmm[5];
+        
+        xyzdims[0][0] = xyzdim[0];
+        xyzdims[1][0] = xyzdim[1];
+        xyzdims[2][0] = xyzdim[2];
+        
+        xyzinds[0][0] = xyzind[0];
+        xyzinds[1][0] = xyzind[1];
+        xyzinds[2][0] = xyzind[2];
+        xyzinds[3][0] = xyzind[3];
+        xyzinds[4][0] = xyzind[4];
+        xyzinds[5][0] = xyzind[5];
 
-        ind[0][0] = ibeg;
-        ind[0][1] = iend;
-
-        double x_mid = (*p)->x_mid;
-        double y_mid = (*p)->y_mid;
-        double z_mid = (*p)->z_mid;
         int numposchild;
 
-        cp_partition_8(
-                       xyzmms, xl, yl, zl, &numposchild, max_num_children,
-                       x_mid, y_mid, z_mid);
-
+        cp_partition_8(xyzmms, xyzdims, xyzinds, xl, yl, zl, &numposchild, max_num_children);
+                       
 
         for (int i = 0; i < numposchild; i++) {
-            if (ind[i][0] <= ind[i][1]) {
+            if (xyzinds[0][i] <= xyzinds[1][i] &&
+                xyzinds[2][i] <= xyzinds[3][i] &&
+                xyzinds[4][i] <= xyzinds[5][i]) {
+
+                double lxyzmm[6];
+                int lxyzind[6], lxyzdim[3];
 
                 (*p)->num_children = (*p)->num_children + 1;
                 int idx = (*p)->num_children - 1;
 
-                for (int j = 0; j < 6; j++)
+                for (int j = 0; j < 6; j++) {
                     lxyzmm[j] = xyzmms[j][i];
+                    lxyzind[j] = xyzinds[j][i];
+                }
+
+                for (int j = 0; j < 3; j++) {
+                    lxyzdim[j] = xyzdims[j][i];
+                }
 
                 struct TreeLinkedListNode **paddress = &((*p)->child[idx]);
 
-                TreeLinkedList_Targets_Construct(paddress,
-                               targets, ind[i][0], ind[i][1],
-                               maxparnode, lxyzmm, numnodes, numleaves,
+                TreeLinkedList_Targets_Construct(paddress, maxparnode,
+                               lxyzmm, lxyzdim, lxyzind, numnodes, numleaves,
                                min_leaf_size, max_leaf_size);
             }
         }

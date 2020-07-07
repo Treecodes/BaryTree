@@ -147,8 +147,6 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     *clusters_addr = malloc(sizeof(struct Clusters));
     struct Clusters *clusters = *clusters_addr;
 
-    SINGULARITY singularity = run_params->singularity;
-
     int tree_numnodes = tree->numnodes;
 
     int interpolationOrder = run_params->interp_order;
@@ -157,27 +155,15 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
 
     int totalNumberInterpolationPoints  = tree_numnodes * interpolationPointsPerCluster;
     int totalNumberInterpolationCharges = tree_numnodes * run_params->interp_charges_per_cluster;
-    int totalNumberInterpolationWeights = tree_numnodes * run_params->interp_weights_per_cluster;
 
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
     make_vector(clusters->z, totalNumberInterpolationPoints);
     make_vector(clusters->q, totalNumberInterpolationCharges);
-    make_vector(clusters->w, totalNumberInterpolationWeights);
 
-    if (singularity == SKIPPING) {
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
-
-    } else if (singularity == SUBTRACTION) {
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
-
-    } else {
-        exit(1);
-    }
 
     clusters->num         = totalNumberInterpolationPoints;
     clusters->num_charges = totalNumberInterpolationCharges;
-    clusters->num_weights = totalNumberInterpolationWeights;
 
     double *xC = clusters->x;
     double *yC = clusters->y;
