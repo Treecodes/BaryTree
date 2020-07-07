@@ -47,7 +47,8 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
     int tree_numnodes = tree->numnodes;
     int interp_order = run_params->interp_order;
-    
+
+    int num_targets = targets->num;
     
     int *target_tree_x_low_ind = tree->x_low_ind;
     int *target_tree_y_low_ind = tree->y_low_ind;
@@ -213,7 +214,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(cluster_q) \
+    #pragma acc kernels async(streamID) present(potential, cluster_q) \
                 create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
                        weights[0:interp_order_lim], dj[0:interp_order_lim], tt[0:interp_order_lim])
     {
@@ -249,7 +250,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop gang worker collapse(3) independent
+    #pragma acc loop collapse(3) independent
 #endif
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
@@ -270,7 +271,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
                 int eiz = -1;
 
 #ifdef OPENACC_ENABLED
-                #pragma acc loop vector independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
+                #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
                 for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
 
@@ -298,7 +299,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
                 double temp = 0.0;
         
 #ifdef OPENACC_ENABLED
-                #pragma acc loop vector independent reduction(+:temp)
+                #pragma acc loop independent reduction(+:temp)
 #endif
                 for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 
@@ -409,7 +410,7 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present( \
+    #pragma acc kernels async(streamID) present(potential, \
                                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                                         cluster_q_dxyz) \
@@ -448,7 +449,7 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
     dj[interp_order] = 0.25;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop gang worker collapse(3) independent
+    #pragma acc loop collapse(3) independent
 #endif
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
@@ -469,7 +470,7 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
                 int eiz = -1;
 
 #ifdef OPENACC_ENABLED
-                #pragma acc loop vector independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
+                #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
 #endif
                 for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
 

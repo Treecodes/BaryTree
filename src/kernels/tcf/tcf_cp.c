@@ -94,7 +94,7 @@ void K_TCF_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolatio
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, \
-                        source_w, cluster_x, cluster_y, cluster_z, \
+                        cluster_x, cluster_y, cluster_z, \
                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                         cluster_q_dxyz)

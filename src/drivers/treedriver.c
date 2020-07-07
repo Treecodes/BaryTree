@@ -219,7 +219,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         START_TIMER(&time_tree[9]);
         InteractionCompute_SubtractionPotentialCorrection(potential, targets, run_params);
-        Particles_Targets_Reorder(targets, potential);
+        //Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
         
@@ -668,7 +668,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         START_TIMER(&time_tree[9]);
         InteractionCompute_SubtractionPotentialCorrection(potential, targets, run_params);
-        Particles_Targets_Reorder(targets, potential);
+        //Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
                

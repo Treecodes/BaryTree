@@ -48,6 +48,26 @@ void Batches_Sources_Construct(struct Tree **batches_addr, struct Particles *sou
     make_vector(batches->y_mid, init_sizeof_arrays);
     make_vector(batches->z_mid, init_sizeof_arrays);
     make_vector(batches->radius, init_sizeof_arrays);
+
+    make_vector(batches->x_min, init_sizeof_arrays);
+    make_vector(batches->y_min, init_sizeof_arrays);
+    make_vector(batches->z_min, init_sizeof_arrays);
+    
+    make_vector(batches->x_max, init_sizeof_arrays);
+    make_vector(batches->y_max, init_sizeof_arrays);
+    make_vector(batches->z_max, init_sizeof_arrays);
+
+    make_vector(batches->x_dim, init_sizeof_arrays);
+    make_vector(batches->y_dim, init_sizeof_arrays);
+    make_vector(batches->z_dim, init_sizeof_arrays);
+
+    make_vector(batches->x_low_ind, init_sizeof_arrays);
+    make_vector(batches->y_low_ind, init_sizeof_arrays);
+    make_vector(batches->z_low_ind, init_sizeof_arrays);
+
+    make_vector(batches->x_high_ind, init_sizeof_arrays);
+    make_vector(batches->y_high_ind, init_sizeof_arrays);
+    make_vector(batches->z_high_ind, init_sizeof_arrays);
     
     Batches_Sources_Fill(batches, &init_sizeof_arrays, sources, 1, sources->num,
                          run_params->max_per_source_leaf, xyzminmax);

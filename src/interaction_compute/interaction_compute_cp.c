@@ -35,6 +35,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     double *source_z  = sources->z;
     double *source_q  = sources->q;
     
+    int num_targets   = targets->num;
 
     int total_num_interp_pts     = clusters->num;
     int total_num_interp_charges = clusters->num_charges;

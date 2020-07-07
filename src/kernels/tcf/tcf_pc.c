@@ -34,7 +34,7 @@ void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
     {
 #endif
 #ifdef OPENACC_ENABLED
-    #pragma acc loop gang worker collapse(3) independent
+    #pragma acc loop collapse(3) independent
 #endif	
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
@@ -49,7 +49,7 @@ void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
                 double temporary_potential = 0.0;
 
 #ifdef OPENACC_ENABLED
-                #pragma acc loop vector independent reduction(+:temporary_potential)
+                #pragma acc loop independent reduction(+:temporary_potential)
 #endif
                 for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
 #ifdef OPENACC_ENABLED
@@ -127,7 +127,7 @@ void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
+    #pragma acc kernels async(gpu_async_stream_id) present( \
                         cluster_x, cluster_y, cluster_z, cluster_q, potential, \
                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
@@ -135,7 +135,7 @@ void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
     {
 #endif
 #ifdef OPENACC_ENABLED
-    #pragma acc loop gang worker collapse(3) independent
+    #pragma acc loop collapse(3) independent
 #endif	
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
@@ -150,7 +150,7 @@ void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
                 double temporary_potential = 0.0;
 
 #ifdef OPENACC_ENABLED
-                #pragma acc loop vector independent reduction(+:temporary_potential)
+                #pragma acc loop independent reduction(+:temporary_potential)
 #endif
                 for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
         

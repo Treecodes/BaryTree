@@ -48,6 +48,8 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     double *source_z = sources->z;
     double *source_q = sources->q;
 
+    int num_targets  = targets->num;
+
 
     int num_source_cluster_points  = source_clusters->num;
     int num_source_cluster_charges = source_clusters->num_charges;
