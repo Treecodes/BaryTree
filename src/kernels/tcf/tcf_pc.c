@@ -34,7 +34,7 @@ void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
     {
 #endif
 #ifdef OPENACC_ENABLED
-    #pragma acc loop collapse(3) independent
+    #pragma acc loop gang collapse(3) independent
 #endif	
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
@@ -49,7 +49,7 @@ void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
                 double temporary_potential = 0.0;
 
 #ifdef OPENACC_ENABLED
-                #pragma acc loop independent reduction(+:temporary_potential)
+                #pragma acc loop vector independent reduction(+:temporary_potential)
 #endif
                 for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
 #ifdef OPENACC_ENABLED

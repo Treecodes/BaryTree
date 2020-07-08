@@ -53,11 +53,11 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
                   
 void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_direct_glob,
                 double *glob_inf_err, double *glob_relinf_err, double *glob_n2_err, double *glob_reln2_err,
-                double *potential, double *potential_direct, int targets_num, int slice);
+                double *potential, double *potential_direct, int *grid_dim, int *slice);
                 
 void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glob,
                 double glob_inf_err, double glob_relinf_err, double glob_n2_err, double glob_reln2_err,
-                int slice);
+                int *slice);
                 
                 
 void CSV_Print(int N, int M, struct RunParams *run_params,

@@ -100,10 +100,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Batches_Sources_Construct(&batches, sources, run_params);
         STOP_TIMER(&time_tree[1]);
 
-        START_TIMER(&time_tree[2]);
-        Clusters_Targets_Construct(&clusters, tree, run_params);
-        STOP_TIMER(&time_tree[2]);
-        
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         if (run_params->verbosity > 0) {
             Tree_Print(tree);
@@ -127,6 +123,10 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         START_TIMER(&time_tree[4]);
         InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
         STOP_TIMER(&time_tree[4]);
+
+        START_TIMER(&time_tree[2]);
+        Clusters_Targets_Construct(&clusters, tree, run_params);
+        STOP_TIMER(&time_tree[2]);
         
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         if (run_params->verbosity > 0) {
@@ -488,7 +488,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
          
         START_TIMER(&time_tree[2]);
         Clusters_Sources_Construct(&source_clusters, sources, source_tree, run_params);
-        Clusters_Targets_Construct(&target_clusters, target_tree, run_params);
         STOP_TIMER(&time_tree[2]);
         
         //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
@@ -552,6 +551,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         START_TIMER(&time_tree[4]);
         InteractionLists_Make(&local_interaction_list, source_tree, target_tree, run_params);
         STOP_TIMER(&time_tree[4]);
+
+        double temp_time;
+        START_TIMER(&temp_time);
+        Clusters_Targets_Construct(&target_clusters, target_tree, run_params);
+        STOP_TIMER(&temp_time);
+        time_tree[2] += temp_time;
 
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         if (run_params->verbosity > 0) {

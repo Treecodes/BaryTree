@@ -189,7 +189,9 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
 #endif
 
     for (int i = 0; i < tree_numnodes; i++) {
-        cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
+        if (tree->used[i] == 1) {
+            cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
+        }
     }
     
 #ifdef OPENACC_ENABLED

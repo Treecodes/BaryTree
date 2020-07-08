@@ -327,7 +327,9 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
 
     /* random_cube_example params */
     *N = 10000; 
-    *slice = 1;
+    slice[0] = 1;
+    slice[1] = 1;
+    slice[2] = 1;
     
     xyz_limits[0] = -1.;
     xyz_limits[1] =  1.;
@@ -393,7 +395,13 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
             strcpy(run_direct_string, c2);
 
         } else if (strcmp(c1, "slice") == 0) {
-            *slice = atoi(c2);
+            char *slice_string = strtok(c2, " ,");
+            int num_slice = 0;
+            while (slice_string != NULL) {
+                slice[num_slice] = atoi(slice_string);
+                num_slice++;
+                slice_string = strtok(NULL, " ,");
+            }
             
         } else if (strcmp(c1, "file_pqr") == 0) {
             strcpy(file_pqr, c2);
@@ -912,10 +920,13 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
 /*----------------------------------------------------------------------------*/
 void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_direct_glob,
                 double *glob_inf_err, double *glob_relinf_err, double *glob_n2_err, double *glob_reln2_err,
-                double *potential, double *potential_direct, int targets_num, int slice)
+                double *potential, double *potential_direct, int *grid_dim, int *slice)
 {
+    int targets_num = grid_dim[0]*grid_dim[1]*grid_dim[2];
+    int targets_sample_num = (grid_dim[0]/slice[0]) * (grid_dim[1]/slice[1]) * (grid_dim[2]/slice[2]);
+
     double potential_engy = sum(potential, targets_num);
-    double potential_engy_direct = sum(potential_direct, targets_num / slice);
+    double potential_engy_direct = sum(potential_direct, targets_sample_num);
 
     MPI_Reduce(&potential_engy, potential_engy_glob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     MPI_Reduce(&potential_engy_direct, potential_engy_direct_glob, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -923,17 +934,24 @@ void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_dire
     double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
     double temp;
 
-    for (int j = 0; j < targets_num / slice; j++) {
+    for (int ix = 0; ix < grid_dim[0]/slice[0]; ix++) {                                                       
+        for (int iy = 0; iy < grid_dim[1]/slice[1]; iy++) {                                                   
+            for (int iz = 0; iz < grid_dim[2]/slice[2]; iz++) {                                               
+                                                                                                                           
+                int ii_sample = (ix * grid_dim[1]/slice[1] * grid_dim[2]/slice[2]) + (iy*grid_dim[2]/slice[2]) + iz;   
+                int ii = (ix*slice[0] * grid_dim[1]*grid_dim[2]) + (iy*slice[1] * grid_dim[2]) + iz*slice[2];
 
-        temp = fabs(potential_direct[j] - potential[j*slice]);
+                temp = fabs(potential_direct[ii_sample] - potential[ii]);
 
-        if (temp >= inferr) inferr = temp;
+                if (temp >= inferr) inferr = temp;
 
-        if (fabs(potential_direct[j]) >= relinferr)
-            relinferr = fabs(potential_direct[j]);
+                if (fabs(potential_direct[ii_sample]) >= relinferr)
+                    relinferr = fabs(potential_direct[ii_sample]);
 
-        n2err = n2err + pow(potential_direct[j] - potential[j*slice], 2.0);
-        reln2err = reln2err + pow(potential_direct[j], 2.0);
+                n2err = n2err + pow(potential_direct[ii_sample] - potential[ii], 2.0);
+                reln2err = reln2err + pow(potential_direct[ii_sample], 2.0);
+            }
+        }
     }
 
     MPI_Reduce(&reln2err, glob_reln2_err, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -952,14 +970,14 @@ void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_dire
 /*----------------------------------------------------------------------------*/
 void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glob,
                 double glob_inf_err, double glob_relinf_err, double glob_n2_err, double glob_reln2_err,
-                int slice)
+                int *slice)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     if (rank == 0) {
         printf("[random cube example]                Tree potential energy:  %f\n", potential_engy_glob);
-        if (slice == 1) {
+        if (slice[0]*slice[1]*slice[2] == 1) {
         printf("[random cube example]              Direct potential energy:  %f\n", potential_engy_direct_glob);
         printf("[random cube example]\n");
         printf("[random cube example]   Absolute error for total potential:  %e\n",

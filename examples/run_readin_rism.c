@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     if (rank == 0) printf("[random cube example] Beginning random cube example with %d ranks.\n", numProcs);
 
     /* run parameters */
-    int N, run_direct, slice;
+    int N, run_direct, slice[3];
     double xyz_limits[6];
     int grid_dim[3];
     double grid_dd[3];
@@ -39,10 +39,8 @@ int main(int argc, char **argv)
     struct RunParams *run_params = NULL;
     
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse_Readin(fp, &run_params, &N, file_pqr, &run_direct, &slice, xyz_limits, grid_dim);
+    Params_Parse_Readin(fp, &run_params, &N, file_pqr, &run_direct, slice, xyz_limits, grid_dim);
     
-    //Slicing currently doesn't work! So I set it to 1.
-    slice = 1;
 
     grid_dd[0] = (xyz_limits[1] - xyz_limits[0]) / (grid_dim[0] - 1);
     grid_dd[1] = (xyz_limits[3] - xyz_limits[2]) / (grid_dim[1] - 1);
@@ -52,7 +50,7 @@ int main(int argc, char **argv)
     /* data structures for BaryTree calculation and comparison */
     struct Particles *sources = NULL;
     struct Particles *targets = NULL;
-    //struct Particles *targets_sample = NULL;
+    struct Particles *targets_sample = NULL;
     double *potential = NULL, *potential_direct = NULL;
     
     /* variables for collecting accuracy info */
@@ -166,9 +164,9 @@ int main(int argc, char **argv)
 
     /* Initializing direct and treedriver runs */
 
-    //targets_sample = malloc(sizeof(struct Particles));
-
     potential = malloc(sizeof(double) * targets->num);
+
+    targets_sample = malloc(sizeof(struct Particles));
     potential_direct = malloc(sizeof(double) * targets->num);
 
     memset(potential, 0, targets->num * sizeof(double));
@@ -190,7 +188,23 @@ int main(int argc, char **argv)
 
     if (run_direct == 1) {
 
-// Currently I haven't set up sampling here. So I have to run the whole thing.
+        targets_sample->num = grid_dim[0]/slice[0] * grid_dim[1]/slice[1] * grid_dim[2]/slice[2];
+        
+        targets_sample->xmin = xyz_limits[0];
+        targets_sample->ymin = xyz_limits[2];
+        targets_sample->zmin = xyz_limits[4];
+
+        targets_sample->xmax = xyz_limits[0] + grid_dd[0] * (grid_dim[0]-slice[0]);
+        targets_sample->ymax = xyz_limits[2] + grid_dd[1] * (grid_dim[1]-slice[1]);
+        targets_sample->zmax = xyz_limits[4] + grid_dd[2] * (grid_dim[2]-slice[2]);
+
+        targets_sample->xdim = grid_dim[0]/slice[0];
+        targets_sample->ydim = grid_dim[1]/slice[1];
+        targets_sample->zdim = grid_dim[2]/slice[2];
+
+        targets_sample->xdd = grid_dd[0]*slice[0];
+        targets_sample->ydd = grid_dd[1]*slice[1];
+        targets_sample->zdd = grid_dd[2]*slice[2];
 
 //        targets_sample->num = targets->num / slice;
 //        targets_sample->x = malloc(targets_sample->num * sizeof(double));
@@ -208,14 +222,14 @@ int main(int argc, char **argv)
         if (rank == 0) printf("[random cube example] Running direct comparison...\n");
 
         START_TIMER(&time_run[1]);
-        directdriver(sources, targets, run_params, potential_direct, time_direct);
+        directdriver(sources, targets_sample, run_params, potential_direct, time_direct);
         STOP_TIMER(&time_run[1]);
 
         //free(targets_sample->x);
         //free(targets_sample->y);
         //free(targets_sample->z);
         //free(targets_sample->q);
-        //free(targets_sample);
+        free(targets_sample);
 
     }
 
@@ -249,7 +263,7 @@ int main(int argc, char **argv)
     if (run_direct == 1) {
         Accuracy_Calculate(&potential_engy_glob, &potential_engy_direct_glob,
                            &glob_inf_err, &glob_relinf_err, &glob_n2_err, &glob_reln2_err,
-                           potential, potential_direct, targets->num, slice);
+                           potential, potential_direct, grid_dim, slice);
         Accuracy_Print(potential_engy_glob, potential_engy_direct_glob,
                            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err, slice);
     }

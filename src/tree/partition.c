@@ -399,11 +399,11 @@ void cp_partition_8(double xyzmms[6][8], int xyzdims[3][8], int xyzinds[6][8],
                 xyzinds[j][*numposchild + i] = xyzinds[j][i];
             }
 
-            xyzmms[4][i]               = zlowmid;
-            xyzmms[5][*numposchild + i] = zhighmid;
+            xyzmms[5][i]               = zlowmid;
+            xyzmms[4][*numposchild + i] = zhighmid;
 
-            xyzinds[4][i]               = zlowind;
-            xyzinds[5][*numposchild + i] = zhighind;
+            xyzinds[5][i]               = zlowind;
+            xyzinds[4][*numposchild + i] = zhighind;
         }
 
         *numposchild = 2 * *numposchild;

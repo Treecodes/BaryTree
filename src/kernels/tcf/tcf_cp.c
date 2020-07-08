@@ -22,7 +22,7 @@ void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolati
     {
 #endif
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop gang independent
 #endif	
     for (int i = 0; i < number_of_interpolation_points_in_cluster; i++) {
 
@@ -33,7 +33,7 @@ void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolati
         double cz = cluster_z[starting_index_of_cluster + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temporary_potential)
+        #pragma acc loop vector independent reduction(+:temporary_potential)
 #endif
         for (int j = 0; j < number_of_sources_in_batch; j++) {
 #ifdef OPENACC_ENABLED

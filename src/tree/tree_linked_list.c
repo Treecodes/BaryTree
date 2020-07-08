@@ -38,7 +38,6 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p,
     (*p)->y_high_ind = xyzind[3];
     (*p)->z_low_ind  = xyzind[4];
     (*p)->z_high_ind = xyzind[5];
-    
 
     double xl = (*p)->x_max - (*p)->x_min;
     double yl = (*p)->y_max - (*p)->y_min;

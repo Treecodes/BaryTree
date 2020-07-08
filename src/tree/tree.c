@@ -75,8 +75,8 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     xyzminmax[5] = targets->zmax;
 
     xyzdim[0] = targets->xdim;
-    xyzdim[1] = targets->xdim;
-    xyzdim[2] = targets->ydim;
+    xyzdim[1] = targets->ydim;
+    xyzdim[2] = targets->zdim;
     
     xyzind[0] = 0;
     xyzind[1] = targets->xdim-1;
