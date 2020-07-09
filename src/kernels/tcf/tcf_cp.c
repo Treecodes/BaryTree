@@ -5,9 +5,9 @@
 #include "../../run_params/struct_run_params.h"
 #include "tcf_cp.h"
 
-
-void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
-         int starting_index_of_sources, int starting_index_of_cluster,
+void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int starting_index_of_sources,
+                       int interp_pts_per_cluster, int cluster_charge_start,
+                       int interp_order_lim, int cluster_pts_start,
          double *source_x, double *source_y, double *source_z, double *source_q,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
          struct RunParams *run_params, int gpu_async_stream_id)
@@ -22,15 +22,19 @@ void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolati
     {
 #endif
 #ifdef OPENACC_ENABLED
-    #pragma acc loop gang independent
+    #pragma acc loop gang collapse(3) independent
 #endif	
-    for (int i = 0; i < number_of_interpolation_points_in_cluster; i++) {
+    for (int k1 = 0; k1 < interp_order_lim; k1++) {
+    for (int k2 = 0; k2 < interp_order_lim; k1++) {
+    for (int k3 = 0; k3 < interp_order_lim; k3++) {
 
         double temporary_potential = 0.0;
 
-        double cx = cluster_x[starting_index_of_cluster + i];
-        double cy = cluster_y[starting_index_of_cluster + i];
-        double cz = cluster_z[starting_index_of_cluster + i];
+        double cx = cluster_x[cluster_pts_start + k1];
+        double cy = cluster_y[cluster_pts_start + k2];
+        double cz = cluster_z[cluster_pts_start + k3];
+
+        int ii = cluster_charge_start + k1 * interp_order_lim*interp_order_lim + k2 * interp_order_lim + k3;
 
 #ifdef OPENACC_ENABLED
         #pragma acc loop vector independent reduction(+:temporary_potential)
@@ -61,7 +65,9 @@ void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolati
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
-        cluster_q[starting_index_of_cluster + i] += temporary_potential;
+        cluster_q[ii] += temporary_potential;
+    }
+    }
     }
 #ifdef OPENACC_ENABLED
     } // end kernel

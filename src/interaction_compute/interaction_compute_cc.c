@@ -384,13 +384,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_TCF_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-                            source_cluster_start, target_cluster_start,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
+//                        K_TCF_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+//                            source_cluster_start, target_cluster_start,
+//                            source_cluster_x, source_cluster_y, source_cluster_z,
+//                            source_cluster_q,
+//                            target_cluster_x, target_cluster_y, target_cluster_z,
+//                            target_cluster_q,
+//                            run_params, stream_id);
                     }
                 }
     
@@ -957,12 +957,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_TCF_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-                            source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
+//                        K_TCF_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+//                            source_start, target_cluster_start,
+//                            source_x, source_y, source_z, source_q,
+//                            target_cluster_x, target_cluster_y, target_cluster_z,
+//                            target_cluster_q,
+//                            run_params, stream_id);
                     }
                 }
 

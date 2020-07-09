@@ -201,13 +201,11 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 
     //int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
     //int target_start           = tree->ibeg[idx] - 1;
-    int cluster_start          = idx * interp_pts_per_cluster;
+    int cluster_charge_start          = idx * interp_pts_per_cluster;
     
-    double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ;
+    double *weights, *nodeX, *nodeY, *nodeZ;
 
     make_vector(weights, interp_order_lim);
-    make_vector(dj,      interp_order_lim);
-    make_vector(tt,      interp_order_lim);
     make_vector(nodeX,   interp_order_lim);
     make_vector(nodeY,   interp_order_lim);
     make_vector(nodeZ,   interp_order_lim);
@@ -216,7 +214,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(potential, cluster_q) \
                 create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
-                       weights[0:interp_order_lim], dj[0:interp_order_lim], tt[0:interp_order_lim])
+                       weights[0:interp_order_lim])
     {
 #endif
     
@@ -226,27 +224,12 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interp_order_lim; i++) {
-        tt[i] = cos(i * M_PI / interp_order);
-        nodeX[i] = target_xmin + (tt[i] + 1.0)/2.0 * (target_xmax - target_xmin);
-        nodeY[i] = target_ymin + (tt[i] + 1.0)/2.0 * (target_ymax - target_ymin);
-        nodeZ[i] = target_zmin + (tt[i] + 1.0)/2.0 * (target_zmax - target_zmin);
-    }
-    
-    // Compute weights
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
-    for (int j = 0; j < interp_order_lim; j++){
-        dj[j] = 1.0;
-        if (j == 0) dj[j] = 0.5;
-        if (j == interp_order) dj[j] = 0.5;
-    }
-
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
-    for (int j = 0; j < interp_order_lim; j++) {
-        weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
+        double tt = cos(i * M_PI / interp_order);
+        nodeX[i] = target_xmin + (tt + 1.0)/2.0 * (target_xmax - target_xmin);
+        nodeY[i] = target_ymin + (tt + 1.0)/2.0 * (target_ymax - target_ymin);
+        nodeZ[i] = target_zmin + (tt + 1.0)/2.0 * (target_zmax - target_zmin);
+        weights[i] = ((i % 2 == 0)? 1 : -1);
+        if (i == 0 || i == interp_order) weights[i] = ((i % 2 == 0)? 1 : -1) * 0.5;
     }
 
 #ifdef OPENACC_ENABLED
@@ -299,15 +282,11 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
                 double temp = 0.0;
         
 #ifdef OPENACC_ENABLED
-                #pragma acc loop independent reduction(+:temp)
+                #pragma acc loop collapse(3) independent reduction(+:temp)
 #endif
-                for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
-
-                    int k1 = j%interp_order_lim;
-                    int kk = (j-k1)/interp_order_lim;
-                    int k2 = kk%interp_order_lim;
-                    kk = kk - k2;
-                    int k3 = kk / interp_order_lim;
+                for (int k1 = 0; k1 < interp_order_lim; k1++) {
+                for (int k2 = 0; k2 < interp_order_lim; k1++) {
+                for (int k3 = 0; k3 < interp_order_lim; k3++) {
 
                     double w3 = weights[k3];
                     double w2 = weights[k2];
@@ -316,7 +295,9 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
                     double cx = nodeX[k1];
                     double cy = nodeY[k2];
                     double cz = nodeZ[k3];
-                    double cq = cluster_q[cluster_start + j];
+
+                    int jj = cluster_charge_start + k1 * interp_order_lim*interp_order_lim + k2 * interp_order_lim + k3;
+                    double cq = cluster_q[jj];
         
                     double numerator = 1.0;
 
@@ -342,6 +323,8 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 
                     temp += numerator * denominator * cq;
                 }
+                }
+                }
         
 #ifdef OPENACC_ENABLED
                 #pragma acc atomic
@@ -355,8 +338,6 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 #endif
     
     free_vector(weights);
-    free_vector(dj);
-    free_vector(tt);
     free_vector(nodeX);
     free_vector(nodeY);
     free_vector(nodeZ);

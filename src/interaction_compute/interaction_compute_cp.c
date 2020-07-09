@@ -28,6 +28,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                            struct Clusters *clusters, struct RunParams *run_params)
 {
     int interp_pts_per_cluster = run_params->interp_pts_per_cluster;
+    int interp_order_lim = run_params->interp_order+1;
 
     int num_sources   = sources->num;
     double *source_x  = sources->x;
@@ -108,7 +109,8 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
             int node_index = approx_inter_list[i][j];
 
-            int cluster_start = interp_pts_per_cluster*cluster_ind[node_index];
+            int cluster_charge_start = interp_pts_per_cluster*cluster_ind[node_index];
+            int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
             int stream_id = j%3;
 
 
@@ -356,8 +358,9 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_TCF_CP_Lagrange(num_sources_in_batch,
-                            interp_pts_per_cluster, batch_start, cluster_start,
+                        K_TCF_CP_Lagrange(num_sources_in_batch, batch_start,
+                            interp_pts_per_cluster, cluster_charge_start,
+                            interp_order_lim, cluster_pts_start,
                             source_x, source_y, source_z, source_q,
                             cluster_x, cluster_y, cluster_z, cluster_q,
                             run_params, stream_id);
@@ -367,11 +370,11 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                     if (run_params->singularity == SKIPPING) {
 
-                        K_TCF_CP_Hermite(num_sources_in_batch,
-                            interp_pts_per_cluster, batch_start, cluster_start,
-                            source_x, source_y, source_z, source_q,
-                            cluster_x, cluster_y, cluster_z, cluster_q,
-                            run_params, stream_id);
+                        //K_TCF_CP_Hermite(num_sources_in_batch,
+                        //    interp_pts_per_cluster, batch_start, cluster_start,
+                        //    source_x, source_y, source_z, source_q,
+                        //    cluster_x, cluster_y, cluster_z, cluster_q,
+                        //    run_params, stream_id);
                     }
                 }
 

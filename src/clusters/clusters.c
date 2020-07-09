@@ -159,7 +159,7 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster = run_params->interp_pts_per_cluster;
 
-    int totalNumberInterpolationPoints  = tree_numnodes * interpolationPointsPerCluster;
+    int totalNumberInterpolationPoints  = tree_numnodes * interpOrderLim;
     int totalNumberInterpolationCharges = tree_numnodes * run_params->interp_charges_per_cluster;
 
     clusters->x = NULL;
@@ -1333,15 +1333,15 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
 {
 
     int interpOrderLim = interpolationOrder + 1;
-    int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
-    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
+    //int interpolationPointsPerCluster = interpOrderLim * interpOrderLim * interpOrderLim;
+    int startingIndexInClustersArray = idx * interpOrderLim;
 
-    double *tt, *nodeX, *nodeY, *nodeZ;
+    //double *tt, *nodeX, *nodeY, *nodeZ;
 
-    make_vector(tt,    interpOrderLim);
-    make_vector(nodeX, interpOrderLim);
-    make_vector(nodeY, interpOrderLim);
-    make_vector(nodeZ, interpOrderLim);
+    //make_vector(tt,    interpOrderLim);
+    //make_vector(nodeX, interpOrderLim);
+    //make_vector(nodeY, interpOrderLim);
+    //make_vector(nodeZ, interpOrderLim);
 
     double x0 = tree->x_min[idx];
     double x1 = tree->x_max[idx];
@@ -1352,9 +1352,9 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ) \
-                       create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
-                              nodeZ[0:interpOrderLim], tt[0:interpOrderLim])
+    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ)
+//                       create(nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
+//                              nodeZ[0:interpOrderLim], tt[0:interpOrderLim])
     {
 #endif
 
@@ -1364,36 +1364,36 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
     #pragma acc loop independent
 #endif
     for (int i = 0; i < interpOrderLim; i++) {
-        tt[i] = cos(i * M_PI / interpolationOrder);
-        nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
-        nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
-        nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+        double tt = cos(i * M_PI / interpolationOrder);
+        clusterX[startingIndexInClustersArray + i] = x0 + (tt + 1.0)/2.0 * (x1 - x0);
+        clusterY[startingIndexInClustersArray + i] = y0 + (tt + 1.0)/2.0 * (y1 - y0);
+        clusterZ[startingIndexInClustersArray + i] = z0 + (tt + 1.0)/2.0 * (z1 - z0);
     }
 
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
-    for (int j = 0; j < interpolationPointsPerCluster; j++) {
-        int k1 = j%(interpolationOrder+1);
-        int kk = (j-k1)/(interpolationOrder+1);
-        int k2 = kk%(interpolationOrder+1);
-        kk = kk - k2;
-        int k3 = kk / (interpolationOrder+1);
-
-        // Fill cluster X, Y, and Z arrays
-        clusterX[startingIndexInClustersArray + j] = nodeX[k1];
-        clusterY[startingIndexInClustersArray + j] = nodeY[k2];
-        clusterZ[startingIndexInClustersArray + j] = nodeZ[k3];
-    }
+//#ifdef OPENACC_ENABLED
+//    #pragma acc loop independent
+//#endif
+//    for (int j = 0; j < interpolationPointsPerCluster; j++) {
+//        int k1 = j%(interpolationOrder+1);
+//        int kk = (j-k1)/(interpolationOrder+1);
+//        int k2 = kk%(interpolationOrder+1);
+//        kk = kk - k2;
+//        int k3 = kk / (interpolationOrder+1);
+//
+//        // Fill cluster X, Y, and Z arrays
+//        clusterX[startingIndexInClustersArray + j] = nodeX[k1];
+//        clusterY[startingIndexInClustersArray + j] = nodeY[k2];
+//        clusterZ[startingIndexInClustersArray + j] = nodeZ[k3];
+//    }
 #ifdef OPENACC_ENABLED
     } //end acc kernels region
 #endif
 
-    free_vector(tt);
-    free_vector(nodeX);
-    free_vector(nodeY);
-    free_vector(nodeZ);
+//    free_vector(tt);
+//    free_vector(nodeX);
+//    free_vector(nodeY);
+//    free_vector(nodeZ);
 
     return;
 }
