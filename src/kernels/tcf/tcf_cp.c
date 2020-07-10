@@ -25,7 +25,7 @@ void K_TCF_CP_Lagrange(int number_of_sources_in_batch, int starting_index_of_sou
     #pragma acc loop gang collapse(3) independent
 #endif	
     for (int k1 = 0; k1 < interp_order_lim; k1++) {
-    for (int k2 = 0; k2 < interp_order_lim; k1++) {
+    for (int k2 = 0; k2 < interp_order_lim; k2++) {
     for (int k3 = 0; k3 < interp_order_lim; k3++) {
 
         double temporary_potential = 0.0;

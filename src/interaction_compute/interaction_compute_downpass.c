@@ -202,19 +202,29 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     //int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
     //int target_start           = tree->ibeg[idx] - 1;
     int cluster_charge_start          = idx * interp_pts_per_cluster;
+
+    int coeff_x_dim = (target_x_high_ind-target_x_low_ind + 1) * interp_order_lim;
+    int coeff_y_dim = (target_y_high_ind-target_y_low_ind + 1) * interp_order_lim;
+    int coeff_z_dim = (target_z_high_ind-target_z_low_ind + 1) * interp_order_lim;
     
     double *weights, *nodeX, *nodeY, *nodeZ;
+    double *coeffX, *coeffY, *coeffZ;
 
     make_vector(weights, interp_order_lim);
     make_vector(nodeX,   interp_order_lim);
     make_vector(nodeY,   interp_order_lim);
     make_vector(nodeZ,   interp_order_lim);
+
+    make_vector(coeffX,  coeff_x_dim);
+    make_vector(coeffY,  coeff_y_dim);
+    make_vector(coeffZ,  coeff_z_dim);
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(potential, cluster_q) \
                 create(nodeX[0:interp_order_lim], nodeY[0:interp_order_lim], nodeZ[0:interp_order_lim], \
-                       weights[0:interp_order_lim])
+                       weights[0:interp_order_lim], \
+                       coeffX[0:coeff_x_dim], coeffY[0:coeff_y_dim], coeffZ[0:coeff_z_dim])
     {
 #endif
     
@@ -232,6 +242,154 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
         if (i == 0 || i == interp_order) weights[i] = ((i % 2 == 0)? 1 : -1) * 0.5;
     }
 
+    
+
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
+        double tx = target_xmin + (ix - target_x_low_ind) * target_xdd;
+        double denominator = 0.0;
+        int eix = -1;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop vector(32) independent reduction(+:denominator) reduction(max:eix)
+#endif
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+            double cx = tx - nodeX[j];
+            if (fabs(cx)<DBL_MIN) eix = j;
+            denominator += weights[j] / cx;
+        }
+
+        if (eix!=-1) denominator = 1;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop vector(32) independent
+#endif
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+            double numerator = 1.0;
+            if (eix == -1) {
+                numerator *= weights[j] / (tx - nodeX[j]);
+            } else {
+                if (eix != j) numerator *= 0;
+            }
+
+            coeffX[(ix-target_x_low_ind) * interp_order_lim + j] = numerator / denominator;
+        }
+    }
+
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
+        double ty = target_ymin + (iy - target_y_low_ind) * target_ydd;
+        double denominator = 0.0;
+        int eiy = -1;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop vector(32) independent reduction(+:denominator) reduction(max:eiy)
+#endif
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+            double cy = ty - nodeY[j];
+            if (fabs(cy)<DBL_MIN) eiy = j;
+            denominator += weights[j] / cy;
+        }
+
+        if (eiy!=-1) denominator = 1;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop vector(32) independent
+#endif
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+            double numerator = 1.0;
+            if (eiy == -1) {
+                numerator *= weights[j] / (ty - nodeY[j]);
+            } else {
+                if (eiy != j) numerator *= 0;
+            }
+
+            coeffY[(iy-target_y_low_ind) * interp_order_lim + j] = numerator / denominator;
+        }
+    }
+
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
+        double tz = target_zmin + (iz - target_z_low_ind) * target_zdd;
+        double denominator = 0.0;
+        int eiz = -1;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop vector(32) independent reduction(+:denominator) reduction(max:eiz)
+#endif
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+            double cz = tz - nodeZ[j];
+            if (fabs(cz)<DBL_MIN) eiz = j;
+            denominator += weights[j] / cz;
+        }
+
+        if (eiz!=-1) denominator = 1;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop vector(32) independent
+#endif
+        for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
+            double numerator = 1.0;
+            if (eiz == -1) {
+                numerator *= weights[j] / (tz - nodeZ[j]);
+            } else {
+                if (eiz != j) numerator *= 0;
+            }
+
+            coeffZ[(iz-target_z_low_ind) * interp_order_lim + j] = numerator / denominator;
+        }
+    }
+
+
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop gang collapse(3) independent
+#endif
+    for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
+        for (int iy = target_y_low_ind; iy <= target_y_high_ind; iy++) {
+            for (int iz = target_z_low_ind; iz <= target_z_high_ind; iz++) {
+
+                int ii = (ix * target_yz_dim) + (iy * target_z_dim_glob) + iz;
+                int iix = (ix - target_x_low_ind) * interp_order_lim;
+                int iiy = (iy - target_y_low_ind) * interp_order_lim;
+                int iiz = (iz - target_z_low_ind) * interp_order_lim;
+                
+                double temp = 0.0;
+
+        #ifdef OPENACC_ENABLED
+                #pragma acc loop vector(32) independent reduction(+:temp)
+        #endif
+                for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+                    int k3 = j%interp_order_lim;
+                    int kk = (j-k3)/interp_order_lim;
+                    int k2 = kk%interp_order_lim;
+                    kk = kk - k2;
+                    int k1 = kk / interp_order_lim;
+
+                    double cq = cluster_q[cluster_charge_start + j];
+                    temp += coeffX[iix + k1] * coeffY[iiy + k2] * coeffZ[iiz + k3] * cq;
+   
+                }
+
+#ifdef OPENACC_ENABLED
+                #pragma acc atomic
+#endif
+                potential[ii] += temp;
+            }
+        }
+    }
+
+
+/*
 #ifdef OPENACC_ENABLED
     #pragma acc loop collapse(3) independent
 #endif
@@ -281,12 +439,32 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
         
                 double temp = 0.0;
         
-#ifdef OPENACC_ENABLED
-                #pragma acc loop collapse(3) independent reduction(+:temp)
-#endif
-                for (int k1 = 0; k1 < interp_order_lim; k1++) {
-                for (int k2 = 0; k2 < interp_order_lim; k1++) {
-                for (int k3 = 0; k3 < interp_order_lim; k3++) {
+//#ifdef OPENACC_ENABLED
+//                #pragma acc loop collapse(3) independent reduction(+:temp)
+//#endif
+//                for (int k1 = 0; k1 < interp_order_lim; k1++) {
+//                for (int k2 = 0; k2 < interp_order_lim; k2++) {
+//                for (int k3 = 0; k3 < interp_order_lim; k3++) {
+//                    double w3 = weights[k3];
+//                    double w2 = weights[k2];
+//                    double w1 = weights[k1];
+//            
+//                    double cx = nodeX[k1];
+//                    double cy = nodeY[k2];
+//                    double cz = nodeZ[k3];
+//
+//                    int jj = cluster_charge_start + k1 * interp_order_lim*interp_order_lim + k2 * interp_order_lim + k3;
+//                    double cq = cluster_q[jj];
+        #ifdef OPENACC_ENABLED
+                #pragma acc loop independent reduction(+:temp)
+        #endif
+                for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+        
+                    int k3 = j%interp_order_lim;
+                    int kk = (j-k3)/interp_order_lim;
+                    int k2 = kk%interp_order_lim;
+                    kk = kk - k2;
+                    int k1 = kk / interp_order_lim;
 
                     double w3 = weights[k3];
                     double w2 = weights[k2];
@@ -296,8 +474,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
                     double cy = nodeY[k2];
                     double cz = nodeZ[k3];
 
-                    int jj = cluster_charge_start + k1 * interp_order_lim*interp_order_lim + k2 * interp_order_lim + k3;
-                    double cq = cluster_q[jj];
+                    double cq = cluster_q[cluster_charge_start + j];
         
                     double numerator = 1.0;
 
@@ -323,8 +500,8 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
 
                     temp += numerator * denominator * cq;
                 }
-                }
-                }
+                //}
+                //}
         
 #ifdef OPENACC_ENABLED
                 #pragma acc atomic
@@ -333,6 +510,8 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
             }
         }
     }
+*/
+
 #ifdef OPENACC_ENABLED
     } //end ACC kernels
 #endif
@@ -341,6 +520,9 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_order
     free_vector(nodeX);
     free_vector(nodeY);
     free_vector(nodeZ);
+    free_vector(coeffX);
+    free_vector(coeffY);
+    free_vector(coeffZ);
 
     return;
 }
