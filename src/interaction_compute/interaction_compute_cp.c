@@ -79,13 +79,16 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
+//    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
                             source_q[0:num_sources], \
                             cluster_x[0:total_num_interp_pts], \
                             cluster_y[0:total_num_interp_pts], \
                             cluster_z[0:total_num_interp_pts]) \
                        copy(cluster_q[0:total_num_interp_charges], \
                             potential[0:num_targets])
+    //#pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
+                            source_q[0:num_sources]) \
+                            copy(potential[0:num_targets])
 #endif
     {
 

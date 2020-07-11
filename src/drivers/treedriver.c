@@ -84,7 +84,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         struct Tree *tree = NULL;
         struct Tree *batches = NULL;
         struct Clusters *clusters = NULL;
-        
+
         
         //-------------------------------
         //-------------------------------
@@ -94,10 +94,17 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         START_TIMER(&time_tree[0]);
         Tree_Targets_Construct(&tree, targets, run_params);
+#ifdef OPENACC_ENABLED
+        #pragma acc enter data create(potential[0:targets->num])
+#endif
         STOP_TIMER(&time_tree[0]);
         
         START_TIMER(&time_tree[1]);
         Batches_Sources_Construct(&batches, sources, run_params);
+#ifdef OPENACC_ENABLED
+        #pragma acc enter data copyin(sources->x[0:sources->num], sources->y[0:sources->num], \
+                                      sources->z[0:sources->num], sources->q[0:sources->num])
+#endif
         STOP_TIMER(&time_tree[1]);
 
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
@@ -222,7 +229,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
-        
+
         
         //-------------------------------
         //-------------------------------
@@ -231,6 +238,10 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //-------------------------------
         
         START_TIMER(&time_tree[10]);
+#ifdef OPENACC_ENABLED
+        #pragma acc exit data copyout(potential[0:targets->num])
+        #pragma acc exit data delete(sources->x, sources->y, sources->z, sources->q)
+#endif
         Particles_FreeOrder(sources);
         Particles_FreeOrder(targets);
         Tree_Free(&tree);
@@ -423,8 +434,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
         STOP_TIMER(&time_tree[9]);
-        
 
+        
         //-------------------------------
         //-------------------------------
         // CLEANUP

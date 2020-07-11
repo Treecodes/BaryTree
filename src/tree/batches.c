@@ -72,6 +72,16 @@ void Batches_Sources_Construct(struct Tree **batches_addr, struct Particles *sou
     Batches_Sources_Fill(batches, &init_sizeof_arrays, sources, 1, sources->num,
                          run_params->max_per_source_leaf, xyzminmax);
 
+#ifdef OPENACC_ENABLED
+    double *source_x = sources->x;
+    double *source_y = sources->y;
+    double *source_z = sources->z;
+    double *source_q = sources->q;
+    int source_num = sources->num;
+    #pragma acc enter data copyin(source_x[0:source_num], source_y[0:source_num], \
+                                  source_z[0:source_num], source_q[0:source_num])
+#endif
+
     return;
 }
 

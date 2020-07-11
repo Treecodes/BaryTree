@@ -77,8 +77,9 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(cluster_q[0:total_num_interp_charges]) \
-                       copy(potential[0:num_targets])
+    //#pragma acc data copyin(cluster_q[0:total_num_interp_charges]) \
+    //                   copy(potential[0:num_targets])
+    //#pragma acc data copy(potential[0:num_targets])
     {
 #endif
 

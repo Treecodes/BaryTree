@@ -180,11 +180,14 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     double *xC = clusters->x;
     double *yC = clusters->y;
     double *zC = clusters->z;
+    double *qC = clusters->q;
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+    //#pragma acc data copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                              zC[0:totalNumberInterpolationPoints])
+    #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                             zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
     {
 #endif
 
@@ -248,11 +251,24 @@ void Clusters_Free(struct Clusters **clusters_addr)
     struct Clusters *clusters = *clusters_addr;
     
     if (clusters != NULL) {
-        if (clusters->x != NULL) free_vector(clusters->x);
-        if (clusters->y != NULL) free_vector(clusters->y);
-        if (clusters->z != NULL) free_vector(clusters->z);
-        if (clusters->q != NULL) free_vector(clusters->q);
-        if (clusters->w != NULL) free_vector(clusters->w);
+#ifdef OPENACC_ENABLED
+        #pragma acc exit data delete(clusters->x, clusters->y, clusters->z, clusters->q)
+#endif
+        if (clusters->x != NULL) {
+            free_vector(clusters->x);
+        }
+        if (clusters->y != NULL) {
+            free_vector(clusters->y);
+        }
+        if (clusters->z != NULL) {
+            free_vector(clusters->z);
+        }
+        if (clusters->q != NULL) {
+            free_vector(clusters->q);
+        }
+        if (clusters->w != NULL) {
+            free_vector(clusters->w);
+        }
         free(clusters);
     }
     
