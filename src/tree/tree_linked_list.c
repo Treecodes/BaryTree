@@ -15,11 +15,15 @@ static void remove_node(struct TreeLinkedListNode *p);
 
 void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p,
                 int maxparnode, double *xyzmm, int *xyzdim, int *xyzind,
-                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size)
+                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size,
+                int *max_depth, int current_level)
 {
     (*p) = malloc(sizeof(struct TreeLinkedListNode));
     (*numnodes)++;
     (*p)->numpar = xyzdim[0]*xyzdim[1]*xyzdim[2];
+
+    if (current_level + 1 > *max_depth) *max_depth = current_level + 1;
+    (*p)->level = current_level;
 
     (*p)->x_min = xyzmm[0];
     (*p)->x_max = xyzmm[1];
@@ -131,7 +135,8 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p,
 
                 TreeLinkedList_Targets_Construct(paddress, maxparnode,
                                lxyzmm, lxyzdim, lxyzind, numnodes, numleaves,
-                               min_leaf_size, max_leaf_size);
+                               min_leaf_size, max_leaf_size, max_depth,
+                               current_level+1);
             }
         }
 

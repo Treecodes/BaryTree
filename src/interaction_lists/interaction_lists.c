@@ -495,21 +495,32 @@ void pc_compute_interaction_list(
     double dist = sqrt(tx*tx + ty*ty + tz*tz);
 
 
-    if (((tree_radius[tree_node] + batch_radius) < dist * run_params->theta)
-      && (tree_radius[tree_node] != 0.00)
-      && (run_params->size_check_factor * run_params->interp_pts_per_cluster < tree_numpar[tree_node])) {
+    if ((tree_radius[tree_node] + batch_radius) < dist * run_params->theta) {
+
+        if ((tree_radius[tree_node] == 0.00) ||
+           (run_params->size_check_factor * run_params->interp_pts_per_cluster > tree_numpar[tree_node])) {
+
+            if (*direct_index_counter >= *sizeof_direct_list) {
+                (*sizeof_direct_list) *= 1.5;
+                *batch_direct_list = realloc_vector(*batch_direct_list, *sizeof_direct_list);
+            }
+
+            (*batch_direct_list)[*direct_index_counter] = tree_node; 
+            (*direct_index_counter)++;
+
+        } else {
     /*
      * If MAC is accepted use the expansion for the approximation.
      */
+            if (*approx_index_counter >= *sizeof_approx_list) {
+                (*sizeof_approx_list) *= 1.5;
+                (*batch_approx_list) = realloc_vector(*batch_approx_list, *sizeof_approx_list);
+            }
 
-        if (*approx_index_counter >= *sizeof_approx_list) {
-            (*sizeof_approx_list) *= 1.5;
-            (*batch_approx_list) = realloc_vector(*batch_approx_list, *sizeof_approx_list);
+            (*batch_approx_list)[*approx_index_counter] = tree_node;
+            (*approx_index_counter)++;
+            tree_used[tree_node] = 1;
         }
-
-        (*batch_approx_list)[*approx_index_counter] = tree_node;
-        (*approx_index_counter)++;
-        tree_used[tree_node] = 1;
 
     } else {
     /*

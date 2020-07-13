@@ -16,6 +16,9 @@
 #include "tree.h"
 
 
+void Tree_Fill_Levels(struct Tree *tree, struct TreeLinkedListNode *p, int *sizeof_levels_list, int *leaves_idx);
+
+
 void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, struct RunParams *run_params)
 {
     struct TreeLinkedListNode *tree_linked_list = NULL;
@@ -63,6 +66,8 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
 
     int numnodes = 0;
     int numleaves = 0;
+
+    int max_depth = 1;
     
     int min_leaf_size = INT_MAX;
     int max_leaf_size = 0;
@@ -87,18 +92,75 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     
     TreeLinkedList_Targets_Construct(&tree_linked_list,
                     run_params->max_per_target_leaf, xyzminmax, xyzdim, xyzind,
-                    &numnodes, &numleaves, &min_leaf_size, &max_leaf_size);
+                    &numnodes, &numleaves, &min_leaf_size, &max_leaf_size,
+                    &max_depth, 0);
     
     TreeLinkedList_SetIndex(tree_linked_list, 0);
     
     Tree_Alloc(tree_addr, numnodes);
     Tree_Fill(*tree_addr, tree_linked_list);
+
     (*tree_addr)->numleaves = numleaves;
-    
     (*tree_addr)->min_leaf_size = min_leaf_size;
     (*tree_addr)->max_leaf_size = max_leaf_size;
+    (*tree_addr)->max_depth = max_depth;
     
+    /* Creating levels list for the downpass */
+    make_matrix((*tree_addr)->levels_list, (*tree_addr)->max_depth, 20);
+    make_vector((*tree_addr)->levels_list_num, (*tree_addr)->max_depth);
+    for (int i = 0; i < (*tree_addr)->max_depth; ++i) (*tree_addr)->levels_list_num[i]=0;
+
+    make_vector((*tree_addr)->leaves_list, (*tree_addr)->numleaves);
+
+    int *sizeof_levels_list;
+    int leaves_idx = 0;
+    make_vector(sizeof_levels_list, (*tree_addr)->max_depth);
+    for (int i = 0; i < (*tree_addr)->max_depth; ++i) sizeof_levels_list[i]=20;
+
+    Tree_Fill_Levels(*tree_addr, tree_linked_list, sizeof_levels_list, &leaves_idx);
+    free_vector(sizeof_levels_list);
+
     TreeLinkedList_Free(&tree_linked_list);
+
+
+/*
+    for (int i = 0; i < (*tree_addr)->max_depth; ++i) {
+        printf("Level %d, %d nodes: ", i, (*tree_addr)->levels_list_num[i]);
+        //for (int j = 0; j < (*tree_addr)->levels_list_num[i]; ++j) printf("%d, ", (*tree_addr)->levels_list[i][j]);
+        printf("\n\n");
+    }
+   
+    printf("\nLeaves, %d of them: ", (*tree_addr)->numleaves);
+    //for (int i = 0; i < (*tree_addr)->numleaves; ++i) printf("%d, ", (*tree_addr)->leaves_list[i]);
+    printf("\n\n");
+*/
+
+
+    return;
+}
+
+
+
+void Tree_Fill_Levels(struct Tree *tree, struct TreeLinkedListNode *p, int *sizeof_levels_list, int *leaves_idx)
+{
+    
+    if (p->num_children > 0) {
+        if (tree->levels_list_num[p->level] >= sizeof_levels_list[p->level]) {
+            sizeof_levels_list[p->level] *= 1.5;
+            tree->levels_list[p->level] = realloc_vector(tree->levels_list[p->level], sizeof_levels_list[p->level]);
+        }
+
+        tree->levels_list[p->level][tree->levels_list_num[p->level]] = p->node_index;
+        tree->levels_list_num[p->level]++;
+
+        for (int i = 0; i < p->num_children; i++) {
+            Tree_Fill_Levels(tree, p->child[i], sizeof_levels_list, leaves_idx);
+        }
+
+    } else {
+        tree->leaves_list[*leaves_idx] = p->node_index;
+        (*leaves_idx)++;
+    }
 
     return;
 }
@@ -140,6 +202,10 @@ void Tree_Alloc(struct Tree **tree_addr, int length)
     make_vector(tree->x_high_ind, length);
     make_vector(tree->y_high_ind, length);
     make_vector(tree->z_high_ind, length);
+
+    tree->levels_list = NULL;
+    tree->levels_list_num = NULL;
+    tree->leaves_list = NULL;
     
     return;
 }   /* END of function allocate_tree */
@@ -180,6 +246,10 @@ void Tree_Free(struct Tree **tree_addr)
         free_vector(tree->x_high_ind);
         free_vector(tree->y_high_ind);
         free_vector(tree->z_high_ind);
+
+        if (tree->levels_list != NULL) free_matrix(tree->levels_list);
+        if (tree->levels_list_num != NULL) free_vector(tree->levels_list_num);
+        if (tree->leaves_list != NULL) free_vector(tree->leaves_list);
 
         free(tree);
     }
