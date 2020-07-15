@@ -112,7 +112,7 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
 
     make_vector((*tree_addr)->leaves_list, (*tree_addr)->numleaves);
 
-    int *sizeof_levels_list;
+    int *sizeof_levels_list = NULL;
     int leaves_idx = 0;
     make_vector(sizeof_levels_list, (*tree_addr)->max_depth);
     for (int i = 0; i < (*tree_addr)->max_depth; ++i) sizeof_levels_list[i]=20;

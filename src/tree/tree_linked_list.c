@@ -319,6 +319,7 @@ static void remove_node(struct TreeLinkedListNode *p)
         for (int i = 0; i < p->num_children; i++) {
             remove_node(p->child[i]);
             free(p->child[i]);
+            p->child[i] = NULL;
         }
     }
 
