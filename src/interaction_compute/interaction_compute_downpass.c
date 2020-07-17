@@ -11,9 +11,12 @@
 
 #include "interaction_compute.h"
 
+static void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
+        double *cluster_x, double *cluster_y, double *cluster_z,
+        int coeff_start, double *coeff_x, double *coeff_y, double *coeff_z, double *weights);
+
 static void cp_comp_downpass(int idx, int child_idx, int interp_order,
-        double *cluster_x,     double *cluster_y,     double *cluster_z,
-        double *cluster_q);
+        int coeff_start, double *coeff_x, double *coeff_y, double *coeff_z, double *cluster_q);
 
 static void cp_comp_pot_coeffs(int idx, int interp_order,
         int target_x_low_ind, int target_x_high_ind, double target_xmin,
@@ -86,90 +89,121 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
     if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
 
-/*
+        double *weights = NULL;
+        make_vector(weights, interp_order+1);
+        for (int i = 0; i < interp_order + 1; i++) {
+            weights[i] = ((i % 2 == 0)? 1 : -1);
+            if (i == 0 || i == interp_order) weights[i] = ((i % 2 == 0)? 1 : -1) * 0.5;
+        }
+
+#ifdef OPENACC_ENABLED
+        #pragma acc enter data copyin(weights[0:interp_order+1])
+#endif
+
         //First go over each level
         for (int i = 0; i < tree->max_depth; ++i) {
 
-            //Go over each cluster at that level
-            for (int j = 0; j < tree->levels_list_num[i]; ++j) {
-                int idx = tree->levels_list[i][j];
+            if (tree->levels_list_num[i] > 0) {
 
-                //Check if we even use it
-                if (tree->used[idx] == 1) {
+                int downpass_num = 0;
+                for (int j = 0; j < tree->levels_list_num[i]; ++j)
+                    downpass_num += tree->num_children[tree->levels_list[i][j]];
 
-                    //If used, interpolate down to each child of the cluster
+                int sizeof_coeffs = (interp_order + 1) * (interp_order + 1) * downpass_num;
+
+                double *coeff_x = NULL; 
+                double *coeff_y = NULL;
+                double *coeff_z = NULL;
+                make_vector(coeff_x, sizeof_coeffs);
+                make_vector(coeff_y, sizeof_coeffs);
+                make_vector(coeff_z, sizeof_coeffs);
+
+#ifdef OPENACC_ENABLED
+                #pragma acc enter data create(coeff_x[0:sizeof_coeffs], coeff_y[0:sizeof_coeffs], \
+                                              coeff_z[0:sizeof_coeffs])
+#endif
+
+                //Go over each cluster at that level
+                int coeff_start = 0;
+                for (int j = 0; j < tree->levels_list_num[i]; ++j) {
+                    int idx = tree->levels_list[i][j];
+
+                    //Interpolate down coeffs to each child of the cluster
                     for (int k = 0; k < tree->num_children[idx]; ++k) {
                         int child_idx = tree->children[8*idx + k];
-                        tree->used[child_idx] = 1;
-                            
-                        //printf("Passing from node %d to its child %d.\n", idx, child_idx);
-
-                        cp_comp_downpass(idx, child_idx, interp_order,
-                                         cluster_x, cluster_y, cluster_z, cluster_q);
+                        cp_comp_downpass_coeffs(idx, child_idx, interp_order,
+                                                cluster_x, cluster_y, cluster_z,
+                                                coeff_start, coeff_x, coeff_y, coeff_z, weights);
+                        coeff_start++;
                     }
                 }
-            }
 #ifdef OPENACC_ENABLED
-            #pragma acc wait
+                #pragma acc wait
 #endif
-        }
-*/
 
+                //Go over each cluster at that level
+                coeff_start = 0;
+                for (int j = 0; j < tree->levels_list_num[i]; ++j) {
+                    int idx = tree->levels_list[i][j];
 
-/*
-        //Then go over the leaves to the targets
-        for (int i = 0; i < tree->numleaves; ++i) {
-            int idx = tree->leaves_list[i];
-*/
-
-        int sizeof_coeff_x = 0, sizeof_coeff_y = 0, sizeof_coeff_z = 0, num_used = 0;
-        for (int i = 0; i < tree_numnodes; ++i) {
-            if (tree->used[i] == 1) {
-               num_used++;
-               sizeof_coeff_x += tree->x_dim[i];
-               sizeof_coeff_y += tree->y_dim[i];
-               sizeof_coeff_z += tree->z_dim[i];
+                    //Interpolate down to each child of the cluster
+                    for (int k = 0; k < tree->num_children[idx]; ++k) {
+                        int child_idx = tree->children[8*idx + k];
+                        cp_comp_downpass(idx, child_idx, interp_order,
+                                         coeff_start, coeff_x, coeff_y, coeff_z, cluster_q);
+                        coeff_start++;
+                    }
+                }
+#ifdef OPENACC_ENABLED
+                #pragma acc wait
+                #pragma acc exit data delete(coeff_x, coeff_y, coeff_z)
+#endif
+                free_vector(coeff_x);
+                free_vector(coeff_y);
+                free_vector(coeff_z);
             }
         }
 
-        sizeof_coeff_x *= (interp_order + 1);
-        sizeof_coeff_y *= (interp_order + 1);
-        sizeof_coeff_z *= (interp_order + 1);
-        
-        if (num_used > 0) {
-           double *coeff_x = NULL; 
-           double *coeff_y = NULL;
-           double *coeff_z = NULL;
-           double *weights = NULL;
-           make_vector(coeff_x, sizeof_coeff_x);
-           make_vector(coeff_y, sizeof_coeff_y);
-           make_vector(coeff_z, sizeof_coeff_z);
-           make_vector(weights, interp_order + 1);
 
-           for (int i = 0; i < interp_order + 1; i++) {
-               weights[i] = ((i % 2 == 0)? 1 : -1);
-               if (i == 0 || i == interp_order) weights[i] = ((i % 2 == 0)? 1 : -1) * 0.5;
-           }
+        //Then go over the leaves to the targets
+
+        if (tree->leaves_list_num > 0) {
+            int sizeof_coeff_x = 0, sizeof_coeff_y = 0, sizeof_coeff_z = 0;
+            for (int i = 0; i < tree->leaves_list_num; ++i) {
+                int idx = tree->leaves_list[i];
+                sizeof_coeff_x += tree->x_dim[idx];
+                sizeof_coeff_y += tree->y_dim[idx];
+                sizeof_coeff_z += tree->z_dim[idx];
+            }
+
+            sizeof_coeff_x *= (interp_order + 1);
+            sizeof_coeff_y *= (interp_order + 1);
+            sizeof_coeff_z *= (interp_order + 1);
+        
+            double *coeff_x = NULL; 
+            double *coeff_y = NULL;
+            double *coeff_z = NULL;
+            make_vector(coeff_x, sizeof_coeff_x);
+            make_vector(coeff_y, sizeof_coeff_y);
+            make_vector(coeff_z, sizeof_coeff_z);
+
 #ifdef OPENACC_ENABLED
             #pragma acc enter data create(coeff_x[0:sizeof_coeff_x], coeff_y[0:sizeof_coeff_y], \
                                           coeff_z[0:sizeof_coeff_z])
-            #pragma acc enter data copyin(weights[0:interp_order+1])
 #endif
 
-        int coeff_x_start=0, coeff_y_start=0, coeff_z_start=0;
-        for (int i = 0; i < tree_numnodes; ++i) {
-            int idx = i;
+            int coeff_x_start=0, coeff_y_start=0, coeff_z_start=0;
+            for (int i = 0; i < tree->leaves_list_num; ++i) {
+                int idx = tree->leaves_list[i];
 
-            if (tree->used[idx] == 1) {
-                
                 int target_x_low_ind = target_tree_x_low_ind[idx];
                 int target_y_low_ind = target_tree_y_low_ind[idx];
                 int target_z_low_ind = target_tree_z_low_ind[idx];
-    
+
                 int target_x_high_ind = target_tree_x_high_ind[idx];
                 int target_y_high_ind = target_tree_y_high_ind[idx];
                 int target_z_high_ind = target_tree_z_high_ind[idx];
-    
+
                 double target_x_min = target_tree_x_min[idx];
                 double target_y_min = target_tree_y_min[idx];
                 double target_z_min = target_tree_z_min[idx];
@@ -178,12 +212,12 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                                target_x_low_ind, target_x_high_ind, target_x_min, 
                                target_xdd,
                                cluster_x, coeff_x_start, coeff_x, weights);
-        
+    
                 cp_comp_pot_coeffs(idx, interp_order,
                                target_y_low_ind, target_y_high_ind, target_y_min, 
                                target_ydd,
                                cluster_y, coeff_y_start, coeff_y, weights);
-        
+    
                 cp_comp_pot_coeffs(idx, interp_order,
                                target_z_low_ind, target_z_high_ind, target_z_min, 
                                target_zdd,
@@ -192,20 +226,16 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 coeff_x_start += tree->x_dim[idx] * (interp_order + 1);
                 coeff_y_start += tree->y_dim[idx] * (interp_order + 1);
                 coeff_z_start += tree->z_dim[idx] * (interp_order + 1);
-        
             }
-        }
 
 #ifdef OPENACC_ENABLED
-        #pragma acc wait
+            #pragma acc wait
 #endif
 
-        coeff_x_start = 0; coeff_y_start = 0; coeff_z_start = 0;
-        for (int i = 0; i < tree_numnodes; ++i) {
-            int idx = i;
+            coeff_x_start = 0; coeff_y_start = 0; coeff_z_start = 0;
+            for (int i = 0; i < tree->leaves_list_num; ++i) {
+                int idx = tree->leaves_list[i];
 
-            if (tree->used[idx] == 1) {
-                
                 int target_x_low_ind = target_tree_x_low_ind[idx];
                 int target_y_low_ind = target_tree_y_low_ind[idx];
                 int target_z_low_ind = target_tree_z_low_ind[idx];
@@ -227,23 +257,21 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 coeff_x_start += tree->x_dim[idx] * (interp_order + 1);
                 coeff_y_start += tree->y_dim[idx] * (interp_order + 1);
                 coeff_z_start += tree->z_dim[idx] * (interp_order + 1);
-        
             }
+#ifdef OPENACC_ENABLED
+            #pragma acc wait
+            #pragma acc exit data delete(coeff_x, coeff_y, coeff_z)
+#endif
+
+            free_vector(coeff_x);
+            free_vector(coeff_y);
+            free_vector(coeff_z);
         }
-#ifdef OPENACC_ENABLED
-        #pragma acc wait
-#endif
 
 #ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(coeff_x, coeff_y, coeff_z, weights)
+        #pragma acc exit data delete(weights)
 #endif
-
-        free_vector(coeff_x);
-        free_vector(coeff_y);
-        free_vector(coeff_z);
         free_vector(weights);
-
-        }
 
 
     } else if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SUBTRACTION)) {
@@ -306,49 +334,28 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 /***** LOCAL FUNCTIONS **************/
 /************************************/
 
-void cp_comp_downpass(int idx, int child_idx, int interp_order,
-        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q)
+void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
+        double *cluster_x, double *cluster_y, double *cluster_z,
+        int coeff_start, double *coeff_x, double *coeff_y, double *coeff_z, double *weights)
 {
     int interp_order_lim       = interp_order + 1;
-    int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
     
-    int cluster_charge_start          = idx * interp_pts_per_cluster;
     int cluster_pts_start             = idx * interp_order_lim;
-
-    int child_cluster_charge_start    = child_idx * interp_pts_per_cluster;
     int child_cluster_pts_start       = child_idx * interp_order_lim;
 
 
     int coeff_dim = interp_order_lim * interp_order_lim;
-
-    double *weights;
-    double *coeffX, *coeffY, *coeffZ;
-
-    make_vector(weights, interp_order_lim);
-
-    make_vector(coeffX,  coeff_dim);
-    make_vector(coeffY,  coeff_dim);
-    make_vector(coeffZ,  coeff_dim);
+    int coeff_start_ind = interp_order_lim * interp_order_lim * coeff_start;
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(cluster_x, cluster_y, cluster_z, cluster_q) \
-                create(weights[0:interp_order_lim], \
-                       coeffX[0:coeff_dim], coeffY[0:coeff_dim], coeffZ[0:coeff_dim])
+    #pragma acc kernels async(streamID) present(cluster_x, cluster_y, cluster_z, \
+                                                coeff_x, coeff_y, coeff_z, weights)
     {
 #endif
     
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
-
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
-    for (int i = 0; i < interp_order_lim; i++) {
-        weights[i] = ((i % 2 == 0)? 1 : -1);
-        if (i == 0 || i == interp_order) weights[i] = ((i % 2 == 0)? 1 : -1) * 0.5;
-    }
-
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
@@ -367,8 +374,8 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
         int eiz = -1;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop vector(32) independent reduction(+:denominatorx,denominatory,denominatorz) \
-                                                reduction(max:eix,eiy,eiz)
+        #pragma acc loop vector(32) reduction(+:denominatorx,denominatory,denominatorz) \
+                                    reduction(max:eix,eiy,eiz)
 #endif
         for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
             double cx = tx - cluster_x[cluster_pts_start + j];
@@ -414,12 +421,40 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
                 if (eiz != j) numeratorz *= 0;
             }
 
-            coeffX[i * interp_order_lim + j] = numeratorx / denominatorx;
-            coeffY[i * interp_order_lim + j] = numeratory / denominatory;
-            coeffZ[i * interp_order_lim + j] = numeratorz / denominatorz;
+            coeff_x[coeff_start_ind + i * interp_order_lim + j] = numeratorx / denominatorx;
+            coeff_y[coeff_start_ind + i * interp_order_lim + j] = numeratory / denominatory;
+            coeff_z[coeff_start_ind + i * interp_order_lim + j] = numeratorz / denominatorz;
         }
     }
+#ifdef OPENACC_ENABLED
+    } //end ACC kernels
+#endif
 
+    return;
+}
+
+
+
+
+void cp_comp_downpass(int idx, int child_idx, int interp_order,
+        int coeff_start, double *coeff_x, double *coeff_y, double *coeff_z, double *cluster_q)
+{
+    int interp_order_lim       = interp_order + 1;
+    int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
+    
+    int cluster_charge_start          = idx * interp_pts_per_cluster;
+    int child_cluster_charge_start    = child_idx * interp_pts_per_cluster;
+
+
+    int coeff_start_ind = interp_order_lim * interp_order_lim * coeff_start;
+
+    
+#ifdef OPENACC_ENABLED
+    int streamID = rand() % 4;
+    #pragma acc kernels async(streamID) present(coeff_x, coeff_y, coeff_z, cluster_q)
+    {
+#endif
+    
 
 #ifdef OPENACC_ENABLED
     #pragma acc loop gang independent
@@ -430,6 +465,10 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
         int child_k2 = child_kk%interp_order_lim;
         child_kk = child_kk - child_k2;
         int child_k1 = child_kk / interp_order_lim;
+
+        int coeff_x_start = coeff_start_ind + child_k1 * interp_order_lim;
+        int coeff_y_start = coeff_start_ind + child_k2 * interp_order_lim;
+        int coeff_z_start = coeff_start_ind + child_k3 * interp_order_lim;
         
         double temp = 0.0;
 
@@ -443,8 +482,8 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
             kk = kk - k2;
             int k1 = kk / interp_order_lim;
 
-            double cq = cluster_q[cluster_charge_start + j];
-            temp += coeffX[child_k1 * interp_order_lim + k1] * coeffY[child_k2 * interp_order_lim + k2] * coeffZ[child_k3 * interp_order_lim + k3] * cq;
+            temp += coeff_x[coeff_x_start + k1] * coeff_y[coeff_y_start + k2] * coeff_z[coeff_z_start + k3] 
+                  * cluster_q[cluster_charge_start + j];
 
         }
 
@@ -458,11 +497,6 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
     } //end ACC kernels
 #endif
     
-    free_vector(weights);
-    free_vector(coeffX);
-    free_vector(coeffY);
-    free_vector(coeffZ);
-
     return;
 }
 
