@@ -138,12 +138,16 @@ void Tree_Downpass_Interact(struct Tree *tree)
 
     for (int i = 0; i < tree->max_depth; ++i) {
         printf("Level %d, %d nodes: ", i, tree->levels_list_num[i]);
-        for (int j = 0; j < tree->levels_list_num[i]; ++j) printf("%d, ", tree->levels_list[i][j]);
+        for (int j = 0; j < tree->levels_list_num[i]; ++j) printf("%d, used: %d, used children: %d\n", tree->levels_list[i][j],
+                                                                  tree->used[tree->levels_list[i][j]],
+                                                                  tree->used_children[tree->levels_list[i][j]]);
         printf("\n\n");
     }
    
     printf("\nLeaves, %d of them: ", tree->leaves_list_num);
-    for (int i = 0; i < tree->leaves_list_num; ++i) printf("%d, ", tree->leaves_list[i]);
+    for (int i = 0; i < tree->leaves_list_num; ++i) printf("%d, used: %d, used children: %d\n", tree->leaves_list[i],
+                                                                  tree->used[tree->leaves_list[i]],
+                                                                  tree->used_children[tree->leaves_list[i]]);
     printf("\n\n");
 
 
@@ -158,6 +162,8 @@ int Tree_Fill_Used_Children(struct Tree *tree, int idx)
 
     for (int i = 0; i < tree->num_children[idx]; ++i)
         tree->used_children[idx] += Tree_Fill_Used_Children(tree, tree->children[8*idx + i]);
+
+    printf("Node %d has used flag %d, and has %d used children.\n", idx, tree->used[idx], tree->used_children[idx]);
 
     return (tree->used[idx] + tree->used_children[idx]);
 }
@@ -207,6 +213,7 @@ void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_
     }
 */
 
+
     tree->used[idx] = 1;
 
     if (tree->num_children[idx] == 0) {
@@ -232,6 +239,7 @@ void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_
         for (int i = 0; i < tree->num_children[idx]; i++)
             Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
     }
+
 
     return;
 }
