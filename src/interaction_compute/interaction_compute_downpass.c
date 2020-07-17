@@ -15,7 +15,7 @@ static void cp_comp_downpass(int idx, int child_idx, int interp_order,
         double *cluster_x,     double *cluster_y,     double *cluster_z,
         double *cluster_q);
 
-static void cp_comp_coeffs(int idx, int interp_order,
+static void cp_comp_pot_coeffs(int idx, int interp_order,
         int target_x_low_ind, int target_x_high_ind, double target_xmin,
         double target_xdd, double *cluster_x,
         int coeff_x_start, double *coeff_x, double *weights);
@@ -174,17 +174,17 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 double target_y_min = target_tree_y_min[idx];
                 double target_z_min = target_tree_z_min[idx];
                 
-                cp_comp_coeffs(idx, interp_order,
+                cp_comp_pot_coeffs(idx, interp_order,
                                target_x_low_ind, target_x_high_ind, target_x_min, 
                                target_xdd,
                                cluster_x, coeff_x_start, coeff_x, weights);
         
-                cp_comp_coeffs(idx, interp_order,
+                cp_comp_pot_coeffs(idx, interp_order,
                                target_y_low_ind, target_y_high_ind, target_y_min, 
                                target_ydd,
                                cluster_y, coeff_y_start, coeff_y, weights);
         
-                cp_comp_coeffs(idx, interp_order,
+                cp_comp_pot_coeffs(idx, interp_order,
                                target_z_low_ind, target_z_high_ind, target_z_min, 
                                target_zdd,
                                cluster_z, coeff_z_start, coeff_z, weights);
@@ -469,7 +469,7 @@ void cp_comp_downpass(int idx, int child_idx, int interp_order,
 
 
 
-void cp_comp_coeffs(int idx, int interp_order,
+void cp_comp_pot_coeffs(int idx, int interp_order,
         int target_x_low_ind, int target_x_high_ind, double target_xmin,
         double target_xdd, double *cluster_x,
         int coeff_x_start, double *coeff_x, double *weights)

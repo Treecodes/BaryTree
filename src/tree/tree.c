@@ -16,7 +16,8 @@
 #include "tree.h"
 
 
-void Tree_Fill_Levels(struct Tree *tree, struct TreeLinkedListNode *p, int *sizeof_levels_list, int *leaves_idx);
+int Tree_Fill_Used_Children(struct Tree *tree, int idx);
+void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_list, int *sizeof_leaves_list);
 
 
 void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, struct RunParams *run_params)
@@ -105,35 +106,45 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     (*tree_addr)->max_leaf_size = max_leaf_size;
     (*tree_addr)->max_depth = max_depth;
     
-    /* Creating levels list for the downpass */
-    make_matrix((*tree_addr)->levels_list, (*tree_addr)->max_depth, 20);
-    make_vector((*tree_addr)->levels_list_num, (*tree_addr)->max_depth);
-    for (int i = 0; i < (*tree_addr)->max_depth; ++i) (*tree_addr)->levels_list_num[i]=0;
-
-    make_vector((*tree_addr)->leaves_list, (*tree_addr)->numleaves);
-
-    int *sizeof_levels_list = NULL;
-    int leaves_idx = 0;
-    make_vector(sizeof_levels_list, (*tree_addr)->max_depth);
-    for (int i = 0; i < (*tree_addr)->max_depth; ++i) sizeof_levels_list[i]=20;
-
-    Tree_Fill_Levels(*tree_addr, tree_linked_list, sizeof_levels_list, &leaves_idx);
-    free_vector(sizeof_levels_list);
-
     TreeLinkedList_Free(&tree_linked_list);
 
+    return;
+}
 
-/*
-    for (int i = 0; i < (*tree_addr)->max_depth; ++i) {
-        printf("Level %d, %d nodes: ", i, (*tree_addr)->levels_list_num[i]);
-        //for (int j = 0; j < (*tree_addr)->levels_list_num[i]; ++j) printf("%d, ", (*tree_addr)->levels_list[i][j]);
+
+
+void Tree_Downpass_Interact(struct Tree *tree)
+{
+
+    /* Creating levels list for the downpass */
+    make_matrix(tree->levels_list, tree->max_depth, 20);
+    make_vector(tree->levels_list_num, tree->max_depth);
+    for (int i = 0; i < tree->max_depth; ++i) tree->levels_list_num[i]=0;
+
+    make_vector(tree->leaves_list, 50);
+    tree->leaves_list_num = 0;
+
+    int *sizeof_levels_list = NULL;
+    make_vector(sizeof_levels_list, tree->max_depth);
+    for (int i = 0; i < tree->max_depth; ++i) sizeof_levels_list[i]=20;
+
+    int sizeof_leaves_list = 50;
+
+    Tree_Fill_Used_Children(tree, 0);
+
+    Tree_Fill_Levels(tree, 0, 0, sizeof_levels_list, &sizeof_leaves_list);
+    free_vector(sizeof_levels_list);
+
+
+    for (int i = 0; i < tree->max_depth; ++i) {
+        printf("Level %d, %d nodes: ", i, tree->levels_list_num[i]);
+        for (int j = 0; j < tree->levels_list_num[i]; ++j) printf("%d, ", tree->levels_list[i][j]);
         printf("\n\n");
     }
    
-    printf("\nLeaves, %d of them: ", (*tree_addr)->numleaves);
-    //for (int i = 0; i < (*tree_addr)->numleaves; ++i) printf("%d, ", (*tree_addr)->leaves_list[i]);
+    printf("\nLeaves, %d of them: ", tree->leaves_list_num);
+    for (int i = 0; i < tree->leaves_list_num; ++i) printf("%d, ", tree->leaves_list[i]);
     printf("\n\n");
-*/
 
 
     return;
@@ -141,25 +152,57 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
 
 
 
-void Tree_Fill_Levels(struct Tree *tree, struct TreeLinkedListNode *p, int *sizeof_levels_list, int *leaves_idx)
+int Tree_Fill_Used_Children(struct Tree *tree, int idx)
 {
-    
-    if (p->num_children > 0) {
-        if (tree->levels_list_num[p->level] >= sizeof_levels_list[p->level]) {
-            sizeof_levels_list[p->level] *= 1.5;
-            tree->levels_list[p->level] = realloc_vector(tree->levels_list[p->level], sizeof_levels_list[p->level]);
-        }
+    tree->used_children[idx] = 0;
 
-        tree->levels_list[p->level][tree->levels_list_num[p->level]] = p->node_index;
-        tree->levels_list_num[p->level]++;
+    for (int i = 0; i < tree->num_children[idx]; ++i)
+        tree->used_children[idx] += Tree_Fill_Used_Children(tree, tree->children[8*idx + i]);
 
-        for (int i = 0; i < p->num_children; i++) {
-            Tree_Fill_Levels(tree, p->child[i], sizeof_levels_list, leaves_idx);
+    return (tree->used[idx] + tree->used_children[idx]);
+}
+
+
+
+void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_list, int *sizeof_leaves_list)
+{
+
+    //printf("Currently on node %d.\n", idx);
+    if (tree->used[idx] == 1) {
+
+        if (tree->used_children[idx] == 0) {
+            //printf("    Node %d is used, but no children are used.\n", idx);
+            if (tree->leaves_list_num >= *sizeof_leaves_list) {
+                *sizeof_leaves_list *= 1.5;
+                tree->leaves_list = realloc_vector(tree->leaves_list, *sizeof_leaves_list);
+            }
+
+            tree->leaves_list[tree->leaves_list_num] = idx;
+            tree->leaves_list_num++;
+
+        } else {
+
+            //printf("    Node %d is used, and its children are used.\n", idx);
+            if (tree->levels_list_num[level] >= sizeof_levels_list[level]) {
+                sizeof_levels_list[level] *= 1.5;
+                tree->levels_list[level] = realloc_vector(tree->levels_list[level], sizeof_levels_list[level]);
+            }
+
+            tree->levels_list[level][tree->levels_list_num[level]] = idx;
+            tree->levels_list_num[level]++;
+
+            for (int i = 0; i < tree->num_children[idx]; i++)
+                Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
         }
 
     } else {
-        tree->leaves_list[*leaves_idx] = p->node_index;
-        (*leaves_idx)++;
+
+        if (tree->used_children[idx] > 0) {
+            //printf("    Node %d is not used, but its children are used.\n");
+            for (int i = 0; i < tree->num_children[idx]; i++)
+                Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
+
+        }
     }
 
     return;
@@ -185,9 +228,12 @@ void Tree_Alloc(struct Tree **tree_addr, int length)
     make_vector(tree->x_max, length);
     make_vector(tree->y_max, length);
     make_vector(tree->z_max, length);
-    make_vector(tree->cluster_ind, length);
-    make_vector(tree->used, length);
     make_vector(tree->radius, length);
+    make_vector(tree->cluster_ind, length);
+
+    make_vector(tree->used, length);
+    make_vector(tree->used_children, length);
+
     make_vector(tree->num_children, length);
     make_vector(tree->children, 8*length);
 
@@ -280,6 +326,9 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p)
     tree->numpar[p->node_index] = p->numpar;
     tree->radius[p->node_index] = p->radius;
     tree->cluster_ind[p->node_index] = p->node_index;
+
+    tree->used[p->node_index] = 0;
+    tree->used_children[p->node_index] = 0;
 
     tree->num_children[p->node_index] = p->num_children;
 

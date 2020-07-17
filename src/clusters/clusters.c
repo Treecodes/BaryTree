@@ -173,7 +173,6 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     make_vector(clusters->z, totalNumberInterpolationPoints);
     make_vector(clusters->q, totalNumberInterpolationCharges);
 
-
     clusters->num         = totalNumberInterpolationPoints;
     clusters->num_charges = totalNumberInterpolationCharges;
 
@@ -184,15 +183,13 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
 
 
 #ifdef OPENACC_ENABLED
-    //#pragma acc data copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                             zC[0:totalNumberInterpolationPoints])
     #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                              zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
     {
 #endif
 
     for (int i = 0; i < tree_numnodes; i++) {
-        if (tree->used[i] == 1) {
+        if (tree->used[i] == 1 || tree->used_children[i] > 0) {
             cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
         }
     }

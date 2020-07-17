@@ -20,5 +20,7 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p);
 
 void Tree_Print(struct Tree *tree);
 
+void Tree_Downpass_Interact(struct Tree *tree);
+
 
 #endif /* H_TREEFUNCTIONS_H */

@@ -139,7 +139,6 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
     if (run_params->compute_type == PARTICLE_CLUSTER || run_params->compute_type == CLUSTER_PARTICLE) {
 
         int *source_tree_used = source_tree->used;
-        for (int i = 0; i < source_tree_numnodes; i++) source_tree->used[i] = 0;
     
         /* Build PC and CP interaction lists */
     
@@ -160,7 +159,6 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
     } else if (run_params->compute_type == CLUSTER_CLUSTER) {
 
         int *target_tree_used = target_tree->used;
-        for (int i = 0; i < target_tree_numnodes; i++) target_tree->used[i] = 0;
     
         /* Allocate interaction lists exclusive to CC */
         

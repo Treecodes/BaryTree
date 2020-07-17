@@ -129,6 +129,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         START_TIMER(&time_tree[4]);
         InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
+        Tree_Downpass_Interact(tree);
         STOP_TIMER(&time_tree[4]);
 
         START_TIMER(&time_tree[2]);
