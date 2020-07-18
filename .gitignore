@@ -8,7 +8,7 @@
 *.csv
 *.xml
 *.prefs
-build/
+build*
 .project
 .cproject
 .pydevproject

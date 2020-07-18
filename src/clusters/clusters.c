@@ -189,7 +189,7 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
 #endif
 
     for (int i = 0; i < tree_numnodes; i++) {
-        if (tree->used[i] == 1 || tree->used_children[i] > 0) {
+        if (tree->used_children[i] > 0 || tree->used_leaf[i] == 1) {
             cp_comp_interp(tree, i, interpolationOrder, xC, yC, zC);
         }
     }

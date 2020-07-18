@@ -17,6 +17,7 @@ struct Tree
     int *cluster_ind;
     int *used;
     int *used_children;
+    int *used_leaf;
     
     double *radius;
 

@@ -135,22 +135,6 @@ void Tree_Downpass_Interact(struct Tree *tree)
     Tree_Fill_Levels(tree, 0, 0, sizeof_levels_list, &sizeof_leaves_list);
     free_vector(sizeof_levels_list);
 
-
-    for (int i = 0; i < tree->max_depth; ++i) {
-        printf("Level %d, %d nodes: ", i, tree->levels_list_num[i]);
-        for (int j = 0; j < tree->levels_list_num[i]; ++j) printf("%d, used: %d, used children: %d\n", tree->levels_list[i][j],
-                                                                  tree->used[tree->levels_list[i][j]],
-                                                                  tree->used_children[tree->levels_list[i][j]]);
-        printf("\n\n");
-    }
-   
-    printf("\nLeaves, %d of them: ", tree->leaves_list_num);
-    for (int i = 0; i < tree->leaves_list_num; ++i) printf("%d, used: %d, used children: %d\n", tree->leaves_list[i],
-                                                                  tree->used[tree->leaves_list[i]],
-                                                                  tree->used_children[tree->leaves_list[i]]);
-    printf("\n\n");
-
-
     return;
 }
 
@@ -163,8 +147,6 @@ int Tree_Fill_Used_Children(struct Tree *tree, int idx)
     for (int i = 0; i < tree->num_children[idx]; ++i)
         tree->used_children[idx] += Tree_Fill_Used_Children(tree, tree->children[8*idx + i]);
 
-    printf("Node %d has used flag %d, and has %d used children.\n", idx, tree->used[idx], tree->used_children[idx]);
-
     return (tree->used[idx] + tree->used_children[idx]);
 }
 
@@ -173,50 +155,7 @@ int Tree_Fill_Used_Children(struct Tree *tree, int idx)
 void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_list, int *sizeof_leaves_list)
 {
 
-/*
-    //printf("Currently on node %d.\n", idx);
-    if (tree->used[idx] == 1) {
-
-        if (tree->used_children[idx] == 0) {
-            //printf("    Node %d is used, but no children are used.\n", idx);
-            if (tree->leaves_list_num >= *sizeof_leaves_list) {
-                *sizeof_leaves_list *= 1.5;
-                tree->leaves_list = realloc_vector(tree->leaves_list, *sizeof_leaves_list);
-            }
-
-            tree->leaves_list[tree->leaves_list_num] = idx;
-            tree->leaves_list_num++;
-
-        } else {
-
-            //printf("    Node %d is used, and its children are used.\n", idx);
-            if (tree->levels_list_num[level] >= sizeof_levels_list[level]) {
-                sizeof_levels_list[level] *= 1.5;
-                tree->levels_list[level] = realloc_vector(tree->levels_list[level], sizeof_levels_list[level]);
-            }
-
-            tree->levels_list[level][tree->levels_list_num[level]] = idx;
-            tree->levels_list_num[level]++;
-
-            for (int i = 0; i < tree->num_children[idx]; i++)
-                Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
-        }
-
-    } else {
-
-        if (tree->used_children[idx] > 0) {
-            //printf("    Node %d is not used, but its children are used.\n");
-            for (int i = 0; i < tree->num_children[idx]; i++)
-                Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
-
-        }
-    }
-*/
-
-
-    tree->used[idx] = 1;
-
-    if (tree->num_children[idx] == 0) {
+    if (tree->used_children[idx] == 0) {
         if (tree->leaves_list_num >= *sizeof_leaves_list) {
             *sizeof_leaves_list *= 1.5;
             tree->leaves_list = realloc_vector(tree->leaves_list, *sizeof_leaves_list);
@@ -224,10 +163,10 @@ void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_
 
         tree->leaves_list[tree->leaves_list_num] = idx;
         tree->leaves_list_num++;
+        tree->used_leaf[idx] = 1;
 
     } else {
 
-        //printf("    Node %d is used, and its children are used.\n", idx);
         if (tree->levels_list_num[level] >= sizeof_levels_list[level]) {
             sizeof_levels_list[level] *= 1.5;
             tree->levels_list[level] = realloc_vector(tree->levels_list[level], sizeof_levels_list[level]);
@@ -239,6 +178,32 @@ void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_
         for (int i = 0; i < tree->num_children[idx]; i++)
             Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
     }
+
+//    tree->used[idx] = 1;
+//
+//    if (tree->num_children[idx] == 0) {
+//        if (tree->leaves_list_num >= *sizeof_leaves_list) {
+//            *sizeof_leaves_list *= 1.5;
+//            tree->leaves_list = realloc_vector(tree->leaves_list, *sizeof_leaves_list);
+//        }
+//
+//        tree->leaves_list[tree->leaves_list_num] = idx;
+//        tree->leaves_list_num++;
+//
+//    } else {
+//
+//        //printf("    Node %d is used, and its children are used.\n", idx);
+//        if (tree->levels_list_num[level] >= sizeof_levels_list[level]) {
+//            sizeof_levels_list[level] *= 1.5;
+//            tree->levels_list[level] = realloc_vector(tree->levels_list[level], sizeof_levels_list[level]);
+//        }
+//
+//        tree->levels_list[level][tree->levels_list_num[level]] = idx;
+//        tree->levels_list_num[level]++;
+//
+//        for (int i = 0; i < tree->num_children[idx]; i++)
+//            Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
+//    }
 
 
     return;
@@ -269,6 +234,7 @@ void Tree_Alloc(struct Tree **tree_addr, int length)
 
     make_vector(tree->used, length);
     make_vector(tree->used_children, length);
+    make_vector(tree->used_leaf, length);
 
     make_vector(tree->num_children, length);
     make_vector(tree->children, 8*length);
@@ -311,9 +277,13 @@ void Tree_Free(struct Tree **tree_addr)
         free_vector(tree->x_max);
         free_vector(tree->y_max);
         free_vector(tree->z_max);
-        free_vector(tree->cluster_ind);
-        free_vector(tree->used);
         free_vector(tree->radius);
+        free_vector(tree->cluster_ind);
+
+        free_vector(tree->used);
+        free_vector(tree->used_children);
+        free_vector(tree->used_leaf);
+
         free_vector(tree->num_children);
         free_vector(tree->children);
 
@@ -365,6 +335,7 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p)
 
     tree->used[p->node_index] = 0;
     tree->used_children[p->node_index] = 0;
+    tree->used_leaf[p->node_index] = 0;
 
     tree->num_children[p->node_index] = p->num_children;
 
