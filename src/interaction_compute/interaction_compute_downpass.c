@@ -96,8 +96,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             if (i == 0 || i == interp_order) weights[i] = ((i % 2 == 0)? 1 : -1) * 0.5;
         }
 
+
 #ifdef OPENACC_ENABLED
-        #pragma acc enter data copyin(weights[0:interp_order+1])
+        #pragma acc update self(cluster_x[0:clusters->num], cluster_y[0:clusters->num], cluster_z[0:clusters->num])
+//        #pragma acc enter data copyin(weights[0:interp_order+1])
 #endif
 
         //First go over each level
@@ -118,10 +120,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 make_vector(coeff_y, sizeof_coeffs);
                 make_vector(coeff_z, sizeof_coeffs);
 
-#ifdef OPENACC_ENABLED
-                #pragma acc enter data create(coeff_x[0:sizeof_coeffs], coeff_y[0:sizeof_coeffs], \
-                                              coeff_z[0:sizeof_coeffs])
-#endif
+//#ifdef OPENACC_ENABLED
+//                #pragma acc enter data create(coeff_x[0:sizeof_coeffs], coeff_y[0:sizeof_coeffs], \
+//                                              coeff_z[0:sizeof_coeffs])
+//#endif
 
                 //Go over each cluster at that level
                 int coeff_start = 0;
@@ -137,8 +139,11 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                         coeff_start++;
                     }
                 }
+                
 #ifdef OPENACC_ENABLED
-                #pragma acc wait
+//                #pragma acc wait
+                #pragma acc enter data copyin(coeff_x[0:sizeof_coeffs], coeff_y[0:sizeof_coeffs], \
+                                              coeff_z[0:sizeof_coeffs])
 #endif
 
                 //Go over each cluster at that level
@@ -187,10 +192,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             make_vector(coeff_y, sizeof_coeff_y);
             make_vector(coeff_z, sizeof_coeff_z);
 
-#ifdef OPENACC_ENABLED
-            #pragma acc enter data create(coeff_x[0:sizeof_coeff_x], coeff_y[0:sizeof_coeff_y], \
-                                          coeff_z[0:sizeof_coeff_z])
-#endif
+//#ifdef OPENACC_ENABLED
+//            #pragma acc enter data create(coeff_x[0:sizeof_coeff_x], coeff_y[0:sizeof_coeff_y], \
+//                                          coeff_z[0:sizeof_coeff_z])
+//#endif
 
             int coeff_x_start=0, coeff_y_start=0, coeff_z_start=0;
             for (int i = 0; i < tree->leaves_list_num; ++i) {
@@ -228,8 +233,11 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                 coeff_z_start += tree->z_dim[idx] * (interp_order + 1);
             }
 
+
 #ifdef OPENACC_ENABLED
-            #pragma acc wait
+            #pragma acc enter data copyin(coeff_x[0:sizeof_coeff_x], coeff_y[0:sizeof_coeff_y], \
+                                          coeff_z[0:sizeof_coeff_z])
+//            #pragma acc wait
 #endif
 
             coeff_x_start = 0; coeff_y_start = 0; coeff_z_start = 0;
@@ -268,9 +276,9 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
             free_vector(coeff_z);
         }
 
-#ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(weights)
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc exit data delete(weights)
+//#endif
         free_vector(weights);
 
 
@@ -347,19 +355,19 @@ void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
     int coeff_dim = interp_order_lim * interp_order_lim;
     int coeff_start_ind = interp_order_lim * interp_order_lim * coeff_start;
     
-#ifdef OPENACC_ENABLED
-    int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(cluster_x, cluster_y, cluster_z, \
-                                                coeff_x, coeff_y, coeff_z, weights)
-    {
-#endif
+//#ifdef OPENACC_ENABLED
+//    int streamID = rand() % 4;
+//    #pragma acc kernels async(streamID) present(cluster_x, cluster_y, cluster_z, \
+//                                                coeff_x, coeff_y, coeff_z, weights)
+//    {
+//#endif
     
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+//#ifdef OPENACC_ENABLED
+//    #pragma acc loop independent
+//#endif
     for (int i = 0; i < interp_order_lim; i++) {
         double tx = cluster_x[child_cluster_pts_start + i];
         double ty = cluster_y[child_cluster_pts_start + i];
@@ -373,10 +381,10 @@ void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
         int eiy = -1;
         int eiz = -1;
 
-#ifdef OPENACC_ENABLED
-        #pragma acc loop vector(32) reduction(+:denominatorx,denominatory,denominatorz) \
-                                    reduction(max:eix,eiy,eiz)
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc loop vector(32) reduction(+:denominatorx,denominatory,denominatorz) \
+//                                    reduction(max:eix,eiy,eiz)
+//#endif
         for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
             double cx = tx - cluster_x[cluster_pts_start + j];
             double cy = ty - cluster_y[cluster_pts_start + j];
@@ -395,9 +403,9 @@ void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
         if (eiy!=-1) denominatory = 1;
         if (eiz!=-1) denominatorz = 1;
 
-#ifdef OPENACC_ENABLED
-        #pragma acc loop vector(32) independent
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc loop vector(32) independent
+//#endif
         for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
             double numeratorx = 1.0;
             double numeratory = 1.0;
@@ -424,11 +432,12 @@ void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
             coeff_x[coeff_start_ind + i * interp_order_lim + j] = numeratorx / denominatorx;
             coeff_y[coeff_start_ind + i * interp_order_lim + j] = numeratory / denominatory;
             coeff_z[coeff_start_ind + i * interp_order_lim + j] = numeratorz / denominatorz;
+
         }
     }
-#ifdef OPENACC_ENABLED
-    } //end ACC kernels
-#endif
+//#ifdef OPENACC_ENABLED
+//    } //end ACC kernels
+//#endif
 
     return;
 }
@@ -512,25 +521,25 @@ void cp_comp_pot_coeffs(int idx, int interp_order,
     int interp_order_lim = interp_order + 1;
     int cluster_pts_start = idx * interp_order_lim;
 
-#ifdef OPENACC_ENABLED
-    int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(cluster_x, coeff_x, weights) 
-    {
-#endif
+//#ifdef OPENACC_ENABLED
+//    int streamID = rand() % 4;
+//    #pragma acc kernels async(streamID) present(cluster_x, coeff_x, weights) 
+//    {
+//#endif
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 
-#ifdef OPENACC_ENABLED
-    #pragma acc loop independent
-#endif
+//#ifdef OPENACC_ENABLED
+//    #pragma acc loop independent
+//#endif
     for (int ix = target_x_low_ind; ix <= target_x_high_ind; ix++) {
         double tx = target_xmin + (ix - target_x_low_ind) * target_xdd;
         double denominator = 0.0;
         int eix = -1;
 
-#ifdef OPENACC_ENABLED
-        #pragma acc loop vector(32) independent reduction(+:denominator) reduction(max:eix)
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc loop vector(32) independent reduction(+:denominator) reduction(max:eix)
+//#endif
         for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
             double cx = tx - cluster_x[cluster_pts_start+j];
             if (fabs(cx)<DBL_MIN) eix = j;
@@ -539,9 +548,9 @@ void cp_comp_pot_coeffs(int idx, int interp_order,
 
         if (eix!=-1) denominator = 1;
 
-#ifdef OPENACC_ENABLED
-        #pragma acc loop vector(32) independent
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc loop vector(32) independent
+//#endif
         for (int j = 0; j < interp_order_lim; j++) {  // loop through the degree
             double numerator = 1.0;
             if (eix == -1) {
@@ -553,9 +562,9 @@ void cp_comp_pot_coeffs(int idx, int interp_order,
             coeff_x[coeff_x_start + (ix-target_x_low_ind) * interp_order_lim + j] = numerator / denominator;
         }
     }
-#ifdef OPENACC_ENABLED
-    } //end ACC kernels
-#endif
+//#ifdef OPENACC_ENABLED
+//    } //end ACC kernels
+//#endif
 
     return;
 }
