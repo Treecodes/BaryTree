@@ -13,6 +13,7 @@ struct TreeLinkedListNode
     
     int num_children;
     struct TreeLinkedListNode *child[8];
+    struct TreeLinkedListNode *parent;
 
     int node_index;
 

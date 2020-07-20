@@ -17,6 +17,7 @@
 
 
 int Tree_Fill_Used_Children(struct Tree *tree, int idx);
+void Tree_Fill_Used_Parent(struct Tree *tree, int idx, int used_parent);
 void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_list, int *sizeof_leaves_list);
 
 
@@ -91,7 +92,7 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     xyzind[4] = 0;
     xyzind[5] = targets->zdim-1;
     
-    TreeLinkedList_Targets_Construct(&tree_linked_list,
+    TreeLinkedList_Targets_Construct(&tree_linked_list, NULL,
                     run_params->max_per_target_leaf, xyzminmax, xyzdim, xyzind,
                     &numnodes, &numleaves, &min_leaf_size, &max_leaf_size,
                     &max_depth, 0);
@@ -131,6 +132,7 @@ void Tree_Downpass_Interact(struct Tree *tree)
     int sizeof_leaves_list = 50;
 
     Tree_Fill_Used_Children(tree, 0);
+    Tree_Fill_Used_Parent(tree, 0, 0);
 
     Tree_Fill_Levels(tree, 0, 0, sizeof_levels_list, &sizeof_leaves_list);
     free_vector(sizeof_levels_list);
@@ -152,6 +154,22 @@ int Tree_Fill_Used_Children(struct Tree *tree, int idx)
 
 
 
+void Tree_Fill_Used_Parent(struct Tree *tree, int idx, int used_parent) {
+
+    tree->used_parent[idx] = used_parent; 
+    
+    int child_used_parent = 0;
+    if (tree->used[idx] == 1 || used_parent == 1) 
+        child_used_parent = 1;
+
+    for (int i = 0; i < tree->num_children[idx]; ++i)
+        Tree_Fill_Used_Parent(tree, tree->children[8*idx + i], child_used_parent);
+
+    return;
+}
+
+
+
 void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_list, int *sizeof_leaves_list)
 {
 
@@ -166,14 +184,16 @@ void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_
         tree->used_leaf[idx] = 1;
 
     } else {
+    
+        if (tree->used_parent[idx] == 1 || tree->used[idx] == 1) {
+            if (tree->levels_list_num[level] >= sizeof_levels_list[level]) {
+                sizeof_levels_list[level] *= 1.5;
+                tree->levels_list[level] = realloc_vector(tree->levels_list[level], sizeof_levels_list[level]);
+            }
 
-        if (tree->levels_list_num[level] >= sizeof_levels_list[level]) {
-            sizeof_levels_list[level] *= 1.5;
-            tree->levels_list[level] = realloc_vector(tree->levels_list[level], sizeof_levels_list[level]);
+            tree->levels_list[level][tree->levels_list_num[level]] = idx;
+            tree->levels_list_num[level]++;
         }
-
-        tree->levels_list[level][tree->levels_list_num[level]] = idx;
-        tree->levels_list_num[level]++;
 
         for (int i = 0; i < tree->num_children[idx]; i++)
             Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
@@ -235,9 +255,11 @@ void Tree_Alloc(struct Tree **tree_addr, int length)
     make_vector(tree->used, length);
     make_vector(tree->used_children, length);
     make_vector(tree->used_leaf, length);
+    make_vector(tree->used_parent, length);
 
     make_vector(tree->num_children, length);
     make_vector(tree->children, 8*length);
+    make_vector(tree->parent, length);
 
     make_vector(tree->x_dim, length);
     make_vector(tree->y_dim, length);
@@ -283,9 +305,11 @@ void Tree_Free(struct Tree **tree_addr)
         free_vector(tree->used);
         free_vector(tree->used_children);
         free_vector(tree->used_leaf);
+        free_vector(tree->used_parent);
 
         free_vector(tree->num_children);
         free_vector(tree->children);
+        free_vector(tree->parent);
 
         free_vector(tree->x_dim);
         free_vector(tree->y_dim);
@@ -336,8 +360,14 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p)
     tree->used[p->node_index] = 0;
     tree->used_children[p->node_index] = 0;
     tree->used_leaf[p->node_index] = 0;
+    tree->used_parent[p->node_index] = 0;
 
     tree->num_children[p->node_index] = p->num_children;
+
+    if (p->parent != NULL) 
+        tree->parent[p->node_index] = (p->parent)->node_index;
+    else
+        tree->parent[p->node_index] = -1;
 
     tree->x_dim[p->node_index] = p->x_dim;
     tree->y_dim[p->node_index] = p->y_dim;

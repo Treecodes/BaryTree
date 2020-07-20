@@ -17,6 +17,7 @@ struct Tree
     int *cluster_ind;
     int *used;
     int *used_children;
+    int *used_parent;
     int *used_leaf;
     
     double *radius;
@@ -35,6 +36,7 @@ struct Tree
 
     int *num_children;
     int *children;
+    int *parent;
 
     int **levels_list;
     int *levels_list_num;
