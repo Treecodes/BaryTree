@@ -14,3 +14,4 @@ distribution          uniform
 run_direct            1
 slice                 10
 verbosity             1
+temp                  0

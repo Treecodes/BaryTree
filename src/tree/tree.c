@@ -23,6 +23,7 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
     double xyzminmax[6];
     int numnodes = 0;
     int numleaves = 0;
+    int max_depth = 1;
     
     int min_leaf_size = INT_MAX;
     int max_leaf_size = 0;
@@ -34,9 +35,9 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
     xyzminmax[4] = minval(sources->z, sources->num);
     xyzminmax[5] = maxval(sources->z, sources->num);
     
-    TreeLinkedList_Sources_Construct(&tree_linked_list, sources, 1, sources->num,
+    TreeLinkedList_Sources_Construct(&tree_linked_list, NULL, sources, 1, sources->num,
                     run_params->max_per_source_leaf, xyzminmax, &numnodes, &numleaves,
-                    &min_leaf_size, &max_leaf_size);
+                    &min_leaf_size, &max_leaf_size, &max_depth, 0);
     
     TreeLinkedList_SetIndex(tree_linked_list, 0);
     
@@ -48,6 +49,7 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
     
     (*tree_addr)->min_leaf_size = min_leaf_size;
     (*tree_addr)->max_leaf_size = max_leaf_size;
+    (*tree_addr)->max_depth = max_depth;
     
     Tree_Set_Leaves_and_Levels(*tree_addr);
 

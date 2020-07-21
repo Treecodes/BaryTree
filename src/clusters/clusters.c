@@ -21,6 +21,10 @@ static void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpola
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
+static void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int interpolationDegree,
+        double *xS, double *yS, double *zS, double *qS, double *wS,
+        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
+
 static void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolationDegree,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
@@ -109,7 +113,8 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
+            pc_comp_ms_modifiedF_child_to_parent(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
+//            pc_comp_ms_modifiedF(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
 
     } else if ((approximation == LAGRANGE) && (singularity == SUBTRACTION)) {
         for (int i = 0; i < tree_numnodes; i++)
@@ -295,6 +300,213 @@ void Clusters_Free_Win(struct Clusters **clusters_addr)
 /************************************/
 /***** LOCAL FUNCTIONS **************/
 /************************************/
+
+void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int interpolationDegree,
+        double *xS, double *yS, double *zS, double *qS, double *wS,
+        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
+{
+
+    int interpDegreeLim = interpolationDegree + 1;
+    int interpolationPointsPerCluster = interpDegreeLim * interpDegreeLim * interpDegreeLim;
+    int sourcePointsInCluster = tree->iend[idx] - tree->ibeg[idx] + 1;
+    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
+    int startingIndexInSourcesArray = tree->ibeg[idx]-1;
+
+    double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ, *modifiedF;
+    int *exactIndX, *exactIndY, *exactIndZ;
+
+    make_vector(weights,   interpDegreeLim);
+    make_vector(dj,        interpDegreeLim);
+    make_vector(tt,        interpDegreeLim);
+    make_vector(nodeX,     interpDegreeLim);
+    make_vector(nodeY,     interpDegreeLim);
+    make_vector(nodeZ,     interpDegreeLim);
+    make_vector(modifiedF, sourcePointsInCluster);
+    make_vector(exactIndX, sourcePointsInCluster);
+    make_vector(exactIndY, sourcePointsInCluster);
+    make_vector(exactIndZ, sourcePointsInCluster);
+
+    double x0 = tree->x_min[idx];
+    double x1 = tree->x_max[idx];
+    double y0 = tree->y_min[idx];
+    double y1 = tree->y_max[idx];
+    double z0 = tree->z_min[idx];
+    double z1 = tree->z_max[idx];
+
+#ifdef OPENACC_ENABLED
+    int streamID = rand() % 4;
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ) \
+                       create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
+                              exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
+                              nodeX[0:interpDegreeLim], nodeY[0:interpDegreeLim], \
+                              nodeZ[0:interpDegreeLim], weights[0:interpDegreeLim], \
+                              dj[0:interpDegreeLim], tt[0:interpDegreeLim])
+    {
+#endif
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int j = 0; j < sourcePointsInCluster; j++) {
+        modifiedF[j] = qS[startingIndexInSourcesArray + j] * wS[startingIndexInSourcesArray + j];
+        exactIndX[j] = -1;
+        exactIndY[j] = -1;
+        exactIndZ[j] = -1;
+    }
+
+    //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int i = 0; i < interpDegreeLim; i++) {
+        tt[i] = cos(i * M_PI / interpolationDegree);
+        nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
+        nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
+        nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+    }
+
+    // Compute weights
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int j = 0; j < interpDegreeLim; j++) {
+        dj[j] = 1.0;
+        if (j == 0) dj[j] = 0.5;
+        if (j == interpolationDegree) dj[j] = 0.5;
+    }
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int j = 0; j < interpDegreeLim; j++) {
+        weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
+    }
+
+    // Compute modified f values
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int i = 0; i < sourcePointsInCluster; i++) { // loop through the source points
+
+        double sumX = 0.0;
+        double sumY = 0.0;
+        double sumZ = 0.0;
+
+        double sx = xS[startingIndexInSourcesArray+i];
+        double sy = yS[startingIndexInSourcesArray+i];
+        double sz = zS[startingIndexInSourcesArray+i];
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+#endif
+        for (int j = 0; j < (interpolationDegree+1); j++) {  // loop through the degree
+
+            double cx = sx - nodeX[j];
+            double cy = sy - nodeY[j];
+            double cz = sz - nodeZ[j];
+
+            if (fabs(cx) < DBL_MIN) exactIndX[i] = j;
+            if (fabs(cy) < DBL_MIN) exactIndY[i] = j;
+            if (fabs(cz) < DBL_MIN) exactIndZ[i] = j;
+
+            // Increment the sums
+            double w = weights[j];
+            sumX += w / cx;
+            sumY += w / cy;
+            sumZ += w / cz;
+
+        }
+
+        double denominator = 1.0;
+        if (exactIndX[i] == -1) denominator *= sumX;
+        if (exactIndY[i] == -1) denominator *= sumY;
+        if (exactIndZ[i] == -1) denominator *= sumZ;
+
+        modifiedF[i] /= denominator;
+    }
+
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int j = 0; j < interpolationPointsPerCluster; j++) {
+        int k1 = j%(interpolationDegree+1);
+        int kk = (j-k1)/(interpolationDegree+1);
+        int k2 = kk%(interpolationDegree+1);
+        kk = kk - k2;
+        int k3 = kk / (interpolationDegree+1);
+
+        double cz = nodeZ[k3];
+        double w3 = weights[k3];
+
+        double cy = nodeY[k2];
+        double w2 = weights[k2];
+
+        double cx = nodeX[k1];
+        double w1 = weights[k1];
+
+        // Fill cluster X, Y, and Z arrays
+        clusterX[startingIndexInClustersArray + j] = cx;
+        clusterY[startingIndexInClustersArray + j] = cy;
+        clusterZ[startingIndexInClustersArray + j] = cz;
+
+        // Increment cluster Q array
+        double temp = 0.0;
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temp)
+#endif
+        for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
+            double sx = xS[startingIndexInSourcesArray + i];
+            double sy = yS[startingIndexInSourcesArray + i];
+            double sz = zS[startingIndexInSourcesArray + i];
+
+            double numerator = 1.0;
+
+            // If exactInd[i] == -1, then no issues.
+            // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
+            if (exactIndX[i] == -1) {
+                numerator *= w1 / (sx - cx);
+            } else {
+                if (exactIndX[i] != k1) numerator *= 0;
+            }
+
+            if (exactIndY[i] == -1) {
+                numerator *= w2 / (sy - cy);
+            } else {
+                if (exactIndY[i] != k2) numerator *= 0;
+            }
+
+            if (exactIndZ[i] == -1) {
+                numerator *= w3 / (sz - cz);
+            } else {
+                if (exactIndZ[i] != k3) numerator *= 0;
+            }
+
+            temp += numerator * modifiedF[i];
+
+        }
+
+        clusterQ[startingIndexInClustersArray + j] += temp;
+
+    }
+#ifdef OPENACC_ENABLED
+    } //end acc kernels region
+#endif
+
+    free_vector(weights);
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
+    free_vector(modifiedF);
+    free_vector(exactIndX);
+    free_vector(exactIndY);
+    free_vector(exactIndZ);
+
+    return;
+}
+
 
 void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDegree,
         double *xS, double *yS, double *zS, double *qS, double *wS,
