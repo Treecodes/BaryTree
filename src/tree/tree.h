@@ -12,6 +12,10 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
 
 void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, struct RunParams *run_params);
 
+void Tree_Set_Leaves_and_Levels(struct Tree *tree);
+
+void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_list, int *sizeof_leaves_list);
+
 void Tree_Alloc(struct Tree **tree_addr, int length);
 
 void Tree_Free(struct Tree **tree_addr);

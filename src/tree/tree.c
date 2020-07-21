@@ -40,6 +40,8 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
     
     TreeLinkedList_SetIndex(tree_linked_list, 0);
     
+
+
     Tree_Alloc(tree_addr, numnodes);
     Tree_Fill(*tree_addr, tree_linked_list);
     (*tree_addr)->numleaves = numleaves;
@@ -47,6 +49,8 @@ void Tree_Sources_Construct(struct Tree **tree_addr, struct Particles *sources, 
     (*tree_addr)->min_leaf_size = min_leaf_size;
     (*tree_addr)->max_leaf_size = max_leaf_size;
     
+    Tree_Set_Leaves_and_Levels(*tree_addr);
+
     TreeLinkedList_Free(&tree_linked_list);
 
     return;
@@ -91,6 +95,61 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
 }
 
 
+void Tree_Set_Leaves_and_Levels(struct Tree *tree)
+{
+
+    /* Creating levels list for the downpass */
+    make_matrix(tree->levels_list, tree->max_depth, 20);
+    make_vector(tree->levels_list_num, tree->max_depth);
+    for (int i = 0; i < tree->max_depth; ++i) tree->levels_list_num[i]=0;
+
+    make_vector(tree->leaves_list, 50);
+    tree->leaves_list_num = 0;
+
+    int *sizeof_levels_list = NULL;
+    make_vector(sizeof_levels_list, tree->max_depth);
+    for (int i = 0; i < tree->max_depth; ++i) sizeof_levels_list[i]=20;
+
+    int sizeof_leaves_list = 50;
+
+    Tree_Fill_Levels(tree, 0, 0, sizeof_levels_list, &sizeof_leaves_list);
+    free_vector(sizeof_levels_list);
+
+    return;
+}
+
+
+void Tree_Fill_Levels(struct Tree *tree, int idx, int level, int *sizeof_levels_list, int *sizeof_leaves_list)
+{
+
+    if (tree->num_children[idx] == 0) {
+        if (tree->leaves_list_num >= *sizeof_leaves_list) {
+            *sizeof_leaves_list *= 1.5;
+            tree->leaves_list = realloc_vector(tree->leaves_list, *sizeof_leaves_list);
+        }
+
+        tree->leaves_list[tree->leaves_list_num] = idx;
+        tree->leaves_list_num++;
+
+    } else {
+
+        if (tree->levels_list_num[level] >= sizeof_levels_list[level]) {
+            sizeof_levels_list[level] *= 1.5;
+            tree->levels_list[level] = realloc_vector(tree->levels_list[level], sizeof_levels_list[level]);
+        }
+
+        tree->levels_list[level][tree->levels_list_num[level]] = idx;
+        tree->levels_list_num[level]++;
+
+        for (int i = 0; i < tree->num_children[idx]; i++)
+            Tree_Fill_Levels(tree, tree->children[8*idx + i], level+1, sizeof_levels_list, sizeof_leaves_list);
+    }
+
+
+    return;
+}
+
+
 
 void Tree_Alloc(struct Tree **tree_addr, int length)
 {
@@ -112,8 +171,15 @@ void Tree_Alloc(struct Tree **tree_addr, int length)
     make_vector(tree->z_max, length);
     make_vector(tree->cluster_ind, length);
     make_vector(tree->radius, length);
+
     make_vector(tree->num_children, length);
     make_vector(tree->children, 8*length);
+    make_vector(tree->parent, length);
+
+    tree->levels_list = NULL;
+    tree->levels_list_num = NULL;
+    tree->leaves_list = NULL;
+
     
     return;
 }   /* END of function allocate_tree */
@@ -139,8 +205,15 @@ void Tree_Free(struct Tree **tree_addr)
         free_vector(tree->z_max);
         free_vector(tree->cluster_ind);
         free_vector(tree->radius);
+
         free_vector(tree->num_children);
         free_vector(tree->children);
+        free_vector(tree->parent);
+
+        if (tree->levels_list != NULL) free_matrix(tree->levels_list);
+        if (tree->levels_list_num != NULL) free_vector(tree->levels_list_num);
+        if (tree->leaves_list != NULL) free_vector(tree->leaves_list);
+
         free(tree);
     }
 
@@ -172,6 +245,11 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p)
     tree->cluster_ind[p->node_index] = p->node_index;
 
     tree->num_children[p->node_index] = p->num_children;
+
+    if (p->parent != NULL)
+        tree->parent[p->node_index] = (p->parent)->node_index;
+    else
+        tree->parent[p->node_index] = -1;
 
     for (int i = 0; i < p->num_children; i++) {
         tree->children[8*p->node_index+i] = (p->child[i])->node_index;
