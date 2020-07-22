@@ -360,8 +360,8 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_ind
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
     #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ, clusterQ) \
-                       create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
-                              exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
+                       create(modifiedF[0:interpolationPointsPerCluster], exactIndX[0:interpolationPointsPerCluster], \
+                              exactIndY[0:interpolationPointsPerCluster], exactIndZ[0:interpolationPointsPerCluster], \
                               nodeX[0:interpDegreeLim], nodeY[0:interpDegreeLim], \
                               nodeZ[0:interpDegreeLim], weights[0:interpDegreeLim], \
                               dj[0:interpDegreeLim], tt[0:interpDegreeLim])
