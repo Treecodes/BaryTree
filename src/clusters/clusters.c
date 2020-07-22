@@ -21,8 +21,7 @@ static void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpola
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
-static void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int interpolationDegree,
-        double *xS, double *yS, double *zS, double *qS, double *wS,
+static void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_index, int parent_index, int interpolationDegree,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 static void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolationDegree,
@@ -112,8 +111,34 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 #endif
 
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
-        for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF_child_to_parent(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
+
+        // anterpolate from particles to leaf cluster interpolation points
+        printf("Computing modified charges for the %i leaves\n",tree->leaves_list_num);
+        for (int i = 0; i < tree->leaves_list_num; ++i) {
+                int leaf_index = tree->leaves_list[i];
+                pc_comp_ms_modifiedF(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
+        }
+
+        // interpolate up clusters, level by level
+        for (int level = tree->max_depth-2; level >= 0; --level) {
+            printf("Computing modified charges for level %i which contains %i clusters\n",level,tree->levels_list_num[level]);
+            for (int cluster_index = 0; cluster_index < tree->levels_list_num[level]; ++cluster_index) {
+
+                int parent_index = tree->levels_list[level][cluster_index];
+
+                for (int child_counter=0; child_counter<tree->num_children[parent_index]; ++child_counter){
+
+                    int child_index = tree->children[8*parent_index + child_counter];
+
+                    pc_comp_ms_modifiedF_child_to_parent(tree, child_index, parent_index, interpolationDegree, xC, yC, zC, qC);
+
+                }
+            }
+        }
+
+
+
+
 //            pc_comp_ms_modifiedF(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
 
     } else if ((approximation == LAGRANGE) && (singularity == SUBTRACTION)) {
@@ -301,16 +326,15 @@ void Clusters_Free_Win(struct Clusters **clusters_addr)
 /***** LOCAL FUNCTIONS **************/
 /************************************/
 
-void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int interpolationDegree,
-        double *xS, double *yS, double *zS, double *qS, double *wS,
+void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_index, int parent_index, int interpolationDegree,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
 
     int interpDegreeLim = interpolationDegree + 1;
     int interpolationPointsPerCluster = interpDegreeLim * interpDegreeLim * interpDegreeLim;
-    int sourcePointsInCluster = tree->iend[idx] - tree->ibeg[idx] + 1;
-    int startingIndexInClustersArray = idx * interpolationPointsPerCluster;
-    int startingIndexInSourcesArray = tree->ibeg[idx]-1;
+
+    int child_startingIndexInClustersArray = child_index * interpolationPointsPerCluster;
+    int parent_startingIndexInClustersArray = parent_index * interpolationPointsPerCluster;
 
     double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ, *modifiedF;
     int *exactIndX, *exactIndY, *exactIndZ;
@@ -321,21 +345,21 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int 
     make_vector(nodeX,     interpDegreeLim);
     make_vector(nodeY,     interpDegreeLim);
     make_vector(nodeZ,     interpDegreeLim);
-    make_vector(modifiedF, sourcePointsInCluster);
-    make_vector(exactIndX, sourcePointsInCluster);
-    make_vector(exactIndY, sourcePointsInCluster);
-    make_vector(exactIndZ, sourcePointsInCluster);
+    make_vector(modifiedF, interpolationPointsPerCluster);
+    make_vector(exactIndX, interpolationPointsPerCluster);
+    make_vector(exactIndY, interpolationPointsPerCluster);
+    make_vector(exactIndZ, interpolationPointsPerCluster);
 
-    double x0 = tree->x_min[idx];
-    double x1 = tree->x_max[idx];
-    double y0 = tree->y_min[idx];
-    double y1 = tree->y_max[idx];
-    double z0 = tree->z_min[idx];
-    double z1 = tree->z_max[idx];
+    double x0 = tree->x_min[parent_index];
+    double x1 = tree->x_max[parent_index];
+    double y0 = tree->y_min[parent_index];
+    double y1 = tree->y_max[parent_index];
+    double z0 = tree->z_min[parent_index];
+    double z1 = tree->z_max[parent_index];
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ) \
+    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ, clusterQ) \
                        create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
                               exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
                               nodeX[0:interpDegreeLim], nodeY[0:interpDegreeLim], \
@@ -347,8 +371,8 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int j = 0; j < sourcePointsInCluster; j++) {
-        modifiedF[j] = qS[startingIndexInSourcesArray + j] * wS[startingIndexInSourcesArray + j];
+    for (int j = 0; j < interpolationPointsPerCluster; j++) {
+        modifiedF[j] = clusterQ[child_startingIndexInClustersArray + j];// * wS[child_startingIndexInClustersArray + j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;
@@ -386,15 +410,15 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int 
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < sourcePointsInCluster; i++) { // loop through the source points
+    for (int i = 0; i < interpolationPointsPerCluster; i++) { // loop through the source points
 
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
 
-        double sx = xS[startingIndexInSourcesArray+i];
-        double sy = yS[startingIndexInSourcesArray+i];
-        double sz = zS[startingIndexInSourcesArray+i];
+        double sx = clusterX[child_startingIndexInClustersArray+i];
+        double sy = clusterY[child_startingIndexInClustersArray+i];
+        double sz = clusterZ[child_startingIndexInClustersArray+i];
 
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
@@ -446,19 +470,19 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int 
         double w1 = weights[k1];
 
         // Fill cluster X, Y, and Z arrays
-        clusterX[startingIndexInClustersArray + j] = cx;
-        clusterY[startingIndexInClustersArray + j] = cy;
-        clusterZ[startingIndexInClustersArray + j] = cz;
+        clusterX[parent_startingIndexInClustersArray + j] = cx;
+        clusterY[parent_startingIndexInClustersArray + j] = cy;
+        clusterZ[parent_startingIndexInClustersArray + j] = cz;
 
         // Increment cluster Q array
         double temp = 0.0;
 #ifdef OPENACC_ENABLED
         #pragma acc loop independent reduction(+:temp)
 #endif
-        for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
-            double sx = xS[startingIndexInSourcesArray + i];
-            double sy = yS[startingIndexInSourcesArray + i];
-            double sz = zS[startingIndexInSourcesArray + i];
+        for (int i = 0; i < interpolationPointsPerCluster; i++) {  // loop over source points
+            double sx = clusterX[child_startingIndexInClustersArray + i];
+            double sy = clusterY[child_startingIndexInClustersArray + i];
+            double sz = clusterZ[child_startingIndexInClustersArray + i];
 
             double numerator = 1.0;
 
@@ -486,7 +510,7 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int idx, int 
 
         }
 
-        clusterQ[startingIndexInClustersArray + j] += temp;
+        clusterQ[parent_startingIndexInClustersArray + j] += temp;
 
     }
 #ifdef OPENACC_ENABLED
