@@ -67,6 +67,7 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     double xyzminmax[6];
     int numnodes = 0;
     int numleaves = 0;
+    int max_depth = 1;
     
     int min_leaf_size = INT_MAX;
     int max_leaf_size = 0;
@@ -78,12 +79,15 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     xyzminmax[4] = minval(targets->z, targets->num);
     xyzminmax[5] = maxval(targets->z, targets->num);
     
-    TreeLinkedList_Targets_Construct(&tree_linked_list, targets, 1, targets->num,
+    TreeLinkedList_Targets_Construct(&tree_linked_list, NULL, targets, 1, targets->num,
                     run_params->max_per_target_leaf, xyzminmax, &numnodes, &numleaves,
-                    &min_leaf_size, &max_leaf_size);
+                    &min_leaf_size, &max_leaf_size, &max_depth, 0);
     
+    printf("TreeLinkedList_Targets_Construct complete.\n");
+
     TreeLinkedList_SetIndex(tree_linked_list, 0);
     
+
     Tree_Alloc(tree_addr, numnodes);
     Tree_Fill(*tree_addr, tree_linked_list);
     (*tree_addr)->numleaves = numleaves;

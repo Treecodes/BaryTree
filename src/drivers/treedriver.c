@@ -480,10 +480,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         START_TIMER(&time_tree[0]);
         Tree_Sources_Construct(&source_tree, sources, run_params);
+        printf("Tree_Sources_Construct complete.\n");
         STOP_TIMER(&time_tree[0]);
 
         START_TIMER(&time_tree[1]);
         Tree_Targets_Construct(&target_tree, targets, run_params);
+        printf("Tree_Targets_Construct complete.\n");
         STOP_TIMER(&time_tree[1]);
          
         START_TIMER(&time_tree[2]);
