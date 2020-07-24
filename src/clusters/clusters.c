@@ -128,7 +128,7 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
                 pc_comp_ms_modifiedF(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
         }
 
-        // interpolate up clusters, level by level
+        // anterpolate up clusters, level by level
         for (int level = tree->max_depth-1; level >= 0; --level) {
             for (int cluster_index = 0; cluster_index < tree->levels_list_num[level]; ++cluster_index) {
 

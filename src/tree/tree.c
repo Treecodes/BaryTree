@@ -94,7 +94,10 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
     
     (*tree_addr)->min_leaf_size = min_leaf_size;
     (*tree_addr)->max_leaf_size = max_leaf_size;
+    (*tree_addr)->max_depth = max_depth;
     
+    Tree_Set_Leaves_and_Levels(*tree_addr);
+
     TreeLinkedList_Free(&tree_linked_list);
 
     return;
