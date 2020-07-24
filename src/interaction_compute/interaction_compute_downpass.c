@@ -49,6 +49,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     double *cluster_q  = clusters->q;
     double *cluster_w = clusters->w;
 
+    int total_num_interp_pts = clusters->num;
     int total_num_interp_charges = clusters->num_charges;
     int total_num_interp_weights = clusters->num_weights;
 
@@ -59,6 +60,9 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     #pragma acc data copyin(target_x[0:num_targets], target_y[0:num_targets], \
                             target_z[0:num_targets], target_q[0:num_targets], \
                             cluster_q[0:total_num_interp_charges], \
+                            cluster_x[0:total_num_interp_pts], \
+                            cluster_y[0:total_num_interp_pts], \
+                            cluster_z[0:total_num_interp_pts], \
                             cluster_w[0:total_num_interp_weights]) \
                        copy(potential[0:num_targets])
     {
