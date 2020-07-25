@@ -56,17 +56,17 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     int tree_numnodes = tree->numnodes;
     int interp_degree = run_params->interp_degree;
 
-#ifdef OPENACC_ENABLED
-    #pragma acc data copyin(target_x[0:num_targets], target_y[0:num_targets], \
-                            target_z[0:num_targets], target_q[0:num_targets], \
-                            cluster_q[0:total_num_interp_charges], \
-                            cluster_x[0:total_num_interp_pts], \
-                            cluster_y[0:total_num_interp_pts], \
-                            cluster_z[0:total_num_interp_pts], \
-                            cluster_w[0:total_num_interp_weights]) \
-                       copy(potential[0:num_targets])
+//#ifdef OPENACC_ENABLED
+//    #pragma acc data copyin(target_x[0:num_targets], target_y[0:num_targets], \
+//                            target_z[0:num_targets], target_q[0:num_targets], \
+//                            cluster_q[0:total_num_interp_charges], \
+//                            cluster_x[0:total_num_interp_pts], \
+//                            cluster_y[0:total_num_interp_pts], \
+//                            cluster_z[0:total_num_interp_pts], \
+//                            cluster_w[0:total_num_interp_weights]) \
+//                       copy(potential[0:num_targets])
+//#endif
     {
-#endif
 
     if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
 //        for (int i = 0; i < tree_numnodes; i++)
@@ -127,8 +127,8 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         
 #ifdef OPENACC_ENABLED
     #pragma acc wait
-    } // end ACC DATA REGION
 #endif
+    } // end ACC DATA REGION
     
     return;
 }

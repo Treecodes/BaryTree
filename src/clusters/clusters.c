@@ -111,13 +111,9 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
-                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
-                            wS[0:totalNumberSourcePoints]) \
-                       copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
-                            wC[0:totalNumberInterpolationWeights])
-    {
+    #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                                  zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
+    #pragma acc enter data copyin(wC[0:totalNumberInterpolationWeights])
 #endif
 
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
@@ -216,18 +212,6 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
         exit(1);
     }
     
-    int numZeros=0;
-    for (int i=0; i<totalNumberInterpolationCharges;i++){
-        if (qC[i]==0.0) numZeros++;
-    }
-
-
-
-#ifdef OPENACC_ENABLED
-    #pragma acc wait
-    } // end ACC DATA REGION
-#endif
-
     return;
 }
 
@@ -277,11 +261,13 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Pa
     double *xC = clusters->x;
     double *yC = clusters->y;
     double *zC = clusters->z;
+    double *qC = clusters->q;
+    double *wC = clusters->w;
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                             zC[0:totalNumberInterpolationPoints])
-    {
+    #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                                  zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
+    #pragma acc enter data copyin(wC[0:totalNumberInterpolationWeights])
 #endif
 
     for (int i = 0; i < tree_numnodes; i++) {
@@ -290,9 +276,8 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Pa
 
 #ifdef OPENACC_ENABLED
     #pragma acc wait
-    } // end ACC DATA REGION
 #endif
-//    }
+
     return;
 }
 

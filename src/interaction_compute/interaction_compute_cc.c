@@ -83,6 +83,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     
     // Additionally, not setup for Hermite either at the moment.
         
+/*
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
                             source_q[0:num_sources], source_w[0:num_sources], \
@@ -100,6 +101,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             target_cluster_w[0:num_target_cluster_charges], \
                             potential[0:num_targets])
 #endif
+*/
     {
 
     for (int i = 0; i < target_tree_numnodes; i++) {
@@ -121,7 +123,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 /* * ************ POTENTIAL FROM APPROX *********************/
 /* * ********************************************************/
 
-//        printf("cluster %i, CC = %i, CP = %i, PC = %i, PP = %i\n",i,num_approx_in_cluster,num_target_approx_in_cluster,num_source_approx_in_cluster,num_direct_in_cluster);
         for (int j = 0; j < num_approx_in_cluster; j++) {
             int source_node_index = approx_inter_list[i][j];
             int source_cluster_start = interp_pts_per_cluster * source_tree_cluster_ind[source_node_index];
