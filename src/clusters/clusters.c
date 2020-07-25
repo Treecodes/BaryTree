@@ -18,7 +18,7 @@
 
 
 static void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDegree,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
+                double *xS, double *yS, double *zS, double *qS,
                 double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 static void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_index, int parent_index, int interpolationDegree,
@@ -78,19 +78,15 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     MPI_Alloc_mem(totalNumberInterpolationPoints*sizeof(double), MPI_INFO_NULL,  &(clusters->y));
     MPI_Alloc_mem(totalNumberInterpolationPoints*sizeof(double), MPI_INFO_NULL,  &(clusters->z));
     MPI_Alloc_mem(totalNumberInterpolationCharges*sizeof(double), MPI_INFO_NULL, &(clusters->q));
-    MPI_Alloc_mem(totalNumberInterpolationWeights*sizeof(double), MPI_INFO_NULL, &(clusters->w));
 
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->x[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->y[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
-        
-    if (singularity == SKIPPING) {
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
-    } else if (singularity == SUBTRACTION) {
+
+    if (singularity == SUBTRACTION) {
+        MPI_Alloc_mem(totalNumberInterpolationWeights*sizeof(double), MPI_INFO_NULL, &(clusters->w));
         for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
-    } else {
-        exit(1);
     }
 
     clusters->num = totalNumberInterpolationPoints;
@@ -113,7 +109,9 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 #ifdef OPENACC_ENABLED
     #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                                   zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
-    #pragma acc enter data copyin(wC[0:totalNumberInterpolationWeights])
+    if (singularity == SUBTRACTION) {
+        #pragma acc enter data create(wC[0:totalNumberInterpolationWeights])
+    }
 #endif
 
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
@@ -121,7 +119,7 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
         // anterpolate from particles to leaf cluster interpolation points
         for (int i = 0; i < tree->leaves_list_num; ++i) {
                 int leaf_index = tree->leaves_list[i];
-                pc_comp_ms_modifiedF(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
+                pc_comp_ms_modifiedF(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, xC, yC, zC, qC);
         }
 
         // anterpolate up clusters, level by level
@@ -140,10 +138,6 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
             }
         }
 
-
-
-
-//            pc_comp_ms_modifiedF(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
 
     } else if ((approximation == LAGRANGE) && (singularity == SUBTRACTION)) {
 //        for (int i = 0; i < tree_numnodes; i++)
@@ -242,16 +236,9 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Pa
     make_vector(clusters->y, totalNumberInterpolationPoints);
     make_vector(clusters->z, totalNumberInterpolationPoints);
     make_vector(clusters->q, totalNumberInterpolationCharges);
-    make_vector(clusters->w, totalNumberInterpolationWeights);
 
-    if (singularity == SKIPPING) {
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
-
-    } else if (singularity == SUBTRACTION) {
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
-
-    } else {
-        exit(1);
+    if (singularity == SUBTRACTION) {
+        make_vector(clusters->w, totalNumberInterpolationWeights);
     }
 
     clusters->num         = totalNumberInterpolationPoints;
@@ -267,7 +254,9 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Pa
 #ifdef OPENACC_ENABLED
     #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                                   zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
-    #pragma acc enter data copyin(wC[0:totalNumberInterpolationWeights])
+    if (singularity == SUBTRACTION) {
+        #pragma acc enter data create(wC[0:totalNumberInterpolationWeights])
+    }
 #endif
 
     for (int i = 0; i < tree_numnodes; i++) {
@@ -313,7 +302,9 @@ void Clusters_Alloc(struct Clusters **clusters_addr, int length, const struct Ru
         make_vector(clusters->y, clusters->num);
         make_vector(clusters->z, clusters->num);
         make_vector(clusters->q, clusters->num_charges);
-        make_vector(clusters->w, clusters->num_weights);
+        if (singularity == SUBTRACTION) {
+            make_vector(clusters->w, clusters->num_weights);
+        }
     }
 
     return;
@@ -348,11 +339,11 @@ void Clusters_Free_Win(struct Clusters **clusters_addr)
     struct Clusters *clusters = *clusters_addr;
 
     if (clusters != NULL) {
-        MPI_Free_mem(clusters->x);
-        MPI_Free_mem(clusters->y);
-        MPI_Free_mem(clusters->z);
-        MPI_Free_mem(clusters->q);
-        MPI_Free_mem(clusters->w);
+        if (clusters->x != NULL) MPI_Free_mem(clusters->x);
+        if (clusters->y != NULL) MPI_Free_mem(clusters->y);
+        if (clusters->z != NULL) MPI_Free_mem(clusters->z);
+        if (clusters->q != NULL) MPI_Free_mem(clusters->q);
+        if (clusters->w != NULL) MPI_Free_mem(clusters->w);
         free(clusters);
     }
 
@@ -411,10 +402,10 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_ind
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpolationPointsPerCluster; j++) {
-        modifiedF[j] = clusterQ[child_startingIndexInClustersArray + j];// * wS[child_startingIndexInClustersArray + j];
+        modifiedF[j] = clusterQ[child_startingIndexInClustersArray + j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;
@@ -422,7 +413,7 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_ind
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         tt[i] = cos(i * M_PI / interpolationDegree);
@@ -433,7 +424,7 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_ind
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -442,7 +433,7 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_ind
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
@@ -463,7 +454,7 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_ind
         double sz = clusterZ[child_startingIndexInClustersArray+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < (interpolationDegree+1); j++) {  // loop through the degree
 
@@ -519,7 +510,7 @@ void pc_comp_ms_modifiedF_child_to_parent(const struct Tree *tree, int child_ind
         // Increment cluster Q array
         double temp = 0.0;
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
+        #pragma acc loop vector(32) reduction(+:temp)
 #endif
         for (int i = 0; i < interpolationPointsPerCluster; i++) {  // loop over source points
             double sx = clusterX[child_startingIndexInClustersArray + i];
@@ -618,7 +609,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_Q(const struct Tree *tree, int chil
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpolationPointsPerCluster; j++) {
         modifiedF[j] = clusterQ[child_startingIndexInClustersArray + j] * clusterW[child_startingIndexInClustersArray + j];
@@ -630,7 +621,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_Q(const struct Tree *tree, int chil
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         tt[i] = cos(i * M_PI / interpolationDegree);
@@ -641,7 +632,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_Q(const struct Tree *tree, int chil
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -650,7 +641,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_Q(const struct Tree *tree, int chil
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
@@ -671,7 +662,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_Q(const struct Tree *tree, int chil
         double sz = clusterZ[child_startingIndexInClustersArray+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < (interpolationDegree+1); j++) {  // loop through the degree
 
@@ -729,7 +720,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_Q(const struct Tree *tree, int chil
         double temp = 0.0;
 //        double temp2 = 0.0;
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
+        #pragma acc loop vector(32) reduction(+:temp)
 #endif
         for (int i = 0; i < interpolationPointsPerCluster; i++) {  // loop over source points
             double sx = clusterX[child_startingIndexInClustersArray + i];
@@ -831,7 +822,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int chil
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpolationPointsPerCluster; j++) {
 //        modifiedF[j] = clusterQ[child_startingIndexInClustersArray + j] * clusterW[child_startingIndexInClustersArray + j];
@@ -843,7 +834,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int chil
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         tt[i] = cos(i * M_PI / interpolationDegree);
@@ -854,7 +845,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int chil
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -863,7 +854,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int chil
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
@@ -884,7 +875,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int chil
         double sz = clusterZ[child_startingIndexInClustersArray+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < (interpolationDegree+1); j++) {  // loop through the degree
 
@@ -942,7 +933,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int chil
         double temp = 0.0;
         double temp2 = 0.0;
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
+        #pragma acc loop vector(32) reduction(+:temp)
 #endif
         for (int i = 0; i < interpolationPointsPerCluster; i++) {  // loop over source points
             double sx = clusterX[child_startingIndexInClustersArray + i];
@@ -1002,7 +993,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int chil
 
 
 void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDegree,
-        double *xS, double *yS, double *zS, double *qS, double *wS,
+        double *xS, double *yS, double *zS, double *qS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
 
@@ -1035,7 +1026,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ) \
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, clusterX, clusterY, clusterZ, clusterQ) \
                        create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
                               exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
                               nodeX[0:interpDegreeLim], nodeY[0:interpDegreeLim], \
@@ -1045,10 +1036,10 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
-        modifiedF[j] = qS[startingIndexInSourcesArray + j] * wS[startingIndexInSourcesArray + j];
+        modifiedF[j] = qS[startingIndexInSourcesArray + j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;
@@ -1056,7 +1047,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         tt[i] = cos(i * M_PI / interpolationDegree);
@@ -1067,7 +1058,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -1076,7 +1067,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
@@ -1097,7 +1088,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
         double sz = zS[startingIndexInSourcesArray+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < (interpolationDegree+1); j++) {  // loop through the degree
 
@@ -1153,7 +1144,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
         // Increment cluster Q array
         double temp = 0.0;
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
+        #pragma acc loop vector(32) reduction(+:temp)
 #endif
         for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
             double sx = xS[startingIndexInSourcesArray + i];
@@ -1253,7 +1244,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < pointsInNode; j++) {
         modifiedF[j] = qS[startingIndexInSources + j] * wS[startingIndexInSources + j];
@@ -1265,7 +1256,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         tt[i] = cos(i * M_PI / interpolationDegree);
@@ -1276,7 +1267,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -1285,7 +1276,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
@@ -1306,7 +1297,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
         double sz = zS[startingIndexInSources+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpDegreeLim; j++) {  // loop through the degree
 
@@ -1366,7 +1357,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
         double temp = 0.0, temp2 = 0.0;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp) reduction(+:temp2)
+        #pragma acc loop vector(32) reduction(+:temp) reduction(+:temp2)
 #endif
         for (int i = 0; i < pointsInNode; i++) {  // loop over source points
             double sx = xS[startingIndexInSources + i];
@@ -1467,7 +1458,7 @@ void pc_comp_ms_modifiedF_SS_W(const struct Tree *tree, int idx, int interpolati
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < pointsInNode; j++) {
 //        modifiedF[j] = qS[startingIndexInSources + j] * wS[startingIndexInSources + j];
@@ -1479,7 +1470,7 @@ void pc_comp_ms_modifiedF_SS_W(const struct Tree *tree, int idx, int interpolati
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         tt[i] = cos(i * M_PI / interpolationDegree);
@@ -1490,7 +1481,7 @@ void pc_comp_ms_modifiedF_SS_W(const struct Tree *tree, int idx, int interpolati
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -1499,7 +1490,7 @@ void pc_comp_ms_modifiedF_SS_W(const struct Tree *tree, int idx, int interpolati
     }
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
@@ -1520,7 +1511,7 @@ void pc_comp_ms_modifiedF_SS_W(const struct Tree *tree, int idx, int interpolati
         double sz = zS[startingIndexInSources+i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpDegreeLim; j++) {  // loop through the degree
 
@@ -1580,7 +1571,7 @@ void pc_comp_ms_modifiedF_SS_W(const struct Tree *tree, int idx, int interpolati
         double temp = 0.0, temp2 = 0.0;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp) reduction(+:temp2)
+        #pragma acc loop vector(32) reduction(+:temp) reduction(+:temp2)
 #endif
         for (int i = 0; i < pointsInNode; i++) {  // loop over source points
             double sx = xS[startingIndexInSources + i];
@@ -1679,7 +1670,7 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 3;
-    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, \
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, \
                                                 clusterX, clusterY, clusterZ, clusterQ) \
                        create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
                               exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
@@ -1690,10 +1681,10 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
-        modifiedF[j] = qS[startingIndexInSourcesArray + j] * wS[startingIndexInSourcesArray + j];
+        modifiedF[j] = qS[startingIndexInSourcesArray + j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;
@@ -1701,7 +1692,7 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         double xx = i * M_PI / interpolationDegree;
@@ -1716,7 +1707,7 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -1743,7 +1734,7 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
         double sz = zS[startingIndexInSourcesArray + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpDegreeLim; j++) {  // loop through the degree
 
@@ -1798,9 +1789,9 @@ void pc_comp_ms_modifiedF_hermite(const struct Tree *tree, int idx, int interpol
         double temp4 = 0.0, temp5 = 0.0, temp6 = 0.0, temp7 = 0.0;
          
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp0) reduction(+:temp1) reduction(+:temp2) \
-                                     reduction(+:temp3) reduction(+:temp4) reduction(+:temp5) \
-                                     reduction(+:temp6) reduction(+:temp7)
+        #pragma acc loop vector(32) reduction(+:temp0) reduction(+:temp1) reduction(+:temp2) \
+                                    reduction(+:temp3) reduction(+:temp4) reduction(+:temp5) \
+                                    reduction(+:temp6) reduction(+:temp7)
 #endif
         for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
         
@@ -1987,7 +1978,7 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
 #endif
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
         modifiedF[j] = qS[startingIndexInSourcesArray + j] * wS[startingIndexInSourcesArray + j];
@@ -1999,7 +1990,7 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         double xx = i * M_PI / interpolationDegree;
@@ -2014,7 +2005,7 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
 
     // Compute weights
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpDegreeLim; j++) {
         dj[j] = 1.0;
@@ -2040,7 +2031,7 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
         double sz = zS[startingIndexInSourcesArray + i];
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
+        #pragma acc loop vector(32) reduction(+:sumX) reduction(+:sumY) reduction(+:sumZ)
 #endif
         for (int j = 0; j < interpDegreeLim; j++) {  // loop through the degree
 
@@ -2099,12 +2090,12 @@ void pc_comp_ms_modifiedF_hermite_SS(const struct Tree *tree, int idx, int inter
         double tempw4 = 0.0, tempw5 = 0.0, tempw6 = 0.0, tempw7 = 0.0;
          
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:tempq0) reduction(+:tempq1) reduction(+:tempq2) \
-                                     reduction(+:tempq3) reduction(+:tempq4) reduction(+:tempq5) \
-                                     reduction(+:tempq6) reduction(+:tempq7) \
-                                     reduction(+:tempw0) reduction(+:tempw1) reduction(+:tempw2) \
-                                     reduction(+:tempw3) reduction(+:tempw4) reduction(+:tempw5) \
-                                     reduction(+:tempw6) reduction(+:tempw7)
+        #pragma acc loop vector(32) reduction(+:tempq0) reduction(+:tempq1) reduction(+:tempq2) \
+                                    reduction(+:tempq3) reduction(+:tempq4) reduction(+:tempq5) \
+                                    reduction(+:tempq6) reduction(+:tempq7) \
+                                    reduction(+:tempw0) reduction(+:tempw1) reduction(+:tempw2) \
+                                    reduction(+:tempw3) reduction(+:tempw4) reduction(+:tempw5) \
+                                    reduction(+:tempw6) reduction(+:tempw7)
 #endif
         for (int i = 0; i < sourcePointsInCluster; i++) {  // loop over source points
          
@@ -2287,7 +2278,7 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationDegree,
 
     //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent 
 #endif
     for (int i = 0; i < interpDegreeLim; i++) {
         tt[i] = cos(i * M_PI / interpolationDegree);
@@ -2298,7 +2289,7 @@ void cp_comp_interp(const struct Tree *tree, int idx, int interpolationDegree,
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop vector(32) independent
 #endif
     for (int j = 0; j < interpolationPointsPerCluster; j++) {
         int k1 = j%(interpolationDegree+1);

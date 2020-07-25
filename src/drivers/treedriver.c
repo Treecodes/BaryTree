@@ -482,8 +482,10 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Tree_Sources_Construct(&source_tree, sources, run_params);
 #ifdef OPENACC_ENABLED
         #pragma acc enter data copyin(sources->x[0:sources->num], sources->y[0:sources->num], \
-                                      sources->z[0:sources->num], sources->q[0:sources->num], \
-                                      sources->w[0:sources->num])
+                                      sources->z[0:sources->num], sources->q[0:sources->num])
+        if (run_params->singularity == SUBTRACTION) {
+            #pragma acc enter data copyin(sources->w[0:sources->num])
+        }
 #endif
         STOP_TIMER(&time_tree[0]);
 
@@ -492,6 +494,9 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 #ifdef OPENACC_ENABLED
         #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
                                       targets->z[0:targets->num], targets->q[0:targets->num])
+        if (run_params->singularity == SUBTRACTION) {
+            #pragma acc enter data copyin(targets->q[0:targets->num])
+        }
         #pragma acc enter data create(potential[0:targets->num])
 #endif
         STOP_TIMER(&time_tree[1]);
@@ -601,6 +606,9 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         #pragma acc exit data delete(sources->x, sources->y, sources->z, sources->q, sources->w, \
                                      source_clusters->x, source_clusters->y, source_clusters->z, \
                                      source_clusters->q, source_clusters->w)
+        if (run_params->singularity == SUBTRACTION) {
+            #pragma acc exit data delete(sources->w, source_clusters->w)
+        }
 #endif
         InteractionLists_Free(&local_interaction_list);
         STOP_TIMER(&time_tree[5]);
@@ -617,10 +625,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             START_TIMER(&time1);
             #pragma acc enter data copyin(let_sources->x[0:let_sources->num], let_sources->y[0:let_sources->num], \
                                           let_sources->z[0:let_sources->num], let_sources->q[0:let_sources->num], \
-                                          let_sources->w[0:let_sources->num], \
                                           let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
-                                          let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges], \
-                                          let_clusters->w[0:let_clusters->num_weights])
+                                          let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
+            if (run_params->singularity == SUBTRACTION) {
+                #pragma acc enter data create(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
+            }
             STOP_TIMER(&time1);
             time_tree[6] += time1;
         }
@@ -686,6 +695,9 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                          let_clusters->x, let_clusters->y, \
                                          let_clusters->z, let_clusters->q, \
                                          let_clusters->w)
+            if (run_params->singularity == SUBTRACTION) {
+                #pragma acc exit data delete(let_sources->w, let_clusters->w)
+            }
             STOP_TIMER(&time1);
             time_tree[6] += time1;
         }
@@ -726,11 +738,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         START_TIMER(&time_tree[10]);
 
 #ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(targets->x, targets->y, \
-                                     targets->z, targets->q, \
+        #pragma acc exit data delete(targets->x, targets->y, targets->z, \
                                      target_clusters->x, target_clusters->y, \
-                                     target_clusters->z, target_clusters->q, \
-                                     target_clusters->w)
+                                     target_clusters->z, target_clusters->q)
+        if (run_params->singularity == SUBTRACTION) {
+            #pragma acc exit data delete(targets->q, target_clusters->w)
+        }
 #endif
 
         Particles_FreeOrder(sources);
