@@ -13,7 +13,7 @@
 
 
 static void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_degree,
-                        double *xT, double *yT, double *zT, double *qT,
+                        double *xT, double *yT, double *zT,
                         double *clusterQ);
 
 static void cp_comp_pot_parent_to_child(struct Tree *tree, int parent_index, int child_index, int interp_degree,
@@ -24,7 +24,7 @@ static void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int in
                         double *clusterQ, double *clusterW);
 
 static void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_degree,
-                        double *xT, double *yT, double *zT, double *qT,
+                        double *xT, double *yT, double *zT,
                         double *clusterQ, double *clusterW);
 
 //static void cp_comp_pot_hermite_SS(struct Tree *tree, int idx, int interp_degree,
@@ -88,7 +88,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         for (int i = 0; i < tree->leaves_list_num; ++i) {
                 int leaf_index = tree->leaves_list[i];
                 cp_comp_pot(tree, leaf_index, potential, interp_degree,
-                        target_x, target_y, target_z, target_q, cluster_q);
+                        target_x, target_y, target_z, cluster_q);
         }
 
 
@@ -101,7 +101,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
             cp_comp_pot_hermite(tree, i, potential, interp_degree,
-                        target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+                        target_x, target_y, target_z, cluster_q, cluster_w);
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
         printf("Not set up to do Hermite SS downpass.\n");
@@ -304,7 +304,7 @@ void cp_comp_pot_parent_to_child(struct Tree *tree, int parent_index, int child_
 
 
 void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_degree,
-        double *target_x, double *target_y, double *target_z, double *target_q,
+        double *target_x, double *target_y, double *target_z,
         double *cluster_q)
 {
     int interp_degree_lim       = interp_degree + 1;
@@ -332,7 +332,7 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_degre
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q) \
+    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, cluster_q) \
                 create(nodeX[0:interp_degree_lim], nodeY[0:interp_degree_lim], nodeZ[0:interp_degree_lim], \
                        weights[0:interp_degree_lim], dj[0:interp_degree_lim], tt[0:interp_degree_lim])
     {
@@ -655,7 +655,7 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_de
 
 
 void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_degree,
-        double *target_x, double *target_y, double *target_z, double *target_q, double *cluster_q, double *cluster_w)
+        double *target_x, double *target_y, double *target_z, double *cluster_q, double *cluster_w)
 {
     int interp_degree_lim       = interp_degree + 1;
     int interp_pts_per_cluster = interp_degree_lim * interp_degree_lim * interp_degree_lim;
@@ -694,7 +694,7 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, \
+    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, \
                                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                                         cluster_q_dxyz) \
