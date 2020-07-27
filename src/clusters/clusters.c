@@ -30,7 +30,7 @@ static void pc_comp_ms_modifiedF_SS_child_to_parent_Q(const struct Tree *tree, i
 static void pc_comp_ms_modifiedF_SS_child_to_parent_W(const struct Tree *tree, int child_index, int parent_index, int interpolationDegree,
                 double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
 
-static void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolationDegree,
+static void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolationDegree,
                 double *xS, double *yS, double *zS, double *qS, double *wS,
                 double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
 
@@ -146,9 +146,10 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
 
     } else if ((approximation == LAGRANGE) && (singularity == SUBTRACTION)) {
-//        for (int i = 0; i < tree_numnodes; i++)
-//            pc_comp_ms_modifiedF_SS(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+        for (int i = 0; i < tree_numnodes; i++)
+            pc_comp_ms_modifiedF_SS(tree, i, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
 
+/*
         // anterpolate from particles to leaf cluster interpolation points
         printf("anterpolating Q to leaves.\n");
         for (int i = 0; i < tree->leaves_list_num; ++i) {
@@ -196,7 +197,7 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
                 }
             }
         }
-
+*/
 
     } else if ((approximation == HERMITE) && (singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
@@ -1212,7 +1213,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationDeg
 
 
 
-void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolationDegree,
+void pc_comp_ms_modifiedF_SS(const struct Tree *tree, int idx, int interpolationDegree,
         double *xS, double *yS, double *zS, double *qS, double *wS,
         double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
 {
@@ -1232,7 +1233,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
     make_vector(nodeY,      interpDegreeLim);
     make_vector(nodeZ,      interpDegreeLim);
     make_vector(modifiedF,  pointsInNode);
-//    make_vector(modifiedF2, pointsInNode);
+    make_vector(modifiedF2, pointsInNode);
     make_vector(exactIndX,  pointsInNode);
     make_vector(exactIndY,  pointsInNode);
     make_vector(exactIndZ,  pointsInNode);
@@ -1260,7 +1261,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
 #endif
     for (int j = 0; j < pointsInNode; j++) {
         modifiedF[j] = qS[startingIndexInSources + j] * wS[startingIndexInSources + j];
-//        modifiedF2[j] = wS[startingIndexInSources + j];
+        modifiedF2[j] = wS[startingIndexInSources + j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;
@@ -1335,7 +1336,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
         if (exactIndZ[i] == -1) denominator *= sumZ;
 
         modifiedF[i] /= denominator;
-//        modifiedF2[i] /= denominator;
+        modifiedF2[i] /= denominator;
 
     }
 
@@ -1399,11 +1400,11 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
             }
 
             temp += numerator * modifiedF[i];
-//            temp2 += numerator * modifiedF2[i];
+            temp2 += numerator * modifiedF2[i];
         }
         
         clusterQ[startingIndexInClusters + j] += temp;
-//        clusterW[startingIndexInClusters + j] += temp2;
+        clusterW[startingIndexInClusters + j] += temp2;
     }
     
 #ifdef OPENACC_ENABLED
@@ -1417,7 +1418,7 @@ void pc_comp_ms_modifiedF_SS_Q(const struct Tree *tree, int idx, int interpolati
     free_vector(nodeY);
     free_vector(nodeZ);
     free_vector(modifiedF);
-//    free_vector(modifiedF2);
+    free_vector(modifiedF2);
     free_vector(exactIndX);
     free_vector(exactIndY);
     free_vector(exactIndZ);
