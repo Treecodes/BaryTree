@@ -73,6 +73,12 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     int totalNumberInterpolationPoints  = tree_numnodes * interpolationPointsPerCluster;
     int totalNumberInterpolationCharges = tree_numnodes * run_params->interp_charges_per_cluster;
     int totalNumberInterpolationWeights = tree_numnodes * run_params->interp_weights_per_cluster;
+
+    clusters->x = NULL;
+    clusters->y = NULL;
+    clusters->z = NULL;
+    clusters->q = NULL;
+    clusters->w = NULL;
     
     MPI_Alloc_mem(totalNumberInterpolationPoints*sizeof(double), MPI_INFO_NULL,  &(clusters->x));
     MPI_Alloc_mem(totalNumberInterpolationPoints*sizeof(double), MPI_INFO_NULL,  &(clusters->y));
@@ -231,6 +237,12 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Pa
     int totalNumberInterpolationPoints  = tree_numnodes * interpolationPointsPerCluster;
     int totalNumberInterpolationCharges = tree_numnodes * run_params->interp_charges_per_cluster;
     int totalNumberInterpolationWeights = tree_numnodes * run_params->interp_weights_per_cluster;
+
+    clusters->x = NULL;
+    clusters->y = NULL;
+    clusters->z = NULL;
+    clusters->q = NULL;
+    clusters->w = NULL;
 
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
