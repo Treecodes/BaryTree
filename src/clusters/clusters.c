@@ -117,8 +117,8 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
         // anterpolate from particles to leaf cluster interpolation points
         for (int i = 0; i < tree->leaves_list_num; ++i) {
-                int leaf_index = tree->leaves_list[i];
-                pc_comp_ms_modifiedF(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, xC, yC, zC, qC);
+            int leaf_index = tree->leaves_list[i];
+            pc_comp_ms_modifiedF(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, xC, yC, zC, qC);
         }
 
         // anterpolate up clusters, level by level
@@ -132,7 +132,6 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
                     int child_index = tree->children[8*parent_index + child_counter];
 
                     pc_comp_ms_modifiedF_child_to_parent(tree, child_index, parent_index, interpolationDegree, xC, yC, zC, qC);
-
                 }
             }
         }
@@ -142,8 +141,8 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
         // anterpolate from particles to leaf cluster interpolation points
         for (int i = 0; i < tree->leaves_list_num; ++i) {
-                int leaf_index = tree->leaves_list[i];
-                pc_comp_ms_modifiedF_SS(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+            int leaf_index = tree->leaves_list[i];
+            pc_comp_ms_modifiedF_SS(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
         }
 
         // interpolate up clusters, level by level
@@ -157,7 +156,6 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
                     int child_index = tree->children[8*parent_index + child_counter];
 
                     pc_comp_ms_modifiedF_SS_child_to_parent(tree, child_index, parent_index, interpolationDegree, xC, yC, zC, qC, wC);
-
                 }
             }
         }

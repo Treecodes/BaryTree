@@ -13,8 +13,7 @@
 
 
 static void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_degree,
-                        double *xT, double *yT, double *zT,
-                        double *clusterQ);
+                        double *xT, double *yT, double *zT, double *clusterQ);
 
 static void cp_comp_pot_parent_to_child(struct Tree *tree, int parent_index, int child_index, int interp_degree,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q);
@@ -23,9 +22,11 @@ static void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int in
                         double *xT, double *yT, double *zT, double *qT,
                         double *clusterQ, double *clusterW);
 
+static void cp_comp_pot_SS_parent_to_child(struct Tree *tree, int parent_index, int child_index, int interp_degree,
+        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q, double *cluster_w);
+
 static void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int interp_degree,
-                        double *xT, double *yT, double *zT,
-                        double *clusterQ, double *clusterW);
+                        double *xT, double *yT, double *zT, double *clusterQ, double *clusterW);
 
 //static void cp_comp_pot_hermite_SS(struct Tree *tree, int idx, int interp_degree,
 //                      int totalNumberInterpolationPoints,
@@ -43,10 +44,10 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
     double *target_z  = targets->z;
     double *target_q  = targets->q;
 
-    double *cluster_x  = clusters->x;
-    double *cluster_y  = clusters->y;
-    double *cluster_z  = clusters->z;
-    double *cluster_q  = clusters->q;
+    double *cluster_x = clusters->x;
+    double *cluster_y = clusters->y;
+    double *cluster_z = clusters->z;
+    double *cluster_q = clusters->q;
     double *cluster_w = clusters->w;
 
     int total_num_interp_pts = clusters->num;
@@ -58,10 +59,6 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
 
     if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
-//        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_pot(tree, i, potential, interp_degree,
-//                        target_x, target_y, target_z, target_q, cluster_q);
-
 
         // interpolate up clusters, level by level
         for (int level = 0; level < tree->max_depth; ++level) {
@@ -70,15 +67,12 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
                 int parent_index = tree->levels_list[level][cluster_index];
 
-                for (int child_counter=0; child_counter<tree->num_children[parent_index]; ++child_counter){
+                for (int child_counter=0; child_counter < tree->num_children[parent_index]; ++child_counter) {
 
                     int child_index = tree->children[8*parent_index + child_counter];
 
-//                    cp_comp_pot(tree, child_index, parent_index, interpolationDegree, xC, yC, zC, qC);
-
                     cp_comp_pot_parent_to_child(tree, parent_index, child_index, interp_degree,
                         cluster_x, cluster_y, cluster_z, cluster_q);
-
                 }
             }
         }
@@ -86,17 +80,43 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         // interpolate from leaf cluster interpolation points to target particles
         printf("Interpolating from leaf interpolation points to particles.\n");
         for (int i = 0; i < tree->leaves_list_num; ++i) {
-                int leaf_index = tree->leaves_list[i];
-                cp_comp_pot(tree, leaf_index, potential, interp_degree,
+            int leaf_index = tree->leaves_list[i];
+            cp_comp_pot(tree, leaf_index, potential, interp_degree,
                         target_x, target_y, target_z, cluster_q);
         }
 
 
     } else if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SUBTRACTION)) {
-        for (int i = 0; i < tree_numnodes; i++){
-            cp_comp_pot_SS(tree, i, potential, interp_degree,
-                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+
+        // interpolate up clusters, level by level
+        for (int level = 0; level < tree->max_depth; ++level) {
+            printf("Interpolating for level %i\n", level);
+            for (int cluster_index = 0; cluster_index < tree->levels_list_num[level]; ++cluster_index) {
+
+                int parent_index = tree->levels_list[level][cluster_index];
+
+                for (int child_counter=0; child_counter < tree->num_children[parent_index]; ++child_counter) {
+
+                    int child_index = tree->children[8*parent_index + child_counter];
+
+                    cp_comp_pot_SS_parent_to_child(tree, parent_index, child_index, interp_degree,
+                        cluster_x, cluster_y, cluster_z, cluster_q, cluster_w);
+                }
+            }
         }
+
+        // interpolate from leaf cluster interpolation points to target particles
+        printf("Interpolating from leaf interpolation points to particles.\n");
+        for (int i = 0; i < tree->leaves_list_num; ++i) {
+            int leaf_index = tree->leaves_list[i];
+            cp_comp_pot_SS(tree, leaf_index, potential, interp_degree,
+                           target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+        }
+
+//        for (int i = 0; i < tree_numnodes; i++){
+//            cp_comp_pot_SS(tree, i, potential, interp_degree,
+//                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
+//        }
 
     } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
         for (int i = 0; i < tree_numnodes; i++)
@@ -477,6 +497,189 @@ void cp_comp_pot(struct Tree *tree, int idx, double *potential, int interp_degre
 }
 
 
+
+
+void cp_comp_pot_SS_parent_to_child(struct Tree *tree, int parent_index, int child_index, int interp_degree,
+        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q, double *cluster_w)
+{
+    int interp_degree_lim       = interp_degree + 1;
+    int interp_pts_per_cluster = interp_degree_lim * interp_degree_lim * interp_degree_lim;
+
+    int parent_cluster_start = parent_index * interp_pts_per_cluster;
+    int child_cluster_start  = child_index  * interp_pts_per_cluster;
+    
+    double *weights, *dj, *tt, *nodeX, *nodeY, *nodeZ;
+
+    make_vector(weights, interp_degree_lim);
+    make_vector(dj,      interp_degree_lim);
+    make_vector(tt,      interp_degree_lim);
+    make_vector(nodeX,   interp_degree_lim);
+    make_vector(nodeY,   interp_degree_lim);
+    make_vector(nodeZ,   interp_degree_lim);
+    
+    double x0 = tree->x_min[parent_index];
+    double x1 = tree->x_max[parent_index];
+    double y0 = tree->y_min[parent_index];
+    double y1 = tree->y_max[parent_index];
+    double z0 = tree->z_min[parent_index];
+    double z1 = tree->z_max[parent_index];
+    
+#ifdef OPENACC_ENABLED
+    int streamID = rand() % 4;
+    #pragma acc kernels async(streamID) present(cluster_x, cluster_y, cluster_z, cluster_q, cluster_w) \
+                create(nodeX[0:interp_degree_lim], nodeY[0:interp_degree_lim], nodeZ[0:interp_degree_lim], \
+                       weights[0:interp_degree_lim], dj[0:interp_degree_lim], tt[0:interp_degree_lim])
+    {
+#endif
+    
+
+    //  Fill in arrays of unique x, y, and z coordinates for the interpolation points.
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int i = 0; i < interp_degree_lim; i++) {
+        tt[i] = cos(i * M_PI / interp_degree);
+        nodeX[i] = x0 + (tt[i] + 1.0)/2.0 * (x1 - x0);
+        nodeY[i] = y0 + (tt[i] + 1.0)/2.0 * (y1 - y0);
+        nodeZ[i] = z0 + (tt[i] + 1.0)/2.0 * (z1 - z0);
+    }
+    
+    // Compute weights
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int j = 0; j < interp_degree_lim; j++){
+        dj[j] = 1.0;
+        if (j == 0) dj[j] = 0.5;
+        if (j == interp_degree) dj[j] = 0.5;
+    }
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int j = 0; j < interp_degree_lim; j++) {
+        weights[j] = ((j % 2 == 0)? 1 : -1) * dj[j];
+    }
+
+#ifdef OPENACC_ENABLED
+    #pragma acc loop independent
+#endif
+    for (int i = 0; i < interp_pts_per_cluster; i++) { // loop through the target points
+
+        double sumX = 0.0;
+        double sumY = 0.0;
+        double sumZ = 0.0;
+
+        double tx = cluster_x[child_cluster_start+i];
+        double ty = cluster_y[child_cluster_start+i];
+        double tz = cluster_z[child_cluster_start+i];
+
+        int eix = -1;
+        int eiy = -1;
+        int eiz = -1;
+
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:sumX,sumY,sumZ) reduction(max:eix,eiy,eiz)
+#endif
+        for (int j = 0; j < interp_degree_lim; j++) {  // loop through the degree
+
+            double cx = tx - nodeX[j];
+            double cy = ty - nodeY[j];
+            double cz = tz - nodeZ[j];
+
+            if (fabs(cx)<DBL_MIN) eix = j;
+            if (fabs(cy)<DBL_MIN) eiy = j;
+            if (fabs(cz)<DBL_MIN) eiz = j;
+
+            // Increment the sums
+            double w = weights[j];
+            sumX += w / cx;
+            sumY += w / cy;
+            sumZ += w / cz;
+
+        }
+
+        double denominator = 1.0;
+        if (eix==-1) denominator /= sumX;
+        if (eiy==-1) denominator /= sumY;
+        if (eiz==-1) denominator /= sumZ;
+        
+        double temp = 0.0;
+        double temp2 = 0.0;
+        
+#ifdef OPENACC_ENABLED
+        #pragma acc loop independent reduction(+:temp)
+#endif
+        for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
+
+            int k1 = j%interp_degree_lim;
+            int kk = (j-k1)/interp_degree_lim;
+            int k2 = kk%interp_degree_lim;
+            kk = kk - k2;
+            int k3 = kk / interp_degree_lim;
+
+            double w3 = weights[k3];
+            double w2 = weights[k2];
+            double w1 = weights[k1];
+            
+            double cx = nodeX[k1];
+            double cy = nodeY[k2];
+            double cz = nodeZ[k3];
+            double cq = cluster_q[parent_cluster_start + j];
+            double cw = cluster_w[parent_cluster_start + j];
+        
+            double numerator = 1.0;
+
+            // If exactInd[i] == -1, then no issues.
+            // If exactInd[i] != -1, then we want to zero out terms EXCEPT when exactInd=k1.
+            if (eix == -1) {
+                numerator *= w1 / (tx - cx);
+            } else {
+                if (eix != k1) numerator *= 0;
+            }
+
+            if (eiy == -1) {
+                numerator *= w2 / (ty - cy);
+            } else {
+                if (eiy != k2) numerator *= 0;
+            }
+
+            if (eiz == -1) {
+                numerator *= w3 / (tz - cz);
+            } else {
+                if (eiz != k3) numerator *= 0;
+            }
+
+            temp  += numerator * denominator * cq;  
+            temp2 += numerator * denominator * cw;
+        }
+        
+#ifdef OPENACC_ENABLED
+        #pragma acc atomic
+#endif
+        cluster_q[child_cluster_start + i] += temp;
+#ifdef OPENACC_ENABLED
+        #pragma acc atomic
+#endif
+        cluster_w[child_cluster_start + i] += temp2;
+    }
+#ifdef OPENACC_ENABLED
+    } //end ACC kernels
+#endif
+    
+    free_vector(weights);
+    free_vector(dj);
+    free_vector(tt);
+    free_vector(nodeX);
+    free_vector(nodeY);
+    free_vector(nodeZ);
+
+    return;
+}
+
+
+
+
 void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_degree,
         double *target_x, double *target_y, double *target_z, double *target_q,
         double *cluster_q, double *cluster_w)
@@ -506,7 +709,7 @@ void cp_comp_pot_SS(struct Tree *tree, int idx, double *potential, int interp_de
     
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q, cluster_w) \
+    #pragma acc kernels async(streamID) present(target_x, target_y, target_z, target_q, cluster_q, cluster_w, potential) \
                 create(nodeX[0:interp_degree_lim], nodeY[0:interp_degree_lim], nodeZ[0:interp_degree_lim], \
                        weights[0:interp_degree_lim], dj[0:interp_degree_lim], tt[0:interp_degree_lim])
     {
