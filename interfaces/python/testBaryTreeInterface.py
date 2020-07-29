@@ -25,7 +25,6 @@ if __name__=="__main__":
     GPUpresent = False
     theta = 0.8
     treecodeDegree = 4
-    beta = -1
     gaussianAlpha = 1.0
     verbosity = 0
     
@@ -56,10 +55,10 @@ if __name__=="__main__":
                                  np.copy(X), np.copy(Y), np.copy(Z), np.copy(RHO), np.copy(W),
                                  kernel, numberOfKernelParameters, kernelParameters,
                                  singularity, approximation, computeType,
-                                 theta, treecodeDegree, maxPerSourceLeaf, maxPerTargetLeaf,
-                                 beta, GPUpresent, verbosity, sizeCheck=1.0)
+                                 GPUpresent, verbosity, 
+                                 theta=theta, degree=treecodeDegree, sourceLeafSize=maxPerSourceLeaf, targetLeafSize=maxPerTargetLeaf, sizeCheck=1.0)
 
-    assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output."
+    assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output using explicit theta/degree."
     
     
     
@@ -73,9 +72,8 @@ if __name__=="__main__":
                                  np.copy(X), np.copy(Y), np.copy(Z), np.copy(RHO), np.copy(W),
                                  kernel, numberOfKernelParameters, kernelParameters,
                                  singularity, approximation, computeType,
-                                 theta, treecodeDegree, maxPerSourceLeaf, maxPerTargetLeaf,
-                                 beta, GPUpresent, verbosity, sizeCheck=1.0)
-    assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output."
+                                 GPUpresent, verbosity, beta=beta,  sizeCheck=1.0)
+    assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output using beta."
     
     
     print("If no errors printed, then the calls to the treecode wrapper worked (one using explicit theta/degree, one use beta)")
