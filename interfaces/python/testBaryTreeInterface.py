@@ -60,7 +60,25 @@ if __name__=="__main__":
                                  beta, GPUpresent, verbosity, sizeCheck=1.0)
 
     assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output."
-    print("If no errors printed, then the call to the treecode wrapper worked!")
+    
+    
+    
+    
+    
+    
+    beta = 0.1
+    expectedOutput = 588.7445889051367  # this is expected value of first element of output array for beta = 0.1
+    output = BT.callTreedriver(  N, N,
+                                 X, Y, Z, RHO,
+                                 np.copy(X), np.copy(Y), np.copy(Z), np.copy(RHO), np.copy(W),
+                                 kernel, numberOfKernelParameters, kernelParameters,
+                                 singularity, approximation, computeType,
+                                 theta, treecodeDegree, maxPerSourceLeaf, maxPerTargetLeaf,
+                                 beta, GPUpresent, verbosity, sizeCheck=1.0)
+    assert (abs(output[0]-expectedOutput) < 1e-14), "Error: didn't get the expected output."
+    
+    
+    print("If no errors printed, then the calls to the treecode wrapper worked (one using explicit theta/degree, one use beta)")
 
 
 
