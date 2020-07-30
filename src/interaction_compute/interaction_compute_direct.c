@@ -40,9 +40,10 @@ void InteractionCompute_Direct(double *potential,
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources], source_w[0:num_sources], \
-                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
-                            target_q[0:num_targets]), copy(potential[0:num_targets])
+                            source_q[0:num_sources], \
+                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets]) \
+                            copy(potential[0:num_targets])
+    #pragma acc data copyin(source_w[0:num_sources], target_q[0:num_targets])
 #endif
     {
 
@@ -61,7 +62,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_Coulomb_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
+                    source_x, source_y, source_z, source_q,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
@@ -86,7 +87,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_Yukawa_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
+                    source_x, source_y, source_z, source_q,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
@@ -111,7 +112,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_RegularizedCoulomb_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
+                    source_x, source_y, source_z, source_q,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
@@ -134,7 +135,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_RegularizedYukawa_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
@@ -154,7 +155,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_Atan_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
 
@@ -166,7 +167,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_SinOverR_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
     /***************************************/
@@ -177,7 +178,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_MQ_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
     } else {

@@ -8,7 +8,7 @@
 
 void K_RegularizedYukawa_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
          int starting_index_of_sources, int starting_index_of_cluster,
-         double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
+         double *source_x, double *source_y, double *source_z, double *source_q,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
          struct RunParams *run_params, int gpu_async_stream_id)
 {
@@ -50,7 +50,7 @@ void K_RegularizedYukawa_CP_Lagrange(int number_of_sources_in_batch, int number_
             double r2 = dx*dx + dy*dy + dz*dz;
             double r  = sqrt(r2);
 
-            temporary_potential += source_q[jj] * source_w[jj] * exp(-kappa * r) / sqrt(r2 + epsilon2);
+            temporary_potential += source_q[jj] * exp(-kappa * r) / sqrt(r2 + epsilon2);
 
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED

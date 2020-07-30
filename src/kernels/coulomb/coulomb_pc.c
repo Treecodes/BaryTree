@@ -46,7 +46,7 @@ void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpo
             double dz = tz - cluster_z[jj];
             double r2  = dx*dx + dy*dy + dz*dz;
 
-                temporary_potential += cluster_charge[starting_index_of_cluster + j] / sqrt(r2);
+            temporary_potential += cluster_charge[starting_index_of_cluster + j] / sqrt(r2);
 
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED

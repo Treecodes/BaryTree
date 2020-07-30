@@ -83,25 +83,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     
     // Additionally, not setup for Hermite either at the moment.
         
-#ifdef OPENACC_ENABLED
-    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources], source_w[0:num_sources], \
-                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
-                            target_q[0:num_targets], \
-                            source_cluster_x[0:num_source_cluster_points], \
-                            source_cluster_y[0:num_source_cluster_points], \
-                            source_cluster_z[0:num_source_cluster_points], \
-                            source_cluster_q[0:num_source_cluster_charges], \
-                            source_cluster_w[0:num_source_cluster_weights], \
-                            target_cluster_x[0:num_target_cluster_points], \
-                            target_cluster_y[0:num_target_cluster_points], \
-                            target_cluster_z[0:num_target_cluster_points]) \
-                       copy(target_cluster_q[0:num_target_cluster_charges], \
-                            target_cluster_w[0:num_target_cluster_charges], \
-                            potential[0:num_targets])
-#endif
-    {
-
     for (int i = 0; i < target_tree_numnodes; i++) {
         int target_ibeg = target_tree_ibeg[i];
         int target_iend = target_tree_iend[i];
@@ -121,7 +102,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 /* * ************ POTENTIAL FROM APPROX *********************/
 /* * ********************************************************/
 
-//        printf("cluster %i, CC = %i, CP = %i, PC = %i, PP = %i\n",i,num_approx_in_cluster,num_target_approx_in_cluster,num_source_approx_in_cluster,num_direct_in_cluster);
         for (int j = 0; j < num_approx_in_cluster; j++) {
             int source_node_index = approx_inter_list[i][j];
             int source_cluster_start = interp_pts_per_cluster * source_tree_cluster_ind[source_node_index];
@@ -140,7 +120,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                         K_Coulomb_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
+                            source_cluster_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -195,7 +175,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                         K_Yukawa_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
+                            source_cluster_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -250,7 +230,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                         K_RegularizedCoulomb_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
+                            source_cluster_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -300,7 +280,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                         K_RegularizedYukawa_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
+                            source_cluster_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -353,7 +333,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                         K_SinOverR_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                             source_cluster_start, target_cluster_start,
                             source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
+                            source_cluster_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -638,7 +618,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
             
                         K_Coulomb_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
                             source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -691,7 +671,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                         K_Yukawa_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
                             source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -744,7 +724,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                         K_RegularizedCoulomb_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
                             source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -793,7 +773,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                         K_RegularizedYukawa_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
                             source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -845,7 +825,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                         K_SinOverR_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
                             source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             target_cluster_x, target_cluster_y, target_cluster_z,
                             target_cluster_q,
                             run_params, stream_id);
@@ -886,7 +866,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     K_Coulomb_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
@@ -913,7 +893,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     K_Yukawa_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
@@ -940,7 +920,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     K_RegularizedCoulomb_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
@@ -967,7 +947,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     K_RegularizedYukawa_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             run_params, potential, stream_id);
 
                 } else if (run_params->singularity == SUBTRACTION) {
@@ -994,7 +974,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     K_SinOverR_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
+                            source_x, source_y, source_z, source_q,
                             run_params, potential, stream_id);
                 }
 
@@ -1008,9 +988,8 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     } // end loop over target nodes
 
 #ifdef OPENACC_ENABLED
-        #pragma acc wait
+    #pragma acc wait
 #endif
-    } // end acc data region
 
     return;
 
