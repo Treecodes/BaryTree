@@ -113,7 +113,6 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
 
         // anterpolate from particles to leaf cluster interpolation points
-        printf("Computing modified charges for the %i leaves\n",tree->leaves_list_num);
         for (int i = 0; i < tree->leaves_list_num; ++i) {
                 int leaf_index = tree->leaves_list[i];
                 pc_comp_ms_modifiedF(tree, leaf_index, interpolationDegree, xS, yS, zS, qS, wS, xC, yC, zC, qC);
@@ -121,7 +120,6 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 
         // interpolate up clusters, level by level
         for (int level = tree->max_depth-2; level >= 0; --level) {
-            printf("Computing modified charges for level %i which contains %i clusters\n",level,tree->levels_list_num[level]);
             for (int cluster_index = 0; cluster_index < tree->levels_list_num[level]; ++cluster_index) {
 
                 int parent_index = tree->levels_list[level][cluster_index];

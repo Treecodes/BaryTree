@@ -172,7 +172,7 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Tree
     (*p)->numpar = iend - ibeg + 1;
     
     if (current_level + 1 > *max_depth){
-        printf("[TreeLinkedList_Sources_Construct] Increasing max depth to %i\n",current_level + 1);
+//        printf("[TreeLinkedList_Sources_Construct] Increasing max depth to %i\n",current_level + 1);
         *max_depth = current_level + 1;
     }
     (*p)->level = current_level;
