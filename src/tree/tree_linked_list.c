@@ -46,7 +46,6 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Tree
     (*p)->numpar = iend - ibeg + 1;
 
     if (current_level + 1 > *max_depth){
-        printf("[TreeLinkedList_Targets_Construct] Increasing max depth to %i\n",current_level + 1);
         *max_depth = current_level + 1;
     }
     (*p)->level = current_level;
