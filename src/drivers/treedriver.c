@@ -377,25 +377,25 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             }
 #endif
             CommTypesAndTrees_Construct(&comm_types, &let_trees, tree, batches, run_params);
-
             Particles_Alloc(&let_sources, comm_types->let_sources_length);
             Clusters_Alloc(&let_clusters, comm_types->let_clusters_length, run_params);
                                                     
-            CommWindows_Create(&comm_windows, clusters, sources);
+            CommWindows_Create(&comm_windows, clusters, sources, run_params);
             
             for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
             
                 int get_from = (num_procs + rank - proc_id) % num_procs;
                 
-                CommWindows_Lock(comm_windows, get_from);
+                CommWindows_Lock(comm_windows, get_from, run_params);
                 // This is a non-blocking call!
                 CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
-                CommWindows_Unlock(comm_windows, get_from);
+                CommWindows_Unlock(comm_windows, get_from, run_params);
             }
             
-            CommWindows_Free(&comm_windows);
+            CommWindows_Free(&comm_windows, run_params);
             STOP_TIMER(&time_tree[3]);
         }
+
 
         //~~~~~~~~~~~~~~~~~~~~
         // Local compute
@@ -650,19 +650,19 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             Particles_Alloc(&let_sources, comm_types->let_sources_length);
             Clusters_Alloc(&let_clusters, comm_types->let_clusters_length, run_params);
                                                       
-            CommWindows_Create(&comm_windows, source_clusters, sources);
+            CommWindows_Create(&comm_windows, source_clusters, sources, run_params);
             
             for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
 
                 int get_from = (num_procs + rank - proc_id) % num_procs;
                 
-                CommWindows_Lock(comm_windows, get_from);
+                CommWindows_Lock(comm_windows, get_from, run_params);
                 //This is a non-blocking call!
                 CommWindows_GetData(let_clusters, let_sources, comm_types, comm_windows, get_from, run_params);
-                CommWindows_Unlock(comm_windows, get_from);
+                CommWindows_Unlock(comm_windows, get_from, run_params);
             }
             
-            CommWindows_Free(&comm_windows);
+            CommWindows_Free(&comm_windows, run_params);
             STOP_TIMER(&time_tree[3]);
         }
 

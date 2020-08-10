@@ -10,13 +10,13 @@
 
 
 void CommWindows_Create(struct CommWindows **comm_windows_addr,
-                        struct Clusters *clusters, struct Particles *sources);
+                        struct Clusters *clusters, struct Particles *sources, struct RunParams *run_params);
 
-void CommWindows_Free(struct CommWindows **comm_windows_addr);
+void CommWindows_Free(struct CommWindows **comm_windows_addr, struct RunParams *run_params);
 
-void CommWindows_Lock(struct CommWindows *comm_windows, int get_from);
+void CommWindows_Lock(struct CommWindows *comm_windows, int get_from, struct RunParams *run_params);
 
-void CommWindows_Unlock(struct CommWindows *comm_windows, int get_from);
+void CommWindows_Unlock(struct CommWindows *comm_windows, int get_from, struct RunParams *run_params);
 
 void CommWindows_GetData(struct Clusters *let_clusters, struct Particles *let_sources,
                          struct CommTypes *comm_types, struct CommWindows *comm_windows,
