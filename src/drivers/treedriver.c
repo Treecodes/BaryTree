@@ -369,6 +369,13 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             MPI_Barrier(MPI_COMM_WORLD);
             
             START_TIMER(&time_tree[3]);
+#ifdef OPENACC_ENABLED
+            #pragma acc update self(clusters->x[0:clusters->num], clusters->y[0:clusters->num], \
+                                    clusters->z[0:clusters->num], clusters->q[0:clusters->num_charges])
+            if (run_params->singularity == SUBTRACTION) {
+                #pragma acc update self(clusters->w[0:clusters->num_weights])
+            }
+#endif
             CommTypesAndTrees_Construct(&comm_types, &let_trees, tree, batches, run_params);
 
             Particles_Alloc(&let_sources, comm_types->let_sources_length);
@@ -446,7 +453,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                           let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
                                           let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
             if (run_params->singularity == SUBTRACTION) {
-                #pragma acc enter data create(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
+                #pragma acc enter data copyin(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
             }
             STOP_TIMER(&time1);
             time_tree[6] += time1;
@@ -728,7 +735,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                           let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
                                           let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
             if (run_params->singularity == SUBTRACTION) {
-                #pragma acc enter data create(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
+                #pragma acc enter data copyin(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
             }
             STOP_TIMER(&time1);
             time_tree[6] += time1;
