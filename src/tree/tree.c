@@ -83,7 +83,6 @@ void Tree_Targets_Construct(struct Tree **tree_addr, struct Particles *targets, 
                     run_params->max_per_target_leaf, xyzminmax, &numnodes, &numleaves,
                     &min_leaf_size, &max_leaf_size, &max_depth, 0);
     
-    printf("TreeLinkedList_Targets_Construct complete.\n");
 
     TreeLinkedList_SetIndex(tree_linked_list, 0);
     

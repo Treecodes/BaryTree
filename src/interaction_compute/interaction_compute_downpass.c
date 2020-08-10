@@ -62,7 +62,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
         // interpolate up clusters, level by level
         for (int level = 0; level < tree->max_depth; ++level) {
-            printf("Interpolating for level %i\n", level);
+
             for (int cluster_index = 0; cluster_index < tree->levels_list_num[level]; ++cluster_index) {
 
                 int parent_index = tree->levels_list[level][cluster_index];
@@ -78,7 +78,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         }
 
         // interpolate from leaf cluster interpolation points to target particles
-        printf("Interpolating from leaf interpolation points to particles.\n");
+
         for (int i = 0; i < tree->leaves_list_num; ++i) {
             int leaf_index = tree->leaves_list[i];
             cp_comp_pot(tree, leaf_index, potential, interp_degree,
@@ -90,7 +90,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
         // interpolate up clusters, level by level
         for (int level = 0; level < tree->max_depth; ++level) {
-            printf("Interpolating for level %i\n", level);
+
             for (int cluster_index = 0; cluster_index < tree->levels_list_num[level]; ++cluster_index) {
 
                 int parent_index = tree->levels_list[level][cluster_index];
@@ -106,7 +106,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         }
 
         // interpolate from leaf cluster interpolation points to target particles
-        printf("Interpolating from leaf interpolation points to particles.\n");
+
         for (int i = 0; i < tree->leaves_list_num; ++i) {
             int leaf_index = tree->leaves_list[i];
             cp_comp_pot_SS(tree, leaf_index, potential, interp_degree,
