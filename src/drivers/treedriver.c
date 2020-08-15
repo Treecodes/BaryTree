@@ -644,6 +644,13 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             MPI_Barrier(MPI_COMM_WORLD);
         
             START_TIMER(&time_tree[3]);
+#ifdef OPENACC_ENABLED
+            #pragma acc update self(source_clusters->x[0:source_clusters->num], source_clusters->y[0:source_clusters->num], \
+                                    source_clusters->z[0:source_clusters->num], source_clusters->q[0:source_clusters->num_charges])
+            if (run_params->singularity == SUBTRACTION) {
+                #pragma acc update self(source_clusters->w[0:source_clusters->num_weights])
+            }
+#endif
             CommTypesAndTrees_Construct(&comm_types, &let_trees,
                                         source_tree, target_tree, run_params);
 
