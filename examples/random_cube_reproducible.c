@@ -18,6 +18,7 @@
 #include "zoltan_fns.h"
 #include "support_fns.h"
 
+void Particles_Fix_Plummer(MESH_DATA *mySources);
 
 int main(int argc, char **argv)
 {
@@ -264,6 +265,8 @@ int main(int argc, char **argv)
     Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
     Zoltan_Destroy(&zz);
 
+    if (distribution == PLUMMER && numProcs == 4) Particles_Fix_Plummer(&mySources);
+
     /* Setting up sources with MPI-allocated source arrays for RMA use */
     
     sources = malloc(sizeof(struct Particles));
@@ -282,7 +285,7 @@ int main(int argc, char **argv)
 
     /* Output load balanced points */
   
-    /*
+    
     char points_file[256];
     sprintf(points_file, "points_rank_%d.csv", rank);
     FILE *points_fp = fopen(points_file, "w");
@@ -290,7 +293,6 @@ int main(int argc, char **argv)
         fprintf(points_fp, "%e, %e, %e\n", sources->x[i], sources->y[i], sources->z[i]);
     }
     fclose(points_fp);
-    */
     
     /* Setting up targets */
     
@@ -436,4 +438,116 @@ int main(int argc, char **argv)
     MPI_Finalize();
 
     return 0;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Particles_Fix_Plummer(MESH_DATA *mySources)
+{
+    //This is only for four ranks
+    int rank, numProcs;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+    int *sendto = malloc(mySources->numMyPoints * sizeof(int));
+
+    int num_sendto[4] = {0};
+    int num_global[4] = {0};
+    int increment_sendto[4] = {0};
+    int num_sendto_all[16] = {0};
+
+    MESH_DATA mesh_sendto[4];
+
+    for (int i = 0; i < mySources->numMyPoints; ++i) {
+        if (mySources->x[i] > 0 && mySources->y[i] > 0) {sendto[i] = 0; num_sendto[0]++;}
+        if (mySources->x[i] > 0 && mySources->y[i] < 0) {sendto[i] = 1; num_sendto[1]++;}
+        if (mySources->x[i] < 0 && mySources->y[i] < 0) {sendto[i] = 2; num_sendto[2]++;}
+        if (mySources->x[i] < 0 && mySources->y[i] > 0) {sendto[i] = 3; num_sendto[3]++;}
+    }
+
+    for (int i = 0; i < numProcs; ++i) {
+        mesh_sendto[i].numMyPoints = num_sendto[i];
+        mesh_sendto[i].x = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].y = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].z = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].q = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].w = malloc(num_sendto[i]*sizeof(double));
+    }
+
+    for (int pt_idx = 0; pt_idx < mySources->numMyPoints; ++pt_idx) {
+        for (int proc_idx = 0; proc_idx < numProcs; ++proc_idx) {
+            if (sendto[pt_idx] == proc_idx) {
+                mesh_sendto[proc_idx].x[increment_sendto[proc_idx]] = mySources->x[pt_idx];
+                mesh_sendto[proc_idx].y[increment_sendto[proc_idx]] = mySources->y[pt_idx];
+                mesh_sendto[proc_idx].z[increment_sendto[proc_idx]] = mySources->z[pt_idx];
+                mesh_sendto[proc_idx].q[increment_sendto[proc_idx]] = mySources->q[pt_idx];
+                mesh_sendto[proc_idx].w[increment_sendto[proc_idx]] = mySources->w[pt_idx];
+                increment_sendto[proc_idx]++;
+                break;
+            }
+        }
+    }
+
+    MPI_Allreduce(num_sendto, num_global, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allgather(num_sendto, 4, MPI_INT, num_sendto_all, 4, MPI_INT, MPI_COMM_WORLD);
+
+    free(mySources->x);
+    free(mySources->y);
+    free(mySources->z);
+    free(mySources->q);
+    free(mySources->w);
+
+    mySources->numMyPoints = num_global[rank];
+    mySources->x = malloc(num_global[rank]*sizeof(double));
+    mySources->y = malloc(num_global[rank]*sizeof(double));
+    mySources->z = malloc(num_global[rank]*sizeof(double));
+    mySources->q = malloc(num_global[rank]*sizeof(double));
+    mySources->w = malloc(num_global[rank]*sizeof(double));
+
+    memcpy(mySources->x, mesh_sendto[rank].x, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->y, mesh_sendto[rank].y, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->z, mesh_sendto[rank].z, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->q, mesh_sendto[rank].q, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->w, mesh_sendto[rank].w, num_sendto[rank] * sizeof(double));
+    int offset = num_sendto[rank];
+
+    MPI_Request send_request[5], recv_request[5];
+
+    for (int proc_idx = 0; proc_idx < numProcs-1; ++proc_idx) {
+
+        int proc_num = (rank + proc_idx + 1) % numProcs;
+
+        MPI_Isend(mesh_sendto[proc_num].x, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  0, MPI_COMM_WORLD, &send_request[0]);
+        MPI_Irecv(&(mySources->x[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  0, MPI_COMM_WORLD, &recv_request[0]);
+
+        MPI_Isend(mesh_sendto[proc_num].y, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  1, MPI_COMM_WORLD, &send_request[1]);
+        MPI_Irecv(&(mySources->y[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  1, MPI_COMM_WORLD, &recv_request[1]);
+
+        MPI_Isend(mesh_sendto[proc_num].z, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  2, MPI_COMM_WORLD, &send_request[2]);
+        MPI_Irecv(&(mySources->z[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  2, MPI_COMM_WORLD, &recv_request[2]);
+
+        MPI_Isend(mesh_sendto[proc_num].q, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  3, MPI_COMM_WORLD, &send_request[3]);
+        MPI_Irecv(&(mySources->q[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  3, MPI_COMM_WORLD, &recv_request[3]);
+
+        MPI_Isend(mesh_sendto[proc_num].w, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  4, MPI_COMM_WORLD, &send_request[4]);
+        MPI_Irecv(&(mySources->w[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  4, MPI_COMM_WORLD, &recv_request[4]);
+
+        offset += num_sendto_all[4*proc_num+rank];
+    }
+    
+    MPI_Waitall(5, send_request, MPI_STATUSES_IGNORE);
+    MPI_Waitall(5, recv_request, MPI_STATUSES_IGNORE);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    return;
 }

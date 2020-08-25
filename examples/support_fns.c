@@ -738,7 +738,6 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     
     if (rank == 0) {
-        RunParams_Print(run_params);
         FILE *fp = fopen("out.csv", "a");
         fprintf(fp, "%d,%d,%d,%d,%d,%d,%d,%f,%d,%d,%d,%f,%f,"
                     "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
