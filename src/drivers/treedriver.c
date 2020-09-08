@@ -96,7 +96,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Tree_Targets_Construct(&tree, targets, run_params);
 #ifdef OPENACC_ENABLED
         #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
-                                      targets->z[0:targets->num], targets->q[0:targets->num])
+                                      targets->z[0:targets->num])
         if (run_params->singularity == SUBTRACTION) {
             #pragma acc enter data copyin(targets->q[0:targets->num])
         }
@@ -327,7 +327,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Batches_Targets_Construct(&batches, targets, run_params);
 #ifdef OPENACC_ENABLED
         #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
-                                      targets->z[0:targets->num], targets->q[0:targets->num])
+                                      targets->z[0:targets->num])
         if (run_params->singularity == SUBTRACTION) {
             #pragma acc enter data copyin(targets->q[0:targets->num])
         }
@@ -601,7 +601,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Tree_Targets_Construct(&target_tree, targets, run_params);
 #ifdef OPENACC_ENABLED
         #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
-                                      targets->z[0:targets->num], targets->q[0:targets->num])
+                                      targets->z[0:targets->num])
         if (run_params->singularity == SUBTRACTION) {
             #pragma acc enter data copyin(targets->q[0:targets->num])
         }
