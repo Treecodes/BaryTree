@@ -608,7 +608,7 @@ void cp_comp_pot_SS_parent_to_child(struct Tree *tree, int parent_index, int chi
         double temp2 = 0.0;
         
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temp)
+        #pragma acc loop independent reduction(+:temp) reduction(+:temp2)
 #endif
         for (int j = 0; j < interp_pts_per_cluster; j++) { // loop over interpolation points, set (cx,cy,cz) for this point
 

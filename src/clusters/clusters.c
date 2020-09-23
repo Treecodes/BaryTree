@@ -573,7 +573,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent(const struct Tree *tree, int child_
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ, clusterQ) \
+    #pragma acc kernels async(streamID) present(clusterX, clusterY, clusterZ, clusterQ, clusterW) \
                        create(modifiedF[0:interpolationPointsPerCluster], modifiedF2[0:interpolationPointsPerCluster], exactIndX[0:interpolationPointsPerCluster], \
                               exactIndY[0:interpolationPointsPerCluster], exactIndZ[0:interpolationPointsPerCluster], \
                               nodeX[0:interpDegreeLim], nodeY[0:interpDegreeLim], \
@@ -694,7 +694,7 @@ void pc_comp_ms_modifiedF_SS_child_to_parent(const struct Tree *tree, int child_
         double temp = 0.0;
         double temp2 = 0.0;
 #ifdef OPENACC_ENABLED
-        #pragma acc loop vector(32) reduction(+:temp)
+        #pragma acc loop vector(32) reduction(+:temp) reduction(+:temp2)
 #endif
         for (int i = 0; i < interpolationPointsPerCluster; i++) {  // loop over source points
             double sx = clusterX[child_startingIndexInClustersArray + i];
