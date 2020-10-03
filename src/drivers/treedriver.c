@@ -46,6 +46,18 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
     Particles_Validate(sources, targets);
     Particles_ConstructOrder(sources);
     Particles_ConstructOrder(targets);
+
+    int sources_w_dummy = 0; 
+    int targets_q_dummy = 0; 
+
+    if (sources->w == NULL) {
+        sources_w_dummy = 1; 
+        make_vector(sources->w, sources->num);
+    }    
+    if (targets->q == NULL) {
+        targets_q_dummy = 1; 
+        make_vector(targets->q, targets->num);
+    }  
     
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
     if (run_params->verbosity > 0 && rank == 0) {
@@ -878,6 +890,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
     }
 
 
+    if (sources_w_dummy) free_vector(sources->w);
+    if (targets_q_dummy) free_vector(targets->q);
 
 
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~

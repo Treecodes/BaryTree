@@ -369,18 +369,20 @@ double Point_Set(DISTRIBUTION distribution, double xmin, double xmax)
 /*----------------------------------------------------------------------------*/
 void Point_Plummer(double R, double *x, double *y, double *z)
 {
-    double u = (double)random()/(1.+ (double)(RAND_MAX));
-    double radius = R / sqrt(pow(u, (-2.0/3.0)) - 1.0);
+    do {
+        double u = (double)random()/(1.+ (double)(RAND_MAX));
+        double radius = R / sqrt(pow(u, (-2.0/3.0)) - 1.0);
 
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    double theta = acos(-1 + u * 2.0);
-    
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    double phi = u * 2.0 * M_PI;
+        u = (double)random()/(1.+ (double)(RAND_MAX));
+        double theta = acos(-1 + u * 2.0);
+        
+        u = (double)random()/(1.+ (double)(RAND_MAX));
+        double phi = u * 2.0 * M_PI;
 
-    *x = radius * sin(theta) * cos(phi);
-    *y = radius * sin(theta) * sin(phi);
-    *z = radius * cos(theta);
+        *x = radius * sin(theta) * cos(phi);
+        *y = radius * sin(theta) * sin(phi);
+        *z = radius * cos(theta);
+    } while (fabs(*x) > 100 || fabs(*y) > 100 || fabs(*z) > 100);
 
     return;
 }
