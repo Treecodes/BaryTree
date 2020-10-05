@@ -105,13 +105,26 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     double *wC = clusters->w;
 
 
+//#ifdef OPENACC_ENABLED
+//    #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+//                                  zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
+//    if (singularity == SUBTRACTION) {
+//        #pragma acc enter data create(wC[0:totalNumberInterpolationWeights])
+//    }
+//#endif
+
+
 #ifdef OPENACC_ENABLED
-    #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                                  zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
-    if (singularity == SUBTRACTION) {
-        #pragma acc enter data create(wC[0:totalNumberInterpolationWeights])
-    }
+    #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
+                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
+                            wS[0:totalNumberSourcePoints]) \
+                       copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
+                            wC[0:totalNumberInterpolationWeights])
+    {
 #endif
+
+
 
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
 
@@ -173,6 +186,11 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     } else {
         exit(1);
     }
+    
+#ifdef OPENACC_ENABLED
+    #pragma acc wait
+    } // end ACC DATA REGION
+#endif
     
     return;
 }

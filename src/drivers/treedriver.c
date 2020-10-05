@@ -326,25 +326,25 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         START_TIMER(&time_tree[0]);
         Tree_Sources_Construct(&tree, sources, run_params);
-#ifdef OPENACC_ENABLED
-        #pragma acc enter data copyin(sources->x[0:sources->num], sources->y[0:sources->num], \
-                                      sources->z[0:sources->num], sources->q[0:sources->num])
-        if (run_params->singularity == SUBTRACTION) {
-            #pragma acc enter data copyin(sources->w[0:sources->num])
-        }
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc enter data copyin(sources->x[0:sources->num], sources->y[0:sources->num], \
+//                                      sources->z[0:sources->num], sources->q[0:sources->num])
+//        if (run_params->singularity == SUBTRACTION) {
+//            #pragma acc enter data copyin(sources->w[0:sources->num])
+//        }
+//#endif
         STOP_TIMER(&time_tree[0]);
         
         START_TIMER(&time_tree[1]);
         Batches_Targets_Construct(&batches, targets, run_params);
-#ifdef OPENACC_ENABLED
-        #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
-                                      targets->z[0:targets->num])
-        if (run_params->singularity == SUBTRACTION) {
-            #pragma acc enter data copyin(targets->q[0:targets->num])
-        }
-        #pragma acc enter data create(potential[0:targets->num])
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
+//                                      targets->z[0:targets->num])
+//        if (run_params->singularity == SUBTRACTION) {
+//            #pragma acc enter data copyin(targets->q[0:targets->num])
+//        }
+//        #pragma acc enter data create(potential[0:targets->num])
+//#endif
         STOP_TIMER(&time_tree[1]);
         
         START_TIMER(&time_tree[2]);
@@ -381,13 +381,13 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             MPI_Barrier(MPI_COMM_WORLD);
             
             START_TIMER(&time_tree[3]);
-#ifdef OPENACC_ENABLED
-            #pragma acc update self(clusters->x[0:clusters->num], clusters->y[0:clusters->num], \
-                                    clusters->z[0:clusters->num], clusters->q[0:clusters->num_charges])
-            if (run_params->singularity == SUBTRACTION) {
-                #pragma acc update self(clusters->w[0:clusters->num_weights])
-            }
-#endif
+//#ifdef OPENACC_ENABLED
+//            #pragma acc update self(clusters->x[0:clusters->num], clusters->y[0:clusters->num], \
+//                                    clusters->z[0:clusters->num], clusters->q[0:clusters->num_charges])
+//            if (run_params->singularity == SUBTRACTION) {
+//                #pragma acc update self(clusters->w[0:clusters->num_weights])
+//            }
+//#endif
             CommTypesAndTrees_Construct(&comm_types, &let_trees, tree, batches, run_params);
             Particles_Alloc(&let_sources, comm_types->let_sources_length);
             Clusters_Alloc(&let_clusters, comm_types->let_clusters_length, run_params);
@@ -441,14 +441,14 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         InteractionCompute_PC(potential, tree, batches, local_interaction_list,
                               sources, targets, clusters, run_params);
         InteractionLists_Free(&local_interaction_list);
-#ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], \
-                                     clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], \
-                                     clusters->q[0:clusters->num_charges])
-        if (run_params->singularity == SUBTRACTION) {
-            #pragma acc exit data delete(sources->w[0:sources->num], clusters->w[0:clusters->num_weights])
-        }
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc exit data delete(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], \
+//                                     clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], \
+//                                     clusters->q[0:clusters->num_charges])
+//        if (run_params->singularity == SUBTRACTION) {
+//            #pragma acc exit data delete(sources->w[0:sources->num], clusters->w[0:clusters->num_weights])
+//        }
+//#endif
         STOP_TIMER(&time_tree[5]);
 
         //~~~~~~~~~~~~~~~~~~~~
@@ -458,20 +458,20 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         time_tree[6] = 0;
         time_tree[7] = 0;
 
-#ifdef OPENACC_ENABLED
-        if (num_procs > 1) {
-            START_TIMER(&time1);
-            #pragma acc enter data copyin(let_sources->x[0:let_sources->num], let_sources->y[0:let_sources->num], \
-                                          let_sources->z[0:let_sources->num], let_sources->q[0:let_sources->num], \
-                                          let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
-                                          let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
-            if (run_params->singularity == SUBTRACTION) {
-                #pragma acc enter data copyin(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
-            }
-            STOP_TIMER(&time1);
-            time_tree[6] += time1;
-        }
-#endif
+//#ifdef OPENACC_ENABLED
+//        if (num_procs > 1) {
+//            START_TIMER(&time1);
+//            #pragma acc enter data copyin(let_sources->x[0:let_sources->num], let_sources->y[0:let_sources->num], \
+//                                          let_sources->z[0:let_sources->num], let_sources->q[0:let_sources->num], \
+//                                          let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
+//                                          let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
+//            if (run_params->singularity == SUBTRACTION) {
+//                #pragma acc enter data copyin(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
+//            }
+//            STOP_TIMER(&time1);
+//            time_tree[6] += time1;
+//        }
+//#endif
 
         for (int proc_id = 1; proc_id < num_procs; ++proc_id) {
         
@@ -510,20 +510,20 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             
         }
 
-#ifdef OPENACC_ENABLED
-        if (num_procs > 1) {
-            START_TIMER(&time1);
-            #pragma acc exit data delete(let_sources->x[0:let_sources->num], let_sources->y[0:let_sources->num], \
-                                         let_sources->z[0:let_sources->num], let_sources->q[0:let_sources->num], \
-                                         let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
-                                         let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
-            if (run_params->singularity == SUBTRACTION) {
-                #pragma acc exit data delete(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
-            }
-            STOP_TIMER(&time1);
-            time_tree[6] += time1;
-        }
-#endif
+//#ifdef OPENACC_ENABLED
+//        if (num_procs > 1) {
+//            START_TIMER(&time1);
+//            #pragma acc exit data delete(let_sources->x[0:let_sources->num], let_sources->y[0:let_sources->num], \
+//                                         let_sources->z[0:let_sources->num], let_sources->q[0:let_sources->num], \
+//                                         let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
+//                                         let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
+//            if (run_params->singularity == SUBTRACTION) {
+//                #pragma acc exit data delete(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
+//            }
+//            STOP_TIMER(&time1);
+//            time_tree[6] += time1;
+//        }
+//#endif
             
 
         //-------------------------------
@@ -535,7 +535,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         time_tree[8] = 0.0;
         
         START_TIMER(&time_tree[9]);
-        #pragma acc exit data copyout(potential[0:targets->num])
+//        #pragma acc exit data copyout(potential[0:targets->num])
         InteractionCompute_SubtractionPotentialCorrection(potential, targets, run_params);
         Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
@@ -549,12 +549,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //-------------------------------
 
         START_TIMER(&time_tree[10]);
-#ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num])
-        if (run_params->singularity == SUBTRACTION) {
-            #pragma acc exit data delete(targets->q[0:targets->num])
-        }
-#endif
+//#ifdef OPENACC_ENABLED
+//        #pragma acc exit data delete(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num])
+//        if (run_params->singularity == SUBTRACTION) {
+//            #pragma acc exit data delete(targets->q[0:targets->num])
+//        }
+//#endif
         Particles_FreeOrder(sources);
         Particles_FreeOrder(targets);
         Tree_Free(&tree);

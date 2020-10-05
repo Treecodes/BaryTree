@@ -64,6 +64,21 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
     int *tree_ibeg = tree->ibeg;
     int *tree_iend = tree->iend;
     int *cluster_ind = tree->cluster_ind;
+    
+    
+    
+#ifdef OPENACC_ENABLED
+    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
+                        source_q[0:num_sources], source_w[0:num_sources], \
+                        target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
+                        target_q[0:num_targets], \
+                        cluster_x[0:total_num_interp_pts], cluster_y[0:total_num_interp_pts], \
+                        cluster_z[0:total_num_interp_pts], \
+                        cluster_q[0:total_num_interp_charges], cluster_w[0:total_num_interp_weights]) \
+                        copy(potential[0:num_targets])
+#endif
+    {
+    
 
 
     for (int i = 0; i < batches->numnodes; i++) {
@@ -552,6 +567,8 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 #ifdef OPENACC_ENABLED
     #pragma acc wait
 #endif
+
+    } // end acc data region
 
     return;
 
