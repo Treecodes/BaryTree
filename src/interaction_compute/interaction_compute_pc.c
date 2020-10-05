@@ -66,7 +66,7 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
     int *cluster_ind = tree->cluster_ind;
     
     
-    
+    printf("Entering data in interaction_compute_pc.\n");    
 #ifdef OPENACC_ENABLED
     #pragma acc enter data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
                         source_q[0:num_sources], source_w[0:num_sources], \
@@ -580,6 +580,8 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                         cluster_q[0:total_num_interp_charges], cluster_w[0:total_num_interp_weights]) \
                         copyout(potential[0:num_targets])
 #endif
+
+    printf("Exiting data in interaction_compute_pc.\n");
 
     return;
 
