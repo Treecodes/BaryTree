@@ -250,8 +250,29 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Pa
 #ifdef OPENACC_ENABLED
     #pragma acc enter data create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                                   zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
+
+    #pragma acc kernels present(xC,yC,zC,qC)
+    {
+        for (int i=0;i<totalNumberInterpolationPoints;i++){
+            xC[i]=0.0;
+            yC[i]=0.0;
+            zC[i]=0.0;
+        }
+
+        for (int i=0;i<totalNumberInterpolationCharges;i++){
+            qC[i]=0.0;
+        }
+    }
+
+
     if (singularity == SUBTRACTION) {
         #pragma acc enter data create(wC[0:totalNumberInterpolationWeights])
+        #pragma acc kernels present(wC)
+        {
+            for (int i=0;i<totalNumberInterpolationWeights;i++){
+                wC[i]=0.0;
+            }
+        }
     }
 #endif
 

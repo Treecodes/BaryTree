@@ -113,6 +113,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             #pragma acc enter data copyin(targets->q[0:targets->num])
         }
         #pragma acc enter data create(potential[0:targets->num])
+        #pragma acc kernels present(potential)
+        {
+            for (int i=0;i<targets->num;i++){
+                potential[i]=0.0;
+            }
+        }
 #endif
         STOP_TIMER(&time_tree[0]);
         
@@ -345,7 +351,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         }
         #pragma acc enter data create(potential[0:targets->num])
 
-#pragma acc kernels present(potential)
+        #pragma acc kernels present(potential)
         {
             for (int i=0;i<targets->num;i++){
                 potential[i]=0.0;
@@ -626,6 +632,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             #pragma acc enter data copyin(targets->q[0:targets->num])
         }
         #pragma acc enter data create(potential[0:targets->num])
+        #pragma acc kernels present(potential)
+        {
+            for (int i=0;i<targets->num;i++){
+                potential[i]=0.0;
+            }
+        }
 #endif
         STOP_TIMER(&time_tree[1]);
          
