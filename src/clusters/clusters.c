@@ -113,18 +113,17 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
 //    }
 //#endif
 
+    printf("Entering data in clusters_sources_construct.\n");
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
+    #pragma acc enter data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
                             zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
                             wS[0:totalNumberSourcePoints]) \
-                       copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                       create(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
                             zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
                             wC[0:totalNumberInterpolationWeights])
-    {
 #endif
-
-
+    {
 
     if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
 
@@ -189,8 +188,20 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     
 #ifdef OPENACC_ENABLED
     #pragma acc wait
-    } // end ACC DATA REGION
 #endif
+
+    } // end ACC DATA REGION
+
+#ifdef OPENACC_ENABLED
+    #pragma acc exit data delete(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
+                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
+                            wS[0:totalNumberSourcePoints], \
+                            xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
+                            wC[0:totalNumberInterpolationWeights])
+#endif
+
+    printf("Exiting data in clusters_sources_construct.\n");
     
     return;
 }
