@@ -338,14 +338,14 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         START_TIMER(&time_tree[1]);
         Batches_Targets_Construct(&batches, targets, run_params);
         
-        printf("Copying in targets in treedriver.\n");
+        printf("Copying in targets and potential in treedriver.\n");
 #ifdef OPENACC_ENABLED
         #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
                                       targets->z[0:targets->num])
         if (run_params->singularity == SUBTRACTION) {
             #pragma acc enter data copyin(targets->q[0:targets->num])
         }
-//        #pragma acc enter data create(potential[0:targets->num])
+        #pragma acc enter data create(potential[0:targets->num])
 #endif
         STOP_TIMER(&time_tree[1]);
         
@@ -537,7 +537,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         time_tree[8] = 0.0;
         
         START_TIMER(&time_tree[9]);
-//        #pragma acc exit data copyout(potential[0:targets->num])
+        #pragma acc exit data copyout(potential[0:targets->num])
+        printf("Copying out potential in treedriver.\n");
         InteractionCompute_SubtractionPotentialCorrection(potential, targets, run_params);
         Particles_Targets_Reorder(targets, potential);
         Particles_Sources_Reorder(sources);
