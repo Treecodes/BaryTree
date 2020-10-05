@@ -337,14 +337,16 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         
         START_TIMER(&time_tree[1]);
         Batches_Targets_Construct(&batches, targets, run_params);
-//#ifdef OPENACC_ENABLED
-//        #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
-//                                      targets->z[0:targets->num])
-//        if (run_params->singularity == SUBTRACTION) {
-//            #pragma acc enter data copyin(targets->q[0:targets->num])
-//        }
+        
+        printf("Copying in targets in treedriver.\n");
+#ifdef OPENACC_ENABLED
+        #pragma acc enter data copyin(targets->x[0:targets->num], targets->y[0:targets->num], \
+                                      targets->z[0:targets->num])
+        if (run_params->singularity == SUBTRACTION) {
+            #pragma acc enter data copyin(targets->q[0:targets->num])
+        }
 //        #pragma acc enter data create(potential[0:targets->num])
-//#endif
+#endif
         STOP_TIMER(&time_tree[1]);
         
         START_TIMER(&time_tree[2]);
@@ -549,12 +551,14 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         //-------------------------------
 
         START_TIMER(&time_tree[10]);
-//#ifdef OPENACC_ENABLED
-//        #pragma acc exit data delete(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num])
-//        if (run_params->singularity == SUBTRACTION) {
-//            #pragma acc exit data delete(targets->q[0:targets->num])
-//        }
-//#endif
+#ifdef OPENACC_ENABLED
+        #pragma acc exit data delete(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num])
+        if (run_params->singularity == SUBTRACTION) {
+            #pragma acc exit data delete(targets->q[0:targets->num])
+        }
+#endif
+        printf("Copying out targets in treedriver.\n");
+        
         Particles_FreeOrder(sources);
         Particles_FreeOrder(targets);
         Tree_Free(&tree);
