@@ -68,14 +68,14 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
     
     
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
+    #pragma acc enter data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
                         source_q[0:num_sources], source_w[0:num_sources], \
                         target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
                         target_q[0:num_targets], \
                         cluster_x[0:total_num_interp_pts], cluster_y[0:total_num_interp_pts], \
                         cluster_z[0:total_num_interp_pts], \
                         cluster_q[0:total_num_interp_charges], cluster_w[0:total_num_interp_weights]) \
-                        copy(potential[0:num_targets])
+                        copyin(potential[0:num_targets])
 #endif
     {
     
@@ -569,6 +569,17 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 #endif
 
     } // end acc data region
+    
+#ifdef OPENACC_ENABLED
+    #pragma acc exit data delete(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
+                        source_q[0:num_sources], source_w[0:num_sources], \
+                        target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
+                        target_q[0:num_targets], \
+                        cluster_x[0:total_num_interp_pts], cluster_y[0:total_num_interp_pts], \
+                        cluster_z[0:total_num_interp_pts], \
+                        cluster_q[0:total_num_interp_charges], cluster_w[0:total_num_interp_weights]) \
+                        copyout(potential[0:num_targets])
+#endif
 
     return;
 
