@@ -119,9 +119,9 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
                             zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
                             wS[0:totalNumberSourcePoints]) \
-                    copyout(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
-                            wC[0:totalNumberInterpolationWeights])
+                    copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
+                         zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
+                         wC[0:totalNumberInterpolationWeights])
 #endif
     {
 
