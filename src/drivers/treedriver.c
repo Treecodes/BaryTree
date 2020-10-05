@@ -235,10 +235,10 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                                   remote_sources, targets, clusters, run_params);
             InteractionLists_Free(&let_interaction_list);
 #ifdef OPENACC_ENABLED
-            #pragma acc exit data delete(remote_sources->x, remote_sources->y, \
-                                         remote_sources->z, remote_sources->q)
+            #pragma acc exit data delete(remote_sources->x[0:remote_sources->num], remote_sources->y[0:remote_sources->num], \
+                                         remote_sources->z[0:remote_sources->num], remote_sources->q[0:remote_sources->num])
             if (run_params->singularity == SUBTRACTION) {
-                #pragma acc exit data delete(remote_sources->w)
+                #pragma acc exit data delete(remote_sources->w[0:remote_sources->num])
             }
 #endif
             Particles_Free(&remote_sources);
@@ -280,11 +280,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         
         START_TIMER(&time_tree[10]);
 #ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(targets->x, targets->y, targets->z, \
-                                     clusters->x, clusters->y, \
-                                     clusters->z, clusters->q)
+        #pragma acc exit data delete(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num], \
+                                     clusters->x[0:clusters->num], clusters->y[0:clusters->num], \
+                                     clusters->z[0:clusters->num], clusters->q[0:clusters->num_charges])
         if (run_params->singularity == SUBTRACTION) {
-            #pragma acc exit data delete(targets->q, clusters->w)
+            #pragma acc exit data delete(targets->q[0:targets->num], clusters->w[0:clusters->num_weights])
         }
 #endif
         Particles_FreeOrder(sources);
@@ -442,10 +442,11 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                               sources, targets, clusters, run_params);
         InteractionLists_Free(&local_interaction_list);
 #ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(sources->x, sources->y, sources->z, sources->q, \
-                                     clusters->x, clusters->y, clusters->z, clusters->q)
+        #pragma acc exit data delete(sources->x[0:sources->num], sources->y[0:sources->num], sources->z[0:sources->num], sources->q[0:sources->num], \
+                                     clusters->x[0:clusters->num], clusters->y[0:clusters->num], clusters->z[0:clusters->num], \
+                                     clusters->q[0:clusters->num_charges])
         if (run_params->singularity == SUBTRACTION) {
-            #pragma acc exit data delete(sources->w, clusters->w)
+            #pragma acc exit data delete(sources->w[0:sources->num], clusters->w[0:clusters->num_weights])
         }
 #endif
         STOP_TIMER(&time_tree[5]);
@@ -512,12 +513,12 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 #ifdef OPENACC_ENABLED
         if (num_procs > 1) {
             START_TIMER(&time1);
-            #pragma acc exit data delete(let_sources->x, let_sources->y, \
-                                         let_sources->z, let_sources->q, \
-                                         let_clusters->x, let_clusters->y, \
-                                         let_clusters->z, let_clusters->q)
+            #pragma acc exit data delete(let_sources->x[0:let_sources->num], let_sources->y[0:let_sources->num], \
+                                         let_sources->z[0:let_sources->num], let_sources->q[0:let_sources->num], \
+                                         let_clusters->x[0:let_clusters->num], let_clusters->y[0:let_clusters->num], \
+                                         let_clusters->z[0:let_clusters->num], let_clusters->q[0:let_clusters->num_charges])
             if (run_params->singularity == SUBTRACTION) {
-                #pragma acc exit data delete(let_sources->w, let_clusters->w)
+                #pragma acc exit data delete(let_sources->w[0:let_sources->num], let_clusters->w[0:let_clusters->num_weights])
             }
             STOP_TIMER(&time1);
             time_tree[6] += time1;
@@ -549,9 +550,9 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
         START_TIMER(&time_tree[10]);
 #ifdef OPENACC_ENABLED
-        #pragma acc exit data delete(targets->x, targets->y, targets->z)
+        #pragma acc exit data delete(targets->x[0:targets->num], targets->y[0:targets->num], targets->z[0:targets->num])
         if (run_params->singularity == SUBTRACTION) {
-            #pragma acc exit data delete(targets->q)
+            #pragma acc exit data delete(targets->q[0:targets->num])
         }
 #endif
         Particles_FreeOrder(sources);
