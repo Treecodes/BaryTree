@@ -962,13 +962,13 @@ static char *test_treecode_wrapper()
 }
 
 
-static char *test_treecode_parameters_on_1_target_10000_sources()
+static char *test_treecode_parameters_on_1_target_5000_sources()
 {
     struct RunParams *run_params = NULL;
     double time_tree[9];
 
     int verbosity = 1;
-    int N = 10000;
+    int N = 5000;
     double beta = -1.0;
 
     struct Particles *sources = NULL;
@@ -1018,7 +1018,7 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
     }
 
 
-    int max_per_source_leaf = 5;
+    int max_per_source_leaf = 50;
     int max_per_target_leaf = 5;
     double size_check = 0.0;
 
@@ -1412,6 +1412,132 @@ static char *test_treecode_parameters_on_1_target_10000_sources()
 
 
 
+
+
+static char *test_BLDTT()
+{
+    struct RunParams *run_params = NULL;
+    double time_tree[13];
+
+    int verbosity = 1;
+    int N = 5000;
+
+    struct Particles *sources = NULL;
+    struct Particles *targets = NULL;
+    double *potential = NULL, *potential_direct = NULL;
+    double potential_engy = 0;
+    double potential_engy_direct = 0;
+
+    sources = malloc(sizeof(struct Particles));
+    targets = malloc(sizeof(struct Particles));
+    potential = malloc(sizeof(double) * N);
+    potential_direct = malloc(sizeof(double) * N);
+
+    targets->num = N;
+    targets->x = malloc(targets->num*sizeof(double));
+    targets->y = malloc(targets->num*sizeof(double));
+    targets->z = malloc(targets->num*sizeof(double));
+    targets->q = malloc(targets->num*sizeof(double));
+
+    sources->num = N;
+    sources->x = malloc(sources->num*sizeof(double));
+    sources->y = malloc(sources->num*sizeof(double));
+    sources->z = malloc(sources->num*sizeof(double));
+    sources->q = malloc(sources->num*sizeof(double));
+    sources->w = malloc(sources->num*sizeof(double));
+
+
+    srand(1);
+    for (int i=0; i<sources->num; i++){
+        // 10,000 randomly distributed sources in the [-1,1] box
+        targets->x[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        targets->y[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        targets->z[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        targets->q[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+
+        sources->x[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        sources->y[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        sources->z[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        sources->q[i]=((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
+        sources->w[i]=((double)rand()/(double)(RAND_MAX));
+    }
+
+
+    int max_per_source_leaf = 20;
+    int max_per_target_leaf = 20;
+
+    int degree = 3;
+    double theta = 0.9;
+    double beta = -1.0;
+    double size_check = 1.0;
+
+    int num_kernel_params = 1;
+    double kernel_params[1] = {0.5};
+
+    RunParams_Setup(&run_params,
+                    NO_KERNEL, num_kernel_params, kernel_params, NO_APPROX, NO_SINGULARITY, CLUSTER_CLUSTER,
+                    theta, degree, max_per_source_leaf, max_per_target_leaf, size_check, beta, verbosity);
+
+
+    /***********************************************/
+    /******************* Test **********************/
+    /***********************************************/
+    /***********************************************/
+    memset(potential, 0, targets->num * sizeof(double));
+    memset(potential_direct, 0, targets->num * sizeof(double));
+
+    run_params->kernel        = COULOMB;
+    run_params->singularity   = SKIPPING;
+    run_params->approximation = LAGRANGE;
+
+
+    directdriver(sources, targets, run_params, potential_direct, time_tree);
+
+    treedriver(sources, targets, run_params, potential, time_tree);
+
+    double cumulative_potential_bldtt=0.0;
+    double cumulative_potential=0.0;
+    double error;
+
+    for (int i=0; i<targets->num; i++){
+
+        cumulative_potential_bldtt += potential[i];
+        cumulative_potential += potential_direct[i];
+
+    }
+
+    error=fabs(cumulative_potential_bldtt - cumulative_potential)/fabs(cumulative_potential);
+
+    if (verbosity>-1) printf("direct: %1.8e\n", cumulative_potential);
+    if (verbosity>-1) printf("approx: %1.8e\n", cumulative_potential_bldtt);
+    if (verbosity>-1) printf("rel. err.: %1.8e\n", error);
+
+    mu_assert("TEST FAILED: Cluster-cluster didn't give same results as direct", \
+            error < 6e-3);
+
+    free(sources->x);
+    free(sources->y);
+    free(sources->z);
+    free(sources->q);
+    free(sources->w);
+    free(sources);
+
+    free(targets->x);
+    free(targets->y);
+    free(targets->z);
+    free(targets->q);
+    free(targets);
+
+    free(potential);
+    free(potential_direct);
+
+    RunParams_Free(&run_params);
+
+    return 0;
+}
+
+
+
 // Run all the tests
 static char *all_tests()
 {
@@ -1421,8 +1547,8 @@ static char *all_tests()
     printf("Completed test_treecode_on_100_particles().\n");
     mu_run_test(test_treecode_on_1_target_10000_sources);
     printf("Completed test_treecode_on_1_target_10000_sources().\n");
-    mu_run_test(test_treecode_parameters_on_1_target_10000_sources);
-    printf("Completed test_treecode_parameters_on_1_target_10000_sources().\n");
+    mu_run_test(test_treecode_parameters_on_1_target_5000_sources);
+    printf("Completed test_treecode_parameters_on_1_target_5000_sources().\n");
     return 0;
 }
 
@@ -1439,13 +1565,16 @@ static char *run_one_test(int i)
         mu_run_test(test_treecode_on_1_target_10000_sources);
         printf("Completed test_treecode_on_1_target_10000_sources().\n");
     }else if(i==3){
-        mu_run_test(test_treecode_parameters_on_1_target_10000_sources);
-        printf("Completed test_treecode_parameters_on_1_target_10000_sources().\n");
+        mu_run_test(test_treecode_parameters_on_1_target_5000_sources);
+        printf("Completed test_treecode_parameters_on_1_target_5000_sources().\n");
     }else if (i==4){
         mu_run_test(test_treecode_wrapper);
         printf("Completed test_treecode_wrapper().\n");
+    }else if (i==5){
+        mu_run_test(test_BLDTT);
+        printf("Completed test_BLDTT().\n");
     }else{
-        printf("Incorrect test number.  Exiting.");
+        printf("Incorrect test number.  Exiting.\n");
         exit(1);
     }
     return 0;
