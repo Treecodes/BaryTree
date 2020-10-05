@@ -83,10 +83,10 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
 
-    if (singularity == SUBTRACTION) {
+//    if (singularity == SUBTRACTION) {
         MPI_Alloc_mem(totalNumberInterpolationWeights*sizeof(double), MPI_INFO_NULL, &(clusters->w));
         for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
-    }
+//    }
 
     clusters->num = totalNumberInterpolationPoints;
     clusters->num_charges = totalNumberInterpolationCharges;
