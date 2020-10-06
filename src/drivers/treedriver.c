@@ -234,7 +234,9 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             #pragma acc enter data copyin(remote_sources->x[0:remote_sources->num], remote_sources->y[0:remote_sources->num], \
                                           remote_sources->z[0:remote_sources->num], remote_sources->q[0:remote_sources->num])
             if (run_params->singularity == SUBTRACTION) {
-                #pragma acc enter data create(remote_sources->w[0:remote_sources->num])
+                #pragma acc enter data copyin(remote_sources->w[0:remote_sources->num])
+
+
             }
 #endif
             InteractionCompute_CP(potential, tree, remote_batches, let_interaction_list,
