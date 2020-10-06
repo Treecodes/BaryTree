@@ -16,6 +16,7 @@
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
+#include "../kernels/user_kernel/user_kernel.h"
 
 #include "interaction_compute.h"
 
@@ -316,6 +317,24 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                     if (run_params->singularity == SKIPPING) {
 
                         K_SinOverR_CP_Hermite(num_sources_in_batch,
+                            interp_pts_per_cluster, batch_start, cluster_start,
+                            source_x, source_y, source_z, source_q,
+                            cluster_x, cluster_y, cluster_z, cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+
+    /***************************************/
+    /****** USER DEFINED KERNEL ************/
+    /***************************************/
+
+            } else if (run_params->kernel == USER) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_User_Kernel_CP_Lagrange(num_sources_in_batch,
                             interp_pts_per_cluster, batch_start, cluster_start,
                             source_x, source_y, source_z, source_q,
                             cluster_x, cluster_y, cluster_z, cluster_q,

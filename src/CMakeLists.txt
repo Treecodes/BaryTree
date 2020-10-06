@@ -173,8 +173,17 @@ SET(SRCS_K_MQ
     kernels/mq/mq_pp.c
     kernels/mq/mq.h
     kernels/mq/mq_pc.c)
-#    kernels/mq/mq_cp.h
-#    kernels/mq/mq_cp.c)
+
+
+SET(SRCS_K_USER
+    kernels/user_kernel/user_kernel.h
+    kernels/user_kernel/user_kernel_pp.h
+    kernels/user_kernel/user_kernel_pp.c
+    kernels/user_kernel/user_kernel_pc.h
+    kernels/user_kernel/user_kernel_pc.c
+    kernels/user_kernel/user_kernel_cp.h
+    kernels/user_kernel/user_kernel_cp.c)
+
 
 
 SET(SRCS_KERNELS ${SRCS_K_COULOMB}
@@ -183,7 +192,8 @@ SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_REGULARIZED_YUKAWA}
                  ${SRCS_K_ATAN}
                  ${SRCS_K_SIN_OVER_R}
-                 ${SRCS_K_MQ})
+                 ${SRCS_K_MQ}
+                 ${SRCS_K_USER})
 
 
 set(TRGT BaryTree_cpu)

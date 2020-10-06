@@ -160,6 +160,9 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     } else if (strcasecmp(kernel_string, "TCF") == 0) {
         kernel = TCF;
     
+    } else if (strcasecmp(kernel_string, "USER") == 0) {
+        kernel = USER;
+
     } else if (strcasecmp(kernel_string, "DCF") == 0) {
         kernel = DCF;
 

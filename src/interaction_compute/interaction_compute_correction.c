@@ -14,6 +14,7 @@
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
 #include "../kernels/mq/mq.h"
+#include "../kernels/user_kernel/user_kernel.h"
 
 #include "interaction_compute.h"
 
