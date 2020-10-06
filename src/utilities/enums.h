@@ -13,7 +13,8 @@ typedef enum KERNEL
     TCF,
     DCF,
     SIN_OVER_R,
-    MQ
+    MQ,
+    USER
 } KERNEL;
 
 

@@ -19,6 +19,7 @@
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
 #include "../kernels/mq/mq.h"
+#include "../kernels/user_kernel/user_kernel.h"
 
 #include "interaction_compute.h"
 
@@ -378,6 +379,22 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                     exit(1);
                 }
 
+    /***************************************/
+    /********* USER DEFINED KERNEL *********/
+    /***************************************/
+
+            } else if (run_params->kernel == USER) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                        K_User_Kernel_PC_Lagrange(num_targets_in_batch,
+                                    interp_pts_per_cluster, batch_start, cluster_start,
+                                    target_x, target_y, target_z,
+                                    cluster_x, cluster_y, cluster_z, cluster_q,
+                                    run_params, potential, stream_id);
+
+                }
+
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -536,6 +553,18 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == SIN_OVER_R) {
 
                 K_SinOverR_PP(num_targets_in_batch, num_sources_in_cluster,
+                            batch_start, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q,
+                            run_params, potential, stream_id);
+
+    /***************************************/
+    /******** USER DEFINED KERNEL **********/
+    /***************************************/
+
+            } else if (run_params->kernel == USER) {
+
+                K_User_Kernel_PP(num_targets_in_batch, num_sources_in_cluster,
                             batch_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q,

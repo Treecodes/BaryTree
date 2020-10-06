@@ -15,6 +15,7 @@
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
+#include "../kernels/user_kernel/user_kernel.h"
 
 #include "interaction_compute.h"
 
@@ -340,6 +341,25 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     }
                 }
 
+    /* * *********************************************/
+    /* * ******* USER DEFINED KERNEL *****************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == USER) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+
+                    K_User_Kernel_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+                        source_cluster_start, target_cluster_start,
+                        source_cluster_x, source_cluster_y, source_cluster_z,
+                        source_cluster_q,
+                        target_cluster_x, target_cluster_y, target_cluster_z,
+                        target_cluster_q,
+                        run_params, stream_id);
+
+                }
+
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -584,8 +604,25 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     }
                 }
 
+    /* * *********************************************/
+    /* * ******* USER DEFINED KERNEL *****************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == USER) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                        K_User_Kernel_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
+                            target_start, source_cluster_start,
+                            target_x, target_y, target_z,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q,
+                            run_params, potential, stream_id);
+
+                }
+
             } else {
-                printf("**ERROR** INVALID KERNEL. EXITING.\n");
+                printf("[Interaction_Compute_CC] **ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
             }
 
@@ -594,7 +631,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
 
 /* * ********************************************************/
-/* * ************ POTENTIAL FROM TARGET APPROX (PC) *********/
+/* * ************ POTENTIAL FROM TARGET APPROX (CP) *********/
 /* * ********************************************************/
 
         for (int j = 0; j < num_target_approx_in_cluster; j++) {
@@ -832,6 +869,25 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     }
                 }
 
+    /* * *********************************************/
+    /* * ******* USER DEFINED KERNEL *****************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == USER) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_User_Kernel_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                            source_start, target_cluster_start,
+                            source_x, source_y, source_z, source_q,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
                 exit(1);
@@ -972,6 +1028,21 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 if (run_params->singularity == SKIPPING) {
 
                     K_SinOverR_PP(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q,
+                            run_params, potential, stream_id);
+                }
+
+    /* * *********************************************/
+    /* * ********** USER DEFINED KERNEL **************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == USER) {
+
+                if (run_params->singularity == SKIPPING) {
+
+                    K_User_Kernel_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q,
