@@ -160,16 +160,27 @@ void Particles_Validate(struct Particles *sources, struct Particles *targets)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
     if (sources->x == targets->x) {
-        if (rank == 0) {
-            printf("[BaryTree]\n");
-            printf("[BaryTree] ERROR! Sources and targets cannot be the same location in memory.\n");
-            printf("[BaryTree] If you are trying to run with identical sources and targets,\n");
-            printf("[BaryTree] you must duplicate the arrays.\n");
-            printf("[BaryTree]\n");
-            printf("[BaryTree] Exiting.\n");
-        }
-        
-        exit(1);
+        printf("[BaryTree]\n");
+        printf("[BaryTree] Sources and targets cannot be the same location in memory.\n");
+        printf("[BaryTree] Making duplicate arrays for targets.\n");
+        printf("[BaryTree]\n");
+        make_vector(targets->x, targets->num);
+        memcpy(targets->x, sources->x, targets->num * sizeof(double));
+    }
+
+    if (sources->y == targets->y) {
+        make_vector(targets->y, targets->num);
+        memcpy(targets->y, sources->y, targets->num * sizeof(double));
+    }
+
+    if (sources->z == targets->z) {
+        make_vector(targets->z, targets->num);
+        memcpy(targets->z, sources->z, targets->num * sizeof(double));
+    }
+
+    if (sources->q == targets->q) {
+        make_vector(targets->q, targets->num);
+        memcpy(targets->q, sources->q, targets->num * sizeof(double));
     }
 
     return;
