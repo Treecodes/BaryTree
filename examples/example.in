@@ -1,6 +1,6 @@
 num_sources           20000
 num_targets           20000
-order                 2
+degree                2
 theta                 0.9
 beta                 -1.0
 size_check            0.0
@@ -14,4 +14,3 @@ distribution          uniform
 run_direct            1
 slice                 10
 verbosity             1
-temp                  0
