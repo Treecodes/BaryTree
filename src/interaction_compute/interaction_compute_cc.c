@@ -28,17 +28,15 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 {
     int interp_pts_per_cluster = run_params->interp_pts_per_cluster;
 
-    int **approx_inter_list = interaction_list->approx_interactions;
-    int **direct_inter_list = interaction_list->direct_interactions;
-    
-    int *num_approx = interaction_list->num_approx;
-    int *num_direct = interaction_list->num_direct;
-    
-    int **source_approx_inter_list = interaction_list->cc_source_approx_interactions;
-    int **target_approx_inter_list = interaction_list->cc_target_approx_interactions;
-    
-    int *num_source_approx = interaction_list->num_cc_source_approx;
-    int *num_target_approx = interaction_list->num_cc_target_approx;
+    int **direct_inter_list = interaction_list->pp_interactions;
+    int **approx_inter_list = interaction_list->cc_interactions;
+    int **source_approx_inter_list = interaction_list->pc_interactions;
+    int **target_approx_inter_list = interaction_list->cp_interactions;
+
+    int *num_direct = interaction_list->num_pp;
+    int *num_approx = interaction_list->num_cc;
+    int *num_source_approx = interaction_list->num_pc;
+    int *num_target_approx = interaction_list->num_cp;
 
     int source_tree_numnodes = source_tree->numnodes;
     int target_tree_numnodes = target_tree->numnodes;
