@@ -34,10 +34,6 @@ void Timing_Print(double time_tree_glob[3][13], double total_time_glob[1], struc
     
     if (rank == 0) {
     
-
-//    double avg_percent_tree=1.0;
-//    double max_percent_tree=1.0;
-
     /* Printing direct and treecode time calculations: */
     printf("[BaryTree]\n");
     printf("[BaryTree] ");

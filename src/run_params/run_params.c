@@ -182,7 +182,7 @@ void RunParams_Print(struct RunParams *run_params)
     printf("[BaryTree]                singularity = %d\n", run_params->singularity);
     printf("[BaryTree]               compute_type = %d\n", run_params->compute_type);
     printf("[BaryTree]                      theta = %f\n", run_params->theta);
-    printf("[BaryTree]               interp_degree = %d\n", run_params->interp_degree);
+    printf("[BaryTree]              interp_degree = %d\n", run_params->interp_degree);
     printf("[BaryTree]     interp_pts_per_cluster = %d\n", run_params->interp_pts_per_cluster);
     printf("[BaryTree] interp_weights_per_cluster = %d\n", run_params->interp_weights_per_cluster);
     printf("[BaryTree] interp_charges_per_cluster = %d\n", run_params->interp_charges_per_cluster);

@@ -56,28 +56,37 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
     
     
     /* Nullify unallocated arrays in interaction_list struct */
+
+    interaction_list->num_pp = NULL;
+    interaction_list->num_cc = NULL;
+    interaction_list->num_pc = NULL;
+    interaction_list->num_cp = NULL;
     
-    interaction_list->approx_interactions = NULL;
-    interaction_list->direct_interactions = NULL;
-    
-    interaction_list->num_approx = NULL;
-    interaction_list->num_direct = NULL;
-    
-    interaction_list->cc_source_approx_interactions = NULL;
-    interaction_list->cc_target_approx_interactions = NULL;
-    
-    interaction_list->num_cc_source_approx = NULL;
-    interaction_list->num_cc_target_approx = NULL;
+    interaction_list->pp_interactions = NULL;
+    interaction_list->cc_interactions = NULL;
+    interaction_list->pc_interactions = NULL;
+    interaction_list->cp_interactions = NULL;
     
     
     /* Set addresses for interaction lists common to PC, CP, and CC */
 
-    int ***approx_inter_list_addr = &(interaction_list->approx_interactions);
-    int ***direct_inter_list_addr = &(interaction_list->direct_interactions);
+    int **num_direct_addr = &(interaction_list->num_pp);
+    int ***direct_inter_list_addr = &(interaction_list->pp_interactions);
+    int **num_approx_addr;
+    int ***approx_inter_list_addr;
     
-    int **num_approx_addr = &(interaction_list->num_approx);
-    int **num_direct_addr = &(interaction_list->num_direct);
-    
+    if (run_params->compute_type == PARTICLE_CLUSTER) {
+        num_approx_addr = &(interaction_list->num_pc);
+        approx_inter_list_addr = &(interaction_list->pc_interactions);
+        
+    } else if (run_params->compute_type == CLUSTER_PARTICLE) {
+        num_approx_addr = &(interaction_list->num_cp);
+        approx_inter_list_addr = &(interaction_list->cp_interactions);
+        
+    } else if (run_params->compute_type == CLUSTER_CLUSTER) {
+        num_approx_addr = &(interaction_list->num_cc);
+        approx_inter_list_addr = &(interaction_list->cc_interactions);
+    }
     
     /* Set addresses for variables pointing to source and target tree struct members */
     
@@ -158,11 +167,11 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
     
         /* Allocate interaction lists exclusive to CC */
         
-        int ***cc_source_approx_inter_list_addr = &(interaction_list->cc_source_approx_interactions);
-        int ***cc_target_approx_inter_list_addr = &(interaction_list->cc_target_approx_interactions);
+        int ***cc_source_approx_inter_list_addr = &(interaction_list->pc_interactions);
+        int ***cc_target_approx_inter_list_addr = &(interaction_list->cp_interactions);
     
-        int **num_cc_source_approx_addr = &(interaction_list->num_cc_source_approx);
-        int **num_cc_target_approx_addr = &(interaction_list->num_cc_target_approx);
+        int **num_cc_source_approx_addr = &(interaction_list->num_pc);
+        int **num_cc_target_approx_addr = &(interaction_list->num_cp);
         
         make_matrix(*cc_source_approx_inter_list_addr, target_tree_numnodes, 50);
         make_matrix(*cc_target_approx_inter_list_addr, target_tree_numnodes, 50);
@@ -230,17 +239,15 @@ void InteractionLists_Free(struct InteractionLists **interaction_list_addr)
 {
     struct InteractionLists *interaction_list = *interaction_list_addr;
 
-    free_matrix(interaction_list->approx_interactions);
-    free_matrix(interaction_list->direct_interactions);
-    
-    free_vector(interaction_list->num_approx);
-    free_vector(interaction_list->num_direct);
-    
-    free_matrix(interaction_list->cc_source_approx_interactions);
-    free_matrix(interaction_list->cc_target_approx_interactions);
-    
-    free_vector(interaction_list->num_cc_source_approx);
-    free_vector(interaction_list->num_cc_target_approx);
+    free_matrix(interaction_list->pp_interactions);
+    free_matrix(interaction_list->cc_interactions);
+    free_matrix(interaction_list->pc_interactions);
+    free_matrix(interaction_list->cp_interactions);
+
+    free_vector(interaction_list->num_pp);
+    free_vector(interaction_list->num_cc);
+    free_vector(interaction_list->num_pc);
+    free_vector(interaction_list->num_cp);
     
     free(interaction_list);
     

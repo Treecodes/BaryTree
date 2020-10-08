@@ -16,7 +16,14 @@ struct Particles
 		int *iend;
   
         int *order;
-
+        
+        int sources_w_dummy;
+        int targets_q_dummy;
+        
+        int targets_x_duplicate;
+        int targets_y_duplicate;
+        int targets_z_duplicate;
+        int targets_q_duplicate;
 };
 
 #endif /* H_PARTICLES_H */

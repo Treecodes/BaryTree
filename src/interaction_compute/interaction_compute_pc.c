@@ -53,11 +53,11 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
     double *cluster_q = clusters->q;
     double *cluster_w = clusters->w;
 
-    int **approx_inter_list = interaction_list->approx_interactions;
-    int **direct_inter_list = interaction_list->direct_interactions;
+    int **approx_inter_list = interaction_list->pc_interactions;
+    int **direct_inter_list = interaction_list->pp_interactions;
     
-    int *num_approx = interaction_list->num_approx;
-    int *num_direct = interaction_list->num_direct;
+    int *num_approx = interaction_list->num_pc;
+    int *num_direct = interaction_list->num_pp;
 
     int tree_numnodes = tree->numnodes;
     int batch_numnodes = batches->numnodes;
