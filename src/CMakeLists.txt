@@ -8,6 +8,8 @@ SET(SRCS_TREEDRIVER
     utilities/xmalloc.c
     utilities/array.h
     utilities/enums.h
+    utilities/advanced_timings.c
+    utilities/advanced_timings.h
 # Calling functions for tree and pp calculations
     drivers/directdriver.h
     drivers/directdriver.c

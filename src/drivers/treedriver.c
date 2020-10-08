@@ -7,6 +7,7 @@
 #include "../utilities/tools.h"
 #include "../utilities/timers.h"
 #include "../utilities/enums.h"
+#include "../utilities/advanced_timings.h"
 
 #include "../tree/struct_tree.h"
 #include "../tree/tree.h"
@@ -62,8 +63,37 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
     if (run_params->verbosity > 0 && rank == 0) {
         printf("[BaryTree]\n");
-        printf("[BaryTree] Running BaryTree with %d ranks.\n", num_procs);
+        printf("[BaryTree] BaryTree has started.\n");
         RunParams_Print(run_params);
+    }
+    if (run_params->verbosity > 1 ) {
+
+
+        int M_min_g, M_max_g, M_avg_g, N_min_g, N_max_g, N_avg_g;
+
+        int M_max = targets->num;
+        int M_min = targets->num;
+        int M_avg = targets->num;
+
+        int N_max = sources->num;
+        int N_min = sources->num;
+        int N_avg = sources->num;
+
+        MPI_Reduce(&M_max, &M_max_g, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&M_min, &M_min_g, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&M_avg, &M_avg_g, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        M_avg_g = M_avg_g / num_procs;
+
+        MPI_Reduce(&N_max, &N_max_g, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&N_min, &N_min_g, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&N_avg, &N_avg_g, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        N_avg_g = N_avg_g / num_procs;
+
+        if ( rank == 0) {
+            printf("[BaryTree] %d target and %d source particles distributed over %d MPI ranks.\n", M_avg_g*num_procs, N_avg_g*num_procs, num_procs);
+            printf("[BaryTree] min, max, avg targets per rank: (%d,%d,%d).\n", M_min_g,M_max_g,M_avg_g);
+            printf("[BaryTree] min, max, avg sources per rank: (%d,%d,%d).\n", N_min_g,N_max_g,N_avg_g);
+        }
     }
     
     double time1;
@@ -162,7 +192,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[4]);
         
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        if (run_params->verbosity > 0) {
+        if (run_params->verbosity > 2) {
             total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
             total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
 
@@ -212,7 +242,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             STOP_TIMER(&time_tree[6]);
             
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-            if (run_params->verbosity > 0) {
+            if (run_params->verbosity > 2) {
                 total_num_approx += sum_int(let_interaction_list->num_approx, remote_batches->numnodes);
                 total_num_direct += sum_int(let_interaction_list->num_direct, remote_batches->numnodes);
 
@@ -307,6 +337,8 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         
         // Total compute time
         time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8];
+
+
     
         MPI_Barrier(MPI_COMM_WORLD);
         
@@ -367,7 +399,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[2]);
         
         //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        if (run_params->verbosity > 0) {
+        if (run_params->verbosity > 1) {
             Tree_Print(tree);
             Batches_Print(batches);
         }
@@ -435,7 +467,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[4]);
 
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        if (run_params->verbosity > 0) {
+        if (run_params->verbosity > 2) {
             total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
             total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
 
@@ -499,7 +531,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             time_tree[6] += time1;
 
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-            if (run_params->verbosity > 0) {
+            if (run_params->verbosity > 2) {
                 total_num_approx += sum_int(let_interaction_list->num_approx, batches->numnodes);
                 total_num_direct += sum_int(let_interaction_list->num_direct, batches->numnodes);
 
@@ -649,7 +681,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[2]);
         
         //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-                if (run_params->verbosity > 0) {
+                if (run_params->verbosity > 1) {
                     Tree_Print(source_tree);
                     Tree_Print(target_tree);
                 }
@@ -718,7 +750,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         STOP_TIMER(&time_tree[4]);
 
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        if (run_params->verbosity > 0) {
+        if (run_params->verbosity > 2) {
             total_num_approx += sum_int(local_interaction_list->num_approx, target_tree->numnodes);
             total_num_direct += sum_int(local_interaction_list->num_direct, target_tree->numnodes);
             
@@ -794,7 +826,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             time_tree[6] += time1;
              
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-            if (run_params->verbosity > 0) {
+            if (run_params->verbosity > 2) {
                 total_num_approx += sum_int(let_interaction_list->num_approx, target_tree->numnodes);
                 total_num_direct += sum_int(let_interaction_list->num_direct, target_tree->numnodes);
                 
@@ -917,7 +949,21 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 
 
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+
+    double total_time[1], total_time_glob[1];
     if (run_params->verbosity > 0) {
+
+        /* Total treedriver time */
+        total_time[0] = time_tree[0] + time_tree[1] + time_tree[2] + time_tree[3] + time_tree[4] +
+                            time_tree[5] + time_tree[6] + time_tree[7] + time_tree[8] + time_tree[9] +
+                            time_tree[10];
+
+        if (rank==0) {
+            printf("[BaryTree] Total BaryTree time: %1.3f seconds.\n", total_time[0]);
+        }
+    }
+
+    if (run_params->verbosity > 2) {
        
         int global_num_inter,  max_num_inter,  min_num_inter;
         int global_num_direct, max_num_direct, min_num_direct;
@@ -1061,6 +1107,17 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
             printf("[BaryTree] BaryTree has finished.\n");
             printf("[BaryTree]\n");
         }
+
+
+        /* variables for date-time calculation */
+        double time_tree_glob[3][13];
+
+
+
+        Timing_Calculate(time_tree_glob, time_tree, total_time_glob, total_time);
+        Timing_Print(time_tree_glob, total_time_glob, run_params);
+
+
     }
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
     
