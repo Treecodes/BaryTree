@@ -154,33 +154,74 @@ void Particles_FreeOrder(struct Particles *particles)
 
 
 
-void Particles_Validate(struct Particles *sources, struct Particles *targets)
+void Particles_Validate(struct Particles *sources, struct Particles *targets, struct RunParams *run_params)
 {
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     
+    sources->sources_w_dummy = 0;
+    targets->targets_q_dummy = 0;
+        
+    targets->targets_x_duplicate = 0;
+    targets->targets_y_duplicate = 0;
+    targets->targets_z_duplicate = 0;
+    targets->targets_q_duplicate = 0;
+    
+    if (sources->x == NULL || sources->y == NULL || sources->z == NULL || sources->q == NULL
+     || targets->x == NULL || targets->y == NULL || targets->z == NULL) {
+        printf("[BaryTree]\n");
+        printf("[BaryTree] ERROR! One or more required particle arrays is unset. Exiting.\n");
+        printf("[BaryTree]\n");
+        exit(1);
+    }
+    
+    if (sources->w == NULL && run_params->singularity == SUBTRACTION) {
+        printf("[BaryTree]\n");
+        printf("[BaryTree] ERROR! Singularity subtraction requires weights for the sources. Exiting.\n");
+        printf("[BaryTree]\n");
+        exit(1);
+    }
+    
+    if (sources->w == NULL) {
+        make_vector(sources->w, sources->num);
+        sources->sources_w_dummy = 1;
+    }
+    
+    if (targets->q == NULL) {
+        make_vector(targets->q, targets->num);
+        targets->targets_q_dummy = 1;
+    }
+    
     if (sources->x == targets->x) {
-        printf("[BaryTree]\n");
-        printf("[BaryTree] Sources and targets cannot be the same location in memory.\n");
-        printf("[BaryTree] Making duplicate arrays for targets.\n");
-        printf("[BaryTree]\n");
         make_vector(targets->x, targets->num);
         memcpy(targets->x, sources->x, targets->num * sizeof(double));
+        targets->targets_x_duplicate = 1;
     }
 
     if (sources->y == targets->y) {
         make_vector(targets->y, targets->num);
         memcpy(targets->y, sources->y, targets->num * sizeof(double));
+        targets->targets_y_duplicate = 1;
     }
 
     if (sources->z == targets->z) {
         make_vector(targets->z, targets->num);
         memcpy(targets->z, sources->z, targets->num * sizeof(double));
+        targets->targets_z_duplicate = 1;
     }
 
     if (sources->q == targets->q) {
         make_vector(targets->q, targets->num);
         memcpy(targets->q, sources->q, targets->num * sizeof(double));
+        targets->targets_q_duplicate = 1;
+    }
+    
+    if (targets->targets_x_duplicate || targets->targets_x_duplicate || targets->targets_z_duplicate
+     || targets->targets_q_duplicate) {
+        printf("[BaryTree]\n");
+        printf("[BaryTree] Sources and targets cannot be the same location in memory.\n");
+        printf("[BaryTree] Making duplicate arrays for targets as necessary.\n");
+        printf("[BaryTree]\n");
     }
 
     return;
