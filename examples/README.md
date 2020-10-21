@@ -30,17 +30,20 @@ The parameters that can be specified in the infile are as follows:
 | `num_particles`   | Number of sources and targets. Its use is exclusive with the `num_sources` and `num_targets` parameters.
 | `num_sources`     | Number of sources.
 | `num_targets`     | Number of targets.
-| `order`           | Order of polynomial interpolation. 
+| `distribution`    | Underlying particle distribution: `UNIFORM`, `GAUSSIAN`, `EXPONENTIAL`, `PLUMMER`, or `PLUMMER_SYMMETRIC`.
+| `degree`          | Degree of polynomial interpolation. 
 | `theta`           | Multipole acceptance criterion (MAC).
-| `max_per_leaf`    | Maximum number of particles per tree leaf.
-| `max_per_batch`   | Maximum number of particles per batch.
-| `kernel_name`     | Name of interaction kernel: `yukawa` or `coulomb`.
-| `approximation`   | Type of polynomial: `lagrange` and `hermite`. 
-| `size_check`      | If the product of this parameter and the number of interpolation points in a cluster is greater than the number of particles in the cluster, then the interaction will be performed directly even if the MAC is accepted.
-| `run_direct`      | Run direct calculation for error comparison: `on` or `off`.
-| `verbosity`       | Determines verbosity level of output. `0` is quiet, `1` is verbose.
-| `slice`           | Determines the proportion of target sites at which the direct calculation is performed for error comparison.
+| `max_per_source_leaf` | Maximum number of particles per source tree leaf (or source batch, for `CLUSTER_PARTICLE`).
+| `max_per_target_leaf` | Maximum number of particles per target tree leaf (or target batch, for `PARTICLE_CLUSTER`).
+| `beta`            | Automatic tuning accuracy parameter. Number in [0,1], higher is more accurate. 
+| `compute_type`    | Type of treecode method. `CLUSTER_PARTICLE`, `PARTICLE_CLUSTER` (i.e. BLTC), `CLUSTER_CLUSTER` (i.e. BLDTT).
+| `approximation`   | Type of polynomial: `LAGRANGE` and `HERMITE`. `HERMITE` is incompatible with cluster-cluster.
+| `kernel_name`     | Name of interaction kernel: `COULOMB`, `YUKAWA`, `REGULARIZED_COULOMB`, `REGULARIZED_YUKAWA`, `SIN_OVER_R`, `USER`.
 | `kernel_params`   | Comma separated list of parameters for given kernel.
+| `run_direct`      | Run direct calculation for error comparison: `on` or `off`.
+| `verbosity`       | Determines verbosity level of output. Integer `0`, `1`, `2`, `3`. Higher means more output.
+| `slice`           | Determines the proportion of target sites at which the direct calculation is performed for error comparison.
+
 
 Note the difference between these executables:
 
