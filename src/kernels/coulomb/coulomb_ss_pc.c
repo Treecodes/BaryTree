@@ -44,9 +44,8 @@ void K_Coulomb_SS_PC_Lagrange(int number_of_targets_in_batch,
             double dz = tz - cluster_z[jj];
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj] * exp(-r*r/kernel_parameter2)) / r;
-            }
+            temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj] * exp(-r*r/kernel_parameter2)) / r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -135,27 +134,25 @@ void K_Coulomb_SS_PC_Hermite(int number_of_targets_in_batch,
             double r_over_k_4 = r_over_k_2*r_over_k_2;
             double r_over_k_6 = r_over_k_4*r_over_k_2;
 
-            if (r > DBL_MIN) {
+            temporary_potential +=  rinv  * (cluster_charge_[j])
+                             +      r3inv * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
+                                           + cluster_charge_delta_z[j]*dz)
+                             +  3 * r5inv * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
+                                           + cluster_charge_delta_xz[j]*dx*dz)
+                             + 15 * r7inv *  cluster_charge_delta_xyz[j]*dx*dy*dz
 
-                temporary_potential +=  rinv  * (cluster_charge_[j])
-                                 +      r3inv * (cluster_charge_delta_x[j]*dx + cluster_charge_delta_y[j]*dy
-                                               + cluster_charge_delta_z[j]*dz)
-                                 +  3 * r5inv * (cluster_charge_delta_xy[j]*dx*dy + cluster_charge_delta_yz[j]*dy*dz
-                                               + cluster_charge_delta_xz[j]*dx*dz)
-                                 + 15 * r7inv *  cluster_charge_delta_xyz[j]*dx*dy*dz
+                       - tcharge * exp(-r_over_k_2)
+                                 * (rinv  * (cluster_weight_[j])
+                             +      r3inv * (1 + 2*r_over_k_2)
+                                          * (cluster_weight_delta_x[j]*dx + cluster_weight_delta_y[j]*dy
+                                           + cluster_weight_delta_z[j]*dz)
+                             +      r5inv * (3 + 4*r_over_k_2 + 4*r_over_k_4)
+                                          * (cluster_weight_delta_xy[j]*dx*dy + cluster_weight_delta_yz[j]*dy*dz
+                                           + cluster_weight_delta_xz[j]*dx*dz)
+                             +      r7inv * (15 + 18*r_over_k_2 + 12*r_over_k_4 + 8*r_over_k_6)
+                                          * cluster_weight_delta_xyz[j]*dx*dy*dz);
 
-                           - tcharge * exp(-r_over_k_2)
-                                     * (rinv  * (cluster_weight_[j])
-                                 +      r3inv * (1 + 2*r_over_k_2)
-                                              * (cluster_weight_delta_x[j]*dx + cluster_weight_delta_y[j]*dy
-                                               + cluster_weight_delta_z[j]*dz)
-                                 +      r5inv * (3 + 4*r_over_k_2 + 4*r_over_k_4)
-                                              * (cluster_weight_delta_xy[j]*dx*dy + cluster_weight_delta_yz[j]*dy*dz
-                                               + cluster_weight_delta_xz[j]*dx*dz)
-                                 +      r7inv * (15 + 18*r_over_k_2 + 12*r_over_k_4 + 8*r_over_k_6)
-                                              * cluster_weight_delta_xyz[j]*dx*dy*dz);
 
-            }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

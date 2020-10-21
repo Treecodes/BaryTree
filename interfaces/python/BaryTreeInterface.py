@@ -63,7 +63,7 @@ try:
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), Kernel, ctypes.c_int, ctypes.POINTER(ctypes.c_double), Singularity, Approximation, ComputeType,
-            ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_double,  ctypes.c_int )
+            ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_int )
 except NameError:
     print("Warning: Could not set argtypes of _gpu_treecodeRoutines.  Ignore if not using GPUs.")
 
@@ -72,7 +72,7 @@ try:
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
             ctypes.POINTER(ctypes.c_double), Kernel, ctypes.c_int, ctypes.POINTER(ctypes.c_double),  Singularity, Approximation, ComputeType,
-            ctypes.c_int, ctypes.c_double,  ctypes.c_int,  ctypes.c_int,  ctypes.c_double,  ctypes.c_int )
+            ctypes.c_double, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_int )
 except NameError:
     print("Could not set argtypes of _cpu_treecodeRoutines.")
 
@@ -83,11 +83,28 @@ def callTreedriver(numTargets, numSources,
                    targetX, targetY, targetZ, targetValue, 
                    sourceX, sourceY, sourceZ, sourceValue, sourceWeight,
                    kernelName, numberOfKernelParameters, kernelParameters, singularityHandling,
-                   approximationName, computeType, order, theta, maxParNode, batchSize, GPUpresent, verbosity, sizeCheck=None):
+                   approximationName, computeType, GPUpresent, verbosity, 
+                   beta=None, theta=None, degree=None, sourceLeafSize=None, targetLeafSize=None,sizeCheck=None):
     '''
     python function which creates pointers to the arrays and calls treedriverWrapper.
     returns the results array.
     '''
+
+#   Handle optional parameters.  Note, either beta must be supplied, or theta, degree, sourceLeafSize, AND targetLeafSize must be supplied.
+    if beta:
+        # Using beta to set other paraemters.  Set them to dummy values for the purpose of calling treedriver.
+        theta=-1.0
+        degree=-1
+        sourceLeafSize=1
+        targetLeafSize=1
+    else:
+        # Not using beta.  Set it to -1 so it is ignored.  Using the provided values of other parameters
+        assert theta is not None, "If beta isn't provided, theta must be."
+        assert degree is not None, "If beta isn't provided, degree must be."
+        assert sourceLeafSize is not None, "If beta isn't provided, sourceLeafSize must be."
+        assert targetLeafSize is not None, "If beta isn't provided, targetLeafSize must be."
+        beta=-1
+        
 
     c_double_p = ctypes.POINTER(ctypes.c_double)
     
@@ -119,14 +136,14 @@ def callTreedriver(numTargets, numSources,
                                                 sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
                                                 resultArray_p, kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
                                                 singularityHandling, approximationName, computeType,
-                                                ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_double(sizeCheck), ctypes.c_int(verbosity) )
+                                                ctypes.c_double(theta), ctypes.c_int(degree), ctypes.c_int(sourceLeafSize), ctypes.c_int(targetLeafSize), ctypes.c_double(sizeCheck), ctypes.c_double(beta), ctypes.c_int(verbosity) )
     elif GPUpresent==False: # No gpu present
         _cpu_treecodeRoutines.BaryTreeInterface(ctypes.c_int(numTargets),  ctypes.c_int(numSources),
                                                 targetX_p, targetY_p, targetZ_p, targetValue_p,
                                                 sourceX_p, sourceY_p, sourceZ_p, sourceValue_p, sourceWeight_p,
                                                 resultArray_p, kernelName, ctypes.c_int(numberOfKernelParameters), kernelParameters_p,
                                                 singularityHandling, approximationName, computeType,
-                                                ctypes.c_int(order), ctypes.c_double(theta), ctypes.c_int(maxParNode), ctypes.c_int(batchSize), ctypes.c_double(sizeCheck), ctypes.c_int(verbosity) )
+                                                ctypes.c_double(theta), ctypes.c_int(degree), ctypes.c_int(sourceLeafSize), ctypes.c_int(targetLeafSize), ctypes.c_double(sizeCheck), ctypes.c_double(beta), ctypes.c_int(verbosity) )
     else: 
         print("What should GPUpresent be set to in the wrapper?")
         exit(-1) 

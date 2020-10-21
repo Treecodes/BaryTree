@@ -8,7 +8,7 @@
 
 void K_SinOverR_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
          int starting_index_of_sources, int starting_index_of_cluster,
-         double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
+         double *source_x, double *source_y, double *source_z, double *source_q,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
          struct RunParams *run_params, int gpu_async_stream_id)
 {
@@ -48,9 +48,8 @@ void K_SinOverR_CP_Lagrange(int number_of_sources_in_batch, int number_of_interp
             double dz = cz - source_z[jj];
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential += source_q[jj] * source_w[jj] * sin(kernel_parameter * r) / r;
-            }
+            temporary_potential += source_q[jj] * sin(kernel_parameter * r) / r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -68,7 +67,7 @@ void K_SinOverR_CP_Lagrange(int number_of_sources_in_batch, int number_of_interp
 
 void K_SinOverR_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
         int starting_index_of_sources, int starting_index_of_cluster,
-        double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
+        double *source_x, double *source_y, double *source_z, double *source_q,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
         struct RunParams *run_params, int gpu_async_stream_id)
 {
@@ -88,7 +87,7 @@ void K_SinOverR_CP_Hermite(int number_of_sources_in_batch, int number_of_interpo
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, \
-                        source_w, cluster_x, cluster_y, cluster_z, \
+                        cluster_x, cluster_y, cluster_z, \
                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                         cluster_q_dxyz)
@@ -124,8 +123,7 @@ void K_SinOverR_CP_Hermite(int number_of_sources_in_batch, int number_of_interpo
             #pragma acc cache(source_x[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_y[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_z[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_w[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
+                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
 #endif
 
             int jj = starting_index_of_sources + j;
@@ -134,33 +132,32 @@ void K_SinOverR_CP_Hermite(int number_of_sources_in_batch, int number_of_interpo
             double dz = source_z[jj] - cz;
             double r = sqrt(dx*dx + dy*dy + dz*dz);
             
-            if (r > DBL_MIN) {
 
-                double rinv  = 1 / r;
-                double r2inv = rinv  *  rinv;
-                double r3inv = rinv  * r2inv;
-                double r4inv = r2inv * r2inv;
-                double r5inv = r3inv * r2inv;
-                double r6inv = r3inv * r3inv;
-                double r7inv = r4inv * r3inv;
+            double rinv  = 1 / r;
+            double r2inv = rinv  *  rinv;
+            double r3inv = rinv  * r2inv;
+            double r4inv = r2inv * r2inv;
+            double r5inv = r3inv * r2inv;
+            double r6inv = r3inv * r3inv;
+            double r7inv = r4inv * r3inv;
 
-                double sinr = sin(k*r) * source_q[jj] * source_w[jj];
-                double cosr = cos(k*r) * source_q[jj] * source_w[jj];
-                
-                double term_d0 = sinr * rinv;
-                double term_d1 = sinr * r3inv  -  k * cosr * r2inv;
-                double term_d2 = sinr * (3 * r5inv - k2 * r3inv)  -  3 * k * cosr * r4inv;
-                double term_d3 = sinr * (15 * r7inv - 6 * k2 * r5inv)  +  cosr * (k3 * r4inv - 15 * k * r6inv);
+            double sinr = sin(k*r) * source_q[jj];
+            double cosr = cos(k*r) * source_q[jj];
 
-                temp_pot_     += term_d0;
-                temp_pot_dx   += term_d1 * dx;
-                temp_pot_dy   += term_d1 * dy;
-                temp_pot_dz   += term_d1 * dz;
-                temp_pot_dxy  += term_d2 * dx * dy;
-                temp_pot_dyz  += term_d2 * dy * dz;
-                temp_pot_dxz  += term_d2 * dx * dz;
-                temp_pot_dxyz += term_d3 * dx * dy * dz;
-            }
+            double term_d0 = sinr * rinv;
+            double term_d1 = sinr * r3inv  -  k * cosr * r2inv;
+            double term_d2 = sinr * (3 * r5inv - k2 * r3inv)  -  3 * k * cosr * r4inv;
+            double term_d3 = sinr * (15 * r7inv - 6 * k2 * r5inv)  +  cosr * (k3 * r4inv - 15 * k * r6inv);
+
+            temp_pot_     += term_d0;
+            temp_pot_dx   += term_d1 * dx;
+            temp_pot_dy   += term_d1 * dy;
+            temp_pot_dz   += term_d1 * dz;
+            temp_pot_dxy  += term_d2 * dx * dy;
+            temp_pot_dyz  += term_d2 * dy * dz;
+            temp_pot_dxz  += term_d2 * dx * dz;
+            temp_pot_dxyz += term_d3 * dx * dy * dz;
+
 
         } // end loop over interpolation points
         

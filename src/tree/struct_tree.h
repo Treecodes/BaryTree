@@ -8,6 +8,7 @@ struct Tree
     
     int min_leaf_size;
     int max_leaf_size;
+    int max_depth;
     
     int *ibeg;
     int *iend;
@@ -31,6 +32,14 @@ struct Tree
 
     int *num_children;
     int *children;
+    int *parent;
+
+    int **levels_list;
+    int *levels_list_num;
+
+    int *leaves_list;
+    int leaves_list_num;
+
 };
 
 #endif /* H_STRUCT_TREE_H */

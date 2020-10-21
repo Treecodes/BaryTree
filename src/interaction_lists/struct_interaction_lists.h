@@ -4,11 +4,15 @@
 
 struct InteractionLists
 {
-    int **approx_interactions;
-    int **direct_interactions;
-
-    int *num_approx;
-    int *num_direct;
+    int *num_pp;
+    int *num_cc;
+    int *num_pc;
+    int *num_cp;
+    
+    int **pp_interactions;
+    int **cc_interactions;
+    int **pc_interactions;
+    int **cp_interactions;
 };
 
 

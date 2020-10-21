@@ -8,7 +8,9 @@ SET(SRCS_TREEDRIVER
     utilities/xmalloc.c
     utilities/array.h
     utilities/enums.h
-# Calling functions for tree and direct calculations
+    utilities/advanced_timings.c
+    utilities/advanced_timings.h
+# Calling functions for tree and pp calculations
     drivers/directdriver.h
     drivers/directdriver.c
     drivers/treedriver.h
@@ -65,8 +67,8 @@ SET(SRCS_TREEDRIVER
 SET(SRCS_K_COULOMB
 # Singularity skipping
     kernels/coulomb/coulomb.h
-    kernels/coulomb/coulomb_direct.h
-    kernels/coulomb/coulomb_direct.c
+    kernels/coulomb/coulomb_pp.h
+    kernels/coulomb/coulomb_pp.c
     kernels/coulomb/coulomb_pc.h
     kernels/coulomb/coulomb_pc.c
     kernels/coulomb/coulomb_cp.h
@@ -74,48 +76,52 @@ SET(SRCS_K_COULOMB
     kernels/coulomb/coulomb_cc_hermite.h
     kernels/coulomb/coulomb_cc_hermite.c
 # Singularity subtraction
-    kernels/coulomb/coulomb_ss_direct.h
-    kernels/coulomb/coulomb_ss_direct.c
+    kernels/coulomb/coulomb_ss_pp.h
+    kernels/coulomb/coulomb_ss_pp.c
     kernels/coulomb/coulomb_ss_correction.h
     kernels/coulomb/coulomb_ss_correction.c
     kernels/coulomb/coulomb_ss_pc.h
-    kernels/coulomb/coulomb_ss_pc.c)
-#   kernels/coulomb/coulomb_ss_cp.h
-#   kernels/coulomb/coulomb_ss_cp.c)
+    kernels/coulomb/coulomb_ss_pc.c
+    kernels/coulomb/coulomb_ss_cp.h
+    kernels/coulomb/coulomb_ss_cp.c
+    kernels/coulomb/coulomb_ss_cc.h
+    kernels/coulomb/coulomb_ss_cc.c)
 
 
 SET(SRCS_K_YUKAWA
 # Singularity skipping
     kernels/yukawa/yukawa.h
-    kernels/yukawa/yukawa_direct.h
-    kernels/yukawa/yukawa_direct.c
+    kernels/yukawa/yukawa_pp.h
+    kernels/yukawa/yukawa_pp.c
     kernels/yukawa/yukawa_pc.h
     kernels/yukawa/yukawa_pc.c
     kernels/yukawa/yukawa_cp.h
     kernels/yukawa/yukawa_cp.c
 # Singularity subtraction
-    kernels/yukawa/yukawa_ss_direct.h
-    kernels/yukawa/yukawa_ss_direct.c
+    kernels/yukawa/yukawa_ss_pp.h
+    kernels/yukawa/yukawa_ss_pp.c
     kernels/yukawa/yukawa_ss_correction.h
     kernels/yukawa/yukawa_ss_correction.c
     kernels/yukawa/yukawa_ss_pc.h
-    kernels/yukawa/yukawa_ss_pc.c)
-#   kernels/yukawa/yukawa_ss_cp.h
-#   kernels/yukawa/yukawa_ss_cp.c)
+    kernels/yukawa/yukawa_ss_pc.c
+    kernels/yukawa/yukawa_ss_cp.h
+    kernels/yukawa/yukawa_ss_cp.c
+    kernels/yukawa/yukawa_ss_cc.h
+    kernels/yukawa/yukawa_ss_cc.c)
 
 
 SET(SRCS_K_REGULARIZED_COULOMB
 # Singularity skipping
     kernels/regularized-coulomb/regularized-coulomb.h
-    kernels/regularized-coulomb/regularized-coulomb_direct.h
-    kernels/regularized-coulomb/regularized-coulomb_direct.c
+    kernels/regularized-coulomb/regularized-coulomb_pp.h
+    kernels/regularized-coulomb/regularized-coulomb_pp.c
     kernels/regularized-coulomb/regularized-coulomb_pc.h
     kernels/regularized-coulomb/regularized-coulomb_pc.c
     kernels/regularized-coulomb/regularized-coulomb_cp.h
     kernels/regularized-coulomb/regularized-coulomb_cp.c
 # Singularity subtraction
-    kernels/regularized-coulomb/regularized-coulomb_ss_direct.h
-    kernels/regularized-coulomb/regularized-coulomb_ss_direct.c
+    kernels/regularized-coulomb/regularized-coulomb_ss_pp.h
+    kernels/regularized-coulomb/regularized-coulomb_ss_pp.c
     kernels/regularized-coulomb/regularized-coulomb_ss_correction.h
     kernels/regularized-coulomb/regularized-coulomb_ss_correction.c
     kernels/regularized-coulomb/regularized-coulomb_ss_pc.h
@@ -127,15 +133,15 @@ SET(SRCS_K_REGULARIZED_COULOMB
 SET(SRCS_K_REGULARIZED_YUKAWA
 #Singularity skipping
     kernels/regularized-yukawa/regularized-yukawa.h
-    kernels/regularized-yukawa/regularized-yukawa_direct.h
-    kernels/regularized-yukawa/regularized-yukawa_direct.c
+    kernels/regularized-yukawa/regularized-yukawa_pp.h
+    kernels/regularized-yukawa/regularized-yukawa_pp.c
     kernels/regularized-yukawa/regularized-yukawa_pc.h
     kernels/regularized-yukawa/regularized-yukawa_pc.c
     kernels/regularized-yukawa/regularized-yukawa_cp.h
     kernels/regularized-yukawa/regularized-yukawa_cp.c
 #Singularity subtraction
-    kernels/regularized-yukawa/regularized-yukawa_ss_direct.h
-    kernels/regularized-yukawa/regularized-yukawa_ss_direct.c
+    kernels/regularized-yukawa/regularized-yukawa_ss_pp.h
+    kernels/regularized-yukawa/regularized-yukawa_ss_pp.c
     kernels/regularized-yukawa/regularized-yukawa_ss_correction.h
     kernels/regularized-yukawa/regularized-yukawa_ss_correction.c
     kernels/regularized-yukawa/regularized-yukawa_ss_pc.h
@@ -146,8 +152,8 @@ SET(SRCS_K_REGULARIZED_YUKAWA
 
 SET(SRCS_K_ATAN
     kernels/atan/atan.h
-    kernels/atan/atan_direct.h
-    kernels/atan/atan_direct.c
+    kernels/atan/atan_pp.h
+    kernels/atan/atan_pp.c
     kernels/atan/atan_pc.h
     kernels/atan/atan_pc.c)
 #   kernels/atan/atan_cp.h
@@ -156,8 +162,8 @@ SET(SRCS_K_ATAN
 
 SET(SRCS_K_SIN_OVER_R
     kernels/sin-over-r/sin-over-r.h
-    kernels/sin-over-r/sin-over-r_direct.h
-    kernels/sin-over-r/sin-over-r_direct.c
+    kernels/sin-over-r/sin-over-r_pp.h
+    kernels/sin-over-r/sin-over-r_pp.c
     kernels/sin-over-r/sin-over-r_pc.h
     kernels/sin-over-r/sin-over-r_pc.c
     kernels/sin-over-r/sin-over-r_cp.h
@@ -165,12 +171,21 @@ SET(SRCS_K_SIN_OVER_R
 
 SET(SRCS_K_MQ
     kernels/mq/mq.h
-    kernels/mq/mq_direct.h
-    kernels/mq/mq_direct.c
+    kernels/mq/mq_pp.h
+    kernels/mq/mq_pp.c
     kernels/mq/mq.h
     kernels/mq/mq_pc.c)
-#    kernels/mq/mq_cp.h
-#    kernels/mq/mq_cp.c)
+
+
+SET(SRCS_K_USER
+    kernels/user_kernel/user_kernel.h
+    kernels/user_kernel/user_kernel_pp.h
+    kernels/user_kernel/user_kernel_pp.c
+    kernels/user_kernel/user_kernel_pc.h
+    kernels/user_kernel/user_kernel_pc.c
+    kernels/user_kernel/user_kernel_cp.h
+    kernels/user_kernel/user_kernel_cp.c)
+
 
 
 SET(SRCS_KERNELS ${SRCS_K_COULOMB}
@@ -179,7 +194,8 @@ SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_REGULARIZED_YUKAWA}
                  ${SRCS_K_ATAN}
                  ${SRCS_K_SIN_OVER_R}
-                 ${SRCS_K_MQ})
+                 ${SRCS_K_MQ}
+                 ${SRCS_K_USER})
 
 
 set(TRGT BaryTree_cpu)

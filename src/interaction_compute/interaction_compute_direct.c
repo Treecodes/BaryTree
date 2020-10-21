@@ -16,6 +16,7 @@
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
 #include "../kernels/mq/mq.h"
+#include "../kernels/user_kernel/user_kernel.h"
 
 #include "interaction_compute.h"
 
@@ -40,9 +41,10 @@ void InteractionCompute_Direct(double *potential,
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources], source_w[0:num_sources], \
-                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
-                            target_q[0:num_targets]), copy(potential[0:num_targets])
+                            source_q[0:num_sources], \
+                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets]) \
+                            copy(potential[0:num_targets])
+    #pragma acc data copyin(source_w[0:num_sources], target_q[0:num_targets])
 #endif
     {
 
@@ -59,14 +61,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_Coulomb_Direct(num_targets, num_sources, 0, 0,
+            K_Coulomb_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
+                    source_x, source_y, source_z, source_q,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_Coulomb_SS_Direct(num_targets, num_sources, 0, 0,
+            K_Coulomb_SS_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
@@ -84,14 +86,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_Yukawa_Direct(num_targets, num_sources, 0, 0,
+            K_Yukawa_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
+                    source_x, source_y, source_z, source_q,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_Yukawa_SS_Direct(num_targets, num_sources, 0, 0,
+            K_Yukawa_SS_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
@@ -109,14 +111,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_RegularizedCoulomb_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedCoulomb_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
+                    source_x, source_y, source_z, source_q,
                     run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_RegularizedCoulomb_SS_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedCoulomb_SS_PP(num_targets, num_sources, 0, 0,
                     target_x, target_y, target_z, target_q,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
@@ -132,14 +134,14 @@ void InteractionCompute_Direct(double *potential,
 
         if (run_params->singularity == SKIPPING) {
 
-            K_RegularizedYukawa_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedYukawa_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
         } else if (run_params->singularity == SUBTRACTION) {
 
-            K_RegularizedYukawa_SS_Direct(num_targets, num_sources, 0, 0,
+            K_RegularizedYukawa_SS_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z, target_q,
                         source_x, source_y, source_z, source_q, source_w,
                         run_params, potential, 0);
@@ -152,9 +154,9 @@ void InteractionCompute_Direct(double *potential,
 
     } else if (run_params->kernel == ATAN) {
 
-            K_Atan_Direct(num_targets, num_sources, 0, 0,
+            K_Atan_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
 
@@ -164,9 +166,9 @@ void InteractionCompute_Direct(double *potential,
 
     } else if (run_params->kernel == SIN_OVER_R) {
 
-            K_SinOverR_Direct(num_targets, num_sources, 0, 0,
+            K_SinOverR_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
     /***************************************/
@@ -175,9 +177,20 @@ void InteractionCompute_Direct(double *potential,
 
     } else if (run_params->kernel == MQ) {
 
-            K_MQ_Direct(num_targets, num_sources, 0, 0,
+            K_MQ_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
+                        run_params, potential, 0);
+
+    /***************************************/
+    /******** USER DEFINED KERNEL **********/
+    /***************************************/
+
+    } else if (run_params->kernel == USER) {
+
+            K_User_Kernel_PP(num_targets, num_sources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
 
     } else {

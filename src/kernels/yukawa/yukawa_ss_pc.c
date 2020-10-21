@@ -43,9 +43,8 @@ void K_Yukawa_SS_PC_Lagrange(int number_of_targets_in_batch,
             double dz = tz - cluster_z[jj];
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj]) * exp(-kernel_parameter*r) /r;
-            }
+            temporary_potential += (cluster_charge[jj] - tq * cluster_weight[jj] ) * exp(-kernel_parameter*r) /r;
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -147,18 +146,17 @@ void K_Yukawa_SS_PC_Hermite(int number_of_targets_in_batch,
             double delta_xz_diff  = cluster_charge_delta_xz[j]  - cluster_weight_delta_xz[j]  * tq;
             double delta_xyz_diff = cluster_charge_delta_xyz[j] - cluster_weight_delta_xyz[j] * tq;
 
-            if (r > DBL_MIN) {
 
-                temporary_potential += exp(-kernel_parameter*r)
-                              * (rinv  * (charge_diff)
-                               + r3inv * (1 + kernel_parameter*r)
-                                       * (delta_x_diff*dx + delta_y_diff*dy + delta_z_diff*dz)
-                               + r5inv * (3 + 3*kernel_parameter*r + kernel_parameter2*r2)
-                                       * (delta_xy_diff*dx*dy + delta_yz_diff*dy*dz + delta_xz_diff*dx*dz)
-                               + r7inv * (15 + 15*kernel_parameter*r + 6*kernel_parameter2*r2 + kernel_parameter3*r3)
-                                       * delta_xyz_diff*dx*dy*dz);
+            temporary_potential += exp(-kernel_parameter*r)
+                          * (rinv  * (charge_diff)
+                           + r3inv * (1 + kernel_parameter*r)
+                                   * (delta_x_diff*dx + delta_y_diff*dy + delta_z_diff*dz)
+                           + r5inv * (3 + 3*kernel_parameter*r + kernel_parameter2*r2)
+                                   * (delta_xy_diff*dx*dy + delta_yz_diff*dy*dz + delta_xz_diff*dx*dz)
+                           + r7inv * (15 + 15*kernel_parameter*r + 6*kernel_parameter2*r2 + kernel_parameter3*r3)
+                                   * delta_xyz_diff*dx*dy*dz);
 
-            }
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic

@@ -8,7 +8,7 @@
 
 void K_RegularizedCoulomb_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
          int starting_index_of_sources, int starting_index_of_cluster,
-         double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
+         double *source_x, double *source_y, double *source_z, double *source_q,
          double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
          struct RunParams *run_params, int gpu_async_stream_id)
 {
@@ -48,9 +48,8 @@ void K_RegularizedCoulomb_CP_Lagrange(int number_of_sources_in_batch, int number
             double dz = cz - source_z[jj];
             double r2 = dx*dx + dy*dy + dz*dz + epsilon2;
 
-            if (r2 > DBL_MIN) {
-                temporary_potential += source_q[jj] * source_w[jj] / sqrt(r2);
-            }
+            temporary_potential += source_q[jj] / sqrt(r2);
+
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
@@ -68,7 +67,7 @@ void K_RegularizedCoulomb_CP_Lagrange(int number_of_sources_in_batch, int number
 
 void K_RegularizedCoulomb_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
         int starting_index_of_sources, int starting_index_of_cluster,
-        double *source_x, double *source_y, double *source_z, double *source_q, double *source_w,
+        double *source_x, double *source_y, double *source_z, double *source_q,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
         struct RunParams *run_params, int gpu_async_stream_id)
 {
@@ -88,7 +87,7 @@ void K_RegularizedCoulomb_CP_Hermite(int number_of_sources_in_batch, int number_
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(source_x, source_y, source_z, source_q, \
-                        source_w, cluster_x, cluster_y, cluster_z, \
+                        cluster_x, cluster_y, cluster_z, \
                         cluster_q_, cluster_q_dx, cluster_q_dy, cluster_q_dz, \
                         cluster_q_dxy, cluster_q_dyz, cluster_q_dxz, \
                         cluster_q_dxyz)
@@ -124,8 +123,7 @@ void K_RegularizedCoulomb_CP_Hermite(int number_of_sources_in_batch, int number_
             #pragma acc cache(source_x[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_y[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
                               source_z[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_w[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
+                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
 #endif
 
             int jj = starting_index_of_sources + j;
@@ -135,23 +133,22 @@ void K_RegularizedCoulomb_CP_Hermite(int number_of_sources_in_batch, int number_
             double r2 = dx*dx + dy*dy + dz*dz + epsilon2;
 
             double r2inv = 1 / r2;
-            double rinvq = source_q[jj] * source_w[jj] / sqrt(r2);
+            double rinvq = source_q[jj] / sqrt(r2);
             double r3inv = rinvq * r2inv;
             double r5inv = r3inv * r2inv;
             double r7inv = r5inv * r2inv;
             
             r5inv *= 3.0;
 
-            if (r2 > DBL_MIN) {
-                temp_pot_     += rinvq;
-                temp_pot_dx   += r3inv * dx;
-                temp_pot_dy   += r3inv * dy;
-                temp_pot_dz   += r3inv * dz;
-                temp_pot_dxy  += r5inv * dx * dy;
-                temp_pot_dyz  += r5inv * dy * dz;
-                temp_pot_dxz  += r5inv * dx * dz;
-                temp_pot_dxyz += r7inv * dx * dy * dz * 15.0;
-            }
+            temp_pot_     += rinvq;
+            temp_pot_dx   += r3inv * dx;
+            temp_pot_dy   += r3inv * dy;
+            temp_pot_dz   += r3inv * dz;
+            temp_pot_dxy  += r5inv * dx * dy;
+            temp_pot_dyz  += r5inv * dy * dz;
+            temp_pot_dxz  += r5inv * dx * dz;
+            temp_pot_dxyz += r7inv * dx * dy * dz * 15.0;
+
         } // end loop over interpolation points
         
 #ifdef OPENACC_ENABLED

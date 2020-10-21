@@ -13,9 +13,11 @@
 static void remove_node(struct TreeLinkedListNode *p);
 
 
-void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Particles *targets,
+void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct TreeLinkedListNode *parent,
+                struct Particles *targets,
                 int ibeg, int iend, int maxparnode, double *xyzmm,
-                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size)
+                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size,
+                int *max_depth, int current_level)
 {
     int ind[8][2];
     double xyzmms[6][8];
@@ -40,7 +42,13 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
 
     (*p) = malloc(sizeof(struct TreeLinkedListNode));
     (*numnodes)++;
+    (*p)->parent = parent;
     (*p)->numpar = iend - ibeg + 1;
+
+    if (current_level + 1 > *max_depth){
+        *max_depth = current_level + 1;
+    }
+    (*p)->level = current_level;
 
     (*p)->x_min = minval(targets->x + ibeg - 1, (*p)->numpar);
     (*p)->x_max = maxval(targets->x + ibeg - 1, (*p)->numpar);
@@ -115,10 +123,13 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
 
                 struct TreeLinkedListNode **paddress = &((*p)->child[idx]);
 
-                TreeLinkedList_Targets_Construct(paddress,
+                TreeLinkedList_Targets_Construct(paddress, *p,
                                targets, ind[i][0], ind[i][1],
                                maxparnode, lxyzmm, numnodes, numleaves,
-                               min_leaf_size, max_leaf_size);
+                               min_leaf_size, max_leaf_size,
+                               max_depth, current_level+1);
+
+
             }
         }
 
@@ -138,9 +149,11 @@ void TreeLinkedList_Targets_Construct(struct TreeLinkedListNode **p, struct Part
 
 
 
-void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Particles *sources,
+void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct TreeLinkedListNode *parent,
+                struct Particles *sources,
                 int ibeg, int iend, int maxparnode, double *xyzmm,
-                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size)
+                int *numnodes, int *numleaves, int *min_leaf_size, int *max_leaf_size,
+                int *max_depth, int current_level)
 {
     int ind[8][2];
     double xyzmms[6][8];
@@ -166,8 +179,15 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
 
     (*p) = malloc(sizeof(struct TreeLinkedListNode));
     (*numnodes)++;
+    (*p)->parent = parent;
     (*p)->numpar = iend - ibeg + 1;
     
+    if (current_level + 1 > *max_depth){
+//        printf("[TreeLinkedList_Sources_Construct] Increasing max depth to %i\n",current_level + 1);
+        *max_depth = current_level + 1;
+    }
+    (*p)->level = current_level;
+
     (*p)->x_min = minval(sources->x + ibeg - 1, (*p)->numpar);
     (*p)->x_max = maxval(sources->x + ibeg - 1, (*p)->numpar);
     (*p)->y_min = minval(sources->y + ibeg - 1, (*p)->numpar);
@@ -240,10 +260,11 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
 
                 struct TreeLinkedListNode **paddress = &((*p)->child[idx]);
 
-                TreeLinkedList_Sources_Construct(paddress,
+                TreeLinkedList_Sources_Construct(paddress, *p,
                                sources, ind[i][0], ind[i][1],
                                maxparnode, lxyzmm, numnodes, numleaves,
-                               min_leaf_size, max_leaf_size);
+                               min_leaf_size, max_leaf_size,
+                               max_depth, current_level+1);
             }
         }
         

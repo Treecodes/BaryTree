@@ -93,16 +93,15 @@ void K_Coulomb_CC_Hermite(int number_of_sources_in_batch, int number_of_interpol
             
             r5inv *= 3.0;
 
-            if (r2 > DBL_MIN) {
-                temp_pot_     += source_cluster_q_[j]     * rinv;
-                temp_pot_dx   += source_cluster_q_dx[j]   * r3inv * dx;
-                temp_pot_dy   += source_cluster_q_dy[j]   * r3inv * dy;
-                temp_pot_dz   += source_cluster_q_dz[j]   * r3inv * dz;
-                temp_pot_dxy  += source_cluster_q_dxy[j]  * r5inv * dx * dy;
-                temp_pot_dyz  += source_cluster_q_dyz[j]  * r5inv * dy * dz;
-                temp_pot_dxz  += source_cluster_q_dxz[j]  * r5inv * dx * dz;
-                temp_pot_dxyz += source_cluster_q_dxyz[j] * r7inv * dx * dy * dz * 15.0;
-            }
+            temp_pot_     += source_cluster_q_[j]     * rinv;
+            temp_pot_dx   += source_cluster_q_dx[j]   * r3inv * dx;
+            temp_pot_dy   += source_cluster_q_dy[j]   * r3inv * dy;
+            temp_pot_dz   += source_cluster_q_dz[j]   * r3inv * dz;
+            temp_pot_dxy  += source_cluster_q_dxy[j]  * r5inv * dx * dy;
+            temp_pot_dyz  += source_cluster_q_dyz[j]  * r5inv * dy * dz;
+            temp_pot_dxz  += source_cluster_q_dxz[j]  * r5inv * dx * dz;
+            temp_pot_dxyz += source_cluster_q_dxyz[j] * r7inv * dx * dy * dz * 15.0;
+
         } // end loop over interpolation points
         
 #ifdef OPENACC_ENABLED

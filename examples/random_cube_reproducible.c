@@ -18,6 +18,7 @@
 #include "zoltan_fns.h"
 #include "support_fns.h"
 
+void Particles_Fix_Plummer(MESH_DATA *mySources);
 
 int main(int argc, char **argv)
 {
@@ -30,9 +31,14 @@ int main(int argc, char **argv)
 
     /* run parameters */
     int N, M, run_direct, slice;
+    double xyz_limits[6];
+    DISTRIBUTION distribution;
+    PARTITION partition;
+    
     struct RunParams *run_params = NULL;
+    
     FILE *fp = fopen(argv[1], "r");
-    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice);
+    Params_Parse(fp, &run_params, &N, &M, &run_direct, &slice, xyz_limits, &distribution, &partition);
 
     if (N != M) {
         if (rank == 0) printf("[random cube example] ERROR! This executable requires sources and targets "
@@ -88,21 +94,27 @@ int main(int argc, char **argv)
     /* General parameters */
 
     Zoltan_Set_Param(zz, "DEBUG_LEVEL", "0");
-    Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
     Zoltan_Set_Param(zz, "NUM_GID_ENTRIES", "1"); 
     Zoltan_Set_Param(zz, "NUM_LID_ENTRIES", "1");
     Zoltan_Set_Param(zz, "OBJ_WEIGHT_DIM", "1");
     Zoltan_Set_Param(zz, "RETURN_LISTS", "ALL");
     Zoltan_Set_Param(zz, "AUTO_MIGRATE", "TRUE"); 
 
+    if (partition == RCB) {
+        Zoltan_Set_Param(zz, "LB_METHOD", "RCB");
+    } else if (partition == HSFC) {
+        Zoltan_Set_Param(zz, "LB_METHOD", "HSFC");
+    }
+
     /* RCB parameters */
 
     Zoltan_Set_Param(zz, "RCB_OUTPUT_LEVEL", "0");
     Zoltan_Set_Param(zz, "RCB_RECTILINEAR_BLOCKS", "1"); 
+    Zoltan_Set_Param(zz, "RCB_MAX_ASPECT_RATIO", "1000000000"); 
 
     /* Setting up sources and load balancing */
 
-    srand(1);
+    srandom(1);
     mySources.numGlobalPoints = N * numProcs;
     mySources.numMyPoints = N;
     mySources.x = malloc(N*sizeof(double));
@@ -113,16 +125,93 @@ int main(int argc, char **argv)
     mySources.b = malloc(N*sizeof(double)); // load balancing weights
     mySources.myGlobalIDs = (ZOLTAN_ID_TYPE *)malloc(sizeof(ZOLTAN_ID_TYPE) * N);
 
-    for (int j = 0; j < rank+1; ++j) {
-        for (int i = 0; i < N; ++i) {
-            mySources.x[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.y[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.z[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.q[i] = ((double)rand()/(double)(RAND_MAX)) * 2. - 1.;
-            mySources.w[i] = 1.0;
-            mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
-            mySources.b[i] = 1.0; // dummy weighting scheme
+    if (distribution == UNIFORM) {
+
+        for (int j = 0; j < rank+1; ++j) { // Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0; // dummy weighting scheme
+            }
         }
+
+    } else if (distribution == PLUMMER) {
+
+        double plummer_R = 1.0;
+        double plummer_M = 1.0;
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                Point_Plummer(plummer_R , &mySources.x[i], &mySources.y[i], &mySources.z[i]);
+                mySources.q[i] = plummer_M / N;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+        }
+
+    } else if (distribution == PLUMMER_SYMMETRIC) {
+
+        double plummer_R = 1.0;
+        double plummer_M = 1.0;
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                mySources.q[i] = plummer_M / N;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+
+            for (int i = 0; i < N/8; ++i) {
+                double xx, yy, zz;
+                Point_Plummer_Octant(plummer_R , &xx, &yy, &zz);
+		
+		for (int ii = 0; ii < 2; ++ii) {
+		    for (int jj = 0; jj < 2; ++jj) {
+			for (int kk = 0; kk < 2; ++kk) {
+		    	    int index = (N/8) * (ii*4 + jj*2 + kk) + i;
+		    	    mySources.x[index] = xx * pow(-1, ii);
+		            mySources.y[index] = yy * pow(-1, jj);
+		            mySources.z[index] = zz * pow(-1, kk);
+                	}
+		    }
+		}
+            }
+        }
+        
+    } else if (distribution == GAUSSIAN) {
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                Point_Gaussian(&mySources.x[i], &mySources.y[i], &mySources.z[i]);
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+        }
+
+    } else if (distribution == EXPONENTIAL) {
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                Point_Exponential(&mySources.x[i], &mySources.y[i], &mySources.z[i]);
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+        }
+
+    } else {
+        printf("[random cube example] ERROR! Distribution %d undefined in this "
+                "context.  Exiting.\n", distribution);
+        exit(1);
     }
 
     /* Query functions, to provide geometry to Zoltan */
@@ -176,6 +265,8 @@ int main(int argc, char **argv)
     Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
     Zoltan_Destroy(&zz);
 
+    if (distribution == PLUMMER && numProcs == 4) Particles_Fix_Plummer(&mySources);
+
     /* Setting up sources with MPI-allocated source arrays for RMA use */
     
     sources = malloc(sizeof(struct Particles));
@@ -191,6 +282,17 @@ int main(int argc, char **argv)
     memcpy(sources->z, mySources.z, sources->num * sizeof(double));
     memcpy(sources->q, mySources.q, sources->num * sizeof(double));
     memcpy(sources->w, mySources.w, sources->num * sizeof(double));
+
+    /* Output load balanced points */
+  
+    
+    char points_file[256];
+    sprintf(points_file, "points_rank_%d.csv", rank);
+    FILE *points_fp = fopen(points_file, "w");
+    for (int i = 0; i < sources->num; ++i) {
+        fprintf(points_fp, "%e, %e, %e\n", sources->x[i], sources->y[i], sources->z[i]);
+    }
+    fclose(points_fp);
     
     /* Setting up targets */
     
@@ -336,4 +438,116 @@ int main(int argc, char **argv)
     MPI_Finalize();
 
     return 0;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Particles_Fix_Plummer(MESH_DATA *mySources)
+{
+    //This is only for four ranks
+    int rank, numProcs;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+    int *sendto = malloc(mySources->numMyPoints * sizeof(int));
+
+    int num_sendto[4] = {0};
+    int num_global[4] = {0};
+    int increment_sendto[4] = {0};
+    int num_sendto_all[16] = {0};
+
+    MESH_DATA mesh_sendto[4];
+
+    for (int i = 0; i < mySources->numMyPoints; ++i) {
+        if (mySources->x[i] > 0 && mySources->y[i] > 0) {sendto[i] = 0; num_sendto[0]++;}
+        if (mySources->x[i] > 0 && mySources->y[i] < 0) {sendto[i] = 1; num_sendto[1]++;}
+        if (mySources->x[i] < 0 && mySources->y[i] < 0) {sendto[i] = 2; num_sendto[2]++;}
+        if (mySources->x[i] < 0 && mySources->y[i] > 0) {sendto[i] = 3; num_sendto[3]++;}
+    }
+
+    for (int i = 0; i < numProcs; ++i) {
+        mesh_sendto[i].numMyPoints = num_sendto[i];
+        mesh_sendto[i].x = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].y = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].z = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].q = malloc(num_sendto[i]*sizeof(double));
+        mesh_sendto[i].w = malloc(num_sendto[i]*sizeof(double));
+    }
+
+    for (int pt_idx = 0; pt_idx < mySources->numMyPoints; ++pt_idx) {
+        for (int proc_idx = 0; proc_idx < numProcs; ++proc_idx) {
+            if (sendto[pt_idx] == proc_idx) {
+                mesh_sendto[proc_idx].x[increment_sendto[proc_idx]] = mySources->x[pt_idx];
+                mesh_sendto[proc_idx].y[increment_sendto[proc_idx]] = mySources->y[pt_idx];
+                mesh_sendto[proc_idx].z[increment_sendto[proc_idx]] = mySources->z[pt_idx];
+                mesh_sendto[proc_idx].q[increment_sendto[proc_idx]] = mySources->q[pt_idx];
+                mesh_sendto[proc_idx].w[increment_sendto[proc_idx]] = mySources->w[pt_idx];
+                increment_sendto[proc_idx]++;
+                break;
+            }
+        }
+    }
+
+    MPI_Allreduce(num_sendto, num_global, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allgather(num_sendto, 4, MPI_INT, num_sendto_all, 4, MPI_INT, MPI_COMM_WORLD);
+
+    free(mySources->x);
+    free(mySources->y);
+    free(mySources->z);
+    free(mySources->q);
+    free(mySources->w);
+
+    mySources->numMyPoints = num_global[rank];
+    mySources->x = malloc(num_global[rank]*sizeof(double));
+    mySources->y = malloc(num_global[rank]*sizeof(double));
+    mySources->z = malloc(num_global[rank]*sizeof(double));
+    mySources->q = malloc(num_global[rank]*sizeof(double));
+    mySources->w = malloc(num_global[rank]*sizeof(double));
+
+    memcpy(mySources->x, mesh_sendto[rank].x, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->y, mesh_sendto[rank].y, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->z, mesh_sendto[rank].z, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->q, mesh_sendto[rank].q, num_sendto[rank] * sizeof(double));
+    memcpy(mySources->w, mesh_sendto[rank].w, num_sendto[rank] * sizeof(double));
+    int offset = num_sendto[rank];
+
+    MPI_Request send_request[5], recv_request[5];
+
+    for (int proc_idx = 0; proc_idx < numProcs-1; ++proc_idx) {
+
+        int proc_num = (rank + proc_idx + 1) % numProcs;
+
+        MPI_Isend(mesh_sendto[proc_num].x, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  0, MPI_COMM_WORLD, &send_request[0]);
+        MPI_Irecv(&(mySources->x[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  0, MPI_COMM_WORLD, &recv_request[0]);
+
+        MPI_Isend(mesh_sendto[proc_num].y, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  1, MPI_COMM_WORLD, &send_request[1]);
+        MPI_Irecv(&(mySources->y[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  1, MPI_COMM_WORLD, &recv_request[1]);
+
+        MPI_Isend(mesh_sendto[proc_num].z, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  2, MPI_COMM_WORLD, &send_request[2]);
+        MPI_Irecv(&(mySources->z[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  2, MPI_COMM_WORLD, &recv_request[2]);
+
+        MPI_Isend(mesh_sendto[proc_num].q, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  3, MPI_COMM_WORLD, &send_request[3]);
+        MPI_Irecv(&(mySources->q[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  3, MPI_COMM_WORLD, &recv_request[3]);
+
+        MPI_Isend(mesh_sendto[proc_num].w, num_sendto[proc_num], MPI_DOUBLE, proc_num, 
+                  4, MPI_COMM_WORLD, &send_request[4]);
+        MPI_Irecv(&(mySources->w[offset]), num_sendto_all[4*proc_num+rank], MPI_DOUBLE, proc_num,
+                  4, MPI_COMM_WORLD, &recv_request[4]);
+
+        offset += num_sendto_all[4*proc_num+rank];
+    }
+    
+    MPI_Waitall(5, send_request, MPI_STATUSES_IGNORE);
+    MPI_Waitall(5, recv_request, MPI_STATUSES_IGNORE);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    return;
 }
