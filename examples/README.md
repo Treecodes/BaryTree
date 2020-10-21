@@ -40,9 +40,9 @@ The parameters that can be specified in the infile are as follows:
 | `approximation`   | Type of polynomial: `LAGRANGE` and `HERMITE`. `HERMITE` is incompatible with cluster-cluster.
 | `kernel_name`     | Name of interaction kernel: `COULOMB`, `YUKAWA`, `REGULARIZED_COULOMB`, `REGULARIZED_YUKAWA`, `SIN_OVER_R`, `USER`.
 | `kernel_params`   | Comma separated list of parameters for given kernel.
-| `run_direct`      | Run direct calculation for error comparison: `on` or `off`.
+| `run_direct`      | Run direct calculation for error comparison: `ON` or `OFF`.
 | `verbosity`       | Determines verbosity level of output. Integer `0`, `1`, `2`, `3`. Higher means more output.
-| `slice`           | Determines the proportion of target sites at which the direct calculation is performed for error comparison.
+| `slice`           | Determines the proportion of target sites at which the direct calculation is performed for error comparison. 10 would mean every 10th target is sampled.
 
 
 Note the difference between these executables:
