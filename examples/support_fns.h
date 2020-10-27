@@ -13,7 +13,10 @@ typedef enum DISTRIBUTION
     GAUSSIAN,
     EXPONENTIAL,
     PLUMMER,
-    PLUMMER_SYMMETRIC
+    PLUMMER_SYMMETRIC,
+    SLAB_1,
+    SLAB_2,
+    SPHERICAL_SHELL
 } DISTRIBUTION;
 
 typedef enum PARTITION
@@ -39,6 +42,8 @@ void Point_Plummer_Octant(double R, double *x, double *y, double *z);
 void Point_Gaussian(double *x, double *y, double *z);
 
 void Point_Exponential(double *x, double *y, double *z);
+
+void Point_Spherical_Shell(double R, double *x, double *y, double *z);
 
 
 void Timing_Calculate(double time_run_glob[3][4], double time_tree_glob[3][13], double time_direct_glob[3][4],

@@ -265,6 +265,15 @@ void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *
     } else if (strcasecmp(distribution_string, "PLUMMER_SYMMETRIC") == 0) {
         *distribution = PLUMMER_SYMMETRIC;
         
+    } else if (strcasecmp(distribution_string, "SLAB_1") == 0) {
+        *distribution = SLAB_1;
+        
+    } else if (strcasecmp(distribution_string, "SLAB_2") == 0) {
+        *distribution = SLAB_2;
+        
+    } else if (strcasecmp(distribution_string, "SPHERICAL_SHELL") == 0) {
+        *distribution = SPHERICAL_SHELL;
+        
     } else {
         if (rank == 0) {
             printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
@@ -438,6 +447,24 @@ void Point_Exponential(double *x, double *y, double *z)
     
     u = (double)random()/(1.+ (double)(RAND_MAX));
     *z = -log(1. - u) / sqrt(12.);
+
+    return;
+}
+
+
+/*----------------------------------------------------------------------------*/
+void Point_Spherical_Shell(double R, double *x, double *y, double *z)
+{
+    double u = 2. * M_PI * (double)random()/(1.+ (double)(RAND_MAX));
+    double v = 2. * (double)random()/(1.+ (double)(RAND_MAX)) - 1.;
+
+    *x = sqrt(1. - v * v) * cos(u);
+    *y = sqrt(1. - v * v) * sin(u);
+    *z = v;
+
+    *x *= R;
+    *y *= R;
+    *z *= R;
 
     return;
 }
