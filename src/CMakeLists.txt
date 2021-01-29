@@ -173,9 +173,26 @@ SET(SRCS_K_MQ
     kernels/mq/mq.h
     kernels/mq/mq_pp.h
     kernels/mq/mq_pp.c
-    kernels/mq/mq.h
+    kernels/mq/mq_pc.h
     kernels/mq/mq_pc.c)
 
+SET(SRCS_K_RBS_U
+    kernels/rbs-u/rbs-u.h
+    kernels/rbs-u/rbs-u_pp.h
+    kernels/rbs-u/rbs-u_pp.c
+    kernels/rbs-u/rbs-u_pc.h
+    kernels/rbs-u/rbs-u_pc.c
+    kernels/rbs-u/rbs-u_cp.h
+    kernels/rbs-u/rbs-u_cp.c)
+
+SET(SRCS_K_RBS_V
+    kernels/rbs-v/rbs-v.h
+    kernels/rbs-v/rbs-v_pp.h
+    kernels/rbs-v/rbs-v_pp.c
+    kernels/rbs-v/rbs-v_pc.h
+    kernels/rbs-v/rbs-v_pc.c
+    kernels/rbs-v/rbs-v_cp.h
+    kernels/rbs-v/rbs-v_cp.c)
 
 SET(SRCS_K_USER
     kernels/user_kernel/user_kernel.h
@@ -195,6 +212,8 @@ SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_ATAN}
                  ${SRCS_K_SIN_OVER_R}
                  ${SRCS_K_MQ}
+                 ${SRCS_K_RBS_U}
+                 ${SRCS_K_RBS_V}
                  ${SRCS_K_USER})
 
 
@@ -217,6 +236,8 @@ install(TARGETS ${TRGT}                         LIBRARY DESTINATION lib
                                                 ARCHIVE DESTINATION lib)
 install(FILES   interface/BaryTreeInterface.h           DESTINATION include)
 
+install(FILES   ../interfaces/fortran/BaryTreeInterface.fh DESTINATION include)
+
 
 if(ENABLE_GPU_BUILD)
     set(TRGT BaryTree_gpu)
@@ -237,4 +258,6 @@ if(ENABLE_GPU_BUILD)
     install(TARGETS ${TRGT}                       LIBRARY DESTINATION lib
                                                   ARCHIVE DESTINATION lib)
     install(FILES   interface/BaryTreeInterface.h         DESTINATION include)
+
+    install(FILES   ../interfaces/fortran/BaryTreeInterface.fh DESTINATION include)
 endif()

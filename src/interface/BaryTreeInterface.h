@@ -15,7 +15,10 @@
         TCF,
         DCF,
         SIN_OVER_R,
-        MQ
+        MQ,
+        RBS_U,
+        RBS_V,
+        USER
     } KERNEL;
     
     
