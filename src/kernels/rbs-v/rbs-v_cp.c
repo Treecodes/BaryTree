@@ -45,7 +45,7 @@ void K_RBSv_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolat
             int jj = starting_index_of_source + j;
             double dx = cx - source_x[jj];
             double dy = cy - source_y[jj];
-            double r = sqrt(dx*dx + dy*dy + delta2);
+            double r = dx*dx + dy*dy + delta2;
 
             temporary_potential += -1. / (2. * M_PI) * source_q[jj] * dx / r;
 

@@ -39,7 +39,7 @@ void K_RBSu_PP(int number_of_targets_in_batch, int number_of_source_points_in_cl
             int jj = starting_index_of_source + j;
             double dx = tx - source_x[jj];
             double dy = ty - source_y[jj];
-            double r  = sqrt(dx*dx + dy*dy + delta2);
+            double r  = dx*dx + dy*dy + delta2;
 
             temporary_potential += 1. / (2. * M_PI) * source_charge[jj] * dy / r;
 

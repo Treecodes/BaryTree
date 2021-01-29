@@ -39,7 +39,7 @@ void K_RBSu_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolat
             int jj = starting_index_of_cluster + j;
             double dx = tx - cluster_x[jj];
             double dy = ty - cluster_y[jj];
-            double r  = sqrt(dx*dx + dy*dy + delta2);
+            double r  = dx*dx + dy*dy + delta2;
 
             temporary_potential += 1. / (2. * M_PI) * cluster_charge[jj] * dy / r;
 
