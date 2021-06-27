@@ -15,6 +15,8 @@
 #include "../kernels/regularized-coulomb/regularized-coulomb.h"
 #include "../kernels/regularized-yukawa/regularized-yukawa.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
+#include "../kernels/rbs-u/rbs-u.h"
+#include "../kernels/rbs-v/rbs-v.h"
 #include "../kernels/user_kernel/user_kernel.h"
 
 #include "interaction_compute.h"
@@ -340,13 +342,52 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 }
 
     /* * *********************************************/
+    /* * ******* RBS_U *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_U) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_RBSu_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+                            source_cluster_start, target_cluster_start,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+
+    /* * *********************************************/
+    /* * ******* RBS_V *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_V) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_RBSv_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+                            source_cluster_start, target_cluster_start,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+
+    /* * *********************************************/
     /* * ******* USER DEFINED KERNEL *****************/
     /* * *********************************************/
 
             } else if (run_params->kernel == USER) {
 
                 if (run_params->approximation == LAGRANGE) {
-
 
                     K_User_Kernel_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
                         source_cluster_start, target_cluster_start,
@@ -594,6 +635,44 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     if (run_params->singularity == SKIPPING) {
 
                         K_SinOverR_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
+                            target_start, source_cluster_start,
+                            target_x, target_y, target_z,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q,
+                            run_params, potential, stream_id);
+                    }
+                }
+
+    /* * *********************************************/
+    /* * ******* RBS U *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_U) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_RBSu_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
+                            target_start, source_cluster_start,
+                            target_x, target_y, target_z,
+                            source_cluster_x, source_cluster_y, source_cluster_z,
+                            source_cluster_q,
+                            run_params, potential, stream_id);
+                    }
+                }
+
+    /* * *********************************************/
+    /* * ******* RBS V *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_V) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_RBSv_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
                             target_start, source_cluster_start,
                             target_x, target_y, target_z,
                             source_cluster_x, source_cluster_y, source_cluster_z,
@@ -868,6 +947,44 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 }
 
     /* * *********************************************/
+    /* * ******* RBS U *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_U) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_RBSu_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                            source_start, target_cluster_start,
+                            source_x, source_y, source_z, source_q,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+
+    /* * *********************************************/
+    /* * ******* RBS V *******************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_V) {
+
+                if (run_params->approximation == LAGRANGE) {
+
+                    if (run_params->singularity == SKIPPING) {
+
+                        K_RBSv_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                            source_start, target_cluster_start,
+                            source_x, source_y, source_z, source_q,
+                            target_cluster_x, target_cluster_y, target_cluster_z,
+                            target_cluster_q,
+                            run_params, stream_id);
+                    }
+                }
+
+    /* * *********************************************/
     /* * ******* USER DEFINED KERNEL *****************/
     /* * *********************************************/
 
@@ -1026,6 +1143,36 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 if (run_params->singularity == SKIPPING) {
 
                     K_SinOverR_PP(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q,
+                            run_params, potential, stream_id);
+                }
+
+    /* * *********************************************/
+    /* * ********** RBS U ****************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_U) {
+
+                if (run_params->singularity == SKIPPING) {
+
+                    K_RBSu_PP(num_targets_in_cluster, num_sources_in_cluster,
+                            target_start, source_start,
+                            target_x, target_y, target_z,
+                            source_x, source_y, source_z, source_q,
+                            run_params, potential, stream_id);
+                }
+
+    /* * *********************************************/
+    /* * ********** RBS V ****************************/
+    /* * *********************************************/
+
+            } else if (run_params->kernel == RBS_V) {
+
+                if (run_params->singularity == SKIPPING) {
+
+                    K_RBSv_PP(num_targets_in_cluster, num_sources_in_cluster,
                             target_start, source_start,
                             target_x, target_y, target_z,
                             source_x, source_y, source_z, source_q,

@@ -16,6 +16,8 @@
 #include "../kernels/atan/atan.h"
 #include "../kernels/sin-over-r/sin-over-r.h"
 #include "../kernels/mq/mq.h"
+#include "../kernels/rbs-u/rbs-u.h"
+#include "../kernels/rbs-v/rbs-v.h"
 #include "../kernels/user_kernel/user_kernel.h"
 
 #include "interaction_compute.h"
@@ -178,6 +180,28 @@ void InteractionCompute_Direct(double *potential,
     } else if (run_params->kernel == MQ) {
 
             K_MQ_PP(num_targets, num_sources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q,
+                        run_params, potential, 0);
+
+    /***************************************/
+    /************ RBS U ********************/
+    /***************************************/
+
+    } else if (run_params->kernel == RBS_U) {
+
+            K_RBSu_PP(num_targets, num_sources, 0, 0,
+                        target_x, target_y, target_z,
+                        source_x, source_y, source_z, source_q,
+                        run_params, potential, 0);
+
+    /***************************************/
+    /************ RBS V ********************/
+    /***************************************/
+
+    } else if (run_params->kernel == RBS_V) {
+
+            K_RBSv_PP(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q,
                         run_params, potential, 0);

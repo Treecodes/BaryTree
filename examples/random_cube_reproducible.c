@@ -171,16 +171,16 @@ int main(int argc, char **argv)
                 double xx, yy, zz;
                 Point_Plummer_Octant(plummer_R , &xx, &yy, &zz);
 		
-		for (int ii = 0; ii < 2; ++ii) {
-		    for (int jj = 0; jj < 2; ++jj) {
-			for (int kk = 0; kk < 2; ++kk) {
-		    	    int index = (N/8) * (ii*4 + jj*2 + kk) + i;
-		    	    mySources.x[index] = xx * pow(-1, ii);
-		            mySources.y[index] = yy * pow(-1, jj);
-		            mySources.z[index] = zz * pow(-1, kk);
-                	}
-		    }
-		}
+		        for (int ii = 0; ii < 2; ++ii) {
+		            for (int jj = 0; jj < 2; ++jj) {
+			            for (int kk = 0; kk < 2; ++kk) {
+		    	            int index = (N/8) * (ii*4 + jj*2 + kk) + i;
+		    	            mySources.x[index] = xx * pow(-1, ii);
+		                    mySources.y[index] = yy * pow(-1, jj);
+		                    mySources.z[index] = zz * pow(-1, kk);
+              	        }
+		            }
+		        }
             }
         }
         
@@ -201,6 +201,46 @@ int main(int argc, char **argv)
         for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
             for (int i = 0; i < N; ++i) {
                 Point_Exponential(&mySources.x[i], &mySources.y[i], &mySources.z[i]);
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0;
+            }
+        }
+
+    } else if (distribution == SLAB_1) {
+
+        for (int j = 0; j < rank+1; ++j) { // Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * 10. - 5;
+                mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * 10. - 5.;
+                mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * 1.;
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0; // dummy weighting scheme
+            }
+        }
+
+    } else if (distribution == SLAB_2) {
+
+        for (int j = 0; j < rank+1; ++j) { // Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                mySources.x[i] = ((double)random()/(double)(RAND_MAX)) * 10 - 5.;
+                mySources.y[i] = ((double)random()/(double)(RAND_MAX)) * 1.;
+                mySources.z[i] = ((double)random()/(double)(RAND_MAX)) * 1.;
+                mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
+                mySources.w[i] = 1.0;
+                mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);
+                mySources.b[i] = 1.0; // dummy weighting scheme
+            }
+        }
+
+    } else if (distribution == SPHERICAL_SHELL) {
+
+        for (int j = 0; j < rank+1; ++j) { //Cycle to generate same particle no matter num ranks
+            for (int i = 0; i < N; ++i) {
+                Point_Spherical_Shell(1., &mySources.x[i], &mySources.y[i], &mySources.z[i]);
                 mySources.q[i] = ((double)random()/(double)(RAND_MAX)) * 2. - 1.;
                 mySources.w[i] = 1.0;
                 mySources.myGlobalIDs[i] = (ZOLTAN_ID_TYPE)(rank*N + i);

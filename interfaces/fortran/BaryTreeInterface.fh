@@ -1,0 +1,39 @@
+ENUM, BIND(C)
+    ENUMERATOR :: NO_KERNEL = 0, COULOMB, YUKAWA, &
+                  REGULARIZED_COULOMB, REGULARIZED_YUKAWA, &
+                  ATANF, TCF, DCF, SIN_OVER_R, MQ, RBS_U, RBS_V, USER
+
+    ENUMERATOR :: NO_SINGULARITY = 0, SKIPPING, SUBTRACTION
+
+    ENUMERATOR :: NO_APPROX = 0, LAGRANGE, HERMITE
+
+    ENUMERATOR :: NO_COMPUTE_TYPE = 0, PARTICLE_CLUSTER, &
+                  CLUSTER_PARTICLE, CLUSTER_CLUSTER
+END ENUM
+
+INTERFACE
+    SUBROUTINE BaryTreeInterface(num_targets, num_sources, &
+                    target_x, target_y, target_z, target_q, &
+                    source_x, source_y, source_z, source_q, source_w, &
+                    potential, kernel, num_kernel_params, kernel_params, &
+                    singularity, approximation, compute_type, &
+                    theta, degree, max_source_leaf, max_target_leaf, &
+                    size_check, beta, verbosity) &
+               BIND(C, NAME='BaryTreeInterface')
+
+        USE, INTRINSIC :: ISO_C_BINDING, ONLY: C_INT, C_DOUBLE, C_PTR
+        IMPLICIT NONE
+
+        INTEGER(KIND=C_INT), VALUE, INTENT(IN) :: num_targets, num_sources
+        TYPE(C_PTR), VALUE, INTENT(IN) :: target_x, target_y, target_z, target_q
+        TYPE(C_PTR), VALUE, INTENT(IN) :: source_x, source_y, source_z, source_q, source_w
+        TYPE(C_PTR), VALUE, INTENT(IN) :: potential
+
+        INTEGER(KIND=C_INT), VALUE, INTENT(IN) :: kernel, num_kernel_params, &
+                            singularity, approximation, compute_type, degree, &
+                            max_source_leaf, max_target_leaf, verbosity
+        TYPE(C_PTR), VALUE, INTENT(IN) :: kernel_params
+        REAL(KIND=C_DOUBLE), VALUE, INTENT(IN) :: theta, size_check, beta
+
+    END SUBROUTINE BaryTreeInterface
+END INTERFACE
