@@ -54,10 +54,19 @@ References
 ----------
    Please refer to the following references for more background:
         
+   - L. Wilson, N. Vaughn, and R. Krasny, A GPU-accelerated fast 
+            multipole method based on barycentric Lagrange interpolation 
+            and dual tree traversal, 
+	    _Comput. Phys. Commun._ __265__ (2021), 108017. 
+	
    - N. Vaughn, L. Wilson, and R. Krasny, A GPU-accelerated barycentric 
-            Lagrange treecode, submitted to _Proc. 21st IEEE Int.
-	    Workshop Parallel Distrib. Sci. Eng. Comput._ (PDSEC 2020) 
-	    (2020).
+            Lagrange treecode, 
+	    _Proc. 21st IEEE Int. Workshop Parallel Distrib. Sci. Eng. 
+	    Comput._ (PDSEC 2020) (2020).
+	    
+   - L. Wang, R. Krasny, and S. Tlupova, A kernel-independent treecode 
+            based on barycentric Lagrange interpolation, 
+	    _Commun. Comput. Phys._ __28__ (2020), 1415-1436.
 	    
    - R. Krasny and L. Wang, A treecode based on barycentric Hermite 
             interpolation for electrostatic particle interactions,
@@ -78,4 +87,9 @@ References
                                                     
 License
 -------
-Copyright © 2019-2020, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).
+Copyright © 2019-2021, The Regents of the University of Michigan. Released under the [MIT License](LICENSE).
+
+
+Disclaimer
+----------
+This material is based upon work supported by the National Science Foundation under grant DMS-1819094, and by the Extreme Science and Engineering Discovery Environment (XSEDE) under grants ACI-1548562 and ASC-190062. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
