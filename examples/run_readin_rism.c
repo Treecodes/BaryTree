@@ -4,10 +4,10 @@
 #include <string.h>
 #include <time.h>
 #include <float.h>
-#include <mpi.h>
 
 #include "../src/utilities/tools.h"
 #include "../src/utilities/timers.h"
+#include "../src/utilities/array.h"
 
 #include "../src/particles/struct_particles.h"
 #include "../src/run_params/struct_run_params.h"
@@ -21,12 +21,7 @@
 
 int main(int argc, char **argv)
 {
-    /* MPI initialization */
-    int rank, numProcs;
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-    if (rank == 0) printf("[random cube example] Beginning random cube example with %d ranks.\n", numProcs);
+    printf("[random cube example] Beginning random cube example.\n");
 
     /* run parameters */
     int N, run_direct, slice[3];
@@ -74,16 +69,15 @@ int main(int argc, char **argv)
     START_TIMER(&time_run[0]);
 
 
-    /* Setting up sources with MPI-allocated source arrays for RMA use */
+    /* Setting up sources */
     
     sources = malloc(sizeof(struct Particles));
     sources->num = N;
 
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->x));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->y));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->z));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->q));
-    MPI_Alloc_mem(sources->num * sizeof(double), MPI_INFO_NULL, &(sources->w));
+    make_vector(sources->x, sources->num);
+    make_vector(sources->y, sources->num);
+    make_vector(sources->z, sources->num);
+    make_vector(sources->q, sources->num);
 
     char c[256], c1[120], c2[120], c3[120], c4[10], c5[10];
     double a1, a2, a3, b1, b2;
@@ -91,23 +85,8 @@ int main(int argc, char **argv)
 
     FILE *points_fp = fopen(file_pqr, "r");
 
-//    while (fgets(c, sizeof(c), points_fp)) {
-//        sscanf(c, "%s %s %s %s %s %lf %lf %lf %lf %lf",
-//               c1, c2, c3, c4, c5, &a1, &a2, &a3, &b1, &b2);
-//
-//        if (strncmp(c1, "ATOM", 4) == 0) {
-//            sources->x[atom_ctr] = a1;
-//            sources->y[atom_ctr] = a2;
-//            sources->z[atom_ctr] = a3;
-//            sources->q[atom_ctr] = b2;
-//            sources->w[atom_ctr] = 1.0;
-//            atom_ctr++;
-//        }
-//    }
-
     for (int i = 0; i < N; ++i) {
         fscanf(points_fp, "%lf %lf %lf %lf", &(sources->x[i]), &(sources->y[i]), &(sources->z[i]), &(sources->q[i]));
-        sources->w[i] = 1.0;
     }
     fclose(points_fp);
 
@@ -133,34 +112,7 @@ int main(int argc, char **argv)
     targets->ydd = grid_dd[1];
     targets->zdd = grid_dd[2];
 
-/*
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->x));
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->y));
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->z));
-    MPI_Alloc_mem(targets->num * sizeof(double), MPI_INFO_NULL, &(targets->q));
-
-    for (int k = 0; k < grid_dim[2]; ++k) {
-        double zz = xyz_limits[4] + k * grid_dd[2];
-        int grid_pos_k = k * grid_dim[1] * grid_dim[0];
-
-        for (int j = 0; j < grid_dim[1]; ++j) {
-            double yy = xyz_limits[2] + j * grid_dd[1];
-            int grid_pos_jk = grid_pos_k + j * grid_dim[0];
-
-            for (int i = 0; i < grid_dim[0]; ++i) {
-                double xx = xyz_limits[0] + i * grid_dd[0];
-
-                targets->x[grid_pos_jk + i] = xx;
-                targets->y[grid_pos_jk + i] = yy;
-                targets->z[grid_pos_jk + i] = zz;
-                targets->q[grid_pos_jk + i] = 1.0;
-            }
-        }
-    }
-*/
-
-
-    if (rank == 0) printf("[random cube example] Setup has finished.\n");
+    printf("[random cube example] Setup has finished.\n");
 
     /* Initializing direct and treedriver runs */
 
@@ -174,12 +126,11 @@ int main(int argc, char **argv)
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc set device_num(rank) device_type(acc_device_nvidia)
+    #pragma acc set device_num(0) device_type(acc_device_nvidia)
     #pragma acc init device_type(acc_device_nvidia)
 #endif
 
     STOP_TIMER(&time_run[0]);
-    MPI_Barrier(MPI_COMM_WORLD);
 
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,48 +157,28 @@ int main(int argc, char **argv)
         targets_sample->ydd = grid_dd[1]*slice[1];
         targets_sample->zdd = grid_dd[2]*slice[2];
 
-//        targets_sample->num = targets->num / slice;
-//        targets_sample->x = malloc(targets_sample->num * sizeof(double));
-//        targets_sample->y = malloc(targets_sample->num * sizeof(double));
-//        targets_sample->z = malloc(targets_sample->num * sizeof(double));
-//        targets_sample->q = malloc(targets_sample->num * sizeof(double));
-//
-//        for (int i = 0; i < targets_sample->num; i++) {
-//            targets_sample->x[i] = targets->x[i*slice];
-//            targets_sample->y[i] = targets->y[i*slice];
-//            targets_sample->z[i] = targets->z[i*slice];
-//            targets_sample->q[i] = targets->q[i*slice];
-//        }
-
-        if (rank == 0) printf("[random cube example] Running direct comparison...\n");
+        printf("[random cube example] Running direct comparison...\n");
 
         START_TIMER(&time_run[1]);
         directdriver(sources, targets_sample, run_params, potential_direct, time_direct);
         STOP_TIMER(&time_run[1]);
 
-        //free(targets_sample->x);
-        //free(targets_sample->y);
-        //free(targets_sample->z);
-        //free(targets_sample->q);
         free(targets_sample);
 
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Running treecode
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
     
-    if (rank == 0) printf("[random cube example] Running treedriver...\n");
+    printf("[random cube example] Running treedriver...\n");
 
     START_TIMER(&time_run[2]);
     treedriver(sources, targets, run_params, potential, time_tree);
     STOP_TIMER(&time_run[2]);
 
     
-    MPI_Barrier(MPI_COMM_WORLD);
     /* Ending total runtime timer */
     STOP_TIMER(&time_run[3]);
 
@@ -277,25 +208,17 @@ int main(int argc, char **argv)
     // Cleanup
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    MPI_Free_mem(sources->x);
-    MPI_Free_mem(sources->y);
-    MPI_Free_mem(sources->z);
-    MPI_Free_mem(sources->q);
-    MPI_Free_mem(sources->w);
+    free_vector(sources->x);
+    free_vector(sources->y);
+    free_vector(sources->z);
+    free_vector(sources->q);
     free(sources);
-
-    MPI_Free_mem(targets->x);
-    MPI_Free_mem(targets->y);
-    MPI_Free_mem(targets->z);
-    MPI_Free_mem(targets->q);
     free(targets);
 
     free(potential);
     free(potential_direct);
 
     RunParams_Free(&run_params);
-
-    MPI_Finalize();
 
     return 0;
 }

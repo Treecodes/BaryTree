@@ -7,13 +7,8 @@ typedef enum KERNEL
     NO_KERNEL,
     COULOMB,
     YUKAWA,
-    REGULARIZED_COULOMB,
-    REGULARIZED_YUKAWA,
-    ATAN,
     TCF,
     DCF,
-    SIN_OVER_R,
-    MQ
 } KERNEL;
 
 

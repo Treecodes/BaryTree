@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>
-#include <mpi.h>
 
 #include "../utilities/array.h"
 #include "../utilities/tools.h"
@@ -393,47 +392,18 @@ void Tree_Fill(struct Tree *tree, struct TreeLinkedListNode *p)
 
 void Tree_Print(struct Tree *tree)
 {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Barrier(MPI_COMM_WORLD);
-   
-    int global_num_nodes,  max_num_nodes,  min_num_nodes;
-    int global_num_leaves, max_num_leaves, min_num_leaves;
-    int global_min_leaf_size, global_max_leaf_size;
-
-    MPI_Reduce(&(tree->numnodes),   &global_num_nodes, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&(tree->numnodes),      &max_num_nodes, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&(tree->numnodes),      &min_num_nodes, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-    
-    MPI_Reduce(&(tree->numleaves), &global_num_leaves, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&(tree->numleaves),    &max_num_leaves, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&(tree->numleaves),    &min_num_leaves, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-    
-    MPI_Reduce(&(tree->max_leaf_size),    &global_max_leaf_size, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&(tree->min_leaf_size),    &global_min_leaf_size, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-    
-    if (rank == 0) {
-        printf("[BaryTree]\n");
-        printf("[BaryTree] Tree information: \n");
-        printf("[BaryTree]\n");
-        printf("[BaryTree]          Cumulative tree nodes across all ranks: %d\n", global_num_nodes);
-        printf("[BaryTree]             Maximum tree nodes across all ranks: %d\n", max_num_nodes);
-        printf("[BaryTree]             Minimum tree nodes across all ranks: %d\n", min_num_nodes);
-        printf("[BaryTree]                                           Ratio: %f\n",
-               (double)max_num_nodes / (double)min_num_nodes);
-        printf("[BaryTree]\n");
-        printf("[BaryTree]         Cumulative tree leaves across all ranks: %d\n", global_num_leaves);
-        printf("[BaryTree]            Maximum tree leaves across all ranks: %d\n", max_num_leaves);
-        printf("[BaryTree]            Minimum tree leaves across all ranks: %d\n", min_num_leaves);
-        printf("[BaryTree]                                           Ratio: %f\n",
-               (double)max_num_leaves / (double)min_num_leaves);
-        printf("[BaryTree]\n");
-        printf("[BaryTree]         Maximum tree leaf size across all ranks: %d\n", global_max_leaf_size);
-        printf("[BaryTree]         Minimum tree leaf size across all ranks: %d\n", global_min_leaf_size);
-        printf("[BaryTree]                                           Ratio: %f\n",
-               (double)global_max_leaf_size / (double)global_min_leaf_size);
-        printf("[BaryTree]\n");
-    }
+    printf("[BaryTree]\n");
+    printf("[BaryTree] Tree information: \n");
+    printf("[BaryTree]\n");
+    printf("[BaryTree]          Cumulative tree nodes: %d\n", tree->numnodes);
+    printf("[BaryTree]\n");
+    printf("[BaryTree]         Cumulative tree leaves: %d\n", tree->numleaves);
+    printf("[BaryTree]\n");
+    printf("[BaryTree]         Maximum tree leaf size: %d\n", tree->max_leaf_size);
+    printf("[BaryTree]         Minimum tree leaf size: %d\n", tree->min_leaf_size);
+    printf("[BaryTree]                          Ratio: %f\n",
+           (double)tree->max_leaf_size / (double)tree->min_leaf_size);
+    printf("[BaryTree]\n");
 
     return;
 }

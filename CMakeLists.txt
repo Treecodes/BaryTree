@@ -17,19 +17,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lib)
 
-option(BUILD_EXAMPLES "build examples with Zoltan"              ON)
+option(BUILD_EXAMPLES "build examples"                          ON)
 option(ENABLE_GPU_BUILD "build OpenACC GPU version"             ON)
 option(BUILD_SHARED_LIBS "build libraries as shared objects"	ON)
 
-find_package(MPI    REQUIRED)
 find_package(OpenMP REQUIRED)
-
-if(BUILD_EXAMPLES OR BUILD_TESTS)
-    find_package(Zoltan REQUIRED)
-    add_library(Zoltan_Interface INTERFACE)
-    target_link_libraries(Zoltan_Interface INTERFACE zoltan)
-    target_include_directories(Zoltan_Interface INTERFACE ${Zoltan_INCLUDE_DIRS})
-endif()
 
 #Some PGI versions seem to require a link flag for OpenMP
 set_property(TARGET OpenMP::OpenMP_C APPEND
@@ -57,4 +49,4 @@ endif()
 enable_testing()
 add_subdirectory(src)
 add_subdirectory(examples)
-add_subdirectory(tests)
+#add_subdirectory(tests)

@@ -20,7 +20,5 @@ void Clusters_Alloc(struct Clusters **clusters_addr, int length,
 
 void Clusters_Free(struct Clusters **clusters_addr);
 
-void Clusters_Free_Win(struct Clusters **clusters_addr);
-
 
 #endif /* H_CLUSTER_FUNCTIONS_H */

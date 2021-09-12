@@ -12,9 +12,6 @@
 
 //#include "../kernels/coulomb/coulomb.h"
 //#include "../kernels/yukawa/yukawa.h"
-//#include "../kernels/regularized-coulomb/regularized-coulomb.h"
-//#include "../kernels/regularized-yukawa/regularized-yukawa.h"
-//#include "../kernels/sin-over-r/sin-over-r.h"
 #include "../kernels/tcf/tcf.h"
 //#include "../kernels/dcf/dcf.h"
 
@@ -164,11 +161,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             target_cluster_q,
                             run_params, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -180,11 +172,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     exit(1);
 
                     if (run_params->singularity == SKIPPING) {
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -215,11 +202,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             target_cluster_q,
                             run_params, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -232,11 +214,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     if (run_params->singularity == SKIPPING) {
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -248,132 +225,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 }
 */
 
-    /* * *********************************************/
-    /* * ******* Regularized Coulomb *****************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_COULOMB) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedCoulomb_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-                            source_cluster_start, target_cluster_start,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                    if (run_params->singularity == SKIPPING) {
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Regularized Yukawa ******************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedYukawa_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-                            source_cluster_start, target_cluster_start,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB HERMITE. EXITING.\n");
-                        exit(1);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Sin Over R **************************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == SIN_OVER_R) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_SinOverR_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-                            source_cluster_start, target_cluster_start,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q, source_cluster_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
-                    }
-                }
-*/
-            
     /* * *********************************************/
     /* * ******* TCF *********************************/
     /* * *********************************************/
@@ -450,11 +301,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             source_cluster_q,
                             run_params, potential, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -500,11 +346,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             source_cluster_q,
                             run_params, potential, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -517,11 +358,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     if (run_params->singularity == SKIPPING) {
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -530,129 +366,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 } else {
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Regularized Coulomb *****************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_COULOMB) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedCoulomb_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
-                            target_start, source_cluster_start,
-                            target_x, target_y, target_z,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q,
-                            run_params, potential, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                    if (run_params->singularity == SKIPPING) {
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Regularized Yukawa ******************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedYukawa_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
-                            target_start, source_cluster_start,
-                            target_x, target_y, target_z,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q,
-                            run_params, potential, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB HERMITE. EXITING.\n");
-                        exit(1);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Sin Over R **************************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == SIN_OVER_R) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_SinOverR_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
-                            target_start, source_cluster_start,
-                            target_x, target_y, target_z,
-                            source_cluster_x, source_cluster_y, source_cluster_z,
-                            source_cluster_q,
-                            run_params, potential, stream_id);
-                    }
                 }
 */
 
@@ -741,11 +454,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             target_cluster_q,
                             run_params, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -757,11 +465,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                     exit(1);
 
                     if (run_params->singularity == SKIPPING) {
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC COULOMB SS. EXITING.\n");
-                        exit(1);
 
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
@@ -791,11 +494,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             target_cluster_q,
                             run_params, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -808,11 +506,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
                     if (run_params->singularity == SKIPPING) {
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC YUKAWA SS. EXITING.\n");
-                        exit(1);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -821,129 +514,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                 } else {
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
                     exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Regularized Coulomb *****************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_COULOMB) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedCoulomb_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-                            source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                    if (run_params->singularity == SKIPPING) {
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Regularized Yukawa ******************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedYukawa_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-                            source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB HERMITE. EXITING.\n");
-                        exit(1);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR CC REGULARIZED COULOMB SS. EXITING.\n");
-                        exit(1);
-
-                    } else {
-                        printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                        exit(1);
-                    }
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ******* Sin Over R **************************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == SIN_OVER_R) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_SinOverR_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-                            source_start, target_cluster_start,
-                            source_x, source_y, source_z, source_q, source_w,
-                            target_cluster_x, target_cluster_y, target_cluster_z,
-                            target_cluster_q,
-                            run_params, stream_id);
-                    }
                 }
 */
 
@@ -1024,14 +594,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             source_x, source_y, source_z, source_q, source_w,
                             run_params, potential, stream_id);
 
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_Coulomb_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z, target_q,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
-
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
@@ -1052,89 +614,9 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                             source_x, source_y, source_z, source_q, source_w,
                             run_params, potential, stream_id);
 
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_Yukawa_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z, target_q,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
-
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ********** Regularized Coulomb **************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_COULOMB) {
-/*
-                if (run_params->singularity == SKIPPING) {
-
-                    K_RegularizedCoulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
-
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_RegularizedCoulomb_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z, target_q,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ********** Regularized Yukawa ***************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-/*
-                if (run_params->singularity == SKIPPING) {
-
-                    K_RegularizedYukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
-
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_RegularizedYukawa_SS_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z, target_q,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-                    exit(1);
-                }
-*/
-
-    /* * *********************************************/
-    /* * ********** Sin Over R ***********************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == SIN_OVER_R) {
-/*
-                if (run_params->singularity == SKIPPING) {
-
-                    K_SinOverR_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                            target_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential, stream_id);
                 }
 */
 

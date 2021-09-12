@@ -11,11 +11,6 @@
 
 #include "../kernels/coulomb/coulomb.h"
 #include "../kernels/yukawa/yukawa.h"
-#include "../kernels/regularized-coulomb/regularized-coulomb.h"
-#include "../kernels/regularized-yukawa/regularized-yukawa.h"
-#include "../kernels/atan/atan.h"
-#include "../kernels/sin-over-r/sin-over-r.h"
-#include "../kernels/mq/mq.h"
 #include "../kernels/tcf/tcf.h"
 #include "../kernels/dcf/dcf.h"
 
@@ -85,13 +80,6 @@ void InteractionCompute_Direct(double *potential,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
 
-        } else if (run_params->singularity == SUBTRACTION) {
-
-            K_Coulomb_SS_Direct(num_targets, num_sources, 0, 0,
-                    target_x, target_y, target_z, target_q,
-                    source_x, source_y, source_z, source_q, source_w,
-                    run_params, potential, 0);
-
         } else {
             printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
             exit(1);
@@ -110,97 +98,10 @@ void InteractionCompute_Direct(double *potential,
                     source_x, source_y, source_z, source_q, source_w,
                     run_params, potential, 0);
 
-        } else if (run_params->singularity == SUBTRACTION) {
-
-            K_Yukawa_SS_Direct(num_targets, num_sources, 0, 0,
-                    target_x, target_y, target_z, target_q,
-                    source_x, source_y, source_z, source_q, source_w,
-                    run_params, potential, 0);
-
         } else {
             printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
             exit(1);
         }
-
-    /* * *************************************/
-    /* * ******* Regularized-Coulomb *********/
-    /* * *************************************/
-
-    } else if (run_params->kernel == REGULARIZED_COULOMB) {
-
-        if (run_params->singularity == SKIPPING) {
-
-            K_RegularizedCoulomb_Direct(num_targets, num_sources, 0, 0,
-                    target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
-                    run_params, potential, 0);
-
-        } else if (run_params->singularity == SUBTRACTION) {
-
-            K_RegularizedCoulomb_SS_Direct(num_targets, num_sources, 0, 0,
-                    target_x, target_y, target_z, target_q,
-                    source_x, source_y, source_z, source_q, source_w,
-                    run_params, potential, 0);
-
-        }
-
-
-    /* * *************************************/
-    /* * ******* Regularized-Yukawa **********/
-    /* * *************************************/
-
-    } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-
-        if (run_params->singularity == SKIPPING) {
-
-            K_RegularizedYukawa_Direct(num_targets, num_sources, 0, 0,
-                        target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
-                        run_params, potential, 0);
-
-        } else if (run_params->singularity == SUBTRACTION) {
-
-            K_RegularizedYukawa_SS_Direct(num_targets, num_sources, 0, 0,
-                        target_x, target_y, target_z, target_q,
-                        source_x, source_y, source_z, source_q, source_w,
-                        run_params, potential, 0);
-        }
-
-
-    /* * *************************************/
-    /* * ******* Atan ************************/
-    /* * *************************************/
-
-    } else if (run_params->kernel == ATAN) {
-
-            K_Atan_Direct(num_targets, num_sources, 0, 0,
-                        target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
-                        run_params, potential, 0);
-                        
-
-    /* * *************************************/
-    /* * ******* Sin Over R ******************/
-    /* * *************************************/
-
-    } else if (run_params->kernel == SIN_OVER_R) {
-
-            K_SinOverR_Direct(num_targets, num_sources, 0, 0,
-                        target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
-                        run_params, potential, 0);
-
-
-    /* * *************************************/
-    /* * ********** MQ ***********************/
-    /* * *************************************/
-
-    } else if (run_params->kernel == MQ) {
-
-            K_MQ_Direct(num_targets, num_sources, 0, 0,
-                        target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
-                        run_params, potential, 0);
 
 
     /* * *************************************/

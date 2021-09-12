@@ -1,9 +1,9 @@
-#include <mpi.h>
+#include <omp.h>
 
 
 void START_TIMER(double *time)
 {
-    *time = MPI_Wtime();
+    *time = omp_get_wtime();
 
     return;
 }
@@ -11,7 +11,7 @@ void START_TIMER(double *time)
 
 void STOP_TIMER(double *time)
 {
-    *time = MPI_Wtime() - *time;
+    *time = omp_get_wtime() - *time;
 
     return;
 }

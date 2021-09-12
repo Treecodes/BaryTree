@@ -37,8 +37,4 @@ void InteractionCompute_Direct(double *potential,
                            struct RunParams *run_params);
 
 
-void InteractionCompute_SubtractionPotentialCorrection(double *potential, 
-                           struct Particles *targets, struct RunParams *run_params);
-
-
 #endif /* H_INTERACTION_COMPUTE_H */

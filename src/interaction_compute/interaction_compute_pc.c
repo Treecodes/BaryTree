@@ -14,11 +14,6 @@
 
 #include "../kernels/coulomb/coulomb.h"
 #include "../kernels/yukawa/yukawa.h"
-#include "../kernels/regularized-coulomb/regularized-coulomb.h"
-#include "../kernels/regularized-yukawa/regularized-yukawa.h"
-#include "../kernels/atan/atan.h"
-#include "../kernels/sin-over-r/sin-over-r.h"
-#include "../kernels/mq/mq.h"
 #include "../kernels/tcf/tcf.h"
 #include "../kernels/dcf/dcf.h"
 
@@ -121,14 +116,6 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                                 cluster_x, cluster_y, cluster_z, cluster_q,
                                 run_params, potential_approx, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        K_Coulomb_SS_PC_Lagrange(num_targets_in_batch,
-                                interp_pts_per_cluster, batch_start, cluster_start,
-                                target_x, target_y, target_z, target_q,
-                                cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
-                                run_params, potential_approx, stream_id);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -143,15 +130,6 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                                 cluster_start, total_num_interp_pts,
                                 target_x, target_y, target_z,
                                 cluster_x, cluster_y, cluster_z, cluster_q,
-                                run_params, potential_approx, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        K_Coulomb_SS_PC_Hermite(num_targets_in_batch,
-                                interp_pts_per_cluster, batch_start,
-                                cluster_start, total_num_interp_pts,
-                                target_x, target_y, target_z, target_q,
-                                cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
                                 run_params, potential_approx, stream_id);
 
                     } else {
@@ -181,14 +159,6 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                                 cluster_x, cluster_y, cluster_z, cluster_q,
                                 run_params, potential_approx, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-                        
-                        K_Yukawa_SS_PC_Lagrange(num_targets_in_batch,
-                                interp_pts_per_cluster, batch_start, cluster_start,
-                                target_x, target_y, target_z, target_q,
-                                cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
-                                run_params, potential_approx, stream_id);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -205,15 +175,6 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                                 cluster_x, cluster_y, cluster_z, cluster_q,
                                 run_params, potential_approx, stream_id);
 
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        K_Yukawa_SS_PC_Hermite(num_targets_in_batch,
-                                interp_pts_per_cluster, batch_start,
-                                cluster_start, total_num_interp_pts,
-                                target_x, target_y, target_z, target_q,
-                                cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
-                                run_params, potential_approx, stream_id);
-
                     } else {
                         printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                         exit(1);
@@ -221,182 +182,6 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
 
                 } else {
                     printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-
-
-    /* * *************************************/
-    /* * ******* Regularized-Coulomb *********/
-    /* * *************************************/
-
-            } else if (run_params->kernel == REGULARIZED_COULOMB) {
-
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedCoulomb_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        K_RegularizedCoulomb_SS_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z, target_q,
-                                    cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
-                                    run_params, potential_approx, stream_id);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedCoulomb_PC_Hermite(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    total_num_interp_pts, target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        K_RegularizedCoulomb_SS_PC_Hermite(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    total_num_interp_pts, target_x, target_y, target_z, target_q,
-                                    cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
-                                    run_params, potential_approx, stream_id);
-                    }
-                }
-
-
-    /* * *************************************/
-    /* * ******* Regularized-Yukawa **********/
-    /* * *************************************/
-
-            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_RegularizedYukawa_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        K_RegularizedYukawa_SS_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z, target_q,
-                                    cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
-                                    run_params, potential_approx, stream_id);
-
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        printf("**ERROR** NOT SET UP FOR PC REGULARIZED YUKAWA HERMITE.  EXITING.\n");
-                        exit(1);
-
-                        /*
-                        K_RegularizedYukawa_PC_Hermite(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    total_num_interp_pts, target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-                        */
-
-                    } else if (run_params->singularity == SUBTRACTION) {
-
-                        printf("**ERROR** NOT SET UP FOR "
-                               "PC REGULARIZED YUKAWA SINGULARITY SUBTRACTION HERMITE.  EXITING.\n");
-                        exit(1);
-
-                        /*
-                        K_RegularizedYukawa_SS_PC_Hermite(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    total_num_interp_pts, target_x, target_y, target_z, target_q,
-                                    cluster_x, cluster_y, cluster_z, cluster_q, cluster_w,
-                                    run_params, potential_approx, stream_id);
-                        */
-                    }
-                }
-
-
-    /* * *************************************/
-    /* * **************** Atan ***************/
-    /* * *************************************/
-
-            } else if (run_params->kernel == ATAN) {
-
-                if (run_params->approximation == LAGRANGE) {
-
-                        K_Atan_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** NOT SET UP FOR PC ATAN HERMITE.  EXITING.\n");
-                    exit(1);
-                }
-
-
-    /* * *************************************/
-    /* * *********** Sin Over R **************/
-    /* * *************************************/
-
-            } else if (run_params->kernel == SIN_OVER_R) {
-
-                if (run_params->approximation == LAGRANGE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_SinOverR_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-                    }
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    if (run_params->singularity == SKIPPING) {
-
-                        K_SinOverR_PC_Hermite(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    total_num_interp_pts, target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-                    }
-                }
-
-
-    /* * *************************************/
-    /* * ***************** MQ ****************/
-    /* * *************************************/
-
-            } else if (run_params->kernel == MQ) {
-
-                if (run_params->approximation == LAGRANGE) {
-
-                        K_MQ_PC_Lagrange(num_targets_in_batch,
-                                    interp_pts_per_cluster, batch_start, cluster_start,
-                                    target_x, target_y, target_z,
-                                    cluster_x, cluster_y, cluster_z, cluster_q,
-                                    run_params, potential_approx, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** NOT SET UP FOR PC MQ HERMITE.  EXITING.\n");
                     exit(1);
                 }
 
@@ -495,14 +280,6 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                             source_x, source_y, source_z, source_q, source_w,
                             run_params, potential_direct, stream_id);
 
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_Coulomb_SS_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z, target_q,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
-
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
@@ -523,106 +300,10 @@ void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *ba
                             source_x, source_y, source_z, source_q, source_w,
                             run_params, potential_direct, stream_id);
 
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_Yukawa_SS_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z, target_q,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
-
                 } else {
                     printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
                     exit(1);
                 }
-
-
-    /* * *************************************/
-    /* * ******* Regularized-Coulomb *********/
-    /* * *************************************/
-
-            } else if (run_params->kernel == REGULARIZED_COULOMB) {
-
-                if (run_params->singularity == SKIPPING) {
-
-                    K_RegularizedCoulomb_Direct(num_targets_in_batch, num_sources_in_cluster,
-                                batch_start, source_start,
-                                target_x, target_y, target_z,
-                                source_x, source_y, source_z, source_q, source_w,
-                                run_params, potential_direct, stream_id);
-
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_RegularizedCoulomb_SS_Direct(num_targets_in_batch, num_sources_in_cluster,
-                                batch_start, source_start,
-                                target_x, target_y, target_z, target_q,
-                                source_x, source_y, source_z, source_q, source_w,
-                                run_params, potential_direct, stream_id);
-                }
-
-
-    /* * *************************************/
-    /* * ******* Regularized-Yukawa **********/
-    /* * *************************************/
-
-            } else if (run_params->kernel == REGULARIZED_YUKAWA) {
-
-                if (run_params->singularity == SKIPPING) {
-
-                    K_RegularizedYukawa_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
-
-                } else if (run_params->singularity == SUBTRACTION) {
-
-                    K_RegularizedYukawa_SS_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z, target_q,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
-
-                }
-
-
-    /* * *************************************/
-    /* * ******* Atan ************************/
-    /* * *************************************/
-
-            } else if (run_params->kernel == ATAN) {
-
-                K_Atan_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
-
-
-    /* * *************************************/
-    /* * ******* MQ **************************/
-    /* * *************************************/
-
-            } else if (run_params->kernel == MQ) {
-
-                K_MQ_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
-
-
-    /* * *************************************/
-    /* * ******* Sin Over R ******************/
-    /* * *************************************/
-
-            } else if (run_params->kernel == SIN_OVER_R) {
-
-                K_SinOverR_Direct(num_targets_in_batch, num_sources_in_cluster,
-                            batch_start, source_start,
-                            target_x, target_y, target_z,
-                            source_x, source_y, source_z, source_q, source_w,
-                            run_params, potential_direct, stream_id);
 
 
     /* * *************************************/

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <mpi.h>
 
 #include "../utilities/array.h"
 #include "../utilities/tools.h"
@@ -246,34 +245,34 @@ void Batches_Free_Win(struct Tree **batches_addr)
     struct Tree *batches = *batches_addr;
     
     if (batches != NULL) {
-        if (batches->ibeg   != NULL) MPI_Free_mem(batches->ibeg);
-        if (batches->iend   != NULL) MPI_Free_mem(batches->iend);
-        if (batches->numpar != NULL) MPI_Free_mem(batches->numpar);
+        if (batches->ibeg   != NULL) free_vector(batches->ibeg);
+        if (batches->iend   != NULL) free_vector(batches->iend);
+        if (batches->numpar != NULL) free_vector(batches->numpar);
         
-        if (batches->x_mid  != NULL) MPI_Free_mem(batches->x_mid);
-        if (batches->y_mid  != NULL) MPI_Free_mem(batches->y_mid);
-        if (batches->z_mid  != NULL) MPI_Free_mem(batches->z_mid);
-        if (batches->radius != NULL) MPI_Free_mem(batches->radius);
+        if (batches->x_mid  != NULL) free_vector(batches->x_mid);
+        if (batches->y_mid  != NULL) free_vector(batches->y_mid);
+        if (batches->z_mid  != NULL) free_vector(batches->z_mid);
+        if (batches->radius != NULL) free_vector(batches->radius);
 
-        if (batches->x_min  != NULL) MPI_Free_mem(batches->x_min);
-        if (batches->y_min  != NULL) MPI_Free_mem(batches->y_min);
-        if (batches->z_min  != NULL) MPI_Free_mem(batches->z_min);
+        if (batches->x_min  != NULL) free_vector(batches->x_min);
+        if (batches->y_min  != NULL) free_vector(batches->y_min);
+        if (batches->z_min  != NULL) free_vector(batches->z_min);
         
-        if (batches->x_max  != NULL) MPI_Free_mem(batches->x_max);
-        if (batches->y_max  != NULL) MPI_Free_mem(batches->y_max);
-        if (batches->z_max  != NULL) MPI_Free_mem(batches->z_max);
+        if (batches->x_max  != NULL) free_vector(batches->x_max);
+        if (batches->y_max  != NULL) free_vector(batches->y_max);
+        if (batches->z_max  != NULL) free_vector(batches->z_max);
         
-        if (batches->x_low_ind != NULL) MPI_Free_mem(batches->x_low_ind);
-        if (batches->y_low_ind != NULL) MPI_Free_mem(batches->y_low_ind);
-        if (batches->z_low_ind != NULL) MPI_Free_mem(batches->z_low_ind);
+        if (batches->x_low_ind != NULL) free_vector(batches->x_low_ind);
+        if (batches->y_low_ind != NULL) free_vector(batches->y_low_ind);
+        if (batches->z_low_ind != NULL) free_vector(batches->z_low_ind);
 
-        if (batches->x_high_ind != NULL) MPI_Free_mem(batches->x_high_ind);
-        if (batches->y_high_ind != NULL) MPI_Free_mem(batches->y_high_ind);
-        if (batches->z_high_ind != NULL) MPI_Free_mem(batches->z_high_ind);
+        if (batches->x_high_ind != NULL) free_vector(batches->x_high_ind);
+        if (batches->y_high_ind != NULL) free_vector(batches->y_high_ind);
+        if (batches->z_high_ind != NULL) free_vector(batches->z_high_ind);
 
-        if (batches->x_dim != NULL) MPI_Free_mem(batches->x_dim);
-        if (batches->y_dim != NULL) MPI_Free_mem(batches->y_dim);
-        if (batches->z_dim != NULL) MPI_Free_mem(batches->z_dim);
+        if (batches->x_dim != NULL) free_vector(batches->x_dim);
+        if (batches->y_dim != NULL) free_vector(batches->y_dim);
+        if (batches->z_dim != NULL) free_vector(batches->z_dim);
 
         free(batches);
     }
@@ -287,27 +286,11 @@ void Batches_Free_Win(struct Tree **batches_addr)
 
 void Batches_Print(struct Tree *batches)
 {
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Barrier(MPI_COMM_WORLD);
-   
-    int global_num_batches, max_num_batches, min_num_batches;
-
-    MPI_Reduce(&(batches->numnodes),   &global_num_batches, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&(batches->numnodes),      &max_num_batches, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&(batches->numnodes),      &min_num_batches, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
-    
-    if (rank == 0) {
-        printf("[BaryTree]\n");
-        printf("[BaryTree] Batches information: \n");
-        printf("[BaryTree]\n");
-        printf("[BaryTree]             Cumulative batches across all ranks: %d\n", global_num_batches);
-        printf("[BaryTree]                Maximum batches across all ranks: %d\n", max_num_batches);
-        printf("[BaryTree]                Minimum batches across all ranks: %d\n", min_num_batches);
-        printf("[BaryTree]                                           Ratio: %f\n",
-               (double)max_num_batches / (double)min_num_batches);
-        printf("[BaryTree]\n");
-    }
+    printf("[BaryTree]\n");
+    printf("[BaryTree] Batches information: \n");
+    printf("[BaryTree]\n");
+    printf("[BaryTree]             Cumulative batches: %d\n", batches->numnodes);
+    printf("[BaryTree]\n");
 
     return;
 }
