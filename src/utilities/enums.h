@@ -12,14 +12,6 @@ typedef enum KERNEL
 } KERNEL;
 
 
-typedef enum SINGULARITY
-{
-    NO_SINGULARITY,
-    SKIPPING,
-    SUBTRACTION
-} SINGULARITY;
-
-
 typedef enum APPROXIMATION
 {
     NO_APPROX,
@@ -31,7 +23,6 @@ typedef enum APPROXIMATION
 typedef enum COMPUTE_TYPE
 {
     NO_COMPUTE_TYPE,
-    PARTICLE_CLUSTER,
     CLUSTER_PARTICLE,
     CLUSTER_CLUSTER,
 } COMPUTE_TYPE;

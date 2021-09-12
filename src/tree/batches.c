@@ -509,7 +509,7 @@ void Batches_Sources_Fill(struct Tree *batches, int *sizeof_batch_arrays, struct
         ind[0][0] = ibeg;
         ind[0][1] = iend;
 
-        pc_partition_8(particles->x, particles->y, particles->z, particles->q, particles->w,
+        pc_partition_8(particles->x, particles->y, particles->z, particles->q,
                        particles->order, xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
 

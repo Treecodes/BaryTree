@@ -9,253 +9,6 @@
 
 #include "support_fns.h"
 
-static double erfinv (double x);
-
-
-void Params_Parse(FILE *fp, struct RunParams **run_params, int *N, int *M, int *run_direct, int *slice,
-                  double *xyz_limits, DISTRIBUTION *distribution, PARTITION *partition)
-{
-    /* BaryTree params */
-    int verbosity = 0;
-    int interp_order = 5; 
-    double theta = 0.5; 
-    int max_per_source_leaf = 500;
-    int max_per_target_leaf = 500; 
-    double size_check_factor = 1.0;
-    
-    char kernel_string[256]        = "COULOMB";
-    char singularity_string[256]   = "SKIPPING";
-    char approximation_string[256] = "LAGRANGE";
-    char compute_type_string[256]  = "PARTICLE_CLUSTER";
-    char run_direct_string[256]    = "OFF";
-    char distribution_string[256]  = "UNIFORM";
-    char partition_string[256]     = "RCB";
-
-    KERNEL kernel;
-    SINGULARITY singularity;
-    APPROXIMATION approximation;
-    COMPUTE_TYPE compute_type;
-
-    int num_kernel_params = 0;
-    double kernel_params[32];
-
-    /* random_cube_example params */
-    *N = 10000; 
-    *M = 10000;
-    *slice = 1;
-    
-    xyz_limits[0] = -1.;
-    xyz_limits[1] =  1.;
-    xyz_limits[2] = -1.;
-    xyz_limits[3] =  1.;
-    xyz_limits[4] = -1.;
-    xyz_limits[5] =  1.;
-
-
-    char c[256], c1[256], c2[256];
-
-    while (fgets(c, 256, fp) != NULL) {
-        sscanf(c, "%s %s", c1, c2);
-    
-        /* Parameters for the RunParam struct */
-        if (strcmp(c1, "order") == 0) {
-            interp_order = atoi(c2);
-
-        } else if (strcmp(c1, "theta") == 0) {
-            theta = atof(c2);
-
-        } else if (strcmp(c1, "max_per_source_leaf") == 0) {
-            max_per_source_leaf = atoi(c2);
-
-        } else if (strcmp(c1, "max_per_target_leaf") == 0) {
-            max_per_target_leaf = atoi(c2);
-
-        } else if (strcmp(c1, "kernel_name") == 0) {
-            strcpy(kernel_string, c2);
-        
-        } else if (strcmp(c1, "kernel_params") == 0) {
-            char *k_param = strtok(c2, " ,");
-            while (k_param != NULL) {
-                kernel_params[num_kernel_params] = atof(k_param);
-                num_kernel_params++;
-                k_param = strtok(NULL, " ,");
-            }
-        
-        } else if (strcmp(c1, "singularity") == 0) {
-            strcpy(singularity_string, c2);
-        
-        } else if (strcmp(c1, "approximation") == 0) {
-            strcpy(approximation_string, c2);
-        
-        } else if (strcmp(c1, "compute_type") == 0) {
-            strcpy(compute_type_string, c2);
-        
-        } else if (strcmp(c1, "size_check") == 0) {
-            size_check_factor = atof(c2);
-        
-        } else if (strcmp(c1, "verbosity") == 0) {
-            verbosity = atoi(c2);
-
-        /* Other run parameters */
-        } else if (strcmp(c1, "num_particles") == 0) {
-            *N = atoi(c2);
-            *M = atoi(c2);
-
-        } else if (strcmp(c1, "num_sources") == 0) {
-            *N = atoi(c2);
-
-        } else if (strcmp(c1, "num_targets") == 0) {
-            *M = atoi(c2);
-
-        } else if (strcmp(c1, "run_direct") == 0) {
-            strcpy(run_direct_string, c2);
-
-        } else if (strcmp(c1, "slice") == 0) {
-            *slice = atoi(c2);
-            
-        } else if (strcmp(c1, "distribution") == 0) {
-            strcpy(distribution_string, c2);
-
-        } else if (strcmp(c1, "partition") == 0) {
-            strcpy(partition_string, c2);
-
-        } else {
-            printf("[random cube example] ERROR! Undefined token \"%s\". Exiting.\n", c1);
-            exit(1);
-        }
-    }
-    
-
-    /* Validating tokens for RunParam struct */
-    if (strcasecmp(kernel_string, "COULOMB") == 0) {
-        kernel = COULOMB;
-
-    } else if (strcasecmp(kernel_string, "YUKAWA") == 0) {
-        kernel = YUKAWA;
-    
-    } else if (strcasecmp(kernel_string, "TCF") == 0) {
-        kernel = TCF;
-    
-    } else if (strcasecmp(kernel_string, "DCF") == 0) {
-        kernel = DCF;
-
-    } else {
-        printf("[random cube example] ERROR! Undefined kernel token \"%s\". Exiting.\n",
-               kernel_string);
-        exit(1);
-    }
-
-
-    if (strcasecmp(singularity_string, "SKIPPING") == 0) {
-        singularity = SKIPPING;
-
-    } else if (strcasecmp(singularity_string, "SUBTRACTION") == 0) {
-        singularity = SUBTRACTION;
-
-    } else {
-        printf("[random cube example] ERROR! Undefined singularity token \"%s\". Exiting.\n",
-               singularity_string);
-        exit(1);
-    }
-
-
-    if (strcasecmp(approximation_string, "LAGRANGE") == 0) {
-        approximation = LAGRANGE;
-
-    } else if (strcasecmp(approximation_string, "HERMITE") == 0) {
-        approximation = HERMITE;
-    
-    } else {
-        printf("[random cube example] ERROR! Undefined approximation token \"%s\". Exiting.\n",
-               approximation_string);
-        exit(1);
-    }
-
-
-    if ((strcasecmp(compute_type_string, "CLUSTER_PARTICLE") == 0)
-     || (strcasecmp(compute_type_string, "CLUSTER-PARTICLE") == 0)) {
-        compute_type = CLUSTER_PARTICLE;
-
-    } else if ((strcasecmp(compute_type_string, "PARTICLE_CLUSTER") == 0)
-            || (strcasecmp(compute_type_string, "PARTICLE-CLUSTER") == 0)) {
-        compute_type = PARTICLE_CLUSTER;
-
-    } else if ((strcasecmp(compute_type_string, "CLUSTER_CLUSTER") == 0)
-            || (strcasecmp(compute_type_string, "CLUSTER-CLUSTER") == 0)) {
-        compute_type = CLUSTER_CLUSTER;
-
-    } else {
-        printf("[random cube example] ERROR! Undefined compute_type token \"%s\". Exiting.\n",
-               compute_type_string);
-        exit(1);
-    }
-    
-    
-    /* Validating other tokens */
-    if ((strcasecmp(run_direct_string, "ON")  == 0)
-     || (strcasecmp(run_direct_string, "YES") == 0)
-     || (strcasecmp(run_direct_string, "1")   == 0)) {
-        *run_direct = 1;
-        
-    } else if ((strcasecmp(run_direct_string, "OFF") == 0)
-            || (strcasecmp(run_direct_string, "NO")  == 0)
-            || (strcasecmp(run_direct_string, "0")   == 0)) {
-        *run_direct = 0;
-    } else {
-        printf("[random cube example] ERROR! Undefined run direct token \"%s\". Exiting.\n",
-               run_direct_string);
-        exit(1);
-    }
-    
-    
-    if (strcasecmp(distribution_string, "UNIFORM") == 0) {
-        *distribution = UNIFORM;
-        
-    } else if ((strcasecmp(distribution_string, "GAUSSIAN") == 0)
-            || (strcasecmp(distribution_string, "NORMAL") == 0)) {
-        *distribution = GAUSSIAN;
-        
-    } else if (strcasecmp(distribution_string, "EXPONENTIAL") == 0) {
-        *distribution = EXPONENTIAL;
-
-    } else if (strcasecmp(distribution_string, "PLUMMER") == 0) {
-        *distribution = PLUMMER;
-        
-    } else if (strcasecmp(distribution_string, "PLUMMER_SYMMETRIC") == 0) {
-        *distribution = PLUMMER_SYMMETRIC;
-        
-    } else {
-        printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
-               distribution_string);
-        exit(1);
-    }
-
-
-    if (strcasecmp(partition_string, "RCB") == 0) {
-        *partition = RCB;
-        
-    } else if (strcasecmp(partition_string, "HSFC") == 0) {
-        *partition = HSFC;
-
-    } else {
-        printf("[random cube example] ERROR! Undefined distribution token \"%s\". Exiting.\n",
-               distribution_string);
-        exit(1);
-    }
-
-
-    RunParams_Setup(run_params,
-                    kernel, num_kernel_params, kernel_params,
-                    approximation, singularity, compute_type,
-                    theta, size_check_factor, interp_order, 
-                    max_per_source_leaf, max_per_target_leaf,
-                    verbosity);
-
-    return;
-}
-
-
-
 
 /*----------------------------------------------------------------------------*/
 void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *file_pqr,
@@ -270,13 +23,11 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
     double size_check_factor = 1.0;
     
     char kernel_string[256]        = "COULOMB";
-    char singularity_string[256]   = "SKIPPING";
     char approximation_string[256] = "LAGRANGE";
-    char compute_type_string[256]  = "PARTICLE_CLUSTER";
+    char compute_type_string[256]  = "CLUSTER_PARTICLE";
     char run_direct_string[256]    = "OFF";
 
     KERNEL kernel;
-    SINGULARITY singularity;
     APPROXIMATION approximation;
     COMPUTE_TYPE compute_type;
 
@@ -329,9 +80,6 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
                 num_kernel_params++;
                 k_param = strtok(NULL, " ,");
             }
-        
-        } else if (strcmp(c1, "singularity") == 0) {
-            strcpy(singularity_string, c2);
         
         } else if (strcmp(c1, "approximation") == 0) {
             strcpy(approximation_string, c2);
@@ -409,19 +157,6 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
     }
 
 
-    if (strcasecmp(singularity_string, "SKIPPING") == 0) {
-        singularity = SKIPPING;
-
-    } else if (strcasecmp(singularity_string, "SUBTRACTION") == 0) {
-        singularity = SUBTRACTION;
-
-    } else {
-        printf("[random cube example] ERROR! Undefined singularity token \"%s\". Exiting.\n",
-               singularity_string);
-        exit(1);
-    }
-
-
     if (strcasecmp(approximation_string, "LAGRANGE") == 0) {
         approximation = LAGRANGE;
 
@@ -438,10 +173,6 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
     if ((strcasecmp(compute_type_string, "CLUSTER_PARTICLE") == 0)
      || (strcasecmp(compute_type_string, "CLUSTER-PARTICLE") == 0)) {
         compute_type = CLUSTER_PARTICLE;
-
-    } else if ((strcasecmp(compute_type_string, "PARTICLE_CLUSTER") == 0)
-            || (strcasecmp(compute_type_string, "PARTICLE-CLUSTER") == 0)) {
-        compute_type = PARTICLE_CLUSTER;
 
     } else if ((strcasecmp(compute_type_string, "CLUSTER_CLUSTER") == 0)
             || (strcasecmp(compute_type_string, "CLUSTER-CLUSTER") == 0)) {
@@ -474,156 +205,13 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
 
     RunParams_Setup(run_params,
                     kernel, num_kernel_params, kernel_params,
-                    approximation, singularity, compute_type,
+                    approximation, compute_type,
                     theta, size_check_factor, interp_order, 
                     max_per_source_leaf, max_per_target_leaf,
                     verbosity);
 
     return;
 }
-
-
-
-
-/*----------------------------------------------------------------------------*/
-double Point_Set_Init(DISTRIBUTION distribution)
-{
-    if (distribution == UNIFORM) {
-        return (double)random()/(double)(RAND_MAX);
-        
-    } else if (distribution == GAUSSIAN) {
-        
-        double u = (double)random()/(1.+ (double)(RAND_MAX));
-        double x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
-	
-        return x;
-        
-    } else if (distribution == EXPONENTIAL) {
-        
-        double u = (double)random()/(1.+ (double)(RAND_MAX));
-        double x = -log(1. - u) / sqrt(12.);
-        
-        return x;
-
-    } else {
-
-        printf("[random cube example] ERROR! Distribution %d undefined in this "
-               "context.  Exiting.\n", distribution);
-        exit(1);
-    }
-}
-
-
-/*----------------------------------------------------------------------------*/
-double Point_Set(DISTRIBUTION distribution, double xmin, double xmax)
-{
-    double cdf_min, cdf_max;
-    
-    if (distribution == UNIFORM) {
-        return (double)random()/(double)(RAND_MAX) * (xmax - xmin) + xmin;
-        
-    } else if (distribution == GAUSSIAN) {
-        
-        cdf_min = 0.5 * (1. + erf((xmin) * sqrt(6.)));
-        cdf_max = 0.5 * (1. + erf((xmax) * sqrt(6.)));
-        
-        double u = (double)random()/(double)(RAND_MAX) * (cdf_max - cdf_min) + cdf_min;
-        
-        return 0.5 + 1. / sqrt(6.) * erfinv(2. * u - 1.);
-        
-    } else if (distribution == EXPONENTIAL) {
-        
-        cdf_min = 1 - exp(-sqrt(12) * xmin);
-        if (xmax > 1) {
-            cdf_max = 1;
-        } else {
-            cdf_max = 1 - exp(-sqrt(12) * xmax);
-        }
-        
-        double u = (double)random()/(1. + (double)(RAND_MAX)) * (cdf_max - cdf_min) + cdf_min;
-                
-        return -log(1. - u) / sqrt(12.);
-        
-    } else {
-
-        printf("[random cube example] ERROR! Distribution %d undefined in this "
-               "context.  Exiting.\n", distribution);
-        exit(1);
-    }
-}
-
-
-/*----------------------------------------------------------------------------*/
-void Point_Plummer(double R, double *x, double *y, double *z)
-{
-    double u = (double)random()/(1.+ (double)(RAND_MAX));
-    double radius = R / sqrt(pow(u, (-2.0/3.0)) - 1.0);
-
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    double theta = acos(-1 + u * 2.0);
-    
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    double phi = u * 2.0 * M_PI;
-
-    *x = radius * sin(theta) * cos(phi);
-    *y = radius * sin(theta) * sin(phi);
-    *z = radius * cos(theta);
-
-    return;
-}
-
-
-/*----------------------------------------------------------------------------*/
-void Point_Plummer_Octant(double R, double *x, double *y, double *z)
-{
-    double u = (double)random()/(1.+ (double)(RAND_MAX));
-    double radius = R / sqrt(pow(u, (-2.0/3.0)) - 1.0);
-
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    double theta = acos(u);
-    
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    double phi = u * M_PI / 2.0;
-
-    *x = radius * sin(theta) * cos(phi);
-    *y = radius * sin(theta) * sin(phi);
-    *z = radius * cos(theta);
-
-    return;
-}
-
-
-/*----------------------------------------------------------------------------*/
-void Point_Gaussian(double *x, double *y, double *z)
-{
-    double u = (double)random()/(1.+ (double)(RAND_MAX));
-    *x = 1. / sqrt(6.) * erfinv(2. * u - 1.);
-
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    *y = 1. / sqrt(6.) * erfinv(2. * u - 1.);
-    
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    *z = 1. / sqrt(6.) * erfinv(2. * u - 1.);
-
-    return;
-}
-
-
-/*----------------------------------------------------------------------------*/
-void Point_Exponential(double *x, double *y, double *z)
-{
-    double u = (double)random()/(1.+ (double)(RAND_MAX));
-    *x = -log(1. - u) / sqrt(12.);
-
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    *y = -log(1. - u) / sqrt(12.);
-    
-    u = (double)random()/(1.+ (double)(RAND_MAX));
-    *z = -log(1. - u) / sqrt(12.);
-
-    return;
-}
-
 
 
 /*----------------------------------------------------------------------------*/
@@ -713,18 +301,8 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
                  time_direct_glob[2][2], time_direct_glob[2][2] * avg_percent_direct,
                  time_direct_glob[1][2]/time_direct_glob[0][2]);
 
-    if (run_params->singularity == SUBTRACTION) {
-    printf("[random cube example] ");
-    printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
-                 time_direct_glob[1][3],          time_direct_glob[1][3] * max_percent_direct,
-                 time_direct_glob[2][3], time_direct_glob[2][3] * avg_percent_direct,
-                 time_direct_glob[1][3]/time_direct_glob[0][3]);
     printf("[random cube example]\n");
     printf("[random cube example]\n");
-    } else {
-    printf("[random cube example]\n");
-    printf("[random cube example]\n");
-    }
     }
 
     printf("[random cube example] ");
@@ -759,13 +337,11 @@ void Timing_Print(double time_run_glob[3][4], double time_tree_glob[3][13], doub
                  time_tree_glob[2][5], time_tree_glob[2][5] * avg_percent_tree,
                  time_tree_glob[1][5]/time_tree_glob[0][5]);
 
-    if (run_params->compute_type == CLUSTER_PARTICLE || run_params->compute_type == CLUSTER_CLUSTER) {
     printf("[random cube example] ");
     printf("|    |....Compute cp2................  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
                  time_tree_glob[1][8],          time_tree_glob[1][8] * max_percent_tree,
                  time_tree_glob[2][8], time_tree_glob[2][8] * avg_percent_tree,
                  time_tree_glob[1][8]/time_tree_glob[0][8]);
-    }
 
     printf("[random cube example] ");
     printf("|    |....Correct potential..........  %9.3e s    (%6.2f%%)      %9.3e s    (%6.2f%%)    %8.3f \n",
@@ -861,14 +437,14 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
                double glob_inf_err, double glob_relinf_err, double glob_n2_err, double glob_reln2_err)
 {
     FILE *fp = fopen("out.csv", "a");
-    fprintf(fp, "%d,%d,%d,%f,%d,%d,%d,%d,%d,%d,"
+    fprintf(fp, "%d,%d,%d,%f,%d,%d,%d,%d,"
                 "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                 "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                 "%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,"
                 "%e,%e,%e,%e,%e,%e,%e,%e\n",
         N, M, run_params->interp_order, run_params->theta,
         run_params->max_per_source_leaf, run_params->max_per_target_leaf, run_params->kernel,
-        run_params->singularity, run_params->approximation, 1, // 1 ends
+        run_params->approximation, // 1 ends
 
         time_run_glob[0][0],  time_run_glob[1][0],  // min, max, avg pre-process
         time_run_glob[2][0],
@@ -927,68 +503,4 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
     fclose(fp);
 
     return;
-}
-
-
-
-/*----------------------------------------------------------------------------*/
-#define erfinv_a3 -0.140543331
-#define erfinv_a2 0.914624893
-#define erfinv_a1 -1.645349621
-#define erfinv_a0 0.886226899
-
-#define erfinv_b4 0.012229801
-#define erfinv_b3 -0.329097515
-#define erfinv_b2 1.442710462
-#define erfinv_b1 -2.118377725
-#define erfinv_b0 1
-
-#define erfinv_c3 1.641345311
-#define erfinv_c2 3.429567803
-#define erfinv_c1 -1.62490649
-#define erfinv_c0 -1.970840454
-
-#define erfinv_d2 1.637067800
-#define erfinv_d1 3.543889200
-#define erfinv_d0 1
-
-double erfinv (double x)
-{
-    double x2, r, y;
-    int  sign_x;
-
-    if (x < -1 || x > 1)
-    return NAN;
-
-    if (x == 0)
-    return 0;
-
-    if (x > 0)
-    sign_x = 1;
-    else {
-    sign_x = -1;
-    x = -x;
-    }
-
-    if (x <= 0.7) {
-
-    x2 = x * x;
-    r =
-      x * (((erfinv_a3 * x2 + erfinv_a2) * x2 + erfinv_a1) * x2 + erfinv_a0);
-    r /= (((erfinv_b4 * x2 + erfinv_b3) * x2 + erfinv_b2) * x2 +
-      erfinv_b1) * x2 + erfinv_b0;
-    }
-    else {
-    y = sqrt (-log ((1 - x) / 2));
-    r = (((erfinv_c3 * y + erfinv_c2) * y + erfinv_c1) * y + erfinv_c0);
-    r /= ((erfinv_d2 * y + erfinv_d1) * y + erfinv_d0);
-    }
-
-    r = r * sign_x;
-    x = x * sign_x;
-
-    r -= (erf (r) - x) / (2 / sqrt (M_PI) * exp (-r * r));
-    r -= (erf (r) - x) / (2 / sqrt (M_PI) * exp (-r * r));
-    
-    return r;
 }

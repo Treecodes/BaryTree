@@ -13,7 +13,6 @@
 void RunParams_Setup(struct RunParams **run_params_addr,
                      KERNEL kernel, int num_kernel_params, double *kernel_params,
                      APPROXIMATION approximation,
-                     SINGULARITY singularity,
                      COMPUTE_TYPE compute_type,
                      double theta, double size_check_factor, int interp_order,
                      int max_per_source_leaf, int max_per_target_leaf,
@@ -31,7 +30,6 @@ void RunParams_Setup(struct RunParams **run_params_addr,
         run_params->kernel_params[i] = kernel_params[i];
 
     run_params->approximation = approximation;
-    run_params->singularity = singularity;
     run_params->compute_type = compute_type;
 
     run_params->theta = theta;
@@ -39,14 +37,9 @@ void RunParams_Setup(struct RunParams **run_params_addr,
 
     run_params->interp_order = interp_order;
     run_params->interp_pts_per_cluster = (interp_order+1) * (interp_order+1) * (interp_order+1);
-
-    run_params->interp_weights_per_cluster = run_params->interp_pts_per_cluster;
     run_params->interp_charges_per_cluster = run_params->interp_pts_per_cluster;
 
     if (run_params->approximation == HERMITE) run_params->interp_charges_per_cluster *=8;
-
-    if (run_params->approximation == HERMITE && run_params->singularity == SUBTRACTION) 
-        run_params->interp_weights_per_cluster *=8;
 
     run_params->max_per_source_leaf = max_per_source_leaf;
     run_params->max_per_target_leaf = max_per_target_leaf;
@@ -62,14 +55,9 @@ void RunParams_Validate(struct RunParams *run_params)
 {
     int interp_order_lim = run_params->interp_order + 1;
     run_params->interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
-
-    run_params->interp_weights_per_cluster = run_params->interp_pts_per_cluster;
     run_params->interp_charges_per_cluster = run_params->interp_pts_per_cluster;
 
     if (run_params->approximation == HERMITE) run_params->interp_charges_per_cluster *=8;
-
-    if (run_params->approximation == HERMITE && run_params->singularity == SUBTRACTION) 
-        run_params->interp_weights_per_cluster *=8;
 
     return;
 }
@@ -105,13 +93,11 @@ void RunParams_Print(struct RunParams *run_params)
     }
     printf("\n");
     printf("[BaryTree]              approximation = %d\n", run_params->approximation);
-    printf("[BaryTree]                singularity = %d\n", run_params->singularity);
     printf("[BaryTree]               compute_type = %d\n", run_params->compute_type);
     printf("[BaryTree]                      theta = %f\n", run_params->theta);
     printf("[BaryTree]          size_check_factor = %f\n", run_params->size_check_factor);
     printf("[BaryTree]               interp_order = %d\n", run_params->interp_order);
     printf("[BaryTree]     interp_pts_per_cluster = %d\n", run_params->interp_pts_per_cluster);
-    printf("[BaryTree] interp_weights_per_cluster = %d\n", run_params->interp_weights_per_cluster);
     printf("[BaryTree] interp_charges_per_cluster = %d\n", run_params->interp_charges_per_cluster);
     printf("[BaryTree]        max_per_source_leaf = %d\n", run_params->max_per_source_leaf);
     printf("[BaryTree]        max_per_target_leaf = %d\n", run_params->max_per_target_leaf);

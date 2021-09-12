@@ -27,13 +27,11 @@ void InteractionCompute_Direct(double *potential,
     double *source_y  = sources->y;
     double *source_z  = sources->z;
     double *source_q  = sources->q;
-    double *source_w  = sources->w;
 
     int num_targets   = targets->num;
     double *target_x  = targets->x;
     double *target_y  = targets->y;
     double *target_z  = targets->z;
-    double *target_q  = targets->q;
 
     double target_xdd = targets->xdd;
     double target_ydd = targets->ydd;
@@ -53,12 +51,8 @@ void InteractionCompute_Direct(double *potential,
 
 
 #ifdef OPENACC_ENABLED
-//    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-//                            source_q[0:num_sources], source_w[0:num_sources], \
-//                            target_x[0:num_targets], target_y[0:num_targets], target_z[0:num_targets], \
-//                            target_q[0:num_targets]), copy(potential[0:num_targets])
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources], source_w[0:num_sources]), copy(potential[0:num_targets])
+                            source_q[0:num_sources]), copy(potential[0:num_targets])
 #endif
     {
 
@@ -73,17 +67,11 @@ void InteractionCompute_Direct(double *potential,
 
     if (run_params->kernel == COULOMB) {
 
-        if (run_params->singularity == SKIPPING) {
+        K_Coulomb_Direct(num_targets, num_sources, 0, 0,
+                target_x, target_y, target_z,
+                source_x, source_y, source_z, source_q,
+                run_params, potential, 0);
 
-            K_Coulomb_Direct(num_targets, num_sources, 0, 0,
-                    target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
-                    run_params, potential, 0);
-
-        } else {
-            printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-            exit(1);
-        }
 
     /* * *************************************/
     /* * ******* Yukawa **********************/
@@ -91,17 +79,10 @@ void InteractionCompute_Direct(double *potential,
 
     } else if (run_params->kernel == YUKAWA) {
 
-        if (run_params->singularity == SKIPPING) {
-
-            K_Yukawa_Direct(num_targets, num_sources, 0, 0,
-                    target_x, target_y, target_z,
-                    source_x, source_y, source_z, source_q, source_w,
-                    run_params, potential, 0);
-
-        } else {
-            printf("**ERROR** INVALID CHOICE OF SINGULARITY. EXITING. \n");
-            exit(1);
-        }
+        K_Yukawa_Direct(num_targets, num_sources, 0, 0,
+                target_x, target_y, target_z,
+                source_x, source_y, source_z, source_q,
+                run_params, potential, 0);
 
 
     /* * *************************************/
@@ -122,11 +103,6 @@ void InteractionCompute_Direct(double *potential,
 
                          run_params, potential, 0);
 
-            //K_TCF_Direct(num_targets, num_sources, 0, 0,
-            //            target_x, target_y, target_z,
-            //            source_x, source_y, source_z, source_q, source_w,
-            //            run_params, potential, 0);
-                        
                         
     /* * *************************************/
     /* * ******* DCF *************************/
@@ -136,7 +112,7 @@ void InteractionCompute_Direct(double *potential,
 
             K_DCF_Direct(num_targets, num_sources, 0, 0,
                         target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q, source_w,
+                        source_x, source_y, source_z, source_q,
                         run_params, potential, 0);
                         
     } else {

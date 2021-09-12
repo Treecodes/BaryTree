@@ -4,16 +4,9 @@
 #include <math.h>
 #include <float.h>
 
-#include "../utilities/array.h"
-#include "../utilities/tools.h"
 #include "../utilities/timers.h"
-#include "../utilities/enums.h"
-
 #include "../particles/struct_particles.h"
-#include "../particles/particles.h"
-
 #include "../run_params/struct_run_params.h"
-
 #include "../interaction_compute/interaction_compute.h"
 
 #include "directdriver.h"
@@ -22,19 +15,6 @@
 void directdriver(struct Particles *sources, struct Particles *targets, struct RunParams *run_params,
                   double *potential, double *time_direct)
 {
-    int num_sources = sources->num;
-    int num_targets = targets->num;
-
-    double *source_x = sources->x;
-    double *source_y = sources->y;
-    double *source_z = sources->z;
-    double *source_q = sources->q;
-
-    double *target_x = targets->x;
-    double *target_y = targets->y;
-    double *target_z = targets->z;
-
-    double time1;
     time_direct[0] = 0.0;
     time_direct[1] = 0.0;
     time_direct[2] = 0.0;

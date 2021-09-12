@@ -28,7 +28,6 @@ int main(int argc, char **argv)
     double xyz_limits[6];
     int grid_dim[3];
     double grid_dd[3];
-    FILE *fp_pqr;
     char file_pqr[256];
     
     struct RunParams *run_params = NULL;
@@ -49,8 +48,8 @@ int main(int argc, char **argv)
     double *potential = NULL, *potential_direct = NULL;
     
     /* variables for collecting accuracy info */
-    double potential_engy = 0, potential_engy_glob = 0;
-    double potential_engy_direct = 0, potential_engy_direct_glob = 0;
+    double potential_engy_glob = 0;
+    double potential_engy_direct_glob = 0;
     double glob_inf_err = 0, glob_n2_err = 0, glob_relinf_err = 0, glob_reln2_err = 0;
 
     /* variables for date-time calculation */
@@ -78,10 +77,6 @@ int main(int argc, char **argv)
     make_vector(sources->y, sources->num);
     make_vector(sources->z, sources->num);
     make_vector(sources->q, sources->num);
-
-    char c[256], c1[120], c2[120], c3[120], c4[10], c5[10];
-    double a1, a2, a3, b1, b2;
-    int atom_ctr = 0;
 
     FILE *points_fp = fopen(file_pqr, "r");
 

@@ -8,12 +8,6 @@
 #include "../interaction_lists/struct_interaction_lists.h"
 
 
-void InteractionCompute_PC(double *potential, struct Tree *tree, struct Tree *batches,
-                           struct InteractionLists *interaction_list,
-                           struct Particles *sources, struct Particles *targets,
-                           struct Clusters *clusters, struct RunParams *run_params);
-
-
 void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *batches,
                            struct InteractionLists *interaction_list,
                            struct Particles *sources, struct Particles *targets,

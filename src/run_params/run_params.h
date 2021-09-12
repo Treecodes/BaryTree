@@ -8,7 +8,6 @@
 void RunParams_Setup(struct RunParams **run_params_addr,
                      KERNEL kernel, int num_kernel_params, double *kernel_params,
                      APPROXIMATION approximation,
-                     SINGULARITY singularity,
                      COMPUTE_TYPE compute_type,
                      double theta, double size_check_factor, int interp_order,
                      int max_per_source_leaf, int max_per_target_leaf,

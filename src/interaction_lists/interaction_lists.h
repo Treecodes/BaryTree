@@ -12,9 +12,5 @@ void InteractionLists_Make(struct InteractionLists **interaction_list_addr,
                           
 void InteractionLists_Free(struct InteractionLists **interaction_list_addr);
 
-void InteractionLists_MakeRemote(const struct Tree *source_tree, const struct Tree *target_tree,
-                          int *approx_list_packed, int *approx_list_unpacked, int *direct_list,
-                          const struct RunParams *run_params);
-
 
 #endif /* H_INTERACTION_LISTS_H */

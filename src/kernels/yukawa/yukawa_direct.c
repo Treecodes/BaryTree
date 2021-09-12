@@ -9,7 +9,7 @@
 void K_Yukawa_Direct(int number_of_targets_in_batch, int number_of_source_points_in_cluster,
         int starting_index_of_target, int starting_index_of_source,
         double *target_x, double *target_y, double *target_z,
-        double *source_x, double *source_y, double *source_z, double *source_charge, double *source_weight,
+        double *source_x, double *source_y, double *source_z, double *source_charge,
         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
 
@@ -17,7 +17,7 @@ void K_Yukawa_Direct(int number_of_targets_in_batch, int number_of_source_points
 
 #ifdef OPENACC_ENABLED
     #pragma acc kernels async(gpu_async_stream_id) present(target_x, target_y, target_z, \
-                        source_x, source_y, source_z, source_charge, source_weight, potential)
+                        source_x, source_y, source_z, source_charge, potential)
     {
 #endif
 #ifdef OPENACC_ENABLED
@@ -42,8 +42,7 @@ void K_Yukawa_Direct(int number_of_targets_in_batch, int number_of_source_points
             double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
             if (r > DBL_MIN) {
-                temporary_potential += source_charge[starting_index_of_source + j]
-                                     * source_weight[starting_index_of_source + j] * exp(-kernel_parameter*r) / r;
+                temporary_potential += source_charge[starting_index_of_source + j] * exp(-kernel_parameter*r) / r;
             }
         } // end loop over interpolation points
 #ifdef OPENACC_ENABLED

@@ -30,7 +30,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                 double *potential, double *time_tree)
 {
     RunParams_Validate(run_params);
-    Particles_Validate(sources, targets);
     Particles_ConstructOrder(sources);
     Particles_ConstructOrder(targets);
     
@@ -41,7 +40,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         RunParams_Print(run_params);
     }
     
-    double time1;
     long long int total_num_direct = 0;
     long long int total_num_approx = 0;
     long long int total_num_inter = 0;
@@ -78,6 +76,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         // SETUP
         //-------------------------------
         //-------------------------------
+
 
         START_TIMER(&time_tree[0]);
         Tree_Targets_Construct(&tree, targets, run_params);
@@ -197,121 +196,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         
         
         
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
-// PARTICLE CLUSTER
-//--------------------------------------------------------------------
-//--------------------------------------------------------------------
-        
-    } else if (run_params->compute_type == PARTICLE_CLUSTER) {
-    
-        struct Tree *tree = NULL;
-        struct Tree *batches = NULL;
-        struct Clusters *clusters = NULL;
-
-
-        //-------------------------------
-        //-------------------------------
-        // SETUP
-        //-------------------------------
-        //-------------------------------
-
-        START_TIMER(&time_tree[0]);
-        Tree_Sources_Construct(&tree, sources, run_params);
-        STOP_TIMER(&time_tree[0]);
-        
-        START_TIMER(&time_tree[1]);
-        Batches_Targets_Construct(&batches, targets, run_params);
-        STOP_TIMER(&time_tree[1]);
-        
-        START_TIMER(&time_tree[2]);
-        Clusters_Sources_Construct(&clusters, sources, tree, run_params);
-        STOP_TIMER(&time_tree[2]);
-        
-        //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        if (run_params->verbosity > 0) {
-            Tree_Print(tree);
-            Batches_Print(batches);
-        }
-        //~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-
-
-        //-------------------------------
-        //-------------------------------
-        // COMPUTE
-        //-------------------------------
-        //-------------------------------
-        
-        //~~~~~~~~~~~~~~~~~~~~
-        // Local compute
-        //~~~~~~~~~~~~~~~~~~~~
-
-        struct InteractionLists *local_interaction_list;
-        
-        START_TIMER(&time_tree[4]);
-        InteractionLists_Make(&local_interaction_list, tree, batches, run_params);
-        STOP_TIMER(&time_tree[4]);
-
-//~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-        if (run_params->verbosity > 0) {
-            total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
-            total_num_direct += sum_int(local_interaction_list->num_direct, batches->numnodes);
-
-            for (int i = 0; i < batches->numnodes; ++i) {
-                for (int j = 0; j < local_interaction_list->num_direct[i]; ++j) {
-                    total_num_direct_interact += (long long int) batches->numpar[i]
-                        * (long long int) tree->numpar[local_interaction_list->direct_interactions[i][j]];
-                }
-                for (int j = 0; j < local_interaction_list->num_approx[i]; ++j) {
-                    total_num_approx_interact += (long long int) batches->numpar[i]
-                        * (long long int) run_params->interp_pts_per_cluster;
-                }
-            }
-        }
-//~ ~ ~ D I A G N O S T I C S ~ ~ ~ E N D ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
-  
-        START_TIMER(&time_tree[5]);
-        InteractionCompute_PC(potential, tree, batches, local_interaction_list,
-                              sources, targets, clusters, run_params);
-        InteractionLists_Free(&local_interaction_list);
-        STOP_TIMER(&time_tree[5]);
-
-
-        //-------------------------------
-        //-------------------------------
-        // CORRECT AND REORDER
-        //-------------------------------
-        //-------------------------------
-        
-        time_tree[8] = 0.0;
-        
-        START_TIMER(&time_tree[9]);
-        Particles_Targets_Reorder(targets, potential);
-        Particles_Sources_Reorder(sources);
-        STOP_TIMER(&time_tree[9]);
-
-        
-        //-------------------------------
-        //-------------------------------
-        // CLEANUP
-        //-------------------------------
-        //-------------------------------
-
-        START_TIMER(&time_tree[10]);
-        Particles_FreeOrder(sources);
-        Particles_FreeOrder(targets);
-        Tree_Free(&tree);
-        Batches_Free(&batches);
-        STOP_TIMER(&time_tree[10]);
-
-        // Total setup time
-        time_tree[11] = time_tree[0] + time_tree[1] + time_tree[3] + time_tree[4] + time_tree[6];
-        
-        // Total compute time
-        time_tree[12] = time_tree[5] + time_tree[7] + time_tree[8];
-    
-
-
 //--------------------------------------------------------------------
 //--------------------------------------------------------------------
 //CLUSTER CLUSTER

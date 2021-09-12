@@ -87,7 +87,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
 
 
 
-    if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SKIPPING)) {
+    if (run_params->approximation == LAGRANGE) {
 
         double *weights = NULL;
         make_vector(weights, interp_order+1);
@@ -282,12 +282,7 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
         free_vector(weights);
 
 
-    } else if ((run_params->approximation == LAGRANGE) && (run_params->singularity == SUBTRACTION)) {
-//        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_pot_SS(tree, i, potential interp_order,
-//                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
-
-    } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SKIPPING)) {
+    } else if (run_params->approximation == HERMITE) {
 
         for (int i = 0; i < tree_numnodes; i++) {
             if (tree->used[i] == 1) {
@@ -322,11 +317,6 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                             cluster_q);
             }
         }
-
-    } else if ((run_params->approximation == HERMITE) && (run_params->singularity == SUBTRACTION)) {
-//        for (int i = 0; i < tree_numnodes; i++)
-//            cp_comp_pot_hermite_SS(tree, i, potential, interp_order,
-//                       target_x, target_y, target_z, target_q, cluster_q, cluster_w);
 
     } else {
         exit(1);

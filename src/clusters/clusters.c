@@ -17,8 +17,8 @@
 
 
 static void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrder,
-                double *xS, double *yS, double *zS, double *qS, double *wS,
-                double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW);
+                double *xS, double *yS, double *zS, double *qS,
+                double *clusterX, double *clusterY, double *clusterZ, double *clusterQ);
 
 static void cp_comp_interp(const struct Tree *tree, int idx, int interpolationOrder,
                 double *clusterX, double *clusterY, double *clusterZ);
@@ -32,74 +32,56 @@ void Clusters_Sources_Construct(struct Clusters **clusters_addr, const struct Pa
     struct Clusters *clusters = *clusters_addr;
     
     APPROXIMATION approximation = run_params->approximation;
-    SINGULARITY singularity = run_params->singularity;
 
     int tree_numnodes = tree->numnodes;
     int totalNumberSourcePoints = sources->num;
     
     int interpolationOrder = run_params->interp_order;
-    int interpOrderLim = interpolationOrder + 1;
     int interpolationPointsPerCluster = run_params->interp_pts_per_cluster;
 
     int totalNumberInterpolationPoints  = tree_numnodes * interpolationPointsPerCluster;
     int totalNumberInterpolationCharges = tree_numnodes * run_params->interp_charges_per_cluster;
-    int totalNumberInterpolationWeights = tree_numnodes * run_params->interp_weights_per_cluster;
 
     clusters->x = NULL;
     clusters->y = NULL;
     clusters->z = NULL;
     clusters->q = NULL;
-    clusters->w = NULL;
     
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
     make_vector(clusters->z, totalNumberInterpolationPoints);
     make_vector(clusters->q, totalNumberInterpolationCharges);
-    make_vector(clusters->w, totalNumberInterpolationWeights);
 
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->x[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->y[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationPoints; i++) clusters->z[i] = 0.0;
     for (int i = 0; i < totalNumberInterpolationCharges; i++) clusters->q[i] = 0.0;
         
-    if (singularity == SKIPPING) {
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 1.0;
-    } else if (singularity == SUBTRACTION) {
-        for (int i = 0; i < totalNumberInterpolationWeights; i++) clusters->w[i] = 0.0;
-    } else {
-        exit(1);
-    }
-
     clusters->num = totalNumberInterpolationPoints;
     clusters->num_charges = totalNumberInterpolationCharges;
-    clusters->num_weights = totalNumberInterpolationWeights;
 
     double *xS = sources->x;
     double *yS = sources->y;
     double *zS = sources->z;
     double *qS = sources->q;
-    double *wS = sources->w;
 
     double *xC = clusters->x;
     double *yC = clusters->y;
     double *zC = clusters->z;
     double *qC = clusters->q;
-    double *wC = clusters->w;
 
 
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(xS[0:totalNumberSourcePoints], yS[0:totalNumberSourcePoints], \
-                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints], \
-                            wS[0:totalNumberSourcePoints]) \
+                            zS[0:totalNumberSourcePoints], qS[0:totalNumberSourcePoints]) \
                        copy(xC[0:totalNumberInterpolationPoints], yC[0:totalNumberInterpolationPoints], \
-                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges], \
-                            wC[0:totalNumberInterpolationWeights])
+                            zC[0:totalNumberInterpolationPoints], qC[0:totalNumberInterpolationCharges])
     {
 #endif
 
-    if ((approximation == LAGRANGE) && (singularity == SKIPPING)) {
+    if (approximation == LAGRANGE) {
         for (int i = 0; i < tree_numnodes; i++)
-            pc_comp_ms_modifiedF(tree, i, interpolationOrder, xS, yS, zS, qS, wS, xC, yC, zC, qC, wC);
+            pc_comp_ms_modifiedF(tree, i, interpolationOrder, xS, yS, zS, qS, xC, yC, zC, qC);
 
     } else {
         exit(1);
@@ -126,7 +108,6 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
 
     int interpolationOrder = run_params->interp_order;
     int interpOrderLim = interpolationOrder + 1;
-    int interpolationPointsPerCluster = run_params->interp_pts_per_cluster;
 
     int totalNumberInterpolationPoints  = tree_numnodes * interpOrderLim;
     int totalNumberInterpolationCharges = tree_numnodes * run_params->interp_charges_per_cluster;
@@ -135,7 +116,6 @@ void Clusters_Targets_Construct(struct Clusters **clusters_addr, const struct Tr
     clusters->y = NULL;
     clusters->z = NULL;
     clusters->q = NULL;
-    clusters->w = NULL;
 
     make_vector(clusters->x, totalNumberInterpolationPoints);
     make_vector(clusters->y, totalNumberInterpolationPoints);
@@ -181,30 +161,23 @@ void Clusters_Alloc(struct Clusters **clusters_addr, int length, const struct Ru
     struct Clusters *clusters = *clusters_addr;
 
     APPROXIMATION approximation = run_params->approximation;
-    SINGULARITY singularity = run_params->singularity;
     
     clusters->num = length;
     clusters->num_charges = length;
-    clusters->num_weights = length;
     
     clusters->x = NULL;
     clusters->y = NULL;
     clusters->z = NULL;
     clusters->q = NULL;
-    clusters->w = NULL;
 
     if (approximation == HERMITE)
         clusters->num_charges *= 8;
-
-    if ((approximation == HERMITE) && (singularity == SUBTRACTION))
-        clusters->num_weights *= 8;
 
     if (clusters->num > 0) {
         make_vector(clusters->x, clusters->num);
         make_vector(clusters->y, clusters->num);
         make_vector(clusters->z, clusters->num);
         make_vector(clusters->q, clusters->num_charges);
-        make_vector(clusters->w, clusters->num_weights);
     }
 
     return;
@@ -233,9 +206,6 @@ void Clusters_Free(struct Clusters **clusters_addr)
         if (clusters->q != NULL) {
             free_vector(clusters->q);
         }
-        if (clusters->w != NULL) {
-            free_vector(clusters->w);
-        }
         free(clusters);
     }
     
@@ -251,8 +221,8 @@ void Clusters_Free(struct Clusters **clusters_addr)
 /************************************/
 
 void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrder,
-        double *xS, double *yS, double *zS, double *qS, double *wS,
-        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ, double *clusterW)
+        double *xS, double *yS, double *zS, double *qS,
+        double *clusterX, double *clusterY, double *clusterZ, double *clusterQ)
 {
 
     int interpOrderLim = interpolationOrder + 1;
@@ -284,7 +254,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
 
 #ifdef OPENACC_ENABLED
     int streamID = rand() % 4;
-    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, wS, clusterX, clusterY, clusterZ, clusterQ) \
+    #pragma acc kernels async(streamID) present(xS, yS, zS, qS, clusterX, clusterY, clusterZ, clusterQ) \
                        create(modifiedF[0:sourcePointsInCluster], exactIndX[0:sourcePointsInCluster], \
                               exactIndY[0:sourcePointsInCluster], exactIndZ[0:sourcePointsInCluster], \
                               nodeX[0:interpOrderLim], nodeY[0:interpOrderLim], \
@@ -297,7 +267,7 @@ void pc_comp_ms_modifiedF(const struct Tree *tree, int idx, int interpolationOrd
     #pragma acc loop independent
 #endif
     for (int j = 0; j < sourcePointsInCluster; j++) {
-        modifiedF[j] = qS[startingIndexInSourcesArray + j] * wS[startingIndexInSourcesArray + j];
+        modifiedF[j] = qS[startingIndexInSourcesArray + j];
         exactIndX[j] = -1;
         exactIndY[j] = -1;
         exactIndZ[j] = -1;

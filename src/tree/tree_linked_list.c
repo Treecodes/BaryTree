@@ -244,7 +244,7 @@ void TreeLinkedList_Sources_Construct(struct TreeLinkedListNode **p, struct Part
         double z_mid = (*p)->z_mid;
         int numposchild;
 
-        pc_partition_8(sources->x, sources->y, sources->z, sources->q, sources->w, sources->order,
+        pc_partition_8(sources->x, sources->y, sources->z, sources->q, sources->order,
                        xyzmms, xl, yl, zl, &numposchild, max_num_children,
                        x_mid, y_mid, z_mid, ind);
 

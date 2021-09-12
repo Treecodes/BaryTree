@@ -11,7 +11,6 @@ struct RunParams
     double *kernel_params;
 
     APPROXIMATION approximation;
-    SINGULARITY singularity;
     COMPUTE_TYPE compute_type;
 
     double theta;
@@ -20,7 +19,6 @@ struct RunParams
     int interp_order;
     int interp_pts_per_cluster;
     int interp_charges_per_cluster;
-    int interp_weights_per_cluster;
 
     int max_per_source_leaf;
     int max_per_target_leaf;
