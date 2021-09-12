@@ -54,7 +54,6 @@ int main(int argc, char **argv)
 
     /* variables for date-time calculation */
     double time_run[4], time_tree[13], time_direct[4];
-    double time_run_glob[3][4], time_tree_glob[3][13], time_direct_glob[3][4];
 
 
     /* Beginning total runtime timer */
@@ -182,9 +181,7 @@ int main(int argc, char **argv)
     // Calculate results
     //~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Timing_Calculate(time_run_glob, time_tree_glob, time_direct_glob,
-                     time_run, time_tree, time_direct);
-    Timing_Print(time_run_glob, time_tree_glob, time_direct_glob, run_direct, run_params);
+    Timing_Print(time_run, time_tree, time_direct, run_direct, run_params);
     
     if (run_direct == 1) {
         Accuracy_Calculate(&potential_engy_glob, &potential_engy_direct_glob,
@@ -194,7 +191,7 @@ int main(int argc, char **argv)
                            glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err, slice);
     }
     
-    CSV_Print(N, targets->num, run_params, time_run_glob, time_tree_glob, time_direct_glob,
+    CSV_Print(N, targets->num, run_params, time_run, time_tree, time_direct,
               potential_engy_glob, potential_engy_direct_glob,
               glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err);
 

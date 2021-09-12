@@ -31,7 +31,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
 {
     RunParams_Validate(run_params);
     Particles_ConstructOrder(sources);
-    Particles_ConstructOrder(targets);
     
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
     if (run_params->verbosity > 0) {
@@ -122,6 +121,7 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         Clusters_Targets_Construct(&clusters, tree, run_params);
         STOP_TIMER(&time_tree[2]);
         
+
 //~ ~ ~ D I A G N O S T I C S ~ ~ ~ S T A R T ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
         if (run_params->verbosity > 0) {
             total_num_approx += sum_int(local_interaction_list->num_approx, batches->numnodes);
@@ -181,7 +181,6 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         #pragma acc exit data delete(sources->x, sources->y, sources->z, sources->q)
 #endif
         Particles_FreeOrder(sources);
-        Particles_FreeOrder(targets);
         Tree_Free(&tree);
         Clusters_Free(&clusters);
         Batches_Free(&batches);
