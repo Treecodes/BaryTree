@@ -352,21 +352,15 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
         printf("[BaryTree]\n");
         printf("[BaryTree] Interaction information: \n");
         printf("[BaryTree]\n");
-        printf("[BaryTree]        Cumulative interactions: %d\n", total_num_inter);
-        printf("[BaryTree]\n");
-        printf("[BaryTree] Cumulative direct interactions: %d\n", total_num_direct);
-        printf("[BaryTree]\n");
-        printf("[BaryTree] Cumulative approx interactions: %d\n", total_num_approx);
-        printf("[BaryTree]\n");
-        
-        // These types of interactions only occur for CC
-        if (run_params->compute_type == CLUSTER_CLUSTER) {
-            printf("[BaryTree] Cumulative source approx inter: %d\n", total_num_source_approx);
-            printf("[BaryTree]\n");
-            printf("[BaryTree] Cumulative target approx inter: %d\n", total_num_target_approx);
-            printf("[BaryTree]\n");
+        printf("[BaryTree]    Cumulative cluster interactions: %d\n", total_num_inter);
+        printf("[BaryTree]            PP cluster interactions: %d\n", total_num_direct);
+        if (run_params->compute_type == CLUSTER_PARTICLE) {
+            printf("[BaryTree]            CP cluster interactions: %d\n", total_num_approx);
+        } else if (run_params->compute_type == CLUSTER_CLUSTER) {
+            printf("[BaryTree]            CC cluster interactions: %d\n", total_num_approx);
+            printf("[BaryTree]            PC cluster interactions: %d\n", total_num_source_approx);
+            printf("[BaryTree]            CP cluster interactions: %d\n", total_num_target_approx);
         }
-
 
         /* For the pointwise interactions */
 
@@ -374,23 +368,16 @@ void treedriver(struct Particles *sources, struct Particles *targets, struct Run
                            + total_num_source_approx_interact + total_num_target_approx_interact;
 
         printf("[BaryTree]\n");
-        printf("[BaryTree]               Cumulative pointwise interactions: %lld\n", total_num_interact);
-        printf("[BaryTree]\n"); 
-
-        printf("[BaryTree]        Cumulative direct pointwise interactions: %lld\n", total_num_direct_interact);
-        printf("[BaryTree]\n");
-
-        printf("[BaryTree]        Cumulative approx pointwise interactions: %lld\n", total_num_approx_interact);
-        printf("[BaryTree]\n"); 
-
-        // These types of interactions only occur for CC
-        if (run_params->compute_type == CLUSTER_CLUSTER) {
-            printf("[BaryTree] Cumulative source approx pointwise interactions: %lld\n", total_num_source_approx_interact);
-            printf("[BaryTree]\n");
-
-            printf("[BaryTree] Cumulative target approx pointwise interactions: %lld\n", total_num_target_approx_interact);
-            printf("[BaryTree]\n");
+        printf("[BaryTree]    Cumulative ptwise interactions: %lld\n", total_num_interact);
+        printf("[BaryTree]            PP ptwise interactions: %lld\n", total_num_direct_interact);
+        if (run_params->compute_type == CLUSTER_PARTICLE) {
+            printf("[BaryTree]            CP ptwise interactions: %lld\n", total_num_approx_interact);
+        } else if (run_params->compute_type == CLUSTER_CLUSTER) {
+            printf("[BaryTree]            CC ptwise interactions: %lld\n", total_num_approx_interact);
+            printf("[BaryTree]            PC ptwise interactions: %lld\n", total_num_source_approx_interact);
+            printf("[BaryTree]            CP ptwise interactions: %lld\n", total_num_target_approx_interact);
         }
+        printf("[BaryTree]\n");
         
         printf("[BaryTree] BaryTree has finished.\n");
         printf("[BaryTree]\n");

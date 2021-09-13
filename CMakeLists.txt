@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9...3.14)
-project(BaryTree VERSION 1.0 LANGUAGES C)
+project(BaryTree VERSION 1.0 LANGUAGES C CUDA)
 
 set(default_build_type "Release")
 
@@ -41,6 +41,7 @@ set_property(TARGET OpenACC_C        PROPERTY
                                          -acc
                                          -ta=tesla:ccall,cc60)
 
+#Note that both pgcc and nvc report PGI
 if(ENABLE_GPU_BUILD AND NOT (CMAKE_C_COMPILER_ID MATCHES PGI))
     message(STATUS "GPU build requires PGI compilers! Turning GPU build off.")
     set(ENABLE_GPU_BUILD OFF CACHE BOOL "build OpenACC GPU version" FORCE)

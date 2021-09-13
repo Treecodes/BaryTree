@@ -48,9 +48,8 @@ int main(int argc, char **argv)
     double *potential = NULL, *potential_direct = NULL;
     
     /* variables for collecting accuracy info */
-    double potential_engy_glob = 0;
-    double potential_engy_direct_glob = 0;
-    double glob_inf_err = 0, glob_n2_err = 0, glob_relinf_err = 0, glob_reln2_err = 0;
+    double potential_engy = 0, potential_engy_direct = 0;
+    double inf_err = 0, n2_err = 0, relinf_err = 0, reln2_err = 0;
 
     /* variables for date-time calculation */
     double time_run[4], time_tree[13], time_direct[4];
@@ -80,7 +79,8 @@ int main(int argc, char **argv)
     FILE *points_fp = fopen(file_pqr, "r");
 
     for (int i = 0; i < N; ++i) {
-        fscanf(points_fp, "%lf %lf %lf %lf", &(sources->x[i]), &(sources->y[i]), &(sources->z[i]), &(sources->q[i]));
+        fscanf(points_fp, "%lf %lf %lf %lf", &(sources->x[i]), &(sources->y[i]),
+                                             &(sources->z[i]), &(sources->q[i]));
     }
     fclose(points_fp);
 
@@ -184,16 +184,16 @@ int main(int argc, char **argv)
     Timing_Print(time_run, time_tree, time_direct, run_direct, run_params);
     
     if (run_direct == 1) {
-        Accuracy_Calculate(&potential_engy_glob, &potential_engy_direct_glob,
-                           &glob_inf_err, &glob_relinf_err, &glob_n2_err, &glob_reln2_err,
+        Accuracy_Calculate(&potential_engy, &potential_engy_direct,
+                           &inf_err, &relinf_err, &n2_err, &reln2_err,
                            potential, potential_direct, grid_dim, slice);
-        Accuracy_Print(potential_engy_glob, potential_engy_direct_glob,
-                           glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err, slice);
+        Accuracy_Print(potential_engy, potential_engy_direct,
+                           inf_err, relinf_err, n2_err, reln2_err, slice);
     }
     
     CSV_Print(N, targets->num, run_params, time_run, time_tree, time_direct,
-              potential_engy_glob, potential_engy_direct_glob,
-              glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err);
+              potential_engy, potential_engy_direct,
+              inf_err, relinf_err, n2_err, reln2_err);
 
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~

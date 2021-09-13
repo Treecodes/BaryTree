@@ -51,7 +51,6 @@ void InteractionCompute_Downpass(double *potential, struct Tree *tree,
                                  struct Particles *targets, struct Clusters *clusters,
                                  struct RunParams *run_params)
 {
-    int total_num_interp_charges = clusters->num_charges;
     double *cluster_x = clusters->x;
     double *cluster_y = clusters->y;
     double *cluster_z = clusters->z;
@@ -341,8 +340,6 @@ void cp_comp_downpass_coeffs(int idx, int child_idx, int interp_order,
     int cluster_pts_start             = idx * interp_order_lim;
     int child_cluster_pts_start       = child_idx * interp_order_lim;
 
-
-    int coeff_dim = interp_order_lim * interp_order_lim;
     int coeff_start_ind = interp_order_lim * interp_order_lim * coeff_start;
     
 //#ifdef OPENACC_ENABLED
@@ -647,10 +644,7 @@ void cp_comp_pot_hermite(struct Tree *tree, int idx, double *potential, int inte
 {
     int interp_order_lim       = interp_order + 1;
     int interp_pts_per_cluster = interp_order_lim * interp_order_lim * interp_order_lim;
-    int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
-
-    int num_targets_in_cluster = tree->iend[idx] - tree->ibeg[idx] + 1;
-    int target_start           = tree->ibeg[idx] - 1;
+    int target_yz_dim          = target_y_dim_glob * target_z_dim_glob;
     int cluster_start          = idx * interp_pts_per_cluster;
     
     double *dj, *tt, *ww, *wx, *wy, *wz, *nodeX, *nodeY, *nodeZ;

@@ -13,7 +13,7 @@ void K_TCF_Direct(int target_x_low_ind,  int target_x_high_ind,
                   double target_xdd,     double target_ydd,     double target_zdd,
                   int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
 
-                  int number_of_source_points_in_cluster, int starting_index_of_source,
+                  int cluster_num_sources, int cluster_idx_start,
                   double *source_x, double *source_y, double *source_z, double *source_q,
 
                   struct RunParams *run_params, double *potential, int gpu_async_stream_id)
@@ -42,15 +42,15 @@ void K_TCF_Direct(int target_x_low_ind,  int target_x_high_ind,
 #ifdef OPENACC_ENABLED
                 #pragma acc loop vector independent reduction(+:temporary_potential)
 #endif
-                for (int j = 0; j < number_of_source_points_in_cluster; j++) {
+                for (int j = 0; j < cluster_num_sources; j++) {
 #ifdef OPENACC_ENABLED
-                #pragma acc cache(source_x[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster], \
-                                  source_y[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster], \
-                                  source_z[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster], \
-                                  source_q[starting_index_of_source : starting_index_of_source+number_of_source_points_in_cluster])
+                #pragma acc cache(source_x[cluster_idx_start : cluster_idx_start+cluster_num_sources], \
+                                  source_y[cluster_idx_start : cluster_idx_start+cluster_num_sources], \
+                                  source_z[cluster_idx_start : cluster_idx_start+cluster_num_sources], \
+                                  source_q[cluster_idx_start : cluster_idx_start+cluster_num_sources])
 #endif
 
-                    int jj = starting_index_of_source + j;
+                    int jj = cluster_idx_start + j;
                     double dx = tx - source_x[jj];
                     double dy = ty - source_y[jj];
                     double dz = tz - source_z[jj];

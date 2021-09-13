@@ -396,7 +396,6 @@ void Tree_Print(struct Tree *tree)
     printf("[BaryTree] Tree information: \n");
     printf("[BaryTree]\n");
     printf("[BaryTree]          Cumulative tree nodes: %d\n", tree->numnodes);
-    printf("[BaryTree]\n");
     printf("[BaryTree]         Cumulative tree leaves: %d\n", tree->numleaves);
     printf("[BaryTree]\n");
     printf("[BaryTree]         Maximum tree leaf size: %d\n", tree->max_leaf_size);

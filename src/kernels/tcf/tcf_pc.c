@@ -6,11 +6,6 @@
 #include "tcf_pc.h"
 
 
-//void K_TCF_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
-//         int starting_index_of_target, int starting_index_of_cluster,
-//         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-//         struct RunParams *run_params, double *potential, int gpu_async_stream_id)
-//
 void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
                        int target_y_low_ind,  int target_y_high_ind,
                        int target_z_low_ind,  int target_z_high_ind,
@@ -19,7 +14,7 @@ void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
                        double target_xdd,     double target_ydd,     double target_zdd,
                        int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
 
-                       int number_of_interpolation_points_in_cluster, int starting_index_of_cluster,
+                       int cluster_num_interp_pts, int cluster_idx_start,
                        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
 
                        struct RunParams *run_params, double *potential, int gpu_async_stream_id)
@@ -51,15 +46,15 @@ void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
 #ifdef OPENACC_ENABLED
                 #pragma acc loop vector independent reduction(+:temporary_potential)
 #endif
-                for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
+                for (int j = 0; j < cluster_num_interp_pts; j++) {
 #ifdef OPENACC_ENABLED
-                #pragma acc cache(cluster_x[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster], \
-                                  cluster_y[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster], \
-                                  cluster_z[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster], \
-                                  cluster_q[starting_index_of_cluster : starting_index_of_cluster+number_of_interpolation_points_in_cluster])
+                #pragma acc cache(cluster_x[cluster_idx_start : cluster_idx_start+cluster_num_interp_pts], \
+                                  cluster_y[cluster_idx_start : cluster_idx_start+cluster_num_interp_pts], \
+                                  cluster_z[cluster_idx_start : cluster_idx_start+cluster_num_interp_pts], \
+                                  cluster_q[cluster_idx_start : cluster_idx_start+cluster_num_interp_pts])
 #endif
 
-                    int jj = starting_index_of_cluster + j;
+                    int jj = cluster_idx_start + j;
                     double dx = tx - cluster_x[jj];
                     double dy = ty - cluster_y[jj];
                     double dz = tz - cluster_z[jj];
@@ -90,12 +85,6 @@ void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
 
 
 
-//void K_TCF_PC_Hermite(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
-//        int starting_index_of_target, int starting_index_of_cluster, int total_number_interpolation_points,
-//        double *target_x, double *target_y, double *target_z,
-//        double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-//        struct RunParams *run_params, double *potential, int gpu_async_stream_id)
-
 void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
                       int target_y_low_ind,  int target_y_high_ind,
                       int target_z_low_ind,  int target_z_high_ind,
@@ -103,7 +92,7 @@ void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
                       double target_xmin,    double target_ymin,    double target_zmin,
                       int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
 
-                      int number_of_interpolation_points_in_cluster, int starting_index_of_cluster,
+                      int cluster_num_interp_pts, int cluster_idx_start,
                       double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
 
                       struct RunParams *run_params, double *potential, int gpu_async_stream_id)
@@ -115,14 +104,14 @@ void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
     int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
 
     // total_number_interpolation_points is the stride, separating clustersQ, clustersQx, clustersQy, etc.
-    double *cluster_q_     = &cluster_q[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dx   = &cluster_q[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dy   = &cluster_q[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dz   = &cluster_q[8*starting_index_of_cluster + 3*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dxy  = &cluster_q[8*starting_index_of_cluster + 4*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dyz  = &cluster_q[8*starting_index_of_cluster + 5*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dxz  = &cluster_q[8*starting_index_of_cluster + 6*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dxyz = &cluster_q[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
+    double *cluster_q_     = &cluster_q[8*cluster_idx_start + 0*cluster_num_interp_pts];
+    double *cluster_q_dx   = &cluster_q[8*cluster_idx_start + 1*cluster_num_interp_pts];
+    double *cluster_q_dy   = &cluster_q[8*cluster_idx_start + 2*cluster_num_interp_pts];
+    double *cluster_q_dz   = &cluster_q[8*cluster_idx_start + 3*cluster_num_interp_pts];
+    double *cluster_q_dxy  = &cluster_q[8*cluster_idx_start + 4*cluster_num_interp_pts];
+    double *cluster_q_dyz  = &cluster_q[8*cluster_idx_start + 5*cluster_num_interp_pts];
+    double *cluster_q_dxz  = &cluster_q[8*cluster_idx_start + 6*cluster_num_interp_pts];
+    double *cluster_q_dxyz = &cluster_q[8*cluster_idx_start + 7*cluster_num_interp_pts];
 
 
 
@@ -152,9 +141,9 @@ void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
 #ifdef OPENACC_ENABLED
                 #pragma acc loop independent reduction(+:temporary_potential)
 #endif
-                for (int j = 0; j < number_of_interpolation_points_in_cluster; j++) {
+                for (int j = 0; j < cluster_num_interp_pts; j++) {
         
-                    int jj = starting_index_of_cluster + j;
+                    int jj = cluster_idx_start + j;
                     double dx = tx - cluster_x[jj];
                     double dy = ty - cluster_y[jj];
                     double dz = tz - cluster_z[jj];

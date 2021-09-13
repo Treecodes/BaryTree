@@ -50,7 +50,6 @@ SET(SRCS_TREEDRIVER
 
 
 SET(SRCS_K_COULOMB
-# Singularity skipping
     kernels/coulomb/coulomb.h
     kernels/coulomb/coulomb_direct.h
     kernels/coulomb/coulomb_direct.c
@@ -58,18 +57,6 @@ SET(SRCS_K_COULOMB
     kernels/coulomb/coulomb_pc.c
     kernels/coulomb/coulomb_cp.h
     kernels/coulomb/coulomb_cp.c)
-
-
-SET(SRCS_K_YUKAWA
-# Singularity skipping
-    kernels/yukawa/yukawa.h
-    kernels/yukawa/yukawa_direct.h
-    kernels/yukawa/yukawa_direct.c
-    kernels/yukawa/yukawa_pc.h
-    kernels/yukawa/yukawa_pc.c
-    kernels/yukawa/yukawa_cp.h
-    kernels/yukawa/yukawa_cp.c)
-
 
 SET(SRCS_K_TCF
     kernels/tcf/tcf.h
@@ -80,7 +67,6 @@ SET(SRCS_K_TCF
     kernels/tcf/tcf_cp.h
     kernels/tcf/tcf_cp.c)
 
-
 SET(SRCS_K_DCF
     kernels/dcf/dcf.h
     kernels/dcf/dcf_direct.h
@@ -89,7 +75,6 @@ SET(SRCS_K_DCF
     kernels/dcf/dcf_pc.c
     kernels/dcf/dcf_cp.h
     kernels/dcf/dcf_cp.c)
-
 
 SET(SRCS_KERNELS ${SRCS_K_COULOMB}
                  ${SRCS_K_YUKAWA}

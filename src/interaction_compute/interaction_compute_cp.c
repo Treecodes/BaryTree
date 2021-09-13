@@ -12,7 +12,6 @@
 #include "../interaction_lists/struct_interaction_lists.h"
 
 //#include "../kernels/coulomb/coulomb.h"
-//#include "../kernels/yukawa/yukawa.h"
 #include "../kernels/tcf/tcf.h"
 //#include "../kernels/dcf/dcf.h"
 
@@ -24,19 +23,13 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                            struct Particles *sources, struct Particles *targets,
                            struct Clusters *clusters, struct RunParams *run_params)
 {
-    int interp_pts_per_cluster = run_params->interp_pts_per_cluster;
+    int cluster_num_interp_pts = run_params->interp_pts_per_cluster;
     int interp_order_lim = run_params->interp_order+1;
 
-    int num_sources   = sources->num;
     double *source_x  = sources->x;
     double *source_y  = sources->y;
     double *source_z  = sources->z;
     double *source_q  = sources->q;
-    
-    int num_targets   = targets->num;
-
-    int total_num_interp_pts     = clusters->num;
-    int total_num_interp_charges = clusters->num_charges;
 
     double *cluster_x = clusters->x;
     double *cluster_y = clusters->y;
@@ -75,20 +68,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
     double target_zdd = targets->zdd;
 
 
-#ifdef OPENACC_ENABLED
-//    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources], \
-                            cluster_x[0:total_num_interp_pts], \
-                            cluster_y[0:total_num_interp_pts], \
-                            cluster_z[0:total_num_interp_pts]) \
-                       copy(cluster_q[0:total_num_interp_charges], \
-                            potential[0:num_targets])
-    //#pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources]) \
-                            copy(potential[0:num_targets])
-#endif
-    {
-
     for (int i = 0; i < batches->numnodes; i++) {
     
         int batch_ibeg = batches->ibeg[i];
@@ -97,8 +76,8 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
         int num_approx_in_batch = num_approx[i];
         int num_direct_in_batch = num_direct[i];
 
-        int num_sources_in_batch = batch_iend - batch_ibeg + 1;
-        int batch_start =  batch_ibeg - 1;
+        int batch_num_sources = batch_iend - batch_ibeg + 1;
+        int batch_idx_start =  batch_ibeg - 1;
 
 
 /* * ********************************************************/
@@ -109,7 +88,7 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
             int node_index = approx_inter_list[i][j];
 
-            int cluster_charge_start = interp_pts_per_cluster*cluster_ind[node_index];
+            int cluster_q_start = cluster_num_interp_pts*cluster_ind[node_index];
             int cluster_pts_start = interp_order_lim*cluster_ind[node_index];
             int stream_id = j%3;
 
@@ -121,16 +100,16 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 /*
                 if (run_params->approximation == LAGRANGE) {
 
-                    K_Coulomb_CP_Lagrange(num_sources_in_batch,
-                        interp_pts_per_cluster, batch_start, cluster_start,
+                    K_Coulomb_CP_Lagrange(batch_num_sources,
+                        cluster_num_interp_pts, batch_idx_start, cluster_start,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
 
                 } else if (run_params->approximation == HERMITE) {
 
-                    K_Coulomb_CP_Hermite(num_sources_in_batch,
-                        interp_pts_per_cluster, batch_start, cluster_start,
+                    K_Coulomb_CP_Hermite(batch_num_sources,
+                        cluster_num_interp_pts, batch_idx_start, cluster_start,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
@@ -141,33 +120,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 }
 */
 
-    /* * *********************************************/
-    /* * *************** Yukawa **********************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == YUKAWA) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_Yukawa_CP_Lagrange(num_sources_in_batch,
-                        interp_pts_per_cluster, batch_start, cluster_start,
-                        source_x, source_y, source_z, source_q,
-                        cluster_x, cluster_y, cluster_z, cluster_q,
-                        run_params, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    K_Yukawa_CP_Hermite(num_sources_in_batch,
-                        interp_pts_per_cluster, batch_start, cluster_start,
-                        source_x, source_y, source_z, source_q,
-                        cluster_x, cluster_y, cluster_z, cluster_q,
-                        run_params, stream_id);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
 
     /* * *************************************/
     /* * ******* TCF *************************/
@@ -177,17 +129,17 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
                 if (run_params->approximation == LAGRANGE) {
 
-                    K_TCF_CP_Lagrange(num_sources_in_batch, batch_start,
-                        interp_pts_per_cluster, cluster_charge_start,
-                        interp_order_lim, cluster_pts_start,
+                    K_TCF_CP_Lagrange(batch_num_sources, batch_idx_start,
+                        cluster_q_start, cluster_pts_start,
+                        interp_order_lim,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
 
                 } else if (run_params->approximation == HERMITE) {
 
-                    //K_TCF_CP_Hermite(num_sources_in_batch,
-                    //    interp_pts_per_cluster, batch_start, cluster_start,
+                    //K_TCF_CP_Hermite(batch_num_sources,
+                    //    cluster_num_interp_pts, batch_idx_start, cluster_start,
                     //    source_x, source_y, source_z, source_q,
                     //    cluster_x, cluster_y, cluster_z, cluster_q,
                     //    run_params, stream_id);
@@ -202,16 +154,16 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 /*
                 if (run_params->approximation == LAGRANGE) {
 
-                    K_DCF_CP_Lagrange(num_sources_in_batch,
-                        interp_pts_per_cluster, batch_start, cluster_start,
+                    K_DCF_CP_Lagrange(batch_num_sources,
+                        cluster_num_interp_pts, batch_idx_start, cluster_start,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
 
                 } else if (run_params->approximation == HERMITE) {
 
-                    K_DCF_CP_Hermite(num_sources_in_batch,
-                        interp_pts_per_cluster, batch_start, cluster_start,
+                    K_DCF_CP_Hermite(batch_num_sources,
+                        cluster_num_interp_pts, batch_idx_start, cluster_start,
                         source_x, source_y, source_z, source_q,
                         cluster_x, cluster_y, cluster_z, cluster_q,
                         run_params, stream_id);
@@ -256,25 +208,13 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 
             if (run_params->kernel == COULOMB) {
 /*
-                K_Coulomb_Direct(num_targets_in_cluster, num_sources_in_batch,
-                        target_start, batch_start,
+                K_Coulomb_Direct(num_targets_in_cluster, batch_num_sources,
+                        target_start, batch_idx_start,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q,
                         run_params, potential, stream_id);
 */
 
-    /* * *********************************************/
-    /* * *************** Yukawa **********************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == YUKAWA) {
-/*
-                K_Yukawa_Direct(num_targets_in_cluster, num_sources_in_batch,
-                        target_start, batch_start,
-                        target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q,
-                        run_params, potential, stream_id);
-*/
 
     /* * *********************************************/
     /* * ********* TCF *******************************/
@@ -285,12 +225,12 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
                 K_TCF_Direct(target_x_low_ind, target_x_high_ind,
                              target_y_low_ind, target_y_high_ind,
                              target_z_low_ind, target_z_high_ind,
-                             target_x_min,       target_y_min,       target_z_min,
 
+                             target_x_min,      target_y_min,      target_z_min,
                              target_xdd,        target_ydd,        target_zdd,
                              target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
 
-                             num_sources_in_batch, batch_start,
+                             batch_num_sources, batch_idx_start,
                              source_x, source_y, source_z, source_q,
 
                              run_params, potential, stream_id);
@@ -303,8 +243,8 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
             } else if (run_params->kernel == DCF) {
 /*
 
-                K_DCF_Direct(num_targets_in_cluster, num_sources_in_batch,
-                        target_start, batch_start,
+                K_DCF_Direct(num_targets_in_cluster, batch_num_sources,
+                        target_start, batch_idx_start,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q,
                         run_params, potential, stream_id);
@@ -320,7 +260,6 @@ void InteractionCompute_CP(double *potential, struct Tree *tree, struct Tree *ba
 #ifdef OPENACC_ENABLED
         #pragma acc wait
 #endif
-    } // end acc data region
 
     return;
 

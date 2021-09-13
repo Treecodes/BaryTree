@@ -11,7 +11,6 @@
 #include "../interaction_lists/struct_interaction_lists.h"
 
 //#include "../kernels/coulomb/coulomb.h"
-//#include "../kernels/yukawa/yukawa.h"
 #include "../kernels/tcf/tcf.h"
 //#include "../kernels/dcf/dcf.h"
 
@@ -48,15 +47,15 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     int num_targets  = targets->num;
 
 
-    int num_source_cluster_points  = source_clusters->num;
-    int num_source_cluster_charges = source_clusters->num_charges;
+    int num_source_cluster_pts  = source_clusters->num;
+    int num_source_cluster_q = source_clusters->num_charges;
     double *source_cluster_x = source_clusters->x;
     double *source_cluster_y = source_clusters->y;
     double *source_cluster_z = source_clusters->z;
     double *source_cluster_q = source_clusters->q;
     
-    int num_target_cluster_points  = target_clusters->num;
-    int num_target_cluster_charges = target_clusters->num_charges;
+    int num_target_cluster_pts  = target_clusters->num;
+    int num_target_cluster_q = target_clusters->num_charges;
     double *target_cluster_x = target_clusters->x;
     double *target_cluster_y = target_clusters->y;
     double *target_cluster_z = target_clusters->z;
@@ -97,14 +96,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 #ifdef OPENACC_ENABLED
     #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
                             source_q[0:num_sources], \
-                            source_cluster_x[0:num_source_cluster_points], \
-                            source_cluster_y[0:num_source_cluster_points], \
-                            source_cluster_z[0:num_source_cluster_points], \
-                            source_cluster_q[0:num_source_cluster_charges], \
-                            target_cluster_x[0:num_target_cluster_points], \
-                            target_cluster_y[0:num_target_cluster_points], \
-                            target_cluster_z[0:num_target_cluster_points]) \
-                       copy(target_cluster_q[0:num_target_cluster_charges], \
+                            source_cluster_x[0:num_source_cluster_pts], \
+                            source_cluster_y[0:num_source_cluster_pts], \
+                            source_cluster_z[0:num_source_cluster_pts], \
+                            source_cluster_q[0:num_source_cluster_q], \
+                            target_cluster_x[0:num_target_cluster_pts], \
+                            target_cluster_y[0:num_target_cluster_pts], \
+                            target_cluster_z[0:num_target_cluster_pts]) \
+                       copy(target_cluster_q[0:num_target_cluster_q], \
                             potential[0:num_targets])
 #endif
     {
@@ -148,53 +147,15 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
             if (run_params->kernel == COULOMB) {
 /*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_Coulomb_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-                        source_cluster_start, target_cluster_start,
-                        source_cluster_x, source_cluster_y, source_cluster_z,
-                        source_cluster_q,
-                        target_cluster_x, target_cluster_y, target_cluster_z,
-                        target_cluster_q,
-                        run_params, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
+                K_Coulomb_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+                    source_cluster_start, target_cluster_start,
+                    source_cluster_x, source_cluster_y, source_cluster_z,
+                    source_cluster_q,
+                    target_cluster_x, target_cluster_y, target_cluster_z,
+                    target_cluster_q,
+                    run_params, stream_id);
 */
 
-    /* * *********************************************/
-    /* * *************** Yukawa **********************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == YUKAWA) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_Yukawa_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-                        source_cluster_start, target_cluster_start,
-                        source_cluster_x, source_cluster_y, source_cluster_z,
-                        source_cluster_q,
-                        target_cluster_x, target_cluster_y, target_cluster_z,
-                        target_cluster_q,
-                        run_params, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
 
     /* * *********************************************/
     /* * ******* TCF *********************************/
@@ -202,16 +163,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == TCF) {
 
-                if (run_params->approximation == LAGRANGE) {
-
-//                    K_TCF_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-//                        source_cluster_start, target_cluster_start,
-//                        source_cluster_x, source_cluster_y, source_cluster_z,
-//                        source_cluster_q,
-//                        target_cluster_x, target_cluster_y, target_cluster_z,
-//                        target_cluster_q,
-//                        run_params, stream_id);
-                }
+//                K_TCF_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+//                    source_cluster_start, target_cluster_start,
+//                    source_cluster_x, source_cluster_y, source_cluster_z,
+//                    source_cluster_q,
+//                    target_cluster_x, target_cluster_y, target_cluster_z,
+//                    target_cluster_q,
+//                    run_params, stream_id);
     
     
     /* * *********************************************/
@@ -220,16 +178,13 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == DCF) {
 /*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_DCF_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
-                        source_cluster_start, target_cluster_start,
-                        source_cluster_x, source_cluster_y, source_cluster_z,
-                        source_cluster_q,
-                        target_cluster_x, target_cluster_y, target_cluster_z,
-                        target_cluster_q,
-                        run_params, stream_id);
-                }
+                K_DCF_CP_Lagrange(interp_pts_per_cluster, interp_pts_per_cluster,
+                    source_cluster_start, target_cluster_start,
+                    source_cluster_x, source_cluster_y, source_cluster_z,
+                    source_cluster_q,
+                    target_cluster_x, target_cluster_y, target_cluster_z,
+                    target_cluster_q,
+                    run_params, stream_id);
 */
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
@@ -255,51 +210,14 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
             if (run_params->kernel == COULOMB) {
 /*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_Coulomb_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
-                        target_start, source_cluster_start,
-                        target_x, target_y, target_z,
-                        source_cluster_x, source_cluster_y, source_cluster_z,
-                        source_cluster_q,
-                        run_params, potential, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
+                K_Coulomb_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
+                    target_start, source_cluster_start,
+                    target_x, target_y, target_z,
+                    source_cluster_x, source_cluster_y, source_cluster_z,
+                    source_cluster_q,
+                    run_params, potential, stream_id);
 */
 
-    /* * *********************************************/
-    /* * *************** Yukawa **********************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == YUKAWA) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_Yukawa_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
-                        target_start, source_cluster_start,
-                        target_x, target_y, target_z,
-                        source_cluster_x, source_cluster_y, source_cluster_z,
-                        source_cluster_q,
-                        run_params, potential, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
 
     /* * *********************************************/
     /* * ******* TCF *********************************/
@@ -307,21 +225,18 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == TCF) {
 
-                if (run_params->approximation == LAGRANGE) {
+                K_TCF_PC_Lagrange(target_x_low_ind, target_x_high_ind,
+                                  target_y_low_ind, target_y_high_ind,
+                                  target_z_low_ind, target_z_high_ind,
 
-                    K_TCF_PC_Lagrange(target_x_low_ind, target_x_high_ind,
-                                      target_y_low_ind, target_y_high_ind,
-                                      target_z_low_ind, target_z_high_ind,
-                                      target_x_min,       target_y_min,       target_z_min,
-                                      
-                                      target_xdd,        target_ydd,        target_zdd,
-                                      target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
+                                  target_x_min,       target_y_min,     target_z_min,
+                                  target_xdd,        target_ydd,        target_zdd,
+                                  target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
 
-                                      interp_pts_per_cluster, source_cluster_start,
-                                      source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q,
+                                  interp_pts_per_cluster, source_cluster_start,
+                                  source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q,
 
-                                      run_params, potential, stream_id);
-                }
+                                  run_params, potential, stream_id);
     
     
     /* * *********************************************/
@@ -330,15 +245,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == DCF) {
 /*
-                if (run_params->approximation == LAGRANGE) {
-
                 K_DCF_PC_Lagrange(num_targets_in_cluster, interp_pts_per_cluster,
                     target_start, source_cluster_start,
                     target_x, target_y, target_z,
                     source_cluster_x, source_cluster_y, source_cluster_z,
                     source_cluster_q,
                     run_params, potential, stream_id);
-                }
 */
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
@@ -367,53 +279,17 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     /* * *********************************************/
     /* * *************** Coulomb *********************/
     /* * *********************************************/
+
             if (run_params->kernel == COULOMB) {
 /*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_Coulomb_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-                        source_start, target_cluster_start,
-                        source_x, source_y, source_z, source_q,
-                        target_cluster_x, target_cluster_y, target_cluster_z,
-                        target_cluster_q,
-                        run_params, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
+                K_Coulomb_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                    source_start, target_cluster_start,
+                    source_x, source_y, source_z, source_q,
+                    target_cluster_x, target_cluster_y, target_cluster_z,
+                    target_cluster_q,
+                    run_params, stream_id);
 */
 
-    /* * *********************************************/
-    /* * *************** Yukawa **********************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == YUKAWA) {
-/*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_Yukawa_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-                        source_start, target_cluster_start,
-                        source_x, source_y, source_z, source_q, 
-                        target_cluster_x, target_cluster_y, target_cluster_z,
-                        target_cluster_q,
-                        run_params, stream_id);
-
-                } else if (run_params->approximation == HERMITE) {
-
-                    printf("**ERROR** CC HERMITE CURRENTLY INOPERABLE. EXITING. \n");
-                    exit(1);
-
-                } else {
-                    printf("**ERROR** INVALID CHOICE OF APPROXIMATION. EXITING. \n");
-                    exit(1);
-                }
-*/
 
     /* * *********************************************/
     /* * ******* TCF *********************************/
@@ -421,15 +297,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == TCF) {
 
-                if (run_params->approximation == LAGRANGE) {
-
-//                    K_TCF_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-//                        source_start, target_cluster_start,
-//                        source_x, source_y, source_z, source_q,
-//                        target_cluster_x, target_cluster_y, target_cluster_z,
-//                        target_cluster_q,
-//                        run_params, stream_id);
-                }
+//                K_TCF_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+//                    source_start, target_cluster_start,
+//                    source_x, source_y, source_z, source_q,
+//                    target_cluster_x, target_cluster_y, target_cluster_z,
+//                    target_cluster_q,
+//                    run_params, stream_id);
 
 
     /* * *********************************************/
@@ -438,15 +311,12 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == DCF) {
 /*
-                if (run_params->approximation == LAGRANGE) {
-
-                    K_DCF_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
-                        source_start, target_cluster_start,
-                        source_x, source_y, source_z, source_q,
-                        target_cluster_x, target_cluster_y, target_cluster_z,
-                        target_cluster_q,
-                        run_params, stream_id);
-                }
+                K_DCF_CP_Lagrange(num_sources_in_cluster, interp_pts_per_cluster,
+                    source_start, target_cluster_start,
+                    source_x, source_y, source_z, source_q,
+                    target_cluster_x, target_cluster_y, target_cluster_z,
+                    target_cluster_q,
+                    run_params, stream_id);
 */
             } else {
                 printf("**ERROR** INVALID KERNEL. EXITING.\n");
@@ -485,19 +355,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                         run_params, potential, stream_id);
 */
 
-    /* * *********************************************/
-    /* * *************** Yukawa **********************/
-    /* * *********************************************/
-
-            } else if (run_params->kernel == YUKAWA) {
-/*
-                K_Yukawa_Direct(num_targets_in_cluster, num_sources_in_cluster,
-                        target_start, source_start,
-                        target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q,
-                        run_params, potential, stream_id);
-
-*/
 
     /* * *********************************************/
     /* * ********** TCF ******************************/

@@ -140,9 +140,6 @@ void Params_Parse_Readin(FILE *fp, struct RunParams **run_params, int *N, char *
     /* Validating tokens for RunParam struct */
     if (strcasecmp(kernel_string, "COULOMB") == 0) {
         kernel = COULOMB;
-
-    } else if (strcasecmp(kernel_string, "YUKAWA") == 0) {
-        kernel = YUKAWA;
     
     } else if (strcasecmp(kernel_string, "TCF") == 0) {
         kernel = TCF;
@@ -309,20 +306,20 @@ void Timing_Print(double time_run[4], double time_tree[13], double time_direct[4
 
 
 /*----------------------------------------------------------------------------*/
-void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_direct_glob,
-                double *glob_inf_err, double *glob_relinf_err, double *glob_n2_err, double *glob_reln2_err,
+void Accuracy_Calculate(double *potential_engy, double *potential_engy_direct,
+                double *inf_err, double *relinf_err, double *n2_err, double *reln2_err,
                 double *potential, double *potential_direct, int *grid_dim, int *slice)
 {
     int targets_num = grid_dim[0]*grid_dim[1]*grid_dim[2];
     int targets_sample_num = (grid_dim[0]/slice[0]) * (grid_dim[1]/slice[1]) * (grid_dim[2]/slice[2]);
 
-    double potential_engy = sum(potential, targets_num);
-    double potential_engy_direct = sum(potential_direct, targets_sample_num);
+    *potential_engy = sum(potential, targets_num);
+    *potential_engy_direct = sum(potential_direct, targets_sample_num);
 
-    *potential_engy_glob = potential_engy;
-    *potential_engy_direct_glob = potential_engy_direct;
-
-    double inferr = 0.0, relinferr = 0.0, n2err = 0.0, reln2err = 0.0;
+    *inf_err = 0.0;
+    *relinf_err = 0.0;
+    *n2_err = 0.0;
+    *reln2_err = 0.0;
     double temp;
 
     for (int ix = 0; ix < grid_dim[0]/slice[0]; ix++) {                                                       
@@ -334,43 +331,42 @@ void Accuracy_Calculate(double *potential_engy_glob, double *potential_engy_dire
 
                 temp = fabs(potential_direct[ii_sample] - potential[ii]);
 
-                if (temp >= inferr) inferr = temp;
+                if (temp >= *inf_err) *inf_err = temp;
 
-                if (fabs(potential_direct[ii_sample]) >= relinferr)
-                    relinferr = fabs(potential_direct[ii_sample]);
+                if (fabs(potential_direct[ii_sample]) >= *relinf_err)
+                    *relinf_err = fabs(potential_direct[ii_sample]);
 
-                n2err = n2err + pow(potential_direct[ii_sample] - potential[ii], 2.0);
-                reln2err = reln2err + pow(potential_direct[ii_sample], 2.0);
+                *n2_err = *n2_err + pow(potential_direct[ii_sample] - potential[ii], 2.0);
+                *reln2_err = *reln2_err + pow(potential_direct[ii_sample], 2.0);
             }
         }
     }
 
-    *glob_reln2_err = sqrt(fabs(n2err / reln2err));
-    *glob_n2_err = sqrt(fabs(n2err));
-    *glob_relinf_err = inferr / relinferr;
-    *glob_inf_err = inferr;
+    *reln2_err = sqrt(fabs(*n2_err / *reln2_err));
+    *n2_err = sqrt(fabs(*n2_err));
+    *relinf_err = *inf_err / *relinf_err;
     
     return;
 }
 
 
 /*----------------------------------------------------------------------------*/
-void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glob,
-                double glob_inf_err, double glob_relinf_err, double glob_n2_err, double glob_reln2_err,
+void Accuracy_Print(double potential_engy, double potential_engy_direct,
+                double inf_err, double relinf_err, double n2_err, double reln2_err,
                 int *slice)
 {
-    printf("[random cube example]                Tree potential energy:  %f\n", potential_engy_glob);
+    printf("[random cube example]                Tree potential energy:  %f\n", potential_engy);
     if (slice[0]*slice[1]*slice[2] == 1) {
-    printf("[random cube example]              Direct potential energy:  %f\n", potential_engy_direct_glob);
+    printf("[random cube example]              Direct potential energy:  %f\n", potential_engy_direct);
     printf("[random cube example]\n");
     printf("[random cube example]   Absolute error for total potential:  %e\n",
-           fabs(potential_engy_glob-potential_engy_direct_glob));
+           fabs(potential_engy-potential_engy_direct));
     printf("[random cube example]   Relative error for total potential:  %e\n",
-           fabs((potential_engy_glob-potential_engy_direct_glob)/potential_engy_direct_glob));
+           fabs((potential_engy-potential_engy_direct)/potential_engy_direct));
     }
     printf("[random cube example]\n");
-    printf("[random cube example] Relative inf norm error in potential:  %e \n", glob_relinf_err);
-    printf("[random cube example]   Relative 2 norm error in potential:  %e \n", glob_reln2_err);
+    printf("[random cube example] Relative inf norm error in potential:  %e \n", relinf_err);
+    printf("[random cube example]   Relative 2 norm error in potential:  %e \n", reln2_err);
     printf("[random cube example]\n");
 
     return;
@@ -381,8 +377,8 @@ void Accuracy_Print(double potential_engy_glob, double potential_engy_direct_glo
 /*----------------------------------------------------------------------------*/
 void CSV_Print(int N, int M, struct RunParams *run_params,
                double time_run[4], double time_tree[13], double time_direct[4],
-               double potential_engy_glob, double potential_engy_direct_glob,
-               double glob_inf_err, double glob_relinf_err, double glob_n2_err, double glob_reln2_err)
+               double potential_engy, double potential_engy_direct,
+               double inf_err, double relinf_err, double n2_err, double reln2_err)
 {
     FILE *fp = fopen("out.csv", "a");
     fprintf(fp, "%d,%d,%d,%f,%d,%d,%d,%d,"
@@ -394,40 +390,40 @@ void CSV_Print(int N, int M, struct RunParams *run_params,
         run_params->max_per_source_leaf, run_params->max_per_target_leaf, run_params->kernel,
         run_params->approximation, // 1 ends
 
-        time_run[0],  //  pre-process
-        time_run[1],  //  directdriver
+        time_run[0],    //  pre-process
+        time_run[1],    //  directdriver
         
-        time_direct[0],     //  communicate
-        time_direct[1],     //  compute local
-        time_direct[2],     //  compute remote
-        time_direct[3],     //  correct potential
+        time_direct[0], //  communicate
+        time_direct[1], //  compute local
+        time_direct[2], //  compute remote
+        time_direct[3], //  correct potential
         // 2 ends
 
-        time_run[2],  //  treedriver
-        time_tree[0],     //  build local tree
-        time_tree[1],     //  build local batches
-        time_tree[2],     //  fill local clusters
-        time_tree[3],     //  build LET
-        time_tree[4],     //  build local lists
+        time_run[2],    //  treedriver
+        time_tree[0],   //  build local tree
+        time_tree[1],   //  build local batches
+        time_tree[2],   //  fill local clusters
+        time_tree[3],   //  build LET
+        time_tree[4],   //  build local lists
         // 3 ends
 
-        time_tree[5],     //  compute local interations
-        time_tree[6],     //  build remote lists
-        time_tree[7],     //  compute remote interactions
-        time_tree[8],     //  compute CP2 (cluster-particle)
-        time_tree[9],     //  correct potential
-        time_tree[10],     //  cleanup
+        time_tree[5],   //  compute local interations
+        time_tree[6],   //  build remote lists
+        time_tree[7],   //  compute remote interactions
+        time_tree[8],   //  compute CP2 (cluster-particle)
+        time_tree[9],   //  correct potential
+        time_tree[10],  //  cleanup
         
-        time_tree[11],   //  total setup
-        time_tree[12],   //  total cleanup
+        time_tree[11],  //  total setup
+        time_tree[12],  //  total cleanup
 
-        time_run[3],  //  total time
+        time_run[3],    //  total time
         // 4 ends
 
-        potential_engy_direct_glob, potential_engy_glob,
-        fabs(potential_engy_direct_glob - potential_engy_glob),
-        fabs((potential_engy_direct_glob - potential_engy_glob) / potential_engy_direct_glob),
-        glob_inf_err, glob_relinf_err, glob_n2_err, glob_reln2_err); // 5 ends
+        potential_engy_direct, potential_engy,
+        fabs(potential_engy_direct - potential_engy),
+        fabs((potential_engy_direct - potential_engy) / potential_engy_direct),
+        inf_err, relinf_err, n2_err, reln2_err); // 5 ends
     fclose(fp);
 
     return;

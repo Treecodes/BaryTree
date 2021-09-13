@@ -6,7 +6,6 @@ typedef enum KERNEL
 {
     NO_KERNEL,
     COULOMB,
-    YUKAWA,
     TCF,
     DCF,
 } KERNEL;

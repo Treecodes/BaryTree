@@ -10,7 +10,6 @@
 #include "../run_params/struct_run_params.h"
 
 #include "../kernels/coulomb/coulomb.h"
-#include "../kernels/yukawa/yukawa.h"
 #include "../kernels/tcf/tcf.h"
 #include "../kernels/dcf/dcf.h"
 
@@ -41,10 +40,6 @@ void InteractionCompute_Direct(double *potential,
     double target_ymin = targets->ymin;
     double target_zmin = targets->zmin;
 
-    double target_xmax = targets->xmax;
-    double target_ymax = targets->ymax;
-    double target_zmax = targets->zmax;
-
     int target_xdim = targets->xdim;
     int target_ydim = targets->ydim;
     int target_zdim = targets->zdim;
@@ -68,18 +63,6 @@ void InteractionCompute_Direct(double *potential,
     if (run_params->kernel == COULOMB) {
 
         K_Coulomb_Direct(num_targets, num_sources, 0, 0,
-                target_x, target_y, target_z,
-                source_x, source_y, source_z, source_q,
-                run_params, potential, 0);
-
-
-    /* * *************************************/
-    /* * ******* Yukawa **********************/
-    /* * *************************************/
-
-    } else if (run_params->kernel == YUKAWA) {
-
-        K_Yukawa_Direct(num_targets, num_sources, 0, 0,
                 target_x, target_y, target_z,
                 source_x, source_y, source_z, source_q,
                 run_params, potential, 0);
