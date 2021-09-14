@@ -2,10 +2,10 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../run_params/struct_run_params.h"
 #include "coulomb_pc.h"
 
 
+/*
 void K_Coulomb_PC_Lagrange(int number_of_targets_in_batch, int number_of_interpolation_points_in_cluster,
          int starting_index_of_target, int starting_index_of_cluster,
          double *target_x, double *target_y, double *target_z,
@@ -140,3 +140,5 @@ void K_Coulomb_PC_Hermite(int number_of_targets_in_batch, int number_of_interpol
 #endif
     return;
 }
+
+*/

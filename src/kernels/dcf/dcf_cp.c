@@ -2,15 +2,15 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../run_params/struct_run_params.h"
 #include "dcf_cp.h"
 
-
-void K_DCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
-         int starting_index_of_sources, int starting_index_of_cluster,
-         double *source_x, double *source_y, double *source_z, double *source_q,
-         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-         struct RunParams *run_params, int gpu_async_stream_id)
+void K_DCF_CP_Lagrange(
+    int batch_num_sources, int batch_idx_start,
+    int cluster_q_start, int cluster_pts_start,
+    int interp_order_lim,
+    double *source_x, double *source_y, double *source_z, double *source_q,
+    double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
+    struct RunParams *run_params, int gpu_async_stream_id)
 {
     double kap = run_params->kernel_params[0];
     double eta = run_params->kernel_params[1];
@@ -22,45 +22,46 @@ void K_DCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolati
     {
 #endif
 #ifdef OPENACC_ENABLED
-    #pragma acc loop independent
+    #pragma acc loop gang collapse(3) independent
 #endif	
-    for (int i = 0; i < number_of_interpolation_points_in_cluster; i++) {
+    for (int k1 = 0; k1 < interp_order_lim; k1++) {
+    for (int k2 = 0; k2 < interp_order_lim; k2++) {
+    for (int k3 = 0; k3 < interp_order_lim; k3++) {
 
         double temporary_potential = 0.0;
 
-        double cx = cluster_x[starting_index_of_cluster + i];
-        double cy = cluster_y[starting_index_of_cluster + i];
-        double cz = cluster_z[starting_index_of_cluster + i];
+        double cx = cluster_x[cluster_pts_start + k1];
+        double cy = cluster_y[cluster_pts_start + k2];
+        double cz = cluster_z[cluster_pts_start + k3];
+
+        int ii = cluster_q_start + k1 * interp_order_lim*interp_order_lim + k2 * interp_order_lim + k3;
 
 #ifdef OPENACC_ENABLED
-        #pragma acc loop independent reduction(+:temporary_potential)
+        #pragma acc loop vector independent reduction(+:temporary_potential)
 #endif
-        for (int j = 0; j < number_of_sources_in_batch; j++) {
+        for (int j = 0; j < batch_num_sources; j++) {
 #ifdef OPENACC_ENABLED
-            #pragma acc cache(source_x[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_y[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_z[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
+            #pragma acc cache(source_x[batch_idx_start : batch_idx_start+batch_num_sources], \
+                              source_y[batch_idx_start : batch_idx_start+batch_num_sources], \
+                              source_z[batch_idx_start : batch_idx_start+batch_num_sources], \
+                              source_q[batch_idx_start : batch_idx_start+batch_num_sources])
 #endif
 
-            int jj = starting_index_of_sources + j;
+            int jj = batch_idx_start + j;
             double dx = cx - source_x[jj];
             double dy = cy - source_y[jj];
             double dz = cz - source_z[jj];
             double r = sqrt(dx*dx + dy*dy + dz*dz);
 
-            if (r > DBL_MIN) {
-                double kap_r = kap * r;
-                double r_eta = r / eta;
-                temporary_potential += source_q[jj] / r
-                                     * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
-                                     -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
-            }
-        } // end loop over interpolation points
+            //temporary_potential += source_q[jj] / r;
+            temporary_potential += source_q[jj] * erf(r / eta) / r;
+        }
 #ifdef OPENACC_ENABLED
         #pragma acc atomic
 #endif
-        cluster_q[starting_index_of_cluster + i] += temporary_potential;
+        cluster_q[ii] += temporary_potential;
+    }
+    }
     }
 #ifdef OPENACC_ENABLED
     } // end kernel
@@ -70,9 +71,9 @@ void K_DCF_CP_Lagrange(int number_of_sources_in_batch, int number_of_interpolati
 
 
 
-
-void K_DCF_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolation_points_in_cluster,
-        int starting_index_of_sources, int starting_index_of_cluster,
+/*
+void K_DCF_CP_Hermite(int batch_num_sources, int cluster_num_interp_pts,
+        int batch_idx_start, int cluster_idx_start,
         double *source_x, double *source_y, double *source_z, double *source_q,
         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
         struct RunParams *run_params, int gpu_async_stream_id)
@@ -81,14 +82,14 @@ void K_DCF_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolatio
     double kappa2 = kappa * kappa;
     double kappa3 = kappa * kappa2;
 
-    double *cluster_q_     = &cluster_q[8*starting_index_of_cluster + 0*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dx   = &cluster_q[8*starting_index_of_cluster + 1*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dy   = &cluster_q[8*starting_index_of_cluster + 2*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dz   = &cluster_q[8*starting_index_of_cluster + 3*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dxy  = &cluster_q[8*starting_index_of_cluster + 4*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dyz  = &cluster_q[8*starting_index_of_cluster + 5*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dxz  = &cluster_q[8*starting_index_of_cluster + 6*number_of_interpolation_points_in_cluster];
-    double *cluster_q_dxyz = &cluster_q[8*starting_index_of_cluster + 7*number_of_interpolation_points_in_cluster];
+    double *cluster_q_     = &cluster_q[8*cluster_idx_start + 0*cluster_num_interp_pts];
+    double *cluster_q_dx   = &cluster_q[8*cluster_idx_start + 1*cluster_num_interp_pts];
+    double *cluster_q_dy   = &cluster_q[8*cluster_idx_start + 2*cluster_num_interp_pts];
+    double *cluster_q_dz   = &cluster_q[8*cluster_idx_start + 3*cluster_num_interp_pts];
+    double *cluster_q_dxy  = &cluster_q[8*cluster_idx_start + 4*cluster_num_interp_pts];
+    double *cluster_q_dyz  = &cluster_q[8*cluster_idx_start + 5*cluster_num_interp_pts];
+    double *cluster_q_dxz  = &cluster_q[8*cluster_idx_start + 6*cluster_num_interp_pts];
+    double *cluster_q_dxyz = &cluster_q[8*cluster_idx_start + 7*cluster_num_interp_pts];
 
 
 #ifdef OPENACC_ENABLED
@@ -102,7 +103,7 @@ void K_DCF_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolatio
 #ifdef OPENACC_ENABLED
     #pragma acc loop independent
 #endif
-    for (int i = 0; i < number_of_interpolation_points_in_cluster; i++) {
+    for (int i = 0; i < cluster_num_interp_pts; i++) {
 
         double temp_pot_     = 0.0;
         double temp_pot_dx   = 0.0;
@@ -113,7 +114,7 @@ void K_DCF_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolatio
         double temp_pot_dxz  = 0.0;
         double temp_pot_dxyz = 0.0;
         
-        int ii = starting_index_of_cluster + i;
+        int ii = cluster_idx_start + i;
         double cx = cluster_x[ii];
         double cy = cluster_y[ii];
         double cz = cluster_z[ii];
@@ -124,15 +125,15 @@ void K_DCF_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolatio
                                      reduction(+:temp_pot_)    reduction(+:temp_pot_dxyz)
                                                
 #endif
-        for (int j = 0; j < number_of_sources_in_batch; j++) {
+        for (int j = 0; j < batch_num_sources; j++) {
 #ifdef OPENACC_ENABLED
-            #pragma acc cache(source_x[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_y[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_z[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch], \
-                              source_q[starting_index_of_sources : starting_index_of_sources+number_of_sources_in_batch])
+            #pragma acc cache(source_x[batch_idx_start : batch_idx_start+batch_num_sources], \
+                              source_y[batch_idx_start : batch_idx_start+batch_num_sources], \
+                              source_z[batch_idx_start : batch_idx_start+batch_num_sources], \
+                              source_q[batch_idx_start : batch_idx_start+batch_num_sources])
 #endif
 
-            int jj = starting_index_of_sources + j;
+            int jj = batch_idx_start + j;
             double dx = source_x[jj] - cx;
             double dy = source_y[jj] - cy;
             double dz = source_z[jj] - cz;
@@ -192,10 +193,10 @@ void K_DCF_CP_Hermite(int number_of_sources_in_batch, int number_of_interpolatio
         cluster_q_dxyz[i] += temp_pot_dxyz;
 #endif
 
-
     }
 #ifdef OPENACC_ENABLED
     } // end kernel
 #endif
     return;
 }
+*/

@@ -10,9 +10,15 @@
 #include "../run_params/struct_run_params.h"
 #include "../interaction_lists/struct_interaction_lists.h"
 
-//#include "../kernels/coulomb/coulomb.h"
+#include "../kernels/coulomb/coulomb.h"
 #include "../kernels/tcf/tcf.h"
-//#include "../kernels/dcf/dcf.h"
+#include "../kernels/dcf/dcf.h"
+
+#ifdef CUDA_ENABLED
+    #include "../kernels/cuda/coulomb/cuda_coulomb.h"
+    #include "../kernels/cuda/tcf/cuda_tcf.h"
+    #include "../kernels/cuda/dcf/cuda_dcf.h"
+#endif
 
 #include "interaction_compute.h"
 
@@ -91,23 +97,6 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     double target_zdd = targets->zdd;
     
     
-    // Additionally, not setup for Hermite either at the moment.
-        
-#ifdef OPENACC_ENABLED
-    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources], \
-                            source_cluster_x[0:num_source_cluster_pts], \
-                            source_cluster_y[0:num_source_cluster_pts], \
-                            source_cluster_z[0:num_source_cluster_pts], \
-                            source_cluster_q[0:num_source_cluster_q], \
-                            target_cluster_x[0:num_target_cluster_pts], \
-                            target_cluster_y[0:num_target_cluster_pts], \
-                            target_cluster_z[0:num_target_cluster_pts]) \
-                       copy(target_cluster_q[0:num_target_cluster_q], \
-                            potential[0:num_targets])
-#endif
-    {
-
     for (int i = 0; i < target_tree->numnodes; i++) {
 
         int target_cluster_start = interp_pts_per_cluster * target_tree_cluster_ind[i];
@@ -225,6 +214,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == TCF) {
 
+/*
                 K_TCF_PC_Lagrange(target_x_low_ind, target_x_high_ind,
                                   target_y_low_ind, target_y_high_ind,
                                   target_z_low_ind, target_z_high_ind,
@@ -237,6 +227,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
                                   source_cluster_x, source_cluster_y, source_cluster_z, source_cluster_q,
 
                                   run_params, potential, stream_id);
+*/
     
     
     /* * *********************************************/
@@ -348,7 +339,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             if (run_params->kernel == COULOMB) {
 /*
-                K_Coulomb_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                K_Coulomb_PP(num_targets_in_cluster, num_sources_in_cluster,
                         target_start, source_start,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q,
@@ -362,18 +353,20 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == TCF) {
 
-                K_TCF_Direct(target_x_low_ind, target_x_high_ind,
-                             target_y_low_ind, target_y_high_ind,
-                             target_z_low_ind, target_z_high_ind,
-                             target_x_min,       target_y_min,       target_z_min,
+/*
+                K_TCF_PP(target_x_low_ind, target_x_high_ind,
+                         target_y_low_ind, target_y_high_ind,
+                         target_z_low_ind, target_z_high_ind,
+                         target_x_min,       target_y_min,       target_z_min,
 
-                             target_xdd,        target_ydd,        target_zdd,
-                             target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
+                         target_xdd,        target_ydd,        target_zdd,
+                         target_x_dim_glob, target_y_dim_glob, target_z_dim_glob,
 
-                             num_sources_in_cluster, source_start,
-                             source_x, source_y, source_z, source_q,
+                         num_sources_in_cluster, source_start,
+                         source_x, source_y, source_z, source_q,
 
-                             run_params, potential, stream_id);
+                         run_params, potential, stream_id);
+*/
                 
                 
     /* * *********************************************/
@@ -382,7 +375,7 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
 
             } else if (run_params->kernel == DCF) {
 /*
-                K_DCF_Direct(num_targets_in_cluster, num_sources_in_cluster,
+                K_DCF_PP(num_targets_in_cluster, num_sources_in_cluster,
                         target_start, source_start,
                         target_x, target_y, target_z,
                         source_x, source_y, source_z, source_q,
@@ -398,9 +391,8 @@ void InteractionCompute_CC(double *potential, struct Tree *source_tree, struct T
     } // end loop over target nodes
 
 #ifdef OPENACC_ENABLED
-        #pragma acc wait
+    #pragma acc wait
 #endif
-    } // end acc data region
 
     return;
 

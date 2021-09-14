@@ -2,10 +2,9 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../run_params/struct_run_params.h"
 #include "tcf_pc.h"
 
-
+/*
 void K_TCF_PC_Lagrange(int target_x_low_ind,  int target_x_high_ind,
                        int target_y_low_ind,  int target_y_high_ind,
                        int target_z_low_ind,  int target_z_high_ind,
@@ -179,3 +178,4 @@ void K_TCF_PC_Hermite(int target_x_low_ind,  int target_x_high_ind,
 #endif
     return;
 }
+*/

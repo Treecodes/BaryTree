@@ -2,15 +2,15 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../run_params/struct_run_params.h"
 #include "tcf_cp.h"
 
-void K_TCF_CP_Lagrange(int batch_num_sources, int batch_idx_start,
-                       int cluster_q_start, int cluster_pts_start,
-                       int interp_order_lim,
-         double *source_x, double *source_y, double *source_z, double *source_q,
-         double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
-         struct RunParams *run_params, int gpu_async_stream_id)
+void K_TCF_CP_Lagrange(
+    int batch_num_sources, int batch_idx_start,
+    int cluster_q_start, int cluster_pts_start,
+    int interp_order_lim,
+    double *source_x, double *source_y, double *source_z, double *source_q,
+    double *cluster_x, double *cluster_y, double *cluster_z, double *cluster_q,
+    struct RunParams *run_params, int gpu_async_stream_id)
 {
     double kap = run_params->kernel_params[0];
     double eta = run_params->kernel_params[1];
@@ -76,8 +76,7 @@ void K_TCF_CP_Lagrange(int batch_num_sources, int batch_idx_start,
 }
 
 
-
-
+/*
 void K_TCF_CP_Hermite(int batch_num_sources, int cluster_num_interp_pts,
         int batch_idx_start, int cluster_idx_start,
         double *source_x, double *source_y, double *source_z, double *source_q,
@@ -206,3 +205,4 @@ void K_TCF_CP_Hermite(int batch_num_sources, int cluster_num_interp_pts,
 #endif
     return;
 }
+*/

@@ -2,25 +2,23 @@
 #include <float.h>
 #include <stdio.h>
 
-#include "../../run_params/struct_run_params.h"
-#include "tcf_direct.h"
+#include "dcf_pp.h"
 
-void K_TCF_Direct(int target_x_low_ind,  int target_x_high_ind,
-                  int target_y_low_ind,  int target_y_high_ind,
-                  int target_z_low_ind,  int target_z_high_ind,
-                  double target_xmin,    double target_ymin,    double target_zmin,
-                  
-                  double target_xdd,     double target_ydd,     double target_zdd,
-                  int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
+void K_DCF_PP(
+    int target_x_low_ind,  int target_x_high_ind,
+    int target_y_low_ind,  int target_y_high_ind,
+    int target_z_low_ind,  int target_z_high_ind,
+    double target_xmin,    double target_ymin,    double target_zmin,
+        
+    double target_xdd,     double target_ydd,     double target_zdd,
+    int target_x_dim_glob, int target_y_dim_glob, int target_z_dim_glob,
 
-                  int cluster_num_sources, int cluster_idx_start,
-                  double *source_x, double *source_y, double *source_z, double *source_q,
+    int cluster_num_sources, int cluster_idx_start,
+    double *source_x, double *source_y, double *source_z, double *source_q,
 
-                  struct RunParams *run_params, double *potential, int gpu_async_stream_id)
+    struct RunParams *run_params, double *potential, int gpu_async_stream_id)
 {
-    double kap = run_params->kernel_params[0];
-    double eta = run_params->kernel_params[1];
-    double kap_eta_2 = kap * eta / 2.0;
+    double eta = run_params->kernel_params[0];
     int target_yz_dim = target_y_dim_glob * target_z_dim_glob;
 
 #ifdef OPENACC_ENABLED
@@ -57,11 +55,7 @@ void K_TCF_Direct(int target_x_low_ind,  int target_x_high_ind,
                     double r  = sqrt(dx*dx + dy*dy + dz*dz);
 
                     if (r > DBL_MIN) {
-                        double kap_r = kap * r;
-                        double r_eta = r / eta;
-                        temporary_potential += source_q[jj] / r
-                                             * (exp(-kap_r) * erfc(kap_eta_2 - r_eta)
-                                             -  exp( kap_r) * erfc(kap_eta_2 + r_eta));
+                        temporary_potential += source_q[jj] * erf(r / eta) / r;
                     }
                 } // end loop over interpolation points
 #ifdef OPENACC_ENABLED

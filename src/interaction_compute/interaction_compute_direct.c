@@ -13,6 +13,12 @@
 #include "../kernels/tcf/tcf.h"
 #include "../kernels/dcf/dcf.h"
 
+#ifdef CUDA_ENABLED
+    #include "../kernels/cuda/coulomb/cuda_coulomb.h"
+    #include "../kernels/cuda/tcf/cuda_tcf.h"
+    #include "../kernels/cuda/dcf/cuda_dcf.h"
+#endif
+
 #include "interaction_compute.h"
 
 
@@ -28,9 +34,6 @@ void InteractionCompute_Direct(double *potential,
     double *source_q  = sources->q;
 
     int num_targets   = targets->num;
-    double *target_x  = targets->x;
-    double *target_y  = targets->y;
-    double *target_z  = targets->z;
 
     double target_xdd = targets->xdd;
     double target_ydd = targets->ydd;
@@ -46,8 +49,9 @@ void InteractionCompute_Direct(double *potential,
 
 
 #ifdef OPENACC_ENABLED
-    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], source_z[0:num_sources], \
-                            source_q[0:num_sources]), copy(potential[0:num_targets])
+    #pragma acc data copyin(source_x[0:num_sources], source_y[0:num_sources], \
+                            source_z[0:num_sources], source_q[0:num_sources]), \
+                       copy(potential[0:num_targets])
 #endif
     {
 
@@ -62,10 +66,39 @@ void InteractionCompute_Direct(double *potential,
 
     if (run_params->kernel == COULOMB) {
 
-        K_Coulomb_Direct(num_targets, num_sources, 0, 0,
-                target_x, target_y, target_z,
-                source_x, source_y, source_z, source_q,
-                run_params, potential, 0);
+#ifdef CUDA_ENABLED
+        #pragma acc host_data use_device(potential, \
+                source_x, source_y, source_z, source_q)
+        {
+        K_CUDA_Coulomb_PP(
+            0,  target_xdim-1,
+            0,  target_ydim-1,
+            0,  target_zdim-1,
+            target_xmin, target_ymin, target_zmin,
+            
+            target_xdd,  target_ydd,  target_zdd,
+            target_xdim, target_ydim, target_zdim,
+
+            num_sources, 0,
+            source_x, source_y, source_z, source_q,
+
+            run_params, potential, 0);
+        }
+#else
+        K_Coulomb_PP(
+            0,  target_xdim-1,
+            0,  target_ydim-1,
+            0,  target_zdim-1,
+            target_xmin, target_ymin, target_zmin,
+            
+            target_xdd,  target_ydd,  target_zdd,
+            target_xdim, target_ydim, target_zdim,
+
+            num_sources, 0,
+            source_x, source_y, source_z, source_q,
+
+            run_params, potential, 0);
+#endif
 
 
     /* * *************************************/
@@ -73,18 +106,40 @@ void InteractionCompute_Direct(double *potential,
     /* * *************************************/
 
     } else if (run_params->kernel == TCF) {
-            K_TCF_Direct(0,  target_xdim-1,
-                         0,  target_ydim-1,
-                         0,  target_zdim-1,
-                         target_xmin, target_ymin, target_zmin,
-                         
-                         target_xdd,  target_ydd,  target_zdd,
-                         target_xdim, target_ydim, target_zdim,
 
-                         num_sources, 0,
-                         source_x, source_y, source_z, source_q,
+#ifdef CUDA_ENABLED
+        #pragma acc host_data use_device(potential, \
+                source_x, source_y, source_z, source_q)
+        {
+        K_CUDA_TCF_PP(
+            0,  target_xdim-1,
+            0,  target_ydim-1,
+            0,  target_zdim-1,
+            target_xmin, target_ymin, target_zmin,
+            
+            target_xdd,  target_ydd,  target_zdd,
+            target_xdim, target_ydim, target_zdim,
 
-                         run_params, potential, 0);
+            num_sources, 0,
+            source_x, source_y, source_z, source_q,
+
+            run_params, potential, 0);
+        }
+#else
+        K_TCF_PP(
+            0,  target_xdim-1,
+            0,  target_ydim-1,
+            0,  target_zdim-1,
+            target_xmin, target_ymin, target_zmin,
+            
+            target_xdd,  target_ydd,  target_zdd,
+            target_xdim, target_ydim, target_zdim,
+
+            num_sources, 0,
+            source_x, source_y, source_z, source_q,
+
+            run_params, potential, 0);
+#endif
 
                         
     /* * *************************************/
@@ -93,14 +148,40 @@ void InteractionCompute_Direct(double *potential,
 
     } else if (run_params->kernel == DCF) {
 
-            K_DCF_Direct(num_targets, num_sources, 0, 0,
-                        target_x, target_y, target_z,
-                        source_x, source_y, source_z, source_q,
-                        run_params, potential, 0);
+#ifdef CUDA_ENABLED
+        #pragma acc host_data use_device(potential, \
+                source_x, source_y, source_z, source_q)
+        {
+        K_CUDA_DCF_PP(
+            0,  target_xdim-1,
+            0,  target_ydim-1,
+            0,  target_zdim-1,
+            target_xmin, target_ymin, target_zmin,
+            
+            target_xdd,  target_ydd,  target_zdd,
+            target_xdim, target_ydim, target_zdim,
+
+            num_sources, 0,
+            source_x, source_y, source_z, source_q,
+
+            run_params, potential, 0);
+        }
+#else
+        K_DCF_PP(
+            0,  target_xdim-1,
+            0,  target_ydim-1,
+            0,  target_zdim-1,
+            target_xmin, target_ymin, target_zmin,
+            
+            target_xdd,  target_ydd,  target_zdd,
+            target_xdim, target_ydim, target_zdim,
+
+            num_sources, 0,
+            source_x, source_y, source_z, source_q,
+
+            run_params, potential, 0);
+#endif
                         
-    } else {
-        printf("**ERROR** INVALID KERNEL. EXITING.\n");
-        exit(1);
     }
 
 #ifdef OPENACC_ENABLED
