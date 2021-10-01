@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9...3.14)
+cmake_minimum_required(VERSION 3.18)
 project(BaryTree VERSION 1.0 LANGUAGES C CXX CUDA)
 
 set(default_build_type "Release")

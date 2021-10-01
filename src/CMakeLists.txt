@@ -141,7 +141,8 @@ if(ENABLE_GPU_BUILD)
         target_link_libraries(     ${TRGT} PUBLIC
                                              OpenMP::OpenMP_C
                                              OpenACC_C
-                                             $<$<C_COMPILER_ID:GNU>:m>)
+                                             $<$<C_COMPILER_ID:GNU>:m>
+                                             -cudalib=cublas)
 
         install(TARGETS            ${TRGT} LIBRARY DESTINATION lib
                                            ARCHIVE DESTINATION lib)
